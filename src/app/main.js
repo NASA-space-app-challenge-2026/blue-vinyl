@@ -17,14 +17,20 @@ import { createSettingsMenu } from '../features/controls/presentation/settings-m
 import { createVolumeControl } from '../features/controls/presentation/volume-control.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_THEME, GlobeTheme } from '../features/globe/domain/globe-theme.js';
-import { createGlobeAttribution } from '../features/globe/presentation/globe-attribution.js';
 import { createDateLabel } from '../features/globe/presentation/date-label.js';
+import { createGlobeAttribution } from '../features/globe/presentation/globe-attribution.js';
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
 import { createHalo } from '../features/globe/presentation/halo.js';
+import { createSeaLevelOverlay } from '../features/globe/presentation/sea-level-overlay.js';
+import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
+import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
+import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
 import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
+import { loadIceSeaTrack } from '../features/tracks/data/track-repository.js';
 import { sampleFlock } from '../features/tracks/domain/bird-track.js';
+import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 
@@ -32,12 +38,19 @@ import { createTurntableView } from '../features/turntable/presentation/turntabl
 let albumIndex = 0;
 let album;
 let totalMs;
+// Data of each track of the album, by track index; null until loaded, and for tracks without data.
+/** @type {(import('../features/tracks/data/track-repository.js').IceSeaTrackData | null)[]} */
+let trackData = [];
+// Credits added once the album's music is built, such as the SoundFont the ice is played on.
+let musicCredits = [];
 // What each track of the album plays, by track index, once its birds have loaded: { tracks, lead }, or null for a
 // track without birds. Empty until then.
 let songs = [];
 // The song whose birds the globe shows, and where its flock is now (the globe keeps it in the middle).
 let shownSong = null;
 let focus = null;
+// The pole the globe looks down on for an ice track, to glide there when it changes; null for other tracks.
+let shownPole = null;
 
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
@@ -79,6 +92,8 @@ const turntable = createTurntableView(slot('stage'), {
 });
 const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
 const globe = createGlobeView(turntable.labelSlot);
+const seaOverlay = createSeaLevelOverlay(turntable.labelSlot);
+const music = createMusicPlayer();
 const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
 globe.setFocus(() => focus);
 const dateLabel = createDateLabel(turntable.labelSlot);
@@ -88,7 +103,12 @@ const soundEngine = createSoundEngine({ composer: new FlockComposer() });
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
-createVolumeControl(transportControls, { onChange: soundEngine.setVolume });
+createVolumeControl(transportControls, {
+  onChange: (level) => {
+    music.setVolume(level);
+    soundEngine.setVolume(level);
+  },
+});
 const albumControls = createGlassCapsule(slot('corner-bottom-left'));
 createAlbumSwitcher(albumControls, {
   onPrevious: () => switchAlbum(-1),
@@ -124,6 +144,40 @@ function showAlbum(index) {
   songs = [];
   showSong(null, null);
   loadSongs(album);
+  trackData = album.tracks.map(() => null);
+  musicCredits = [];
+  music.load([]);
+  loadAlbumData(album);
+}
+
+/**
+ * Loads the ice and sea data of the album's tracks, then builds the album's music: each track's notes, moved to where
+ * the track starts. Playback that is already running picks the music up where it is.
+ *
+ * @param {import('../features/album/domain/album.js').Album} loading
+ */
+async function loadAlbumData(loading) {
+  if (!loading.tracks.some((track) => track.iceSea)) return;
+  let data;
+  try {
+    data = await Promise.all(loading.tracks.map((track) => (track.iceSea ? loadIceSeaTrack(track.iceSea) : null)));
+  } catch (error) {
+    console.warn('Album data unavailable:', error);
+    return;
+  }
+  if (album !== loading) return;
+  trackData = data;
+  const starts = trackBoundaries(album).map((edge) => (edge * totalMs) / 1000);
+  const notes = album.tracks.flatMap((track, i) => {
+    if (!data[i]) return [];
+    return iceSeaScore(data[i].years, track.iceSea.iceVoice, YEAR_TIMELINE, track.durationSec)
+      .map((note) => ({ ...note, timeSec: note.timeSec + starts[i] }));
+  });
+  music.load(notes);
+  musicCredits = [SOUNDFONT_CREDIT];
+  if (state === PlaybackState.PLAYING) music.play(() => elapsedMs / 1000);
+  render();
+  globe.glide();
 }
 
 // Loads the birds of `target`'s tracks, unless another album is shown by then.
@@ -147,6 +201,7 @@ function showSong(song, color) {
 
 // Audio may only start from a user gesture, so every gesture that can start playback unlocks it.
 function unlockSound() {
+  music.unlock();
   soundEngine.unlock().catch((error) => console.error('sound engine failed to load', error));
 }
 
@@ -206,6 +261,8 @@ function seekTo(ms) {
   elapsedMs = ms;
   globe.glide();
   if (state === PlaybackState.PLAYING) {
+    // The ice and sea music sets the clock while it plays, so it starts again from the new place.
+    music.play(() => elapsedMs / 1000);
     render();
     return;
   }
@@ -221,6 +278,7 @@ function togglePlayback() {
 
 function startPlaying() {
   setState(PlaybackState.PLAYING);
+  music.play(() => elapsedMs / 1000);
   cancelAnimationFrame(tickFrame);
   lastFrameTs = null;
   tickFrame = requestAnimationFrame(tick);
@@ -231,9 +289,62 @@ function render() {
   const trackIndex = trackIndexAt(album, progress);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex);
-  albumCredit.render(album, trackIndex);
+  albumCredit.render(album, trackIndex, musicCredits);
   backdrop.show(trackCover(album, trackIndex).url);
   renderSong(trackIndex);
+  renderData(trackIndex);
+}
+
+/**
+ * Draws the year that plays at the clock on the globe, looking down on the track's pole: its ice and the sea level;
+ * ice lost from one year to the next falls into the water. The record at rest before it plays shows the first year.
+ */
+function renderData(trackIndex) {
+  const track = album.tracks[trackIndex];
+  const data = trackData[trackIndex];
+  if (!track.iceSea || !data) {
+    shownPole = null;
+    globe.showIce(null);
+    seaOverlay.render(null);
+    return;
+  }
+  // Exactly over the pole the camera's orientation is undefined, so look from just short of it.
+  focus = { lat: Math.max(-89, Math.min(89, track.iceSea.poleLat)), lon: 0 };
+  if (shownPole !== track.iceSea.poleLat) {
+    shownPole = track.iceSea.poleLat;
+    globe.glide();
+  }
+  const trackSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  const { years } = data;
+  const now = yearAt(YEAR_TIMELINE, trackSec, years.length);
+  const at = Math.max(0, now.index);
+  const trackKey = `${album.id}:${trackIndex}`;
+  const year = years[at];
+  // Share of this year's bar played: the ice moves from last year's shape to this year's over the bar, starting on
+  // the chord and settling into the shape. The water rises from last year's level to this year's over the bar too,
+  // from the downbeat, where the sea's string note and wave stroke sound.
+  const along = now.index < 0 ? 0 : Math.min(1, now.beatSec / YEAR_TIMELINE.beatSec);
+  const settle = 1 - (1 - along) ** 3;
+  const rising = along;
+  const before = years[Math.max(0, at - 1)];
+  const waterMm = before.seaLevelMm + (year.seaLevelMm - before.seaLevelMm) * (1 - (1 - rising) ** 2);
+  globe.setWaterLine(seaOverlay.waterLine(waterMm));
+  globe.showIce({
+    key: trackKey,
+    poleLat: track.iceSea.poleLat,
+    shapes: data.iceShapes,
+    at: at === 0 ? 0 : at - 1 + settle,
+    // The lost ice falls for as long as the year's chord is held.
+    fallSec: YEAR_TIMELINE.beatSec,
+  });
+  seaOverlay.render({
+    year: year.year,
+    firstYear: years[0].year,
+    extent: year.extent,
+    firstExtent: years[0].extent,
+    seaLevelMm: year.seaLevelMm,
+    waterMm,
+  });
 }
 
 // Draws the birds, the date and the flock's place at the clock and, while playing, lets the music follow it.
@@ -255,6 +366,7 @@ function renderSong(trackIndex) {
 }
 
 function setState(next) {
+  if (next !== PlaybackState.PLAYING) music.stop();
   state = next;
   if (state !== PlaybackState.PLAYING) soundEngine.stop();
   playHint.render(state);
@@ -265,7 +377,10 @@ function setState(next) {
 function tick(ts) {
   if (state !== PlaybackState.PLAYING) return;
   const dtMs = lastFrameTs === null ? 0 : ts - lastFrameTs;
-  elapsedMs += dtMs;
+  // The ice and sea music sets the clock while it plays, so the globe follows what is heard; otherwise the frames do.
+  const heardSec = music.positionSec();
+  if (heardSec !== null) elapsedMs = heardSec * 1000;
+  else elapsedMs += dtMs;
   lastFrameTs = ts;
   if (elapsedMs >= totalMs) {
     elapsedMs = 0;

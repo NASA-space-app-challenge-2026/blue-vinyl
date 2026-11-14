@@ -1,3 +1,5 @@
+import { IceVoice } from '../../music/domain/ice-sea-score.js';
+import { YEAR_TIMELINE, trackDurationSec } from '../../tracks/domain/year-timeline.js';
 import { AlbumCategory } from '../domain/album.js';
 import { Instrument } from '../../music/domain/instruments.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
@@ -7,6 +9,12 @@ const ARCTIC_BIRD_COVERS = 'assets/albums/arctic-bird';
 // A week of the year a second: a bird's year in about 52 s.
 const WEEK_A_SECOND_MS = 7 * DAY_MS;
 const BIRD_YEAR_SEC = YEAR_MS / WEEK_A_SECOND_MS;
+
+const GLACIER_DATA = 'data/glacier/tracks';
+const GLACIER_COVERS = 'assets/albums/glacier';
+// 32 years (1993–2024), one a bar (1.2 s) with no intro, then the last note's tail: 39.7 s.
+const POLAR_YEARS = 32;
+const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -38,6 +46,43 @@ export const albums = [
       {
         title: 'Northern Pintail', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/northern_pintail.csv`, lead: Instrument.OCARINA, color: '#a8aeb8',
         coverUrl: `${ARCTIC_BIRD_COVERS}/northern_pintail.jpg`, coverCredit: 'Photo: J.M.Garg, CC BY-SA 3.0, via Wikimedia Commons',
+      },
+    ],
+  },
+  {
+    id: 'glacier',
+    category: AlbumCategory.CLIMATE,
+    title: 'As the Ice Melts',
+    coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
+    coverCredit: 'NASA Scientific Visualization Studio',
+    dataCredit: 'Data: NSIDC Sea Ice Index v4 · NOAA Laboratory for Satellite Altimetry',
+    tracks: [
+      {
+        title: 'Arctic',
+        durationSec: POLAR_TRACK_SEC,
+        // Each track shows its own pole at its smallest ice of 2024, from the SVS page the track's ice comes from.
+        coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
+        coverCredit: 'Cover: SVS 5382, Arctic sea ice, Sep 11 2024',
+        iceSea: {
+          csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
+          shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
+          poleLat: 90,
+          // The ice on a vibraphone.
+          iceVoice: IceVoice.VIBRAPHONE,
+        },
+      },
+      {
+        title: 'Antarctic',
+        durationSec: POLAR_TRACK_SEC,
+        coverUrl: `${GLACIER_COVERS}/antarctic.jpg`,
+        coverCredit: 'Cover: SVS 5064, Antarctic sea ice, Feb 20 2024',
+        iceSea: {
+          csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,
+          shapesUrl: `${GLACIER_DATA}/antarctic_february_sea_ice_extent.geojson`,
+          poleLat: -90,
+          // The ice on a piano, so the two tracks are told apart.
+          iceVoice: IceVoice.PIANO,
+        },
       },
     ],
   },

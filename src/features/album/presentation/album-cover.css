@@ -115,6 +115,7 @@
 
 .album-credit {
   margin: 0;
+  text-align: right;
   font-size: 13px;
   color: var(--ink-muted);
 }

@@ -59,6 +59,21 @@ Geometry is defined once in `src/features/turntable/domain/geometry.js`, in viny
 - **Progress ring** runs round the label rim: one full turn per track, from 12 o'clock clockwise. A faint rail is filled in white as far as the track has played, with a white handle (with a soft shadow) at the head. Clicking the ring plays the current track from that point; the fill and handle glide there rather than jump. A new track starts the ring at once.
 - **Globe** is rendered with [globe.gl](https://github.com/vasturiano/globe.gl) (MIT, no API key), loaded as the pinned UMD bundle in `index.html`. It is lit flat (ambient light only) like a printed map, has no atmosphere and does not spin with the record. Its fitted size fills the label edge to edge. Drag rotates it; scrolling zooms in, and zooming out stops at the fitted size so no gap opens between the globe and the grooves.
 
+## Data on the Globe
+
+An album whose tracks have data draws each year of the playing track on the globe, in step with its music (the sound sets the clock while it plays). See [albums/glacier.md](albums/glacier.md) for what the glacier album shows.
+
+| Element | Look | Changes |
+| --- | --- | --- |
+| Camera | Looks down on the track's pole | Turns there in 1.2 s when the track changes; back to the start view for an album without data |
+| Ice | Pale, soft-edged layer (`232, 244, 255` at 85%) just above the surface, on a 256 × 256 grid over the pole (about 31 km a cell) | Morphs from last year's shape into this year's over the beat: it starts on the note and settles into the shape. The edge slides (blended signed distance fields); pieces too thin to slide fade in |
+| Falling ice | Small pale shards with a thin blue edge that turn as they fall, and a ring spreading on the water where each goes in | When a year loses ice, pieces fall from where it was lost into the water over the year's bar (as long as its chord rings), one per 20 cells of net loss (about 20,000 km²: ice lost less ice gained), at most 90. None fall when the ice grows, when the record is scrubbed, or with reduced motion |
+| Ice trail | Earlier years stay behind in blue (`95, 165, 240`), blurred, at up to 60% | Each year fades with age (time constant 2.5 years, the last 6 years drawn), so the lost ice builds up around the ice that is left |
+| Year and ice | Year in bold at the top; below it the extent and, like the sea level, its change since the first year as a share (such as −32% since 1993, or + where it grew) | Each year |
+| Sea level | The porthole of SVS 5235: water whose top edge is cut to a sliding wave, a paler swell behind it and light rays; a centimetre ruler in the middle with a dark halo so it shows on ice and map alike, the first year's sea level at its foot and this year's rise (such as +71 mm) at its height | The water rises from last year's level to this year's over the bar, from the downbeat where the sea's string note sounds; the reading moves a year at a time |
+
+Before a track plays, the globe shows its first year. The text and water never take pointer events, so the globe stays draggable.
+
 ## Globe Themes
 
 Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/globe/domain/globe-theme.js`) and their sources in `src/features/globe/data/globe-themes.js`.

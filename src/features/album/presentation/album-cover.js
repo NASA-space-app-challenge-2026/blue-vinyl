@@ -2,6 +2,7 @@ import { AlbumCategory, trackCover } from '../domain/album.js';
 
 const CATEGORY_LABEL = Object.freeze({
   [AlbumCategory.BIODIVERSITY]: 'Biodiversity',
+  [AlbumCategory.CLIMATE]: 'Climate',
 });
 
 // Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always
@@ -25,8 +26,9 @@ function el(tag, className, text) {
 }
 
 function formatDuration(sec) {
-  const minutes = Math.floor(sec / 60);
-  const seconds = String(Math.round(sec % 60)).padStart(2, '0');
+  const whole = Math.round(sec);
+  const minutes = Math.floor(whole / 60);
+  const seconds = String(whole % 60).padStart(2, '0');
   return `${minutes}:${seconds}`;
 }
 
