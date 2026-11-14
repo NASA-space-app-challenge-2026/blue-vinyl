@@ -4,6 +4,7 @@
   "scripts": {
     "start": "npx --yes serve@14.2.6 .",
     "dev": "npx --yes browser-sync@3.0.4 start --server --files \"index.html\" \"src/**/*\" \"data/**/*\" --no-notify --no-ui",
+    "watch": "npm run dev",
     "notebook": "uvx --with pandas --with matplotlib --with requests jupyter lab notebooks"
   }
 }
