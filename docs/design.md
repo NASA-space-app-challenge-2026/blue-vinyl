@@ -38,7 +38,7 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 - Full-viewport stage; nothing scrolls on desktop.
 - The sleeve is tilted by -3deg and tucked **behind** the record. The record overlaps the sleeve's right edge.
 - The sleeve has a dark gradient at the bottom so the title and track list stay readable over any cover photo.
-- Bottom center: the play hint. Bottom right: the cover photo credit.
+- Top right: the settings button. Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
 - At 760px wide and below, the sleeve and the record stack vertically and the page scrolls.
 
 ## Record
@@ -47,7 +47,20 @@ Geometry is defined once in `src/features/turntable/domain/geometry.js` and shar
 
 - **Grooves** run from the outer edge (start of the album) to the inner edge (end of the album).
 - **Track boundaries** are drawn as lighter rings in the grooves. The width of each band is proportional to the track's duration.
-- **Label** is a large center area that hosts the globe. Features mount content into the label slot; it is clipped to a circle.
+- **Label** is a large center area that hosts the globe. It is an HTML layer between the record (SVG) and the tonearm (SVG), clipped to a circle, so features can mount canvases into the label slot.
+- **Globe** is rendered with [globe.gl](https://github.com/vasturiano/globe.gl) (MIT, no API key), loaded as the pinned UMD bundle in `index.html`. It is lit flat (ambient light only) like a printed map, has no atmosphere and does not spin with the record. Drag rotates it; zoom is off so it keeps filling the label.
+
+## Globe Themes
+
+Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/globe/domain/globe-theme.js`) and their sources in `src/features/globe/data/globe-themes.js`.
+
+| Theme | Source | Look |
+| --- | --- | --- |
+| Map (default) | Esri World Dark Gray Base tiles | Gray land with borders and country names on a dark sea |
+| Satellite | NASA Blue Marble image | Desaturated with a CSS filter so it sits in the dark theme |
+
+- The attribution of the active theme is always shown at the bottom right. Esri tiles require it.
+- Neither source needs an API key.
 - **Progress dot** is a white dot on the label rim that travels one full turn over the album.
 - **Sheen**: two soft light reflections stay still while the record spins under them.
 
@@ -62,8 +75,10 @@ Geometry is defined once in `src/features/turntable/domain/geometry.js` and shar
 | Input | Action |
 | --- | --- |
 | Space | Play / pause |
-| Click on the record or the tonearm | Play / pause |
+| Click on the record grooves or the tonearm | Play / pause |
+| Drag on the globe | Rotate the globe |
+| Settings button (top right) | Open the settings menu; Escape or a click outside closes it |
 
 Playback states (`PlaybackState`): `stopped` → `cueing` (arm swings on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position.
 
-There are no on-screen buttons for now. Language, view options, album switching and notes will be added in later issues.
+The settings button is the only on-screen button for now. Language, view options, album switching and notes will be added in later issues.

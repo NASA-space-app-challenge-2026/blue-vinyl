@@ -34,9 +34,18 @@ body {
   z-index: 3;
 }
 
+#corner-top-right {
+  top: var(--gutter);
+  right: var(--gutter);
+}
+
 #corner-bottom-right {
   bottom: var(--gutter);
   right: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
 #bottom-center {

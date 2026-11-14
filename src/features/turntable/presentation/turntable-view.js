@@ -24,7 +24,7 @@ function wedge(radius, fromDeg, toDeg) {
 }
 
 function createDefs() {
-  const { center, recordRadius, labelRadius } = TURNTABLE;
+  const { center, recordRadius } = TURNTABLE;
   return svg('defs', {}, [
     svg('radialGradient', { id: 'tt-vinyl', cx: '50%', cy: '50%', r: '50%' }, [
       svg('stop', { offset: '60%', 'stop-color': '#161616' }),
@@ -44,7 +44,6 @@ function createDefs() {
       svg('feDropShadow', { dx: 0, dy: 18, stdDeviation: 18, 'flood-color': '#000', 'flood-opacity': 0.45 }),
     ]),
     svg('clipPath', { id: 'tt-record-clip' }, [svg('circle', { cx: center.x, cy: center.y, r: recordRadius })]),
-    svg('clipPath', { id: 'tt-label-clip' }, [svg('circle', { r: labelRadius })]),
   ]);
 }
 
@@ -108,6 +107,9 @@ function createTonearm() {
 /**
  * LP record with track boundary rings, a label slot and a tonearm.
  *
+ * Three stacked layers: the record (SVG), the label (HTML, so features can mount canvases such as
+ * a WebGL globe) and the tonearm (SVG), which swings over the label.
+ *
  * @param {HTMLElement} parent
  * @param {{ boundaries: number[], onToggle: () => void, onCued: () => void }} options
  *   boundaries: track edge progress values (0..1), as returned by trackBoundaries().
@@ -117,26 +119,41 @@ function createTonearm() {
 export function createTurntableView(parent, { boundaries, onToggle, onCued }) {
   const { width, height, center, labelRadius, tonearm } = TURNTABLE;
 
-  const root = svg('svg', { viewBox: `0 0 ${width} ${height}`, class: 'turntable', role: 'img', 'aria-label': 'Turntable' });
-  root.append(createDefs());
+  const root = document.createElement('div');
+  root.className = 'turntable';
+  root.style.aspectRatio = `${width} / ${height}`;
 
+  const viewBox = `0 0 ${width} ${height}`;
+  const recordLayer = svg('svg', { viewBox, class: 'turntable-layer', role: 'img', 'aria-label': 'Turntable' });
+  recordLayer.append(createDefs());
   const platter = svg('g', { class: 'platter', filter: 'url(#tt-shadow)' });
-  platter.append(createRecord(boundaries), createSheen());
+  platter.append(createRecord(boundaries), createSheen(), svg('circle', { cx: center.x, cy: center.y, r: labelRadius, class: 'record-label-bg' }));
+  recordLayer.append(platter);
 
-  // Label area: features mount their content here, centered at (0, 0).
-  const label = svg('g', { class: 'record-label', transform: `translate(${center.x} ${center.y})` });
-  const labelSlot = svg('g', { 'clip-path': 'url(#tt-label-clip)' }, [svg('circle', { r: labelRadius, class: 'record-label-bg' })]);
-  const progressDot = svg('g', {}, [svg('circle', { cx: 0, cy: -labelRadius, r: 7, class: 'record-progress-dot' })]);
-  label.append(labelSlot, svg('circle', { r: labelRadius, class: 'record-label-rim' }), progressDot);
-  platter.append(label);
+  // Label area, positioned over the label circle in view-box percentages.
+  const label = document.createElement('div');
+  label.className = 'record-label';
+  Object.assign(label.style, {
+    left: `${((center.x - labelRadius) / width) * 100}%`,
+    top: `${((center.y - labelRadius) / height) * 100}%`,
+    width: `${((2 * labelRadius) / width) * 100}%`,
+    height: `${((2 * labelRadius) / height) * 100}%`,
+  });
+  const labelSlot = document.createElement('div');
+  labelSlot.className = 'record-label-slot';
+  const progressRing = document.createElement('div');
+  progressRing.className = 'record-progress';
+  progressRing.append(Object.assign(document.createElement('div'), { className: 'record-progress-dot' }));
+  label.append(labelSlot, Object.assign(document.createElement('div'), { className: 'record-label-rim' }), progressRing);
 
-  const base = svg('circle', { cx: tonearm.pivot.x, cy: tonearm.pivot.y, r: 50, class: 'tonearm-base' });
+  const armLayer = svg('svg', { viewBox, class: 'turntable-layer turntable-arm-layer', 'aria-hidden': 'true' });
   const arm = createTonearm();
   arm.addEventListener('transitionend', (event) => {
     if (event.propertyName === 'transform') onCued();
   });
+  armLayer.append(svg('circle', { cx: tonearm.pivot.x, cy: tonearm.pivot.y, r: 50, class: 'tonearm-base' }), arm);
 
-  root.append(platter, base, arm);
+  root.append(recordLayer, label, armLayer);
   platter.addEventListener('click', onToggle);
   arm.addEventListener('click', onToggle);
   parent.append(root);
@@ -149,7 +166,7 @@ export function createTurntableView(parent, { boundaries, onToggle, onCued }) {
     root.dataset.state = state;
     const angle = state === PlaybackState.STOPPED ? tonearm.restAngleDeg : tonearmAngleAt(progress);
     arm.style.transform = `rotate(${angle}deg)`;
-    progressDot.setAttribute('transform', `rotate(${progress * 360})`);
+    progressRing.style.transform = `rotate(${progress}turn)`;
   }
 
   return { labelSlot, render };

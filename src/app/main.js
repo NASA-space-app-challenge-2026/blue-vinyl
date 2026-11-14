@@ -8,8 +8,11 @@ import { createAlbumCover } from '../features/album/presentation/album-cover.js'
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
 import { createPlayHint } from '../features/controls/presentation/play-hint.js';
-import { createGlobePlaceholder } from '../features/globe/presentation/globe-placeholder.js';
-import { TURNTABLE } from '../features/turntable/domain/geometry.js';
+import { createSettingsMenu } from '../features/controls/presentation/settings-menu.js';
+import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
+import { DEFAULT_GLOBE_THEME, GlobeTheme } from '../features/globe/domain/globe-theme.js';
+import { createGlobeAttribution } from '../features/globe/presentation/globe-attribution.js';
+import { createGlobeView } from '../features/globe/presentation/globe-view.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 
 // Album switching comes later; show the first album for now.
@@ -37,14 +40,27 @@ const turntable = createTurntableView(slot('stage'), {
     requestAnimationFrame(tick);
   },
 });
-turntable.labelSlot.append(createGlobePlaceholder(TURNTABLE.labelRadius));
+const globe = createGlobeView(turntable.labelSlot);
+const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
+
+createSettingsMenu(slot('corner-top-right'), {
+  globeThemes: Object.values(GlobeTheme).map((theme) => ({ value: theme, label: GLOBE_THEMES[theme].label })),
+  globeTheme: DEFAULT_GLOBE_THEME,
+  onGlobeThemeChange: applyGlobeTheme,
+});
+applyGlobeTheme(DEFAULT_GLOBE_THEME);
 
 document.addEventListener('keydown', (event) => {
-  // A focused button already reacts to Space on its own.
-  if (event.code !== 'Space' || event.target instanceof HTMLButtonElement) return;
+  // Focused controls (buttons, radios) already react to Space on their own.
+  if (event.code !== 'Space' || event.target.closest('button, input')) return;
   event.preventDefault();
   togglePlayback();
 });
+
+function applyGlobeTheme(theme) {
+  globe.setTheme(theme, GLOBE_THEMES[theme]);
+  globeAttribution.render(GLOBE_THEMES[theme].attribution);
+}
 
 function togglePlayback() {
   setState(state === PlaybackState.STOPPED ? PlaybackState.CUEING : PlaybackState.STOPPED);

@@ -1,0 +1,76 @@
+.settings {
+  position: relative;
+}
+
+.settings-toggle {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgb(243 236 225 / 0.28);
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.15);
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.settings-toggle:hover,
+.settings-toggle[aria-expanded='true'] {
+  color: var(--ink);
+}
+
+.settings-toggle:focus-visible,
+.settings-option:focus-within {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.settings-icon {
+  width: 20px;
+  height: 20px;
+  fill: var(--bg-deep);
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.settings-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  padding: 12px;
+  border: 1px solid rgb(243 236 225 / 0.2);
+  border-radius: 12px;
+  background: rgb(30 23 14 / 0.92);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.4);
+}
+
+.settings-group {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.settings-group legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.settings-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.settings-option input {
+  margin: 0;
+  accent-color: var(--ink);
+}
