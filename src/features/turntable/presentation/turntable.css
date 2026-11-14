@@ -6,6 +6,11 @@
   width: min(54vw, 100vh);
 }
 
+.turntable-record {
+  position: absolute;
+  inset: 0;
+}
+
 .turntable-layer {
   position: absolute;
   inset: 0;

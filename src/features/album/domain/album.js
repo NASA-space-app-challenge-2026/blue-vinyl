@@ -20,6 +20,16 @@ export const AlbumCategory = Object.freeze({
  * @property {Track[]} tracks
  */
 
+/**
+ * Wraps a catalog index round the ends, so stepping past the last album reaches the first.
+ *
+ * @param {number} index
+ * @param {number} count
+ */
+export function wrapIndex(index, count) {
+  return ((index % count) + count) % count;
+}
+
 /** @param {Album} album */
 export function albumDurationSec(album) {
   return album.tracks.reduce((sum, track) => sum + track.durationSec, 0);

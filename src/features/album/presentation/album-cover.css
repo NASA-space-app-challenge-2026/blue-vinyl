@@ -89,3 +89,9 @@
   font-size: 13px;
   color: var(--ink-muted);
 }
+
+/* Neighbouring sleeves in the album column, placed by createAlbumColumn just off screen. */
+.stage .album-cover-neighbour {
+  position: absolute;
+  margin: 0;
+}

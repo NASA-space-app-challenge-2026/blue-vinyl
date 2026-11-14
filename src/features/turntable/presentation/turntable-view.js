@@ -266,7 +266,13 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
   const armLayer = layer('turntable-arm-layer', armLayerSvg());
   const arm = armLayer.querySelector('.arm');
 
-  root.append(vinylLayer, label, armLayer);
+  // The record (vinyl and label) is one piece so it can be lifted off the platter; the arm stays.
+  const record = document.createElement('div');
+  record.className = 'turntable-record';
+  record.style.transformOrigin = `${(-BOUNDS.left / BOUNDS.width) * 100}% ${(-BOUNDS.top / BOUNDS.height) * 100}%`;
+  record.append(vinylLayer, label);
+
+  root.append(record, armLayer);
   vinylLayer.addEventListener('click', onToggle);
   parent.append(root);
 
@@ -398,6 +404,16 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
 
   placeArm();
 
+  /** Record centre and radius in client pixels, at rest on the platter. */
+  function recordGeometry() {
+    const rect = root.getBoundingClientRect();
+    return {
+      x: rect.left + (-BOUNDS.left / BOUNDS.width) * rect.width,
+      y: rect.top + (-BOUNDS.top / BOUNDS.height) * rect.height,
+      r: rect.width / BOUNDS.width,
+    };
+  }
+
   /** @param {number[]} trackStarts progress (0..1) where each track after the first begins, drawn as brighter grooves */
   function setTrackStarts(trackStarts) {
     trackGaps.innerHTML = trackStarts.map((p) => circle(grooveRadius(p), 'none', COLOR.trackGap)).join('');
@@ -419,5 +435,5 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     }
   }
 
-  return { labelSlot, setTrackStarts, render };
+  return { labelSlot, recordEl: record, recordGeometry, setTrackStarts, render };
 }

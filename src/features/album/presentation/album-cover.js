@@ -59,5 +59,5 @@ export function createAlbumCover(parent) {
     items.forEach((item, i) => item.classList.toggle('is-active', i === activeTrackIndex));
   }
 
-  return { setAlbum, render };
+  return { el: cover, setAlbum, render };
 }
