@@ -1,6 +1,6 @@
 # Hot Oceans Album (working title)
 
-Issue #21, branch `feat/#21`. Warm water feeds hurricanes: the message of EIC page [5097 2022 Hurricane Season](https://svs.gsfc.nasa.gov/5097/), heard through three Atlantic hurricanes. Analysis: [`notebooks/hot_oceans_album.ipynb`](../../notebooks/hot_oceans_album.ipynb). Sources: [`data/hot_oceans/sources.md`](../../data/hot_oceans/sources.md).
+Issue #21, branch `feat/#21`. Warm water feeds hurricanes: the message of EIC page [5097 2022 Hurricane Season](https://svs.gsfc.nasa.gov/5097/), heard through three Atlantic hurricanes (Emily 2005, Felix 2007, Sam 2021). Analysis: [`notebooks/hot_oceans_album.ipynb`](../../notebooks/hot_oceans_album.ipynb). Sources: [`data/hot_oceans/sources.md`](../../data/hot_oceans/sources.md).
 
 Status (2026-11-14): data analyzed and tracks chosen. Not yet implemented: track export, album entry, composer, visuals, covers. This file is the hand-off for that work.
 
@@ -29,22 +29,27 @@ The album must say "warm water lets storms grow", never "every warm sea makes a 
 ## Decisions (user, 2026-11-14)
 
 - **One storm per track.** The album joins the storm's wind (as in the earlier single-storm album) with the water under it. Storms moving as a flock (latitude as pitch, east–west travel as panning) go to a **separate album**.
-- **Tracks**: Dennis 2005, Emily 2005, Felix 2007 (three tracks). The three Atlantic storms of the earlier single-storm album that follow the water best (notebook sections 9 and 11.3).
+- **Tracks**: Emily 2005, Felix 2007, Sam 2021 (three tracks, notebook sections 9 and 11.3). First Dennis, Emily and Felix, the Atlantic storms of the earlier single-storm album that follow the water best; then Dennis was swapped for Sam so that one track weakens over cool water and the weakening colour is seen (user, 2026-11-14). Dennis followed the same path as Emily, in the same month.
 - **The melody of the earlier album is replaced by the ocean.** That melody drew the 24-hour wind change, which the tempo already plays. The ocean takes its place, so the number of layers stays the same.
 - **On screen, next to the storm, show the SST under it as a number**, and colour it by what it does to the storm: one colour when the water is warm enough to grow the storm, another when it is cool enough to weaken it. The line between them is the basin's neutral SST from the notebook: **26.9 °C** for the Atlantic.
 - **Implement it in this repository from scratch.** The earlier album lives in another project (`nell-v2`, see Reference below). Its design and mapping may be reused, its files may not be copied.
 
 ## Tracks
 
-| Track | Named | Peak | SST under it at sea | Landfalls (HURDAT2 `L` records) | Steps in step with the water |
-| --- | --- | --- | --- | --- | --- |
-| Dennis 2005 (`AL042005`) | 5.75 days | 130 kt | 28.5–29.6 °C | Grenada, Cuba twice, Florida Panhandle | 84 % |
-| Emily 2005 (`AL052005`) | 9.25 days | 140 kt | 28.1–29.5 °C | Grenada, Yucatán, Tamaulipas | 77 % |
-| Felix 2007 (`AL062007`) | 4.25 days | 150 kt | 28.3–29.3 °C | Grenada, Nicaragua | 82 % |
+| Track | Named | Peak | SST under it at sea | Landfalls (HURDAT2 `L` records) | Steps in step with the water | Weakens |
+| --- | --- | --- | --- | --- | --- | --- |
+| Emily 2005 (`AL052005`) | 9.25 days | 140 kt | 28.1–29.5 °C | Grenada, Yucatán, Tamaulipas | 77 % | On land; also over warm water in the Caribbean (140 → 115 kt, 17–18 July) |
+| Felix 2007 (`AL062007`) | 4.25 days | 150 kt | 28.3–29.3 °C | Grenada, Nicaragua | 82 % | On land; briefly over warm water (150 → 135 kt, 3 September) |
+| Sam 2021 (`AL182021`) | 12 days | 135 kt | 24.4–29.1 °C | none | 86 % | Over cool water, north of the 26.9 °C line |
 
 "In step": over warm water and strengthening, or over cool water and weakening (notebook section 9).
 
-**Known consequence**: all three stay over water warmer than 26.9 °C for as long as they are at sea, and weaken on land. So the SST number will always show the growing colour at sea, and the ocean line stays on the growing side. What the water adds is where it breaks off at landfall and returns when the storm reaches the sea again (Dennis over the Gulf after Cuba, Emily over the Gulf after Yucatán). The weakening colour would only appear with a storm that dies over cool water (candidates in notebook section 9: Dora 2007, Kevin 2023, Vongfong 2014). Raise this with the user before building, in case the weakening colour must be seen.
+What each track shows:
+
+- **Emily and Felix** stay over water warmer than 26.9 °C for as long as they are at sea, so their SST number keeps the growing colour and the ocean line stays on the growing side. The water breaks off at landfall and returns when Emily reaches the Gulf after Yucatán. Both also weaken over warm water (eyewall replacement, upper winds and nearby land, not in this data): warm water lets a storm grow but does not make it grow. Keep those moments as they are: a full ocean line under a slowing tempo.
+- **Sam** grows over warm water and weakens as it moves north over cooler water. Its SST number turns to the weakening colour and the ocean line sags: the ending 5097 points to. Sam makes no landfall, so it has no big drum.
+
+The SST in the analysis is a monthly mean, which hides the cooling a storm leaves in its own wake. Daily SST may show the water under a slow storm 1–2 °C cooler; Emily and Felix move fast, so it is unlikely to cross the line for them.
 
 ## Data to Sound (planned)
 
@@ -56,7 +61,7 @@ The album must say "warm water lets storms grow", never "every warm sea makes a 
 
 - The water and the wind change at the same moment: no delay between the ocean line and the tempo (notebook 5.2).
 - The ocean is heard as weight and pressure, never brightness: warm water fuels a disaster, and bad news must not sound cheerful ([album-guide.md](../album-guide.md)).
-- Each track needs a different main instrument (album guide). The earlier album gave each storm its own percussion family: Dennis drum set, Emily Latin, Felix marching drumline.
+- Each track needs a different main instrument (album guide). The earlier album gave each storm its own percussion family: Emily Latin, Felix marching drumline (Dennis, dropped, had the drum set). Sam needs one of its own.
 - Each track lasts 40–60 seconds.
 
 ## Next Steps
