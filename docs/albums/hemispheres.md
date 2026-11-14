@@ -18,7 +18,7 @@ EIC page: [SVS 5097 2022 Hurricane Season](https://svs.gsfc.nasa.gov/5097/), whi
 
 | # | Track | Basin and time played | Storms (tracks) | Lead | Length | SVS |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Atlantic 2023 | North Atlantic, Jun 1 12:00 – Oct 28 18:00, 2023 | 20 (21) | Whistle | 0:50 | 5097 |
+| 1 | North Atlantic 2023 | North Atlantic, Jun 1 12:00 – Oct 28 18:00, 2023 | 20 (21) | Whistle | 0:50 | 5097 |
 | 2 | South Indian 2023 | South Indian, Jan 1 – Apr 15, 2023 | 7 (11) | Bowed string | 0:45 | 5097, [14312](https://svs.gsfc.nasa.gov/14312/) |
 
 Data files: `data/hemispheres/tracks/` (see `tracks.json` for every source and credit). They come from IBTrACS v04r01's US agency columns (NHC and JTWC best tracks), every 6 hours, while a storm is in a tropical or subtropical stage; a storm that weakened and came back is two tracks. IBTrACS stands in for the ATCF best track 5097 cites (decided 2026-11-14). The Atlantic keeps every system.
@@ -44,7 +44,7 @@ The leads:
 
 | Track | Lead | Sound |
 | --- | --- | --- |
-| Atlantic 2023 | Whistle | one sine, quick vibrato (5.5 Hz, ±18 cents) |
+| North Atlantic 2023 | Whistle | one sine, quick vibrato (5.5 Hz, ±18 cents) |
 | South Indian 2023 | Bowed string | a sawtooth over a triangle an octave down, slow narrow vibrato (4.5 Hz, ±12 cents), filter Q 2 |
 
 Every storm on the globe sings, one voice each.

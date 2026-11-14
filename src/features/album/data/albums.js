@@ -159,7 +159,7 @@ export const albums = [
     // and one southern (see docs/albums/hemispheres.md). Each cover is one of the season's strongest storms.
     tracks: [
       {
-        title: 'Atlantic 2023',
+        title: 'North Atlantic 2023',
         durationSec: seasonDurationSec(SEASON_SPANS.atlantic),
         color: '#7fc4e8',
         coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
