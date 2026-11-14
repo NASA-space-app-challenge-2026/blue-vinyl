@@ -92,7 +92,7 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 
 Playback states (`PlaybackState`): `stopped` → `cueing` (arm eases on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position. Grabbing the arm enters `scrubbing` from any state.
 
-Volume is held by the control only; nothing plays sound yet. Language, view options and notes will be added in later issues. Albums other than the first are placeholders.
+Volume sets the level of the music (see the album docs in [albums/](albums/) for what plays). Language, view options and notes will be added in later issues. Albums other than the first are placeholders.
 
 ## Changing Albums
 
