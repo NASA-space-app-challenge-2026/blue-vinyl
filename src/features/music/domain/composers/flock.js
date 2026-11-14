@@ -8,8 +8,6 @@
 // The album's tracks are laid over one year; the music plays a week of it a second.
 
 import { CC, Instrument } from '../instruments.js';
-import { dailyFlock, sampleFlock } from '../../../tracks/domain/bird-track.js';
-import { bearing, distanceKm } from '../../../tracks/domain/geo.js';
 
 const BPM = 96;
 const STEPS_PER_BEAT = 4;
@@ -69,6 +67,21 @@ function degreeToMidi(degree) {
   return MELODY_LOW_NOTE + 12 * octave + SCALE[degree % SCALE.length];
 }
 
+/**
+ * @typedef {Object} Music what a composer plays through (see data/sound-engine.js)
+ * @property {(instrument: Object, midi: number, velocity: number, at: number, steps: number) => void} note
+ * @property {(instrument: Object, midi: number, velocity: number, at: number) => void} hold  a note held until released
+ * @property {(instrument: Object, midi: number, at: number) => void} release
+ * @property {(instrument: Object, semitones: number, at: number) => void} bend  the instrument's pitch wheel
+ * @property {(instrument: Object, cc: number, value: number, at: number) => void} control
+ * @property {(instrument: Object, sound: { program: number, volume: number }, at: number) => void} program  another
+ *   sound of the same kind (melodic or drums) on the instrument's channel
+ * @property {(patch: Object, midi: number, velocity: number, at: number, steps: number, shape: Object) => void} synthNote
+ *   a note on the analog synth (see data/analog-synth.js)
+ * @property {(velocity: number, at: number, steps: number, fromHz: number, toHz: number) => void} noise a noise hit
+ * @property {(effect: Object, value: number, at: number) => void} effect turns an Effect on the whole mix (see effects.js)
+ */
+
 export class FlockComposer {
   // Every lead a track of the album takes, then the accompaniment.
   instruments = Object.freeze([
@@ -87,18 +100,13 @@ export class FlockComposer {
   stepsPerBar = STEPS_PER_BAR;
 
   /**
-   * Fits the melody's range and the speed tiers to a song's flock, sampled once a day, and finds where it starts and
-   * how far (km) from there it ever gets.
+   * Fits the melody's range and the speed tiers to a track's flock, sampled once a day (its `path`).
    *
-   * @param {{ tracks: import('../../../tracks/domain/bird-track.js').BirdTrack[], lead: Object }} song the birds, and
-   *   the Instrument that plays the melody
+   * @param {{ path: import('../../../tracks/domain/bird-track.js').Flock[], lead: Object }} song `lead`: the
+   *   Instrument that plays the melody
    */
-  setSong({ tracks, lead }) {
-    this.tracks = tracks;
+  setSong({ path: samples, lead }) {
     this.lead = lead;
-    const samples = dailyFlock(tracks);
-    const origin = samples[0];
-    this.space = { origin, maxDistance: Math.max(...samples.map((s) => distanceKm(origin.lat, origin.lon, s.lat, s.lon))) };
     const lats = samples.map((s) => s.lat);
     this.lat = { min: Math.min(...lats), max: Math.max(...lats) };
     const speeds = samples.map((s) => s.speed).sort((a, b) => a - b);
@@ -113,28 +121,10 @@ export class FlockComposer {
   }
 
   /**
-   * Where the mix sits at `time`: the flock's bearing from where the song's flock starts (north ahead, east to the
-   * right), further away the further it has gone; null while no bird flies.
-   *
-   * @param {number} time
+   * @param {Music} music
+   * @param {{ sample: import('../../../tracks/domain/bird-track.js').Flock, step: number, bar: number, at: number }} now
    */
-  spaceAt(time) {
-    const flock = sampleFlock(this.tracks, time);
-    if (!flock) return null;
-    const { origin, maxDistance } = this.space;
-    const gone = maxDistance > 0 ? distanceKm(origin.lat, origin.lon, flock.lat, flock.lon) / maxDistance : 0;
-    return { angle: bearing(origin.lat, origin.lon, flock.lat, flock.lon), gone };
-  }
-
-  /**
-   * Plays one step of the flock at `time`; nothing while no bird flies.
-   *
-   * @param {import('../composer.js').Music} music
-   * @param {{ time: number, step: number, bar: number, at: number }} now
-   */
-  playStep(music, { time, step, bar, at }) {
-    const flock = sampleFlock(this.tracks, time);
-    if (!flock) return;
+  playStep(music, { sample: flock, step, bar, at }) {
     const tier = SpeedTier[this.tierSpeeds.filter((speed) => flock.speed >= speed).length];
     if (step % tier.melodyEvery === 0) {
       const note = this.playMelody(music, flock, tier, at);

@@ -19,7 +19,6 @@ import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
 import { DEFAULT_GLOBE_THEME, GlobeTheme } from '../features/globe/domain/globe-theme.js';
 import { createDateLabel } from '../features/globe/presentation/date-label.js';
-import { createGlobeAttribution } from '../features/globe/presentation/globe-attribution.js';
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
 import { createHalo } from '../features/globe/presentation/halo.js';
 import { createSeaLevelOverlay } from '../features/globe/presentation/sea-level-overlay.js';
@@ -27,12 +26,15 @@ import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
+import { HurricaneComposer } from '../features/music/domain/composers/hurricane.js';
 import { LightningComposer } from '../features/music/domain/composers/lightning.js';
 import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
 import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
 import { loadLightningTrack } from '../features/tracks/data/lightning-season-source.js';
+import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack } from '../features/tracks/data/track-repository.js';
-import { sampleFlock } from '../features/tracks/domain/bird-track.js';
+import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
+import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
@@ -46,13 +48,13 @@ let totalMs;
 let trackData = [];
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
-// What each track of the album plays, by track index, once its birds have loaded: a Song of the flock composer with
-// its { tracks, lead }, or null for a track without birds. Empty until then.
+// The attribution of the globe's map and imagery, shown with the album's credits.
+let mapCredit = '';
+// What each track of the album plays, by track index, once its data has loaded (see the Song of sound-engine.js): its
+// birds (`tracks`, `lead`), its storm (`storm`) or its year of lightning (`lightning`), or null for a track with none
+// of them. Empty until then.
 let songs = [];
-// The same for lightning tracks, once their seasons have loaded: a Song of the lightning composer with its { season,
-// view, north, south }.
-let lightningSongs = [];
-// The song whose birds the globe shows, and where its flock is now (the globe keeps it in the middle).
+// The song whose birds, storm or lightning the globe shows, and where they are now (the globe keeps them in the middle).
 let shownSong = null;
 let focus = null;
 // The pole the globe looks down on for an ice track, to glide there when it changes; null for other tracks.
@@ -68,7 +70,6 @@ let pendingSteps = 0;
 
 const slot = (id) => document.getElementById(id);
 
-const albumCredit = createAlbumCredit(slot('corner-bottom-right'));
 const backdrop = createBackdrop(document.documentElement);
 const playHint = createPlayHint(slot('bottom-center'));
 
@@ -96,17 +97,20 @@ const turntable = createTurntableView(slot('stage'), {
   onSeek: seekTrack,
   onSelectGroove: (progress) => playFromTrack(trackIndexAt(album, progress)),
 });
+// The album's credits run round the record's rim.
+const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
+
 const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
 const globe = createGlobeView(turntable.labelSlot);
 const seaOverlay = createSeaLevelOverlay(turntable.labelSlot);
 const music = createMusicPlayer();
-const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
 globe.setFocus(() => focus);
 const dateLabel = createDateLabel(turntable.labelSlot);
 const halo = createHalo(turntable.haloCanvas, () => soundEngine.analyser);
 new ResizeObserver(() => halo.place(turntable.labelDisc())).observe(turntable.haloCanvas);
 const soundEngine = createSoundEngine();
 const flockComposer = new FlockComposer();
+const hurricaneComposer = new HurricaneComposer();
 const lightningComposer = new LightningComposer();
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
@@ -180,7 +184,8 @@ document.addEventListener(
 
 function applyGlobeTheme(theme) {
   globe.setTheme(theme, GLOBE_THEMES[theme]);
-  globeAttribution.render(GLOBE_THEMES[theme].attribution);
+  mapCredit = GLOBE_THEMES[theme].attribution;
+  if (album) render();
 }
 
 function showAlbum(index) {
@@ -191,10 +196,8 @@ function showAlbum(index) {
   globe.setLens(album.globeLens ?? DEFAULT_GLOBE_LENS);
   turntable.setTrackStarts(trackBoundaries(album).slice(1, -1));
   songs = [];
-  lightningSongs = [];
   showSong(null, null);
   loadSongs(album);
-  loadLightningSongs(album);
   trackData = album.tracks.map(() => null);
   musicCredits = [];
   music.load([]);
@@ -231,43 +234,87 @@ async function loadAlbumData(loading) {
   globe.glide();
 }
 
-// Loads the birds of `target`'s tracks, unless another album is shown by then.
+// Loads the birds, the storm or the lightning of each of `target`'s tracks, unless another album is shown by then.
 async function loadSongs(target) {
-  if (!target.tracks.some((track) => track.birdsUrl)) return;
-  const perTrack = await Promise.all(target.tracks.map((track) => (track.birdsUrl ? loadBirdTracks(track.birdsUrl) : null)));
-  if (album !== target) return;
-  songs = perTrack.map(
-    (tracks, i) => tracks && { composer: flockComposer, msPerSec: target.msPerSec, originMs: 0, tracks, lead: target.tracks[i].lead },
-  );
-  render();
-  globe.glide();
-}
-
-// Loads the seasons of `target`'s lightning tracks, unless another album is shown by then.
-async function loadLightningSongs(target) {
-  if (!target.tracks.some((track) => track.lightning)) return;
+  if (!target.tracks.some((track) => track.birdsUrl || track.storm || track.lightning)) return;
   let perTrack;
   try {
-    perTrack = await Promise.all(target.tracks.map((track) => (track.lightning ? loadLightningTrack(track.lightning) : null)));
+    perTrack = await Promise.all(target.tracks.map((track) => loadSong(track, target)));
   } catch (error) {
-    console.warn('Lightning data unavailable:', error);
+    console.warn('Album data unavailable:', error);
     return;
   }
   if (album !== target) return;
-  lightningSongs = perTrack.map((data, i) => {
-    if (!data) return null;
-    const { north, south } = target.tracks[i].lightning;
-    return { composer: lightningComposer, msPerSec: target.msPerSec, originMs: data.season.t[0], ...data, north, south };
-  });
+  songs = withFastestWind(perTrack);
   render();
   globe.glide();
 }
 
-// Puts `song`'s birds on the globe in `color`, and the glow in it; null takes them off.
+// Gives each storm song the album's strongest wind, which its tempo is in proportion to (tempoOf).
+function withFastestWind(perTrack) {
+  const winds = perTrack.filter((song) => song?.storm).flatMap((song) => song.track.windKt);
+  if (!winds.length) return perTrack;
+  const fastestKt = Math.max(...winds);
+  return perTrack.map((song) => (song?.storm ? { ...song, fastestKt } : song));
+}
+
+/**
+ * @param {import('../features/album/domain/album.js').Track} track
+ * @param {import('../features/album/domain/album.js').Album} target the album it is on
+ * @returns {Promise<import('../features/music/data/sound-engine.js').Song | null>}
+ */
+async function loadSong(track, target) {
+  if (track.birdsUrl) {
+    const tracks = await loadBirdTracks(track.birdsUrl);
+    return {
+      tracks,
+      lead: track.lead,
+      composer: flockComposer,
+      startMs: 0,
+      msPerSec: target.msPerSec,
+      sampleAt: (time) => sampleFlock(tracks, time),
+      path: dailyFlock(tracks),
+    };
+  }
+  if (track.storm) {
+    const stormTrack = await loadStormTrack(track.storm);
+    return {
+      storm: true,
+      track: stormTrack,
+      kit: track.storm.kit,
+      composer: hurricaneComposer,
+      startMs: stormTrack.t[0],
+      msPerSec: stormMsPerSec(stormTrack, track.durationSec),
+      sampleAt: (time) => sampleStorm(stormTrack, time),
+      path: stormTrack.t.map((_, i) => ({ lat: stormTrack.lat[i], lon: stormTrack.lon[i] })),
+    };
+  }
+  if (track.lightning) {
+    const { season, view } = await loadLightningTrack(track.lightning);
+    return {
+      lightning: true,
+      season,
+      view,
+      north: track.lightning.north,
+      south: track.lightning.south,
+      composer: lightningComposer,
+      startMs: season.t[0],
+      msPerSec: target.msPerSec,
+      // The whole year plays; the composer reads the season at each step's time.
+      sampleAt: () => season,
+    };
+  }
+  return null;
+}
+
+// Puts `song`'s birds on the globe in `color`, and the glow in it; null takes them off. A storm's song clears the
+// birds and draws its storm instead (renderStorm).
 function showSong(song, color) {
   shownSong = song;
   focus = null;
   globe.birds.reset(color);
+  globe.storm.show(null);
+  halo.setSwirl(song?.storm ? () => globe.storm.swirl : null);
   dateLabel.show(null);
   if (color) halo.setColor(color);
 }
@@ -362,10 +409,9 @@ function render() {
   const trackIndex = trackIndexAt(album, progress);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex);
-  albumCredit.render(album, trackIndex, musicCredits);
+  albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
   backdrop.show(trackCover(album, trackIndex).url);
   renderSong(trackIndex);
-  renderLightning(trackIndex);
   renderData(trackIndex);
 }
 
@@ -424,7 +470,19 @@ function renderData(trackIndex) {
 // Draws the birds, the date and the flock's place at the clock and, while playing, lets the music follow it.
 function renderSong(trackIndex) {
   const song = songs[trackIndex];
-  if (!song) return;
+  if (!song?.lightning) globe.lightning.render(null, 0, 1);
+  if (!song) {
+    if (shownSong) showSong(null, null);
+    return;
+  }
+  if (song.storm) {
+    renderStorm(trackIndex, song);
+    return;
+  }
+  if (song.lightning) {
+    renderLightning(trackIndex, song);
+    return;
+  }
   if (shownSong !== song) {
     showSong(song, album.tracks[trackIndex].color);
     globe.glide();
@@ -440,22 +498,41 @@ function renderSong(trackIndex) {
 }
 
 /**
+ * Draws the storm at the clock, its wind and the date; the globe keeps it in the middle and the glow takes its colour.
+ * While playing, the music follows it.
+ */
+function renderStorm(trackIndex, song) {
+  const { durationSec } = album.tracks[trackIndex];
+  if (shownSong !== song) {
+    showSong(song, null);
+    globe.glide();
+  }
+  const sec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  const time = stormTimeAt(song.track, sec, durationSec);
+  const sample = sampleStorm(song.track, time);
+  const fade = stormFadeAt(sec, durationSec);
+  globe.storm.show({ sample, fade });
+  const color = globe.storm.color;
+  if (color) halo.setColor(color);
+  dateLabel.show(time);
+  focus = { lat: sample.lat, lon: sample.lon };
+  if (state !== PlaybackState.PLAYING) return;
+  soundEngine.follow(song, sec);
+  halo.wake();
+}
+
+/**
  * Draws the year of lightning that plays at the clock on the globe, which looks at the equator from the track's side
  * of the Earth, with the date; while playing, lets the music follow it.
  */
-function renderLightning(trackIndex) {
-  const song = lightningSongs[trackIndex];
-  if (!song) {
-    globe.lightning.render(null, 0, 1);
-    return;
-  }
+function renderLightning(trackIndex, song) {
   if (shownSong !== song) {
     showSong(song, album.tracks[trackIndex].color);
     globe.glide();
   }
   focus = { lat: song.view.lat, lon: song.view.lon };
   const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
-  const time = song.originMs + elapsedSec * song.msPerSec;
+  const time = song.startMs + elapsedSec * song.msPerSec;
   globe.lightning.render(song.season, time, song.msPerSec);
   dateLabel.show(time);
   if (state !== PlaybackState.PLAYING) return;

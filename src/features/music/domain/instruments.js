@@ -5,12 +5,14 @@ export const SOUND_FONT = 'orchestra.sf2';
 
 export const CC = Object.freeze({
   VOLUME: 7,
+  PAN: 10,
   EXPRESSION: 11,
   REVERB: 91,
   RESET_ALL: 121,
 });
 
 // `volume` (CC 7, which scales the level by (volume/127)²) evens out how loud the programs play against each other.
+// `drums`: a drum kit, played on a drum channel, one sound per key.
 export const Instrument = Object.freeze({
   FLUTE: { program: 73, volume: 110 },
   OBOE: { program: 68, volume: 100 },
@@ -21,6 +23,11 @@ export const Instrument = Object.freeze({
   CELLO: { program: 42, volume: 90 },
   VIOLA: { program: 41, volume: 75 },
   VIOLIN: { program: 40, volume: 75 },
+  DOUBLE_BASS: { program: 43, volume: 80 },
+  VOICE_OOHS: { program: 53, volume: 76 },
+  STANDARD_KIT: { program: 0, volume: 100, drums: true },
+  POWER_KIT: { program: 16, volume: 100, drums: true },
+  ORCHESTRAL_KIT: { program: 48, volume: 100, drums: true },
   // The lightning album (see composers/lightning.js): its pad, and what each hemisphere's flashes are struck on, the
   // south's on drums. Volumes from nell-v2, the melodic tom's set so the south sits against the north as on the taiko
   // track (rendered offline, mean RMS over each part's range).

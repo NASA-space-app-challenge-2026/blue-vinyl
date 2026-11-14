@@ -16,6 +16,7 @@ All data lives in `data/` at the repository root, with one folder per album. The
 ```
 data/
   <album>/
+    sources.md     # committed: every source the album uses (see Sources File)
     raw/           # git-ignored: downloads and intermediate files, local only
       api/         #   SVS API responses (<id>.json)
       media/       #   EIC images and videos
@@ -66,6 +67,23 @@ Rules:
 - **Repeat the links locally**: put the EIC page and source links again right under each message section's title, so a reader never has to scroll back.
 - **Never put credentials in a link**, and mark links that need a login.
 
+## Sources File
+
+Every album keeps `data/<album>/sources.md`: one page listing every source the album uses, so anyone can see where each piece of data came from without opening the notebook.
+
+It lists:
+
+- **EIC visualizations**: SVS ID, title, URL, the path from the EIC gallery, and the datasets each page cites.
+- **Datasets used**: name, provider, URL or DOI, version, download date, license, whether EIC cites it, and what it is used for (analysis only, or which tracks).
+- **Downloaded files**: the exact URL of every file the notebook downloads.
+- **Substitutes and non-EIC sources**: a source EIC does not cite may be used, but say so in the "EIC cites it?" column and give the reason.
+
+Rules:
+
+- Create it with the album's first download, and update it whenever a source, version or download changes.
+- Record only what was actually downloaded or used. Write "not recorded" rather than guess a date or version.
+- Cover image credits stay in `albums.js`; link to it instead of copying them.
+
 ## Music Data (`tracks/`)
 
 When a series is chosen to become a track, export it from the notebook into `data/<album>/tracks/` and commit it.
@@ -79,7 +97,7 @@ What belongs here:
 
 Each track file:
 
-- is CSV with a header row; the first column is the time axis (ISO dates, `YYYY-MM-DD`)
+- is CSV with a header row; the first column is the time axis (ISO dates, `YYYY-MM-DD`, or ISO times in UTC, `YYYY-MM-DDTHH:MMZ`, for a series finer than a day)
 - keeps the original units of the source data; the unit is part of the column name (`extent_million_km2`)
 - stays small: 3 MB at most. Downsample or crop to what the music needs instead of committing the full dataset.
 
@@ -145,4 +163,5 @@ Rules:
 
 1. Create the notebook `notebooks/<album>_album.ipynb` (see [notebook-guide.md](notebook-guide.md)).
 2. Download into `data/<album>/raw/`. The folder is created by the notebook and ignored by git automatically.
-3. When tracks are decided, export them into `data/<album>/tracks/` with a `tracks.json`, and commit.
+3. Record every source in `data/<album>/sources.md` (see [Sources File](#sources-file)), and commit it.
+4. When tracks are decided, export them into `data/<album>/tracks/` with a `tracks.json`, and commit.

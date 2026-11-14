@@ -113,13 +113,6 @@
   opacity: 0.8;
 }
 
-.album-credit {
-  margin: 0;
-  text-align: right;
-  font-size: 13px;
-  color: var(--ink-muted);
-}
-
 /* Neighbouring sleeves in the album column, placed by createAlbumColumn just off screen. */
 .stage .album-cover-neighbour {
   position: absolute;

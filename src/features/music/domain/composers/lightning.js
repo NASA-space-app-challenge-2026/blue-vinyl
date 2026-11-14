@@ -141,7 +141,7 @@ export class LightningComposer {
   }
 
   /**
-   * @param {import('../composer.js').Music} music
+   * @param {import('./flock.js').Music} music
    * @param {{ time: number, at: number, stepMs: number }} now
    */
   playStep(music, { time, at, stepMs }) {

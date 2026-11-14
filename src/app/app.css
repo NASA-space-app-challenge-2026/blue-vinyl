@@ -61,15 +61,6 @@ body {
   gap: 8px;
 }
 
-#corner-bottom-right {
-  bottom: var(--gutter);
-  right: var(--gutter);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-
 #bottom-center {
   bottom: var(--gutter);
   left: 50%;

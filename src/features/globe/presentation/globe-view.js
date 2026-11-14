@@ -4,6 +4,7 @@ import { createIceMorph } from './ice-morph.js';
 import { DEFAULT_GLOBE_LENS } from '../domain/globe-lens.js';
 import { createBirdsLayer } from './birds-layer.js';
 import { createLightningLayer } from './lightning-layer.js';
+import { createStormLayer } from './storm-view.js';
 
 // globe.gl is loaded as a UMD bundle in index.html: it ships one copy of three.js,
 // while the ESM build pulls several three.js versions from the CDN.
@@ -38,7 +39,8 @@ function fittedAltitude(camera) {
  * It turns to keep a focus point (the flock, or the pole of a track's ice) at its centre; turned or zoomed by hand, it glides back a moment after release.
  *
  * It can draw a track's sea ice, morphing from year to year. When a year loses ice, pieces of it fall from where it
- * was into the water at the bottom of the label. It can draw a year of lightning with the sunlight of the season.
+ * was into the water at the bottom of the label. It can draw a hurricane (storm), and a year of lightning with the
+ * sunlight of the season.
  *
  * @param {HTMLElement} container
  */
@@ -254,6 +256,7 @@ export function createGlobeView(container) {
     setElements: (elements) => globe.htmlElementsData(elements),
   });
   globe.htmlElement('el').htmlTransitionDuration(0);
+  const storm = createStormLayer({ globe, container });
 
   const lightning = createLightningLayer(globe);
 
@@ -264,6 +267,7 @@ export function createGlobeView(container) {
     setWaterLine,
     birds,
     lightning,
+    storm,
     /** @param {() => ({ lat: number, lon: number } | null)} next */
     setFocus(next) {
       getFocus = next;
