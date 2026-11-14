@@ -18,6 +18,8 @@ const TIME_CONSTANTS = 3;
 const TAIL_CONSTANTS = 8;
 // The noise hit's high-pass resonance.
 const NOISE_Q = 2;
+// How fast silence() fades out what is sounding (s).
+const SILENCE_SEC = 0.03;
 
 const hzOf = (midi) => 440 * 2 ** ((midi - 69) / 12);
 const clampHz = (hz) => Math.min(HZ.max, Math.max(HZ.min, hz));
@@ -54,6 +56,15 @@ export function createAnalogSynth(context, destination) {
   const noiseBuffer = new AudioBuffer({ length: Math.round(NOISE_SEC * context.sampleRate), sampleRate: context.sampleRate });
   const samples = noiseBuffer.getChannelData(0);
   for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
+  // The notes and hits sounding or still to sound, until they end: each one's level and its sources. Held voices are
+  // closed by whoever opened them.
+  const sounding = new Set();
+
+  function track(amp, sources) {
+    const entry = { amp, sources };
+    sounding.add(entry);
+    sources[0].addEventListener('ended', () => sounding.delete(entry));
+  }
 
   /**
    * Plays `midi` on `patch` at `velocity` (0-127) from `at` for `durationSec`.
@@ -80,12 +91,14 @@ export function createAnalogSynth(context, destination) {
 
     const end = off + (shape.release / TIME_CONSTANTS) * TAIL_CONSTANTS;
     const total = patch.waves.reduce((sum, wave) => sum + wave.gain, 0);
-    for (const wave of patch.waves) {
+    const oscillators = patch.waves.map((wave) => {
       const osc = new OscillatorNode(context, { type: wave.type, frequency: hz * 2 ** wave.octave, detune: wave.detune });
       osc.connect(new GainNode(context, { gain: wave.gain / total })).connect(filter);
       osc.start(at);
       osc.stop(end);
-    }
+      return osc;
+    });
+    track(amp, oscillators);
   }
 
   /** A burst of noise at `velocity` (0-127) from `at` fading over `durationSec`, through a high-pass sweeping from `fromHz` to `toHz`. */
@@ -101,6 +114,7 @@ export function createAnalogSynth(context, destination) {
     source.connect(filter).connect(amp).connect(destination);
     source.start(at, Math.random() * NOISE_SEC);
     source.stop(at + durationSec);
+    track(amp, [source]);
   }
 
   /**
@@ -113,7 +127,19 @@ export function createAnalogSynth(context, destination) {
     return createGlideVoice(context, destination, lead, sound, at);
   }
 
-  return { play, noise, voice };
+  /** Fades out every note and hit sounding now, and drops those still to come. */
+  function silence() {
+    const now = context.currentTime;
+    for (const { amp, sources } of sounding) {
+      amp.gain.cancelScheduledValues(now);
+      amp.gain.setTargetAtTime(0, now, SILENCE_SEC / TIME_CONSTANTS);
+      // A source not yet started never starts.
+      for (const source of sources) source.stop(now + SILENCE_SEC);
+    }
+    sounding.clear();
+  }
+
+  return { play, noise, voice, silence };
 }
 
 // A voice held open while its pitch, level, brightness and place glide: oscillators, each at its own level, through a

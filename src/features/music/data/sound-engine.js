@@ -9,8 +9,9 @@
 // Space: the whole mix sits where the sample is, as seen from where the song starts (north ahead, east to the
 // right), further away the further it has gone; a song without a path stays straight ahead.
 //
-// Mix: synths -> effects (see master-fx.js) -> analyser -> panner -> volume. Besides the sound font, a composer may
-// play the analog synth (see analog-synth.js), notes, noise hits and held voices; all start over with the music.
+// Mix: synths -> effects (see master-fx.js) -> gate -> analyser -> panner -> volume. Besides the sound font, a composer
+// may play the analog synth (see analog-synth.js), notes, noise hits and held voices; all start over with the music.
+// The gate closes when the music stops and opens when it starts again.
 
 import { CC, SOUND_FONT } from '../domain/instruments.js';
 import { bearing, distanceKm } from '../../tracks/domain/geo.js';
@@ -25,6 +26,10 @@ const SOUND_FONT_URL = new URL(`./soundfonts/${SOUND_FONT}`, import.meta.url);
 const LOOKAHEAD_SEC = 0.15;
 // A gap this large between the app's clock and the audio clock means the app jumped: start over.
 const RESYNC_SEC = 0.15;
+// stop() fades the whole mix out with this time constant, cutting off the notes' release and the effects' tails.
+const STOP_FADE_SEC = 0.02;
+// MIDI CC that silences a channel at once (All Sound Off).
+const ALL_SOUND_OFF = 120;
 // Notes stop this much before their full length, so repeated notes re-strike cleanly.
 const NOTE_GAP_SEC = 0.02;
 // Volume changes ease in with this time constant, so dragging the slider does not click.
@@ -63,6 +68,9 @@ export function createSoundEngine() {
   let output = null;
   let panner = null;
   let analyser = null;
+  let gate = null;
+  // Audio time by which every note scheduled before the last stop() has been silenced; the music starts no earlier.
+  let quietAt = 0;
   let fx = null;
   let analog = null;
   let synth = null;
@@ -96,8 +104,10 @@ export function createSoundEngine() {
       panner.connect(output);
       analyser = new AnalyserNode(context, ANALYSER);
       analyser.connect(panner);
+      gate = new GainNode(context);
+      gate.connect(analyser);
       fx = createMasterFx(context);
-      fx.output.connect(analyser);
+      fx.output.connect(gate);
       analog = createAnalogSynth(context, fx.input);
     }
     loading ??= load();
@@ -181,8 +191,12 @@ export function createSoundEngine() {
     if (expected === null || Math.abs(expected - elapsedSec) > RESYNC_SEC) {
       silence();
       fx.reset(now);
-      anchor = { audioSec: now, elapsedSec };
-      nextStepAt = now;
+      // After a stop, start once the notes it left queued are silenced, from where the app's clock will be then.
+      const start = Math.max(now, quietAt);
+      gate.gain.cancelScheduledValues(start);
+      gate.gain.setTargetAtTime(1, start, STOP_FADE_SEC);
+      anchor = { audioSec: start, elapsedSec: elapsedSec + (start - now) };
+      nextStepAt = start;
       step = 0;
       bar = 0;
       composer.reset();
@@ -272,17 +286,32 @@ export function createSoundEngine() {
     return channel;
   }
 
-  // Stops every note and fades out every analog voice still open.
+  // Stops every note and fades out every analog note, hit and voice still sounding.
   function silence() {
     synth?.stopAll();
+    analog?.silence();
     for (const voice of voices) voice.close(context.currentTime, VOICE_STOP_SEC);
     voices.clear();
   }
 
-  /** Silences everything; the next follow() starts over. */
+  /**
+   * Silences everything at once; the next follow() starts over.
+   *
+   * The sound font synth plays notes already queued up to LOOKAHEAD_SEC ahead even after stopAll(), and a held note
+   * among them would ring on, so the gate closes over them, and an All Sound Off queued behind them clears them once
+   * they have started.
+   */
   function stop() {
     anchor = null;
     silence();
+    if (!synth) return;
+    const now = context.currentTime;
+    gate.gain.cancelScheduledValues(now);
+    gate.gain.setTargetAtTime(0, now, STOP_FADE_SEC);
+    quietAt = now + LOOKAHEAD_SEC + STOP_FADE_SEC;
+    synth.stopAll(true);
+    for (const channel of MIDI_CHANNELS) synth.controllerChange(channel, ALL_SOUND_OFF, 0, { time: quietAt });
+    fx.reset(now);
   }
 
   return {
