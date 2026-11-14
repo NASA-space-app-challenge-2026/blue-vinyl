@@ -1,11 +1,12 @@
+import { createIceMorph } from './ice-morph.js';
+
 // globe.gl is loaded as a UMD bundle in index.html: it ships one copy of three.js,
 // while the ESM build pulls several three.js versions from the CDN.
 const { Globe } = globalThis;
 
 // Closest zoom, as camera altitude in globe radii above the surface.
 const MIN_ZOOM_ALTITUDE = 0.15;
-// Data drawn on the globe: sea ice as a pale cap a little above the surface, lines just above it.
-const ICE = Object.freeze({ rgb: '232, 244, 255', opacity: 0.85, altitude: 0.004, fadeMs: 300 });
+// Lines drawn on the globe sit just above the ice (see ice-morph.js).
 const LINE_ALTITUDE = 0.006;
 const NORMAL_LINE = Object.freeze({ color: '#e3b23c', stroke: 0.9 });
 // The record low usually lies inside the current ice, so its edge needs a colour that shows on the pale ice and on
@@ -61,8 +62,8 @@ function outline(geometry) {
  * Interactive WebGL globe that fills its container. Drag to rotate, scroll to zoom in.
  * Zooming out stops at the fitted size, so the globe never shrinks away from the label edge.
  *
- * It can draw a track's sea ice: the ice of the current year (cross-faded when the year changes), the 1981–2010
- * normal ice edge and the edge of the latest record low.
+ * It can draw a track's sea ice: the ice morphing from year to year, the 1981–2010 normal ice edge and the edge of
+ * the latest record low.
  *
  * @param {HTMLElement} container
  */
@@ -88,25 +89,12 @@ export function createGlobeView(container) {
   new ResizeObserver(resize).observe(container);
   resize();
 
-  // Ice layers being shown: { key, geometry, from (ms), fadingOut }.
-  let layers = [];
-  let fadeFrame = null;
-  let iceKey = null;
+  // Made on first use: it borrows three.js classes from the globe's objects, which exist once the globe has drawn.
+  let ice = null;
   let linesKey = null;
   let focusLat = null;
 
-  const opacity = (layer, now) => {
-    const t = Math.min(1, (now - layer.from) / ICE.fadeMs);
-    return ICE.opacity * (layer.fadingOut ? 1 - t : t);
-  };
-
   globe
-    .polygonsData([])
-    .polygonGeoJsonGeometry((layer) => layer.geometry)
-    .polygonSideColor(() => 'rgba(0, 0, 0, 0)')
-    .polygonStrokeColor(() => false)
-    .polygonAltitude(ICE.altitude)
-    .polygonsTransitionDuration(0)
     .pathsData([])
     .pathPoints((line) => line.points)
     .pathPointLat((point) => point[1])
@@ -118,23 +106,6 @@ export function createGlobeView(container) {
     .pathDashGap((line) => line.gap)
     .pathTransitionDuration(0);
 
-  function paintIce(now) {
-    globe.polygonCapColor((layer) => `rgba(${ICE.rgb}, ${opacity(layer, now)})`);
-  }
-
-  function fade(now) {
-    paintIce(now);
-    const done = layers.every((layer) => now - layer.from >= ICE.fadeMs);
-    if (!done) {
-      fadeFrame = requestAnimationFrame(fade);
-      return;
-    }
-    fadeFrame = null;
-    layers = layers.filter((layer) => !layer.fadingOut);
-    globe.polygonsData(layers);
-    paintIce(now);
-  }
-
   /**
    * @param {string} theme one of GlobeTheme
    * @param {import('../domain/globe-theme.js').GlobeThemeSource} source
@@ -145,24 +116,20 @@ export function createGlobeView(container) {
   }
 
   /**
-   * Shows sea ice; a new `key` cross-fades to the new shape. Pass null to clear.
+   * Shows a track's sea ice at a position in its years, morphing between years, with the normal ice edge and the
+   * edge of the latest record low. Pass null to clear.
    *
-   * @param {{ key: string | null, ice: object | null, normal: object | null, record: object | null, linesKey: string } | null} view
-   *   ice, normal and record are GeoJSON geometries; linesKey changes when normal or record do.
+   * @param {{
+   *   key: string, poleLat: number, shapes: (object | null)[], at: number,
+   *   normal: object | null, record: object | null, linesKey: string,
+   * } | null} view
+   *   key names the track; shapes are GeoJSON geometries of each year's ice, in order; at is the position in them
+   *   (2.5 is halfway from the third year to the fourth); normal and record are GeoJSON geometries; linesKey changes
+   *   when normal or record do.
    */
   function showIce(view) {
-    const nextKey = view?.key ?? null;
-    if (nextKey !== iceKey) {
-      iceKey = nextKey;
-      const now = performance.now();
-      layers = layers
-        .filter((layer) => !layer.fadingOut)
-        .map((layer) => ({ ...layer, from: now, fadingOut: true }));
-      if (view?.ice) layers.push({ key: nextKey, geometry: view.ice, from: now, fadingOut: false });
-      globe.polygonsData(layers);
-      paintIce(now);
-      if (fadeFrame === null) fadeFrame = requestAnimationFrame(fade);
-    }
+    if (view && !ice) ice = createIceMorph(globe);
+    ice?.show(view && { key: view.key, poleLat: view.poleLat, shapes: view.shapes, at: view.at });
     const nextLinesKey = view?.linesKey ?? null;
     if (nextLinesKey !== linesKey) {
       linesKey = nextLinesKey;

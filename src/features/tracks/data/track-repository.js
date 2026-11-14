@@ -6,6 +6,7 @@ import { parseIceSeaCsv } from '../domain/ice-sea-series.js';
  * @typedef {Object} IceSeaTrackData
  * @property {import('../domain/ice-sea-series.js').IceSeaYear[]} years
  * @property {Map<number, object>} iceByYear GeoJSON geometry of each year's ice
+ * @property {(object | null)[]} iceShapes the same geometries in the order of `years`, null where one is missing
  * @property {object | null} normal GeoJSON geometry of the 1981–2010 normal ice edge
  */
 
@@ -34,7 +35,7 @@ export function loadIceSeaTrack({ csvUrl, shapesUrl }) {
         if (feature.properties.kind === 'normal') normal = feature.geometry;
         else iceByYear.set(feature.properties.year, feature.geometry);
       }
-      return { years, iceByYear, normal };
+      return { years, iceByYear, iceShapes: years.map((y) => iceByYear.get(y.year) ?? null), normal };
     });
     // A failed load is not kept, so the next attempt fetches again.
     loading.catch(() => cache.delete(key));

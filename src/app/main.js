@@ -28,9 +28,6 @@ import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.j
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 
-// Top of the sea level ruler over the globe (mm since 1993); the 1993–2024 rise is about 100 mm.
-const SEA_RULER_MM = 100;
-
 // Set by showAlbum().
 let albumIndex = 0;
 let album;
@@ -75,7 +72,7 @@ const turntable = createTurntableView(slot('stage'), {
 });
 const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
 const globe = createGlobeView(turntable.labelSlot);
-const seaOverlay = createSeaLevelOverlay(turntable.labelSlot, { maxMm: SEA_RULER_MM });
+const seaOverlay = createSeaLevelOverlay(turntable.labelSlot);
 const music = createMusicPlayer();
 const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
 
@@ -206,7 +203,7 @@ function render() {
 
 /**
  * Draws the year that plays at `progress` on the globe: its ice, the normal ice edge, the edge of the latest record
- * low, and the sea level. The intro shows only the normal edge.
+ * low, and the sea level. The intro, and the record at rest before it plays, show the first year.
  */
 function renderData(progress) {
   const index = trackIndexAt(album, progress);
@@ -220,23 +217,34 @@ function renderData(progress) {
   }
   globe.focus(track.iceSea.poleLat);
   const trackSec = (progress - trackBoundaries(album)[index]) * (totalMs / 1000);
-  const { index: at } = yearAt(YEAR_TIMELINE, trackSec, data.years.length);
+  const { years } = data;
+  const now = yearAt(YEAR_TIMELINE, trackSec, years.length);
+  const at = Math.max(0, now.index);
   const trackKey = `${album.id}:${index}`;
-  if (at < 0) {
-    globe.showIce({ key: null, ice: null, normal: data.normal, record: null, linesKey: `${trackKey}:intro` });
-    seaOverlay.render(null);
-    return;
-  }
-  const year = data.years[at];
+  const year = years[at];
+  // Share of this year's beat played: the ice moves from last year's shape to this year's over the beat, starting
+  // on the note and settling into the shape; the water eases from this year's level towards the next.
+  const along = now.index < 0 ? 0 : Math.min(1, now.beatSec / YEAR_TIMELINE.beatSec);
+  const settle = 1 - (1 - along) ** 3;
+  const next = years[Math.min(at + 1, years.length - 1)];
   const recordYear = recordYearAt(data.years, at);
   globe.showIce({
-    key: `${trackKey}:${year.year}`,
-    ice: data.iceByYear.get(year.year) ?? null,
+    key: trackKey,
+    poleLat: track.iceSea.poleLat,
+    shapes: data.iceShapes,
+    at: at === 0 ? 0 : at - 1 + settle,
     normal: data.normal,
     record: recordYear === null ? null : data.iceByYear.get(recordYear) ?? null,
     linesKey: `${trackKey}:${recordYear}`,
   });
-  seaOverlay.render({ year: year.year, extent: year.extent, normal: year.normal, seaLevelMm: year.seaLevelMm });
+  seaOverlay.render({
+    year: year.year,
+    firstYear: years[0].year,
+    extent: year.extent,
+    normal: year.normal,
+    seaLevelMm: year.seaLevelMm,
+    waterMm: year.seaLevelMm + (next.seaLevelMm - year.seaLevelMm) * along,
+  });
 }
 
 function setState(next) {

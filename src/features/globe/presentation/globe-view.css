@@ -9,7 +9,7 @@
   color: var(--ink-muted);
 }
 
-/* Year, ice and rising water over the globe (sea-level-overlay.js). The label is round and clips it. */
+/* Year, ice and the porthole of SVS 5235 over the globe (sea-level-overlay.js). The round label clips it. */
 .sea-overlay {
   position: absolute;
   inset: 0;
@@ -43,54 +43,153 @@
   color: var(--ink-muted);
 }
 
+/* The sea seen through the porthole, from the bottom of the label up to the water level plus half a wave. */
+.sea-overlay-sea {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* Water: bright under the surface, deep blue below, with faint light rays. Its top edge is cut to a wave that slides
+   along (a tiled mask over a solid one), so the surface is one edge with no line across it. Its height follows the
+   sea level every frame, so it needs no transition. */
 .sea-overlay-water {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 0;
-  background: linear-gradient(to bottom, rgb(120 175 215 / 0.4), rgb(40 90 140 / 0.5));
-  border-top: 1px solid rgb(200 230 255 / 0.8);
-  transition: height 0.3s ease-out;
+  inset: 0;
+  background: linear-gradient(to bottom, rgb(40 205 255 / 0.5) 0%, rgb(25 125 220 / 0.55) 35%, rgb(12 45 105 / 0.75) 100%);
+  mask-image: var(--wave-mask), linear-gradient(#000, #000);
+  mask-size: var(--wave-w) var(--wave-h), 100% calc(100% - var(--wave-h) + 1px);
+  mask-position: 0 0, 0 100%;
+  mask-repeat: repeat-x, no-repeat;
+  animation: sea-overlay-wave 6s linear infinite;
 }
 
-.sea-overlay-level {
+/* A paler swell behind the surface, moving the other way; it fades out downwards, so it leaves no edge. */
+.sea-overlay-swell {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  transform: translateY(calc(-100% - 4px));
-  font-size: clamp(10px, 1vw, 14px);
-  color: rgb(200 230 255);
+  inset: calc(-1 * var(--wave-h) / 3) 0 auto;
+  height: calc(var(--wave-h) * 2.5);
+  background: rgb(150 225 255 / 0.4);
+  mask-image: var(--wave-mask), linear-gradient(#000, transparent);
+  mask-size: var(--wave-w) var(--wave-h), 100% 100%;
+  mask-position: 0 0, 0 0;
+  mask-repeat: repeat-x, no-repeat;
+  mask-composite: intersect;
+  animation: sea-overlay-swell 9s linear infinite;
 }
 
+@keyframes sea-overlay-wave {
+  to {
+    mask-position: calc(-1 * var(--wave-w)) 0, 0 100%;
+  }
+}
+
+@keyframes sea-overlay-swell {
+  to {
+    mask-position: var(--wave-w) 0, 0 0;
+  }
+}
+
+.sea-overlay-rays {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: repeating-linear-gradient(105deg, rgb(255 255 255 / 0) 0 7%, rgb(255 255 255 / 0.07) 9%, rgb(255 255 255 / 0) 12%);
+  mask-image: linear-gradient(to bottom, #000, transparent 80%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sea-overlay-water,
+  .sea-overlay-swell {
+    animation: none;
+  }
+}
+
+/* Ruler and measured mark, as in 5235. White on the dark map and blue on pale ice would both get lost, so every line
+   and label carries a dark halo. */
+.sea-overlay-ruler,
+.sea-overlay-mark {
+  filter: drop-shadow(0 0 1px rgb(0 0 0 / 0.95)) drop-shadow(0 0 3px rgb(0 0 0 / 0.6));
+}
+
+/* Centimetre ruler standing in the middle of the porthole, from the first year's sea level up. */
 .sea-overlay-ruler {
   position: absolute;
-  left: 18%;
-  bottom: 0;
-  top: 0;
+  left: 50%;
+  width: 0;
+  border-left: 2px solid #fff;
 }
 
 .sea-overlay-tick {
   position: absolute;
-  left: 0;
-  transform: translateY(50%);
-  padding-left: 14px;
-  white-space: nowrap;
-  font-size: clamp(8px, 0.75vw, 11px);
-  color: rgb(255 255 255 / 0.35);
-  transition: color 0.3s;
+  left: -5px;
+  width: 8px;
+  border-top: 1px solid #fff;
 }
 
-.sea-overlay-tick::before {
+.sea-overlay-tick.is-major {
+  left: -9px;
+  width: 16px;
+  border-top-width: 2px;
+}
+
+/* A major tick's label sits to the left of the ruler. */
+.sea-overlay-tick-label {
+  position: absolute;
+  right: calc(100% + 4px);
+  top: 0;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-size: clamp(8px, 0.8vw, 11px);
+  font-weight: 700;
+  color: #fff;
+}
+
+/* The measured rise, as in 5235: a blue bar with end caps from the first year's level to this year's, labelled on
+   the right. It moves a year at a time. */
+.sea-overlay-mark {
+  position: absolute;
+  left: 50%;
+  width: 0;
+  border-left: 3px solid #3d7bff;
+  transform: translateX(-0.5px);
+  transition: height 0.3s ease-out;
+}
+
+.sea-overlay-mark::before,
+.sea-overlay-mark::after {
   content: '';
   position: absolute;
-  left: 0;
-  top: 50%;
-  width: 10px;
-  border-top: 1px solid currentcolor;
+  left: -8px;
+  width: 13px;
+  border-top: 3px solid #3d7bff;
 }
 
-.sea-overlay-tick.is-reached {
-  color: rgb(200 230 255 / 0.95);
+.sea-overlay-mark::before {
+  top: -1.5px;
+}
+
+.sea-overlay-mark::after {
+  bottom: -1.5px;
+  border-color: #fff;
+}
+
+.sea-overlay-mark-label {
+  position: absolute;
+  left: 14px;
+  white-space: nowrap;
+  font-size: clamp(9px, 0.95vw, 13px);
+  font-weight: 700;
+  color: #d4e3ff;
+}
+
+.sea-overlay-mark-from {
+  bottom: 0;
+  transform: translateY(50%);
+}
+
+.sea-overlay-mark-to {
+  top: 0;
+  transform: translateY(-50%);
 }
