@@ -11,16 +11,14 @@
     "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=543061768",
     "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
     "units": {
+      "track": "bird / calendar year",
       "lat_deg": "degrees north",
-      "lon_deg": "degrees east",
-      "km_per_day": "km per day, mean bird",
-      "birds": "birds tracked"
+      "lon_deg": "degrees east"
     },
     "timeRange": [
-      "2001-01-01",
-      "2001-12-31"
+      "2018-07-01",
+      "2020-07-22"
     ],
-    "foldedYears": "All years folded into one; dates use 2001 as a stand-in year.",
     "annualKmMedian": 24670
   },
   {
@@ -35,16 +33,14 @@
     "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=854852176",
     "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
     "units": {
+      "track": "bird / calendar year",
       "lat_deg": "degrees north",
-      "lon_deg": "degrees east",
-      "km_per_day": "km per day, mean bird",
-      "birds": "birds tracked"
+      "lon_deg": "degrees east"
     },
     "timeRange": [
-      "2001-01-01",
-      "2001-12-31"
+      "2009-06-08",
+      "2015-08-01"
     ],
-    "foldedYears": "All years folded into one; dates use 2001 as a stand-in year.",
     "annualKmMedian": 20306
   },
   {
@@ -59,16 +55,14 @@
     "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=506737915",
     "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
     "units": {
+      "track": "bird / calendar year",
       "lat_deg": "degrees north",
-      "lon_deg": "degrees east",
-      "km_per_day": "km per day, mean bird",
-      "birds": "birds tracked"
+      "lon_deg": "degrees east"
     },
     "timeRange": [
-      "2001-01-01",
-      "2001-12-31"
+      "2002-07-04",
+      "2010-11-20"
     ],
-    "foldedYears": "All years folded into one; dates use 2001 as a stand-in year.",
     "annualKmMedian": 10289
   },
   {
@@ -83,16 +77,14 @@
     "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=506722909",
     "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
     "units": {
+      "track": "bird / calendar year",
       "lat_deg": "degrees north",
-      "lon_deg": "degrees east",
-      "km_per_day": "km per day, mean bird",
-      "birds": "birds tracked"
+      "lon_deg": "degrees east"
     },
     "timeRange": [
-      "2001-01-01",
-      "2001-12-31"
+      "2000-07-06",
+      "2009-08-21"
     ],
-    "foldedYears": "All years folded into one; dates use 2001 as a stand-in year.",
     "annualKmMedian": 9699
   }
 ]
