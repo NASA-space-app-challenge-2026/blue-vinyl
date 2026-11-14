@@ -109,16 +109,12 @@ export class NoonComposer {
 
   reset() {}
 
-  spaceAt() {
-    return null;
-  }
-
   /**
    * @param {import('./flock.js').Music} music
-   * @param {{ songSec: number, at: number }} now
+   * @param {{ time: number, at: number }} now  `time` is the track's own time in ms (the song's data clock)
    */
-  playStep(music, { songSec, at }) {
-    const step = Math.round(songSec / STEP_SEC);
+  playStep(music, { time, at }) {
+    const step = Math.round(time / 1000 / STEP_SEC);
     if (step < 0 || step >= LINE_STEPS) return;
     if (step % STEPS_PER_BAR === 0) this.playAir(music, step, at);
     // The noon line and the globe move from step 0; the legend (if any) only explains on top.

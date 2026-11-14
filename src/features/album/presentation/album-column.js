@@ -5,7 +5,7 @@ import { createAlbumCover } from './album-cover.js';
 const NEIGHBOUR_PLACES = Object.freeze([-1, 1]);
 // Extra turn (deg) a sleeve has per place off the stage, so it spins in as it is tossed onto the stage and spins
 // away as it leaves; each sleeve settles at its own album's tilt.
-const TOSS_SPIN_DEG = 10;
+const TOSS_SPIN_DEG = 4;
 // A sleeve landing in the middle swings past its tilt by `share` of the spin, `at` that point of the move, then
 // settles back.
 const TOSS_OVERSHOOT = Object.freeze({ share: 0.15, at: 0.7 });

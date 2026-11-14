@@ -12,7 +12,7 @@ export function createDateLabel(container) {
   el.setAttribute('aria-hidden', 'true');
   container.append(el);
 
-  /** @param {number | null} time ms into the year (UTC), or null to show nothing */
+  /** @param {number | null} time ms since the epoch (UTC; for a track laid over one year, ms into it), or null to show nothing */
   function show(time) {
     showDigits(el, time === null ? '' : new Date(time).toLocaleDateString(LOCALE, FORMAT));
   }

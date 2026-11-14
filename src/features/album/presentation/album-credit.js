@@ -1,26 +1,26 @@
 import { trackCover } from '../domain/album.js';
 
-/** @param {HTMLElement} parent */
-export function createAlbumCredit(parent) {
-  const credit = document.createElement('p');
-  credit.className = 'album-credit';
-  parent.append(credit);
+// Joins the credits into the one line the record's rim runs.
+const SEPARATOR = '  ·  ';
+
+/** @param {(text: string) => void} show puts the credits on screen (the turntable's rim, see setCredit) */
+export function createAlbumCredit(show) {
   let shown = null;
 
   /**
-   * Credits the cover the sleeve shows while the track at `trackIndex` is current, the album's data, and any further
-   * credits, one to a line.
+   * Credits the cover the sleeve shows while the track at `trackIndex` is current, the track's data (or the album's),
+   * and any further credits.
    *
    * @param {import('../domain/album.js').Album} album
    * @param {number} trackIndex
-   * @param {string[]} [more] further credits, such as the instruments the music plays
+   * @param {string[]} [more] further credits, such as the instruments the music plays and the globe's map
    */
   function render(album, trackIndex, more = []) {
-    const lines = [trackCover(album, trackIndex).credit, album.dataCredit, ...more].filter(Boolean);
-    const text = lines.join('\n');
+    const dataCredit = album.tracks[trackIndex].dataCredit ?? album.dataCredit;
+    const text = [trackCover(album, trackIndex).credit, dataCredit, ...more].filter(Boolean).join(SEPARATOR);
     if (text === shown) return;
     shown = text;
-    credit.replaceChildren(...lines.flatMap((line, i) => (i === 0 ? [line] : [document.createElement('br'), line])));
+    show(text);
   }
 
   return { render };

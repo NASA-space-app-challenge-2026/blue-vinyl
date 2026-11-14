@@ -8,8 +8,6 @@
 // The album's tracks are laid over one year; the music plays a week of it a second.
 
 import { CC, Instrument } from '../instruments.js';
-import { dailyFlock, sampleFlock } from '../../../tracks/domain/bird-track.js';
-import { bearing, distanceKm } from '../../../tracks/domain/geo.js';
 
 const BPM = 96;
 const STEPS_PER_BEAT = 4;
@@ -33,8 +31,6 @@ const PAD_VELOCITY = 60;
 const VIOLA_LOW_NOTE = 60;
 const VIOLIN_LOW_NOTE = 72;
 const STRINGS_VELOCITY = 70;
-// The mix is placed at a distance from `near` (at the song's start) to `far` (the furthest the flock gets).
-const SPACE = Object.freeze({ near: 1, far: 3 });
 
 // Chords as pitch classes above the key's root, root first. Every note of the scale is in at least one.
 const Chord = Object.freeze({
@@ -74,7 +70,19 @@ function degreeToMidi(degree) {
 /**
  * @typedef {Object} Music what a composer plays through (see data/sound-engine.js)
  * @property {(instrument: Object, midi: number, velocity: number, at: number, steps: number) => void} note
+ * @property {(instrument: Object, midi: number, velocity: number, at: number) => void} hold  a note held until released
+ * @property {(instrument: Object, midi: number, at: number) => void} release
+ * @property {(instrument: Object, semitones: number, at: number) => void} bend  the instrument's pitch wheel
  * @property {(instrument: Object, cc: number, value: number, at: number) => void} control
+ * @property {(instrument: Object, sound: { program: number, volume: number }, at: number) => void} program  another
+ *   sound of the same kind (melodic or drums) on the instrument's channel
+ * @property {(patch: Object, midi: number, velocity: number, at: number, steps: number, shape: Object) => void} synthNote
+ *   a note of a Patch on the analog synth (see data/analog-synth.js)
+ * @property {(velocity: number, at: number, steps: number, fromHz: number, toHz: number) => void} noise  a noise hit
+ * @property {(lead: Object, sound: Object, at: number) => { move: Function, close: Function }} voice  a held voice of a
+ *   Lead on the analog synth, moved and closed by the composer
+ * @property {(effect: Object, value: number, at: number) => void} effect  an Effect on the whole mix (see
+ *   domain/effects.js)
  */
 
 export class FlockComposer {
@@ -95,39 +103,18 @@ export class FlockComposer {
   stepsPerBar = STEPS_PER_BAR;
 
   /**
-   * Fits the melody's range, the speed tiers and the space to a track's flock, sampled once a day.
+   * Fits the melody's range and the speed tiers to a track's flock, sampled once a day (its `path`).
    *
-   * @param {{ tracks: import('../../../tracks/domain/bird-track.js').BirdTrack[], lead: Object, msPerSec: number }} song
+   * @param {{ path: import('../../../tracks/domain/bird-track.js').Flock[], lead: Object }} song `lead`: the
+   *   Instrument that plays the melody
    */
-  setSong(song) {
-    this.song = song;
-    this.lead = song.lead;
-    const samples = dailyFlock(song.tracks);
+  setSong({ path: samples, lead }) {
+    this.lead = lead;
     const lats = samples.map((s) => s.lat);
     this.lat = { min: Math.min(...lats), max: Math.max(...lats) };
     const speeds = samples.map((s) => s.speed).sort((a, b) => a - b);
     this.tierSpeeds = SpeedTier.slice(1).map((_, i) => speeds[Math.floor(((i + 1) * speeds.length) / SpeedTier.length)]);
     this.mostFlying = Math.max(1, ...samples.map((s) => s.flying));
-    const origin = samples[0];
-    this.space = { origin, maxDistance: Math.max(...samples.map((s) => distanceKm(origin.lat, origin.lon, s.lat, s.lon))) };
-  }
-
-  flockAt(songSec) {
-    return sampleFlock(this.song.tracks, songSec * this.song.msPerSec);
-  }
-
-  /**
-   * Where the mix sits at `songSec`: at the flock's bearing from where the song's flock starts (the listener faces
-   * north, -z; east is +x), further away the further it has gone; null while no bird is on the map.
-   */
-  spaceAt(songSec) {
-    const flock = this.flockAt(songSec);
-    if (!flock) return null;
-    const { origin, maxDistance } = this.space;
-    const angle = bearing(origin.lat, origin.lon, flock.lat, flock.lon);
-    const gone = maxDistance > 0 ? distanceKm(origin.lat, origin.lon, flock.lat, flock.lon) / maxDistance : 0;
-    const radius = SPACE.near + gone * (SPACE.far - SPACE.near);
-    return { x: radius * Math.sin(angle), z: -radius * Math.cos(angle) };
   }
 
   /** Back to the opening state, as the music starts. */
@@ -138,11 +125,9 @@ export class FlockComposer {
 
   /**
    * @param {Music} music
-   * @param {{ songSec: number, step: number, bar: number, at: number }} now
+   * @param {{ sample: import('../../../tracks/domain/bird-track.js').Flock, step: number, bar: number, at: number }} now
    */
-  playStep(music, { songSec, step, bar, at }) {
-    const flock = this.flockAt(songSec);
-    if (!flock) return;
+  playStep(music, { sample: flock, step, bar, at }) {
     const tier = SpeedTier[this.tierSpeeds.filter((speed) => flock.speed >= speed).length];
     if (step % tier.melodyEvery === 0) {
       const note = this.playMelody(music, flock, tier, at);
