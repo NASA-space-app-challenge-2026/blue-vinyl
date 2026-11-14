@@ -11,6 +11,7 @@ const WEEK_A_SECOND_MS = 7 * DAY_MS;
 const BIRD_YEAR_SEC = YEAR_MS / WEEK_A_SECOND_MS;
 
 const GLACIER_DATA = 'data/glacier/tracks';
+const GLACIER_COVERS = 'assets/albums/glacier';
 // 32 years (1993–2024), one a bar (1.2 s) with no intro, then the last note's tail: 39.7 s.
 const POLAR_YEARS = 32;
 const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
@@ -52,13 +53,16 @@ export const albums = [
     id: 'glacier',
     category: AlbumCategory.CLIMATE,
     title: 'As the Ice Melts',
-    coverUrl: 'assets/albums/glacier/cover.jpg',
-    coverCredit: 'Cover: NASA Scientific Visualization Studio (SVS 5382)',
+    coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
+    coverCredit: 'NASA Scientific Visualization Studio',
     dataCredit: 'Data: NSIDC Sea Ice Index v4 · NOAA Laboratory for Satellite Altimetry',
     tracks: [
       {
         title: 'Arctic',
         durationSec: POLAR_TRACK_SEC,
+        // Each track shows its own pole at its smallest ice of 2024, from the SVS page the track's ice comes from.
+        coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
+        coverCredit: 'Cover: SVS 5382, Arctic sea ice, Sep 11 2024',
         iceSea: {
           csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
           shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
@@ -70,6 +74,8 @@ export const albums = [
       {
         title: 'Antarctic',
         durationSec: POLAR_TRACK_SEC,
+        coverUrl: `${GLACIER_COVERS}/antarctic.jpg`,
+        coverCredit: 'Cover: SVS 5064, Antarctic sea ice, Feb 20 2024',
         iceSea: {
           csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,
           shapesUrl: `${GLACIER_DATA}/antarctic_february_sea_ice_extent.geojson`,

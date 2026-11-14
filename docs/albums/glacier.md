@@ -43,7 +43,9 @@ See [design.md](../design.md#data-on-the-globe): the ice morphing from one year'
 
 ## Credits
 
-- Cover: NASA Scientific Visualization Studio, [SVS 5382](https://svs.gsfc.nasa.gov/5382/) (2024 Arctic minimum still, cropped)
+- Covers, one per track, each pole at its smallest ice of 2024: NASA Scientific Visualization Studio
+  - Arctic: [SVS 5382](https://svs.gsfc.nasa.gov/5382/), frame 2200 of the 4K animation (September 11, 2024, before the yellow 1981–2010 average line fades in), cropped to a square
+  - Antarctic: [SVS 5064](https://svs.gsfc.nasa.gov/5064/), the 2024 daily frame without dates for February 20, 2024 (converted from EXR), cropped to a square
 - Data: NSIDC Sea Ice Index v4 (G02135); NOAA Laboratory for Satellite Altimetry, global mean sea level
 - Instruments: FluidR3_GM SoundFont by Frank Wen (CC BY 3.0), via [gleitz/midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts)
 
