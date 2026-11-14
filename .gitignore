@@ -215,3 +215,6 @@ data/*/raw/
 
 # Node packages for scripts/
 node_modules/
+
+# Claude Code worktrees of other sessions (local only)
+.claude/worktrees/
