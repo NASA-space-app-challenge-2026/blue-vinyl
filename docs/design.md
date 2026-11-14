@@ -43,11 +43,15 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 
 ## Record
 
-Geometry is defined once in `src/features/turntable/domain/geometry.js` and shared by drawing and tonearm math.
+Geometry is defined once in `src/features/turntable/domain/geometry.js`, in vinyl radii (record centre at the origin, edge at 1), and shared by drawing and tonearm math. Drawing sizes and colors live in `src/features/turntable/presentation/turntable-view.js`.
 
-- **Grooves** run from the outer edge (start of the album) to the inner edge (end of the album).
-- **Track boundaries** are drawn as lighter rings in the grooves. The width of each band is proportional to the track's duration.
-- **Label** is a large center area that hosts the globe. It starts exactly at the innermost groove, with no gap. It is an HTML layer between the record (SVG) and the tonearm (SVG), clipped to a circle, so features can mount canvases into the label slot.
+- **Grooves** run from the outer edge (start of the album) to the inner edge (end of the album), evenly pitched, so the needle's radius falls linearly with progress.
+- **Track boundaries** are drawn as brighter grooves. The width of each band is proportional to the track's duration.
+- **Glints**: faint bright arcs scattered over the grooves. They turn with the record, which makes the spin visible.
+- **Sheen**: two opposite reflections of a light at the upper left (a wide soft wedge and a narrow bright one each). They stay still while the record spins under them.
+- **Platter** runs at 33⅓ rpm. It spins up when the needle sets down and coasts to a stop when it lifts.
+- **Label** is a large center area that hosts the globe. It starts exactly at the innermost groove, with no gap. It is an HTML layer between the vinyl (SVG) and the tonearm (SVG), clipped to a circle, so features can mount canvases into the label slot.
+- **Progress dot** is a white dot on the label rim that travels one full turn over the album.
 - **Globe** is rendered with [globe.gl](https://github.com/vasturiano/globe.gl) (MIT, no API key), loaded as the pinned UMD bundle in `index.html`. It is lit flat (ambient light only) like a printed map, has no atmosphere and does not spin with the record. Its fitted size fills the label edge to edge. Drag rotates it; scrolling zooms in, and zooming out stops at the fitted size so no gap opens between the globe and the grooves.
 
 ## Globe Themes
@@ -61,25 +65,25 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 
 - The attribution of the active theme is always shown at the bottom right. Esri tiles require it.
 - Neither source needs an API key.
-- **Progress dot** is a white dot on the label rim that travels one full turn over the album.
-- **Sheen**: two soft light reflections stay still while the record spins under them.
 
 ## Tonearm
 
-- Silver arm with counterweight, pivot cap, S-bend tube and headshell, mounted on a dark base at the top right.
-- At rest it hangs straight down beside the record.
-- When cued, it swings onto the groove for the current position. While playing, it moves inward with playback so the stylus always sits on the matching groove.
+- Chrome arm pivoting at about 1 o'clock on a dark base: ringed counterweight, gimbal, pivot cap, a tube that runs straight and then bends, and a headshell turned toward the centre with a cartridge, needle and finger lift.
+- It reads the right side of the record. At rest the needle sits just off the record's right edge.
+- It eases (exponentially) between positions instead of jumping: onto the groove when cued, back to rest when lifted. While playing it follows the groove for the current position.
+- The listener can grab and drag it. While held, the clock stops and the needle position scrubs the album; released over the record, playback resumes from there; released off it, the arm returns to rest.
 
 ## Interaction
 
 | Input | Action |
 | --- | --- |
 | Space | Play / pause |
-| Click on the record grooves or the tonearm | Play / pause |
+| Click on the record grooves | Play / pause |
+| Drag the tonearm | Scrub; drop on the record to play from there, off it to stop |
 | Drag on the globe | Rotate the globe |
 | Scroll on the globe | Zoom in / out (out to the fitted size) |
 | Settings button (top right) | Open the settings menu; Escape or a click outside closes it |
 
-Playback states (`PlaybackState`): `stopped` → `cueing` (arm swings on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position.
+Playback states (`PlaybackState`): `stopped` → `cueing` (arm eases on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position. Grabbing the arm enters `scrubbing` from any state.
 
 The settings button is the only on-screen button for now. Language, view options, album switching and notes will be added in later issues.

@@ -23,6 +23,7 @@ const totalMs = albumDurationSec(album) * 1000;
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
 let lastFrameTs = null;
+let tickFrame = null;
 
 const slot = (id) => document.getElementById(id);
 
@@ -31,14 +32,22 @@ const playHint = createPlayHint(slot('bottom-center'));
 
 const cover = createAlbumCover(slot('stage'), { album, index: albumIndex, count: albums.length });
 const turntable = createTurntableView(slot('stage'), {
-  boundaries: trackBoundaries(album),
+  trackStarts: trackBoundaries(album).slice(1, -1),
   onToggle: togglePlayback,
   onCued: () => {
-    if (state !== PlaybackState.CUEING) return;
-    setState(PlaybackState.PLAYING);
-    lastFrameTs = null;
-    requestAnimationFrame(tick);
+    if (state === PlaybackState.CUEING) startPlaying();
   },
+  onGrab: () => setState(PlaybackState.SCRUBBING),
+  onScrub: (progress) => {
+    if (progress === null) return;
+    elapsedMs = progress * totalMs;
+    render();
+  },
+  onDrop: (progress) => {
+    elapsedMs = progress * totalMs;
+    startPlaying();
+  },
+  onLift: () => setState(PlaybackState.STOPPED),
 });
 const globe = createGlobeView(turntable.labelSlot);
 const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
@@ -66,6 +75,13 @@ function togglePlayback() {
   setState(state === PlaybackState.STOPPED ? PlaybackState.CUEING : PlaybackState.STOPPED);
 }
 
+function startPlaying() {
+  setState(PlaybackState.PLAYING);
+  cancelAnimationFrame(tickFrame);
+  lastFrameTs = null;
+  tickFrame = requestAnimationFrame(tick);
+}
+
 function render() {
   const progress = elapsedMs / totalMs;
   turntable.render(state, progress);
@@ -88,7 +104,7 @@ function tick(ts) {
     return;
   }
   render();
-  requestAnimationFrame(tick);
+  tickFrame = requestAnimationFrame(tick);
 }
 
 setState(PlaybackState.STOPPED);

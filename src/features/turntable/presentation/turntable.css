@@ -3,7 +3,7 @@
   position: relative;
   z-index: 1;
   flex: none;
-  width: min(54vw, 104vh);
+  width: min(54vw, 100vh);
 }
 
 .turntable-layer {
@@ -14,62 +14,27 @@
   overflow: visible;
 }
 
-/* Only the arm itself catches clicks, so the globe under the layer stays draggable. */
+.turntable-vinyl-layer {
+  filter: drop-shadow(0 18px 24px rgb(0 0 0 / 0.45));
+}
+
+.turntable-vinyl-layer .vinyl {
+  cursor: pointer;
+}
+
+/* Only the arm itself catches pointers, so the globe under the layer stays draggable. */
 .turntable-arm-layer {
   pointer-events: none;
 }
 
-.turntable-arm-layer .tonearm {
-  pointer-events: auto;
+.turntable-arm-layer .arm {
+  pointer-events: visiblePainted;
+  cursor: grab;
+  touch-action: none;
 }
 
-.platter,
-.tonearm {
-  cursor: pointer;
-}
-
-.record {
-  animation: record-spin 1.8s linear infinite paused;
-}
-
-.turntable[data-state='playing'] .record {
-  animation-play-state: running;
-}
-
-@keyframes record-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.record-disc {
-  fill: url(#tt-vinyl);
-}
-
-.record-groove {
-  fill: none;
-  stroke: #1d1d1d;
-  stroke-width: 1;
-}
-
-.record-groove.is-alt {
-  stroke: #232323;
-}
-
-.record-track-boundary {
-  fill: none;
-  stroke: #3d3d3d;
-  stroke-width: 1.5;
-}
-
-.record-sheen {
-  fill: #fff;
-  opacity: 0.09;
-  pointer-events: none;
-}
-
-.record-label-bg {
-  fill: #1c1d22;
+.turntable-arm-layer .arm.dragging {
+  cursor: grabbing;
 }
 
 /* Round, so clicks on the grooves just outside the circle still reach the record. */
@@ -91,7 +56,7 @@
 }
 
 .record-label-rim {
-  border: 2px solid rgb(255 255 255 / 0.22);
+  border: 1px solid rgb(255 255 255 / 0.15);
   pointer-events: none;
 }
 
@@ -108,63 +73,4 @@
   border-radius: 50%;
   background: #fff;
   transform: translate(-50%, -50%);
-}
-
-/* The arm swings smoothly when lifted or cued; while playing it follows the clock frame by frame. */
-.tonearm {
-  transition: transform 0.9s ease-in-out;
-}
-
-.turntable[data-state='playing'] .tonearm {
-  transition: none;
-}
-
-.tonearm-base {
-  fill: #151515;
-  stroke: rgb(0 0 0 / 0.4);
-  stroke-width: 2;
-}
-
-.tonearm-metal {
-  stroke: #6f6f6f;
-  stroke-width: 1;
-}
-
-.tonearm-knurl {
-  stroke: #7a7a7a;
-  stroke-width: 1;
-}
-
-.tonearm-tube {
-  fill: none;
-  stroke: #c9c9c9;
-  stroke-width: 7;
-  stroke-linecap: round;
-}
-
-.tonearm-tube-highlight {
-  fill: none;
-  stroke: #fff;
-  stroke-width: 2;
-  stroke-linecap: round;
-  opacity: 0.7;
-}
-
-.tonearm-lift {
-  fill: none;
-  stroke: #c9c9c9;
-  stroke-width: 3;
-  stroke-linecap: round;
-}
-
-.tonearm-cartridge {
-  fill: #222;
-}
-
-.tonearm-stylus {
-  fill: #fff;
-}
-
-.tonearm-cap {
-  fill: #b9b9b9;
 }
