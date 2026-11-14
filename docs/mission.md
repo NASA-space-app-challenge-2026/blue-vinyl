@@ -47,12 +47,7 @@ Blue Vinyl is an interactive web jukebox. Each EIC dataset is an **album** place
 
 Source: the challenge's [Resources tab](https://www.spaceappschallenge.org/2026/challenges/the-earth-information-jukebox/?tab=resources). The challenge notes that more resources may be added before the hackathon, so check the tab again before picking new albums.
 
-### Data Policy
-
-1. **EIC first.** The challenge is built around EIC visual frames, and every recommended resource is an EIC or SVS visualization. Our main albums use EIC data.
-2. **Other NASA data is allowed.** The challenge does not limit us to the list below. Any NASA data, such as other SVS visualizations, Earthdata, or NASA Worldview imagery, may be used when it makes an album stronger. Prefer it as a supplement to an EIC album, for example to add a data layer or context, rather than as a replacement.
-3. **Non-NASA sources follow their own terms.** NASA does not endorse non-U.S. Government sources and is not responsible for them. If we use one, we must follow its data use terms and record them.
-4. **Credit everything.** Every album records its sources (title, link, credit line) and the page shows them.
+The challenge recommends EIC data, and every listed resource is an EIC or SVS visualization. Other NASA data, such as other SVS visualizations, Earthdata, or NASA Worldview imagery, can be used as well.
 
 ### Recommended Resources
 
@@ -78,7 +73,7 @@ Not Earth data, but a reference for how NASA turns imagery into sound. It shows 
 
 ### Data Pipeline
 
-Data prep (frame extraction, color and density analysis) lives in `notebooks/` and exports static datasets into `src/features/*/data`. Keep the original source link and credit next to every exported dataset.
+Data prep (frame extraction, color and density analysis) lives in `notebooks/` and exports static datasets into `src/features/*/data`.
 
 ## Definition of Done
 
@@ -88,4 +83,4 @@ The submission is ready when:
 - The page is usable with a keyboard and a screen reader alone.
 - Each shipped album documents its data source, its data-to-sound mapping, and the story behind it.
 - The app runs as a static site (`npm start`) with no backend.
-- Every data source is credited on the page (SVS and the EIC for EIC albums), following the Data Policy above.
+- NASA data is credited to SVS and the EIC on the page.
