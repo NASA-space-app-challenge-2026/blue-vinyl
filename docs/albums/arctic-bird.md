@@ -11,30 +11,37 @@ EIC shows that Arctic animals move with the seasons, with all years folded into 
 | 1 | Lesser Yellowlegs | 24,670 | Flute |
 | 2 | Whimbrel | 20,306 | Oboe |
 | 3 | Yellow-billed Loon | 10,289 | French horn |
-| 4 | Red-throated Loon | 9,699 | Clarinet |
+| 4 | Red-throated Loon | 9,699 | Ocarina |
 
-The shorebirds cross the equator to South America; the loons stay in the North Pacific. A listener hears both how far each flock goes and when it goes.
+The shorebirds cross the equator to South America; the loons stay in the North Pacific.
 
 ## Data
 
-Each track is one species' flock through one folded year, one row per day (`data/arctic_bird/tracks/<species>.csv`): the birds' median latitude, circular mean longitude, mean km flown that day and the number of birds tracked. See section 9 of the notebook for how a day is built.
+Each track file (`data/arctic_bird/tracks/<species>.csv`) holds the daily positions of up to 30 bird-years of one species: one bird in one calendar year each. The app lays every year over one, so the birds of all years fly together through Jan 1 to Dec 31, a week a second (about 52 s a track). See section 9 of the notebook.
+
+The **flock** is the birds on the map at a moment, averaged together: their mean position, mean speed, mean change of latitude and how many of them are flying (faster than 5 km/h). Code: [`bird-track.js`](../../src/features/tracks/domain/bird-track.js).
 
 ## Data to Sound
 
-One day of data is one sixteenth note at 105 BPM, so a year lasts about 52 s. Every scale is shared by the whole album, so the same latitude or distance sounds the same in every track. Code: [`migration.js`](../../src/features/music/domain/composers/migration.js).
+D major pentatonic at 96 BPM. Code: [`flock.js`](../../src/features/music/domain/composers/flock.js) and [`sound-engine.js`](../../src/features/music/data/sound-engine.js).
 
 | Data | Sound |
 | --- | --- |
-| Latitude | Pitch of the lead on a D major pentatonic scale, about two and a half octaves from the southernmost to the northernmost flock. The shorebirds sweep the whole range; the loons stay in its upper part. The lead moves at most two scale steps per note, so a fast move sounds as a run. |
-| km flown that day | How often the lead plays and how hard: one note a bar while resting (under 10 km), up to a note on every sixteenth over 200 km. |
-| Heading | Rising phrases while the flock goes north, falling phrases while it goes south. |
-| km flown since Jan 1 | String voices: one more voice and a little louder for every sixth of the album's farthest year, so the farthest flyer ends with the fullest chord. |
+| Flock latitude | Pitch of the lead, over two and a half octaves from the track's southernmost to its northernmost flock. |
+| Flock speed | One of five tiers, split at the quintiles of the track's daily flock speed: from one note a bar at velocity 50 to a note every sixteenth at 110. The two fastest tiers add a piccolo an octave above the lead. The cello's root follows the same tiers. |
+| Heading | In the moving tiers the lead runs up while the flock heads north and down while it heads south; resting, it turns around its note. |
+| Birds flying | Viola and violin hold the bar's chord as loud as the share of birds flying. |
+| Flock position | The whole mix sits at the flock's bearing from where the track's flock starts (north ahead, east to the right), further away the further it has gone (HRTF panner). |
 
-A cello root and a soft pad hold a chord that contains the lead's note at each bar.
+Each bar a chord that holds the lead's note plays on the pad; every fourth bar it returns to D major when it can.
 
 ## Visuals
 
-The globe turns to each flock as its track starts, draws the trail flown so far in the track's color, and marks where the flock is now with a dot that pulses on every lead note, as strongly as the note is played.
+- Each bird is drawn seen from above with flapping wings, turned the way it flies, in the track's colour; birds fade in and out as their paths begin and end.
+- A comet tail of the last 30 days follows each bird, drawn as a WebGL ribbon in the globe's scene.
+- The globe turns to keep the flock in the middle; turned by hand, it glides back a second after release.
+- A WebGL halo around the globe breathes with the music: each place on the rim shows a frequency band, low at 6 o'clock to high at 12, in the track's colour.
+- The date (month and day) is printed at 6 o'clock on the globe.
 
 ## Sound Font
 
