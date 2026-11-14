@@ -98,4 +98,5 @@
 
 .record-progress-dot {
   fill: #fff;
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.6));
 }

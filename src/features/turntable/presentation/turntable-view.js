@@ -216,6 +216,13 @@ function layer(className, markup) {
 // The progress ring in the label's own units (radius 1 at its rim, where the globe's edge is): the rail runs centred
 // on that edge; how thick it is, and how wide a band round it takes a click.
 const RING = Object.freeze({ radius: 1, width: 0.014, dotRadius: 0.024, hitWidth: 0.09 });
+// A change of more than JUMP (share of a turn) within a track, such as a seek, glides there over GLIDE_MS instead of
+// jumping; playback itself moves far less than JUMP a frame.
+const RING_GLIDE = Object.freeze({ jump: 0.02, ms: 450 });
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+}
 
 /** The point on the rail `share` (0..1) of a turn clockwise from 12 o'clock. */
 function ringPoint(share) {
@@ -260,13 +267,48 @@ function createProgressRing(onSeek) {
     onSeek(turn);
   });
 
-  /** @param {number} trackProgress 0..1 */
-  function render(trackProgress) {
-    const share = Math.min(1, Math.max(0, trackProgress));
+  // The share the ring shows, the one it is headed for, the track they belong to, and the glide under way, if any.
+  let shown = 0;
+  let target = 0;
+  let track = null;
+  let glide = null;
+
+  function draw(share) {
+    shown = share;
     const [x, y] = ringPoint(share);
     fill.setAttribute('d', arcFromTop(share));
     dot.setAttribute('cx', String(x));
     dot.setAttribute('cy', String(y));
+  }
+
+  // Eases from where the glide began to the target, which may keep moving while the track plays.
+  function step(now) {
+    glide.start ??= now;
+    const t = Math.min(1, (now - glide.start) / RING_GLIDE.ms);
+    draw(glide.from + easeInOutCubic(t) * (target - glide.from));
+    glide.frame = t < 1 ? requestAnimationFrame(step) : null;
+    if (t === 1) glide = null;
+  }
+
+  /**
+   * @param {number} trackProgress 0..1
+   * @param {unknown} trackKey which track it is; another track starts the ring from its place at once
+   */
+  function render(trackProgress, trackKey) {
+    const next = Math.min(1, Math.max(0, trackProgress));
+    const jumped = Math.abs(next - target) > RING_GLIDE.jump;
+    target = next;
+    if (trackKey !== track) {
+      track = trackKey;
+      if (glide) cancelAnimationFrame(glide.frame);
+      glide = null;
+      draw(target);
+    } else if (jumped) {
+      if (glide) cancelAnimationFrame(glide.frame);
+      glide = { from: shown, start: null, frame: requestAnimationFrame(step) };
+    } else if (!glide) {
+      draw(target);
+    }
   }
 
   return { el: svg, render };
@@ -485,9 +527,10 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
    * @param {string} state one of PlaybackState
    * @param {number} progress 0..1 through the album
    * @param {number} trackProgress 0..1 through the current track
+   * @param {unknown} trackKey the current track, to tell when it changes
    */
-  function render(state, progress, trackProgress) {
-    progressRing.render(trackProgress);
+  function render(state, progress, trackProgress, trackKey) {
+    progressRing.render(trackProgress, trackKey);
     if (state === PlaybackState.STOPPED) {
       if (onRecord) lift();
     } else if (state === PlaybackState.CUEING) {

@@ -53,7 +53,7 @@ Geometry is defined once in `src/features/turntable/domain/geometry.js`, in viny
 - **Sheen**: two opposite reflections of a light at the upper left (a wide soft wedge and a narrow bright one each). They stay still while the record spins under them.
 - **Platter** runs at 33⅓ rpm. It spins up when the needle sets down and coasts to a stop when it lifts.
 - **Label** is a large center area that hosts the globe. It starts exactly at the innermost groove, with no gap. It is an HTML layer between the vinyl (SVG) and the tonearm (SVG), clipped to a circle, so features can mount canvases into the label slot.
-- **Progress ring** runs round the label rim: one full turn per track, from 12 o'clock clockwise. A faint rail is filled in white as far as the track has played, with a white dot at the head. Clicking the ring plays the current track from that point.
+- **Progress ring** runs round the label rim: one full turn per track, from 12 o'clock clockwise. A faint rail is filled in white as far as the track has played, with a white handle (with a soft shadow) at the head. Clicking the ring plays the current track from that point; the fill and handle glide there rather than jump. A new track starts the ring at once.
 - **Globe** is rendered with [globe.gl](https://github.com/vasturiano/globe.gl) (MIT, no API key), loaded as the pinned UMD bundle in `index.html`. It is lit flat (ambient light only) like a printed map, has no atmosphere and does not spin with the record. Its fitted size fills the label edge to edge. Drag rotates it; scrolling zooms in, and zooming out stops at the fitted size so no gap opens between the globe and the grooves.
 
 ## Globe Themes

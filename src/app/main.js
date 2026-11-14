@@ -217,7 +217,7 @@ function startPlaying() {
 function render() {
   const progress = elapsedMs / totalMs;
   const trackIndex = trackIndexAt(album, progress);
-  turntable.render(state, progress, trackProgressAt(trackIndex));
+  turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex);
   renderSong(trackIndex);
 }
