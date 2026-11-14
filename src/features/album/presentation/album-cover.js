@@ -9,7 +9,7 @@ const CATEGORY_LABEL = Object.freeze({
 const TILT = Object.freeze({ minDeg: -6, maxDeg: -2 });
 const GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
 // Most the face leans (deg) toward or away from the pointer at the sleeve's edges.
-const HOVER_TILT_DEG = 3;
+const HOVER_TILT_DEG = 1.5;
 
 /** @param {number} index place in the catalog; neighbouring places get well spread angles */
 function tiltDeg(index) {
