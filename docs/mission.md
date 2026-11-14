@@ -73,7 +73,7 @@ Not Earth data, but a reference for how NASA turns imagery into sound. It shows 
 
 ### Data Pipeline
 
-Data prep (frame extraction, color and density analysis) lives in `notebooks/` and exports static datasets into `src/features/*/data`.
+Data prep lives in `notebooks/`. Downloads stay local in `data/<album>/raw/`, and the data the music uses is exported into `data/<album>/tracks/`. Every notebook follows [notebook-guide.md](notebook-guide.md), and all data follows [data-guide.md](data-guide.md).
 
 ## Definition of Done
 
