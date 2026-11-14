@@ -1,3 +1,5 @@
+const GROOVE = Object.freeze({ outerRadius: 292, innerRadius: 204 });
+
 /**
  * Turntable layout in SVG view-box units. Single source for both drawing and tonearm math.
  * The tonearm points straight down from its pivot at 0deg; positive angles swing it onto the record.
@@ -7,8 +9,9 @@ export const TURNTABLE = Object.freeze({
   height: 640,
   center: Object.freeze({ x: 320, y: 320 }),
   recordRadius: 300,
-  labelRadius: 192,
-  groove: Object.freeze({ outerRadius: 292, innerRadius: 204 }),
+  // The label (and the globe in it) starts right where the grooves end.
+  labelRadius: GROOVE.innerRadius,
+  groove: GROOVE,
   tonearm: Object.freeze({
     pivot: Object.freeze({ x: 655, y: 90 }),
     length: 460,

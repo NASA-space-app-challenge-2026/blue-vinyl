@@ -47,8 +47,8 @@ Geometry is defined once in `src/features/turntable/domain/geometry.js` and shar
 
 - **Grooves** run from the outer edge (start of the album) to the inner edge (end of the album).
 - **Track boundaries** are drawn as lighter rings in the grooves. The width of each band is proportional to the track's duration.
-- **Label** is a large center area that hosts the globe. It is an HTML layer between the record (SVG) and the tonearm (SVG), clipped to a circle, so features can mount canvases into the label slot.
-- **Globe** is rendered with [globe.gl](https://github.com/vasturiano/globe.gl) (MIT, no API key), loaded as the pinned UMD bundle in `index.html`. It is lit flat (ambient light only) like a printed map, has no atmosphere and does not spin with the record. Drag rotates it; zoom is off so it keeps filling the label.
+- **Label** is a large center area that hosts the globe. It starts exactly at the innermost groove, with no gap. It is an HTML layer between the record (SVG) and the tonearm (SVG), clipped to a circle, so features can mount canvases into the label slot.
+- **Globe** is rendered with [globe.gl](https://github.com/vasturiano/globe.gl) (MIT, no API key), loaded as the pinned UMD bundle in `index.html`. It is lit flat (ambient light only) like a printed map, has no atmosphere and does not spin with the record. Its fitted size fills the label edge to edge. Drag rotates it; scrolling zooms in, and zooming out stops at the fitted size so no gap opens between the globe and the grooves.
 
 ## Globe Themes
 
@@ -77,6 +77,7 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | Space | Play / pause |
 | Click on the record grooves or the tonearm | Play / pause |
 | Drag on the globe | Rotate the globe |
+| Scroll on the globe | Zoom in / out (out to the fitted size) |
 | Settings button (top right) | Open the settings menu; Escape or a click outside closes it |
 
 Playback states (`PlaybackState`): `stopped` → `cueing` (arm swings on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position.

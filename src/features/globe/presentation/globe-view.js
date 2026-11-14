@@ -2,11 +2,17 @@
 // while the ESM build pulls several three.js versions from the CDN.
 const { Globe } = globalThis;
 
-// Camera altitude (in globe radii) that lets the globe nearly fill its square container.
-const CAMERA_ALTITUDE = 1.5;
+// Closest zoom, as camera altitude in globe radii above the surface.
+const MIN_ZOOM_ALTITUDE = 0.15;
+
+/** Camera altitude at which the globe's silhouette exactly fills a square viewport. */
+function fittedAltitude(camera) {
+  return 1 / Math.sin((camera.fov * Math.PI) / 360) - 1;
+}
 
 /**
- * Interactive WebGL globe that fills its container. Drag to rotate; zoom is off so it keeps its size.
+ * Interactive WebGL globe that fills its container. Drag to rotate, scroll to zoom in.
+ * Zooming out stops at the fitted size, so the globe never shrinks away from the label edge.
  *
  * @param {HTMLElement} container
  */
@@ -14,9 +20,14 @@ export function createGlobeView(container) {
   container.classList.add('globe-view');
   const globe = new Globe(container, { animateIn: false })
     .backgroundColor('rgba(0, 0, 0, 0)')
-    .showAtmosphere(false)
-    .pointOfView({ altitude: CAMERA_ALTITUDE });
-  globe.controls().enableZoom = false;
+    .showAtmosphere(false);
+
+  const fitAltitude = fittedAltitude(globe.camera());
+  const radius = globe.getGlobeRadius();
+  const controls = globe.controls();
+  controls.minDistance = radius * (1 + MIN_ZOOM_ALTITUDE);
+  controls.maxDistance = radius * (1 + fitAltitude);
+  globe.pointOfView({ altitude: fitAltitude });
   globe.globeMaterial().shininess = 0;
 
   // Flat, even light like a printed map: drop the directional glare, keep the ambient fill.
