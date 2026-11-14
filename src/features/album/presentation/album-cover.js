@@ -51,7 +51,7 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
   let image = null;
   let items = [];
 
-  face.append(el('div', 'album-cover-shade'), counter, body);
+  face.append(counter, body);
   cover.append(face);
   parent.append(cover);
 
@@ -84,7 +84,7 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
       img.addEventListener('load', () => img.classList.add('is-shown'), { once: true });
       img.addEventListener('transitionend', removeOthers, { once: true });
     }
-    face.querySelector('.album-cover-shade').before(img);
+    counter.before(img);
     image = img;
   }
 
