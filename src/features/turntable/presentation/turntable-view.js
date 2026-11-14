@@ -270,7 +270,10 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
   const record = document.createElement('div');
   record.className = 'turntable-record';
   record.style.transformOrigin = `${(-BOUNDS.left / BOUNDS.width) * 100}% ${(-BOUNDS.top / BOUNDS.height) * 100}%`;
-  record.append(vinylLayer, label);
+  // A canvas over the whole record, between the vinyl and the label, for a glow around the globe.
+  const haloCanvas = document.createElement('canvas');
+  haloCanvas.className = 'record-halo';
+  record.append(vinylLayer, haloCanvas, label);
 
   root.append(record, armLayer);
   vinylLayer.addEventListener('click', onToggle);
@@ -435,5 +438,11 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     }
   }
 
-  return { labelSlot, recordEl: record, recordGeometry, setTrackStarts, render };
+  /** The label's centre and radius in the halo canvas's CSS pixels. */
+  function labelDisc() {
+    const r = label.offsetWidth / 2;
+    return { x: label.offsetLeft + r, y: label.offsetTop + r, r };
+  }
+
+  return { labelSlot, haloCanvas, labelDisc, recordEl: record, recordGeometry, setTrackStarts, render };
 }
