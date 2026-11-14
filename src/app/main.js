@@ -518,10 +518,6 @@ function renderData(trackIndex) {
   });
   seaOverlay.render({
     year: year.year,
-    firstYear: years[0].year,
-    extent: year.extent,
-    firstExtent: years[0].extent,
-    seaLevelMm: year.seaLevelMm,
     waterMm,
   });
 }

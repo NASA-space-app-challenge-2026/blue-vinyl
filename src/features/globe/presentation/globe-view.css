@@ -3,13 +3,18 @@
   filter: grayscale(0.85) brightness(0.85) contrast(1.15);
 }
 
-/* Year, ice and the porthole of SVS 5235 over the globe (sea-level-overlay.js). The round label clips it. */
+/* The year and the porthole of SVS 5235 over the globe (sea-level-overlay.js). The round label clips it. The year is
+   white with a thin black outline, so it shows on white ice, the map and the water alike; the stroke is painted
+   under the fill, so half of it shows as the outline. */
 .sea-overlay {
+  --outline: 1px;
   position: absolute;
   inset: 0;
   pointer-events: none;
   text-align: center;
-  text-shadow: 0 1px 4px rgb(0 0 0 / 0.8);
+  color: #fff;
+  -webkit-text-stroke: calc(2 * var(--outline)) #000;
+  paint-order: stroke fill;
 }
 
 .sea-overlay[hidden] {
@@ -25,20 +30,6 @@
   font-size: clamp(18px, 3.2vw, 44px);
   font-weight: 700;
   letter-spacing: 0.08em;
-}
-
-.sea-overlay-ice-line {
-  display: block;
-}
-
-.sea-overlay-ice {
-  position: absolute;
-  top: calc(9% + clamp(24px, 4.2vw, 58px));
-  left: 15%;
-  right: 15%;
-  margin: 0;
-  font-size: clamp(10px, 1vw, 14px);
-  color: var(--ink-muted);
 }
 
 /* The sea seen through the porthole: as tall as the label, moved down (sea-level-overlay.js) so its top is half a
@@ -162,73 +153,6 @@
   .sea-overlay-swell {
     animation: none;
   }
-}
-
-/* Ruler, as in 5235. White on pale ice would get lost, so its lines and labels carry a dark halo. */
-.sea-overlay-ruler {
-  filter: drop-shadow(0 0 1px rgb(0 0 0 / 0.95)) drop-shadow(0 0 3px rgb(0 0 0 / 0.6));
-}
-
-/* Centimetre ruler standing in the middle of the porthole, from the first year's sea level up. */
-.sea-overlay-ruler {
-  position: absolute;
-  left: 50%;
-  width: 0;
-  border-left: 2px solid #fff;
-}
-
-.sea-overlay-tick {
-  position: absolute;
-  left: -5px;
-  width: 8px;
-  border-top: 1px solid #fff;
-}
-
-.sea-overlay-tick.is-major {
-  left: -9px;
-  width: 16px;
-  border-top-width: 2px;
-}
-
-/* A major tick's label sits to the left of the ruler. */
-.sea-overlay-tick-label {
-  position: absolute;
-  right: calc(100% + 4px);
-  top: 0;
-  transform: translateY(-50%);
-  white-space: nowrap;
-  font-size: clamp(8px, 0.8vw, 11px);
-  font-weight: 700;
-  color: #fff;
-}
-
-/* The readings beside the ruler: the first year's sea level at its foot and this year's rise at its height. The box
-   spans the ruler between them and draws nothing itself; it moves a year at a time. */
-.sea-overlay-reading {
-  position: absolute;
-  left: 50%;
-  width: 0;
-  transition: height 0.3s ease-out;
-}
-
-.sea-overlay-reading-label {
-  position: absolute;
-  left: 14px;
-  white-space: nowrap;
-  font-size: clamp(9px, 0.95vw, 13px);
-  font-weight: 700;
-  color: #fff;
-  text-shadow: 0 0 2px rgb(0 0 0 / 0.95), 0 0 5px rgb(0 0 0 / 0.7);
-}
-
-.sea-overlay-reading-from {
-  bottom: 0;
-  transform: translateY(50%);
-}
-
-.sea-overlay-reading-to {
-  top: 0;
-  transform: translateY(-50%);
 }
 
 /* Falling pieces of lost ice (ice-fall.js), between the globe and the porthole water. */

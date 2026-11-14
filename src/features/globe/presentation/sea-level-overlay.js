@@ -3,10 +3,6 @@
 const BASE = 0.14;
 const SPAN = 0.3;
 const SCALE_MM = 100;
-// Ruler: 0 to 11 cm, a tick every centimetre, a label every 5.
-const RULER_TOP_MM = 110;
-const TICK_MM = 10;
-const LABEL_EVERY_MM = 50;
 // One wave of the surface (px). The water's top edge is cut to this shape, so the surface has no straight line.
 const WAVE = Object.freeze({ width: 160, height: 12, amplitude: 3.5 });
 const SWELL = Object.freeze({ width: 230, height: 16, amplitude: 5 });
@@ -16,22 +12,16 @@ const SWELL = Object.freeze({ width: 230, height: 16, amplitude: 5 });
  *
  * @typedef {Object} SeaLevelFrame
  * @property {number} year
- * @property {number} firstYear the year the sea level is measured from
- * @property {number} extent sea ice extent, million km²
- * @property {number} firstExtent sea ice extent of the first year, million km²
- * @property {number} seaLevelMm measured sea level of the year, change since the first year
  * @property {number} waterMm level of the water, which moves smoothly from one year's value to the next
  */
 
-function el(tag, className, text) {
+function el(tag, className) {
   const node = document.createElement(tag);
   node.className = className;
-  if (text !== undefined) node.textContent = text;
   return node;
 }
 
 const heightOf = (mm) => BASE + (mm / SCALE_MM) * SPAN;
-const percent = (share) => `${share * 100}%`;
 
 // One period of a sine wave across `width`, as SVG path points, its middle `top` px below the image's top edge.
 function crest({ width, height, amplitude }, top = 0) {
@@ -73,10 +63,9 @@ function setText(node, text) {
 }
 
 /**
- * Text and water over the globe. The year and its ice sit at the top. Below, the label becomes the porthole of SVS
- * 5235: water with a moving surface rises past a centimetre ruler. The ruler marks the first year's sea level, and
- * the measured rise of this year (such as +71 mm) is written beside it at that height; it moves a year at a time,
- * while the water moves smoothly. The overlay never takes pointer events, so the globe stays draggable.
+ * The year and the water over the globe. The year sits at the top; below, the label becomes the porthole of SVS 5235,
+ * where water with a moving surface rises smoothly with the sea level. The overlay never takes pointer events, so the
+ * globe stays draggable.
  *
  * @param {HTMLElement} container
  */
@@ -126,30 +115,8 @@ export function createSeaLevelOverlay(container) {
     if (waterShare !== null) placeWater(waterShare);
   }).observe(root);
 
-  const ruler = el('div', 'sea-overlay-ruler');
-  ruler.style.bottom = percent(heightOf(0));
-  ruler.style.height = percent(heightOf(RULER_TOP_MM) - heightOf(0));
-  for (let mm = 0; mm <= RULER_TOP_MM; mm += TICK_MM) {
-    const major = mm % LABEL_EVERY_MM === 0;
-    const tick = el('span', `sea-overlay-tick${major ? ' is-major' : ''}`);
-    if (major) tick.append(el('span', 'sea-overlay-tick-label', `${mm / 10} cm`));
-    tick.style.bottom = percent(mm / RULER_TOP_MM);
-    ruler.append(tick);
-  }
-
-  // Spans the ruler from the first year's level to this year's; it only places the two readings beside the ruler.
-  const reading = el('div', 'sea-overlay-reading');
-  reading.style.bottom = percent(heightOf(0));
-  const readingFrom = el('span', 'sea-overlay-reading-label sea-overlay-reading-from');
-  const readingTo = el('span', 'sea-overlay-reading-label sea-overlay-reading-to');
-  reading.append(readingFrom, readingTo);
-
   const year = el('p', 'sea-overlay-year');
-  const ice = el('p', 'sea-overlay-ice');
-  const iceArea = el('span', 'sea-overlay-ice-line');
-  const iceChange = el('span', 'sea-overlay-ice-line');
-  ice.append(iceArea, iceChange);
-  root.append(sea, ruler, reading, year, ice);
+  root.append(sea, year);
   container.append(root);
 
   /** @param {SeaLevelFrame | null} frame null hides the overlay */
@@ -157,17 +124,7 @@ export function createSeaLevelOverlay(container) {
     root.hidden = frame === null;
     if (!frame) return;
     placeWater(heightOf(frame.waterMm));
-    reading.style.height = percent(Math.max(0, heightOf(frame.seaLevelMm) - heightOf(0)));
-    setText(readingFrom, `${frame.firstYear} sea level`);
-    const rise = `${frame.seaLevelMm >= 0 ? '+' : '−'}${Math.abs(frame.seaLevelMm).toFixed(0)} mm`;
-    setText(readingTo, frame.year === frame.firstYear ? '' : rise);
     setText(year, String(frame.year));
-    // Like the sea level, the ice is read against the first year: the share it has shrunk (or grown) by since.
-    setText(iceArea, `Sea ice ${frame.extent.toFixed(2)} million km²`);
-    const change = Math.round((frame.extent / frame.firstExtent - 1) * 100);
-    setText(iceChange, frame.year === frame.firstYear
-      ? ''
-      : `${change >= 0 ? '+' : '−'}${Math.abs(change)}% since ${frame.firstYear}`);
   }
 
   // Moves the sea so its surface is `share` of the label up, and stretches the water's colour over the depth seen,
