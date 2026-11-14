@@ -2,13 +2,16 @@
 const SAMPLE_SIZE = 48;
 // Bits kept of each RGB channel when pixels are grouped by color: 3 bits make 8 levels, 512 groups.
 const BUCKET_BITS = 3;
+// Pixels darker than this lightness (HSL, 0..1), such as black space around a globe, are left out when the main color
+// is picked, so the backdrop does not come out near black. A cover that is dark all over still uses all its pixels.
+const MIN_PIXEL_LIGHTNESS = 0.12;
 // Lightness (HSL, 0..1) the backdrop's centre is held at or below, so the light text stays readable on it, and how
 // much darker its rim is.
 const BACKDROP_MAX_LIGHTNESS = 0.24;
 const BACKDROP_DEEP_SHARE = 0.7;
 
 /**
- * Main color of a loaded image: the mean of the pixels in the largest group of like colors.
+ * Main color of a loaded image: the mean of the pixels in the largest group of like colors, near-black pixels left out.
  *
  * @param {HTMLImageElement} img
  * @returns {{ r: number, g: number, b: number }}
@@ -19,9 +22,22 @@ function mainColor(img) {
   const context = canvas.getContext('2d', { willReadFrequently: true });
   context.drawImage(img, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
   const { data } = context.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
+  const top = largestGroup(data, MIN_PIXEL_LIGHTNESS) ?? largestGroup(data, 0);
+  return { r: top.r / top.count, g: top.g / top.count, b: top.b / top.count };
+}
+
+/**
+ * The largest group of like colors among the pixels at or above `minLightness`, or null when there are none.
+ *
+ * @param {Uint8ClampedArray} data RGBA pixels
+ * @param {number} minLightness HSL lightness, 0..1
+ * @returns {{ r: number, g: number, b: number, count: number } | null}
+ */
+function largestGroup(data, minLightness) {
   const shift = 8 - BUCKET_BITS;
   const buckets = new Map();
   for (let i = 0; i < data.length; i += 4) {
+    if (lightness({ r: data[i], g: data[i + 1], b: data[i + 2] }) < minLightness) continue;
     const key = ((data[i] >> shift) << (2 * BUCKET_BITS)) | ((data[i + 1] >> shift) << BUCKET_BITS) | (data[i + 2] >> shift);
     const bucket = buckets.get(key) ?? { r: 0, g: 0, b: 0, count: 0 };
     bucket.r += data[i];
@@ -30,8 +46,8 @@ function mainColor(img) {
     bucket.count += 1;
     buckets.set(key, bucket);
   }
-  const top = [...buckets.values()].reduce((best, bucket) => (bucket.count > best.count ? bucket : best));
-  return { r: top.r / top.count, g: top.g / top.count, b: top.b / top.count };
+  if (buckets.size === 0) return null;
+  return [...buckets.values()].reduce((best, bucket) => (bucket.count > best.count ? bucket : best));
 }
 
 // HSL lightness (0..1) of an RGB color (0..255 each).
