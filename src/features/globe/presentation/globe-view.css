@@ -1,0 +1,10 @@
+/* Turns the Blue Marble texture into a muted dark map: lighter land on a deep sea. */
+.globe-view[data-theme='satellite'] canvas {
+  filter: grayscale(0.85) brightness(0.85) contrast(1.15);
+}
+
+.globe-attribution {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-muted);
+}

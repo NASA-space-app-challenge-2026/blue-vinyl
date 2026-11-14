@@ -1,0 +1,91 @@
+:root {
+  --bg: #4b3a24;
+  --bg-deep: #3a2c1a;
+  --ink: #f3ece1;
+  --ink-muted: rgb(243 236 225 / 0.65);
+  --gutter: clamp(16px, 2vw, 32px);
+  --font: 'Gowun Batang', serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 60% 45%, var(--bg) 0%, var(--bg-deep) 100%);
+  color: var(--ink);
+  font-family: var(--font);
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6vh var(--gutter);
+}
+
+.corner {
+  position: fixed;
+  z-index: 3;
+}
+
+#corner-top-right {
+  top: var(--gutter);
+  right: var(--gutter);
+}
+
+#corner-bottom-left {
+  bottom: var(--gutter);
+  left: var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#corner-bottom-right {
+  bottom: var(--gutter);
+  right: var(--gutter);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+#bottom-center {
+  bottom: var(--gutter);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 760px) {
+  body {
+    overflow: auto;
+  }
+
+  .stage {
+    position: static;
+    flex-direction: column;
+    padding: 80px var(--gutter) 120px;
+  }
+
+  /* Stacked, the record lies over the sleeve's bottom instead of its right side. */
+  .stage .album-cover {
+    --record-overlap: 12vw;
+    width: 100%;
+    margin: 0 0 calc(-1 * var(--record-overlap));
+  }
+
+  .stage .album-cover-body {
+    right: 9%;
+    bottom: calc(6% + var(--record-overlap));
+  }
+
+  .stage .turntable {
+    width: 100%;
+  }
+}

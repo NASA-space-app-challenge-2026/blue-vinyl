@@ -1,0 +1,110 @@
+/* The sleeve's angle (--tilt) is set per album by album-cover.js. --record-overlap is how far the record covers it. */
+.album-cover {
+  --tilt: -3deg;
+  --record-overlap: min(8vw, 14vh);
+  position: relative;
+  flex: none;
+  width: min(46vw, 80vh);
+  aspect-ratio: 1;
+  margin-right: calc(-1 * var(--record-overlap));
+  transform: rotate(var(--tilt));
+  perspective: 1200px;
+  color: var(--ink);
+}
+
+/* Leans toward the mouse (--hover-x, --hover-y, set by album-cover.js) and eases back when it leaves. */
+.album-cover-face {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, #8a7458, #4a3a27);
+  box-shadow: 0 30px 60px rgb(0 0 0 / 0.45);
+  overflow: hidden;
+  transform: rotateX(var(--hover-x, 0deg)) rotateY(var(--hover-y, 0deg));
+  transition: transform 0.3s ease-out;
+}
+
+.album-cover-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.album-cover-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.15) 0%, rgb(0 0 0 / 0) 35%, rgb(0 0 0 / 0.55) 75%, rgb(0 0 0 / 0.7) 100%);
+}
+
+.album-cover-counter {
+  position: absolute;
+  top: 6%;
+  left: 7%;
+  margin: 0;
+  font-size: clamp(16px, 1.8vw, 28px);
+  letter-spacing: 0.3em;
+}
+
+.album-cover-body {
+  position: absolute;
+  left: 9%;
+  /* Keeps the text clear of the record lying over the sleeve's right side. */
+  right: calc(9% + var(--record-overlap));
+  bottom: 6%;
+}
+
+.album-cover-category {
+  margin: 0 0 0.4em;
+  font-size: clamp(12px, 1.3vw, 20px);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+.album-cover-title {
+  margin: 0 0 0.7em;
+  font-size: clamp(28px, 4vw, 64px);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.album-cover-tracks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: track;
+  font-size: clamp(14px, 1.7vw, 28px);
+}
+
+.album-cover-track {
+  counter-increment: track;
+  margin-top: 0.35em;
+  color: var(--ink-muted);
+}
+
+.album-cover-track::before {
+  content: counter(track) '. ';
+}
+
+.album-cover-track.is-active {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.album-cover-track-duration {
+  margin-left: 0.9em;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.album-credit {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+/* Neighbouring sleeves in the album column, placed by createAlbumColumn just off screen. */
+.stage .album-cover-neighbour {
+  position: absolute;
+  margin: 0;
+}
