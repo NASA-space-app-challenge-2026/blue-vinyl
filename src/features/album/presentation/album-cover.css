@@ -82,7 +82,17 @@
   color: var(--ink-muted);
 }
 
-.album-cover-track::before {
+.album-cover-track-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.album-cover-track-button::before {
   content: counter(track) '. ';
 }
 

@@ -20,9 +20,10 @@ const TUCKED_Z_INDEX = '2';
  *
  * @param {HTMLElement} parent
  * @param {import('../domain/album.js').Album[]} albums
+ * @param {{ onSelectTrack: (trackIndex: number) => void }} options  a track of the current album's sleeve was clicked
  */
-export function createAlbumColumn(parent, albums) {
-  const sleeve = createAlbumCover(parent);
+export function createAlbumColumn(parent, albums, { onSelectTrack }) {
+  const sleeve = createAlbumCover(parent, { onSelectTrack });
   const neighbours = NEIGHBOUR_PLACES.map((place) => {
     const cover = createAlbumCover(parent);
     cover.el.classList.add('album-cover-neighbour');

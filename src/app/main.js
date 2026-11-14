@@ -51,7 +51,7 @@ const slot = (id) => document.getElementById(id);
 const albumCredit = createAlbumCredit(slot('corner-bottom-right'));
 const playHint = createPlayHint(slot('bottom-center'));
 
-const albumColumn = createAlbumColumn(slot('stage'), albums);
+const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack });
 const turntable = createTurntableView(slot('stage'), {
   onToggle: togglePlayback,
   onCued: () => {
@@ -191,7 +191,17 @@ function trackProgressAt(trackIndex) {
 function seekTrack(trackProgress) {
   if (swapping) return;
   const trackIndex = trackIndexAt(album, elapsedMs / totalMs);
-  elapsedMs = (trackStartSec(album, trackIndex) + trackProgress * album.tracks[trackIndex].durationSec) * 1000;
+  seekTo((trackStartSec(album, trackIndex) + trackProgress * album.tracks[trackIndex].durationSec) * 1000);
+}
+
+// Plays the track at `trackIndex` from its start, as seekTrack does.
+function playFromTrack(trackIndex) {
+  if (swapping) return;
+  seekTo(trackStartSec(album, trackIndex) * 1000);
+}
+
+function seekTo(ms) {
+  elapsedMs = ms;
   globe.glide();
   if (state === PlaybackState.PLAYING) {
     render();

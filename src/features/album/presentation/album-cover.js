@@ -32,11 +32,13 @@ function formatDuration(sec) {
 
 /**
  * Album sleeve with title and track list. Falls back to a plain backdrop while the cover image is missing.
- * The face leans in 3D toward the mouse like a card held in the hand.
+ * The face leans in 3D toward the mouse like a card held in the hand. Clicking a track calls `onSelectTrack` with its
+ * index.
  *
  * @param {HTMLElement} parent
+ * @param {{ onSelectTrack?: (trackIndex: number) => void }} [options]
  */
-export function createAlbumCover(parent) {
+export function createAlbumCover(parent, { onSelectTrack } = {}) {
   const cover = el('article', 'album-cover');
   const counter = el('p', 'album-cover-counter');
   const body = el('div', 'album-cover-body');
@@ -76,9 +78,13 @@ export function createAlbumCover(parent) {
     counter.textContent = `${index + 1} / ${count}`;
 
     const list = el('ol', 'album-cover-tracks');
-    items = album.tracks.map((track) => {
+    items = album.tracks.map((track, i) => {
       const item = el('li', 'album-cover-track');
-      item.append(el('span', 'album-cover-track-title', track.title), el('span', 'album-cover-track-duration', formatDuration(track.durationSec)));
+      const button = el('button', 'album-cover-track-button');
+      button.type = 'button';
+      button.append(el('span', 'album-cover-track-title', track.title), el('span', 'album-cover-track-duration', formatDuration(track.durationSec)));
+      button.addEventListener('click', () => onSelectTrack?.(i));
+      item.append(button);
       return item;
     });
     list.append(...items);
