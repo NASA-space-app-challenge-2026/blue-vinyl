@@ -39,13 +39,13 @@ const MIDI_CHANNELS = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 
  * @typedef {Object} Song
  * @property {import('../../tracks/domain/bird-track.js').BirdTrack[]} tracks
  * @property {Object} lead  the Instrument that plays the melody
+ * @property {number} msPerSec  ms of data time that pass in a second of the track
  */
 
 /**
- * @param {{ composer: import('../domain/composers/flock.js').FlockComposer, msPerSec: number }} options
- *   `msPerSec`: ms of data time that pass in a second of the track.
+ * @param {{ composer: import('../domain/composers/flock.js').FlockComposer }} options
  */
-export function createSoundEngine({ composer, msPerSec }) {
+export function createSoundEngine({ composer }) {
   let context = null;
   let output = null;
   let panner = null;
@@ -143,7 +143,7 @@ export function createSoundEngine({ composer, msPerSec }) {
       composer.reset();
     }
     while (nextStepAt < now + LOOKAHEAD_SEC) {
-      const dataTime = (anchor.elapsedSec + (nextStepAt - anchor.audioSec)) * msPerSec;
+      const dataTime = (anchor.elapsedSec + (nextStepAt - anchor.audioSec)) * song.msPerSec;
       const flock = sampleFlock(song.tracks, dataTime);
       if (flock) {
         if (step === 0) place(flock, nextStepAt);

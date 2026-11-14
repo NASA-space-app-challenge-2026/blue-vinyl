@@ -6,7 +6,7 @@ export const AlbumCategory = Object.freeze({
  * @typedef {Object} Track
  * @property {string} title
  * @property {number} durationSec
- * @property {string} [flockUrl] the flock year the track plays (see tracks/domain/flock-year.js)
+ * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
  * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
  * @property {string} [color] CSS color the track's data is drawn in
  */
@@ -21,6 +21,7 @@ export const AlbumCategory = Object.freeze({
  * @property {string} coverUrl
  * @property {string} coverCredit
  * @property {Track[]} tracks
+ * @property {number} [msPerSec] ms of data time a second of a track plays, for an album whose tracks play data
  */
 
 /**

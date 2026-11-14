@@ -17,10 +17,13 @@ import { createVolumeControl } from '../features/controls/presentation/volume-co
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_THEME, GlobeTheme } from '../features/globe/domain/globe-theme.js';
 import { createGlobeAttribution } from '../features/globe/presentation/globe-attribution.js';
+import { createDateLabel } from '../features/globe/presentation/date-label.js';
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
+import { createHalo } from '../features/globe/presentation/halo.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
-import { DAY_SEC, MigrationComposer } from '../features/music/domain/composers/migration.js';
-import { loadFlockYear } from '../features/tracks/data/flock-source.js';
+import { FlockComposer } from '../features/music/domain/composers/flock.js';
+import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
+import { sampleFlock } from '../features/tracks/domain/bird-track.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 
@@ -28,11 +31,12 @@ import { createTurntableView } from '../features/turntable/presentation/turntabl
 let albumIndex = 0;
 let album;
 let totalMs;
-// What each track of the album plays, by track index, once its flock year has loaded: { year, lead }, or null for a
-// track without one. Empty until then.
-let flockTracks = [];
-// The track whose flock the globe shows.
-let shownFlockTrack = null;
+// What each track of the album plays, by track index, once its birds have loaded: { tracks, lead }, or null for a
+// track without birds. Empty until then.
+let songs = [];
+// The song whose birds the globe shows, and where its flock is now (the globe keeps it in the middle).
+let shownSong = null;
+let focus = null;
 
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
@@ -61,6 +65,7 @@ const turntable = createTurntableView(slot('stage'), {
     if (progress === null) return;
     elapsedMs = progress * totalMs;
     render();
+    globe.glide();
   },
   onDrop: (progress) => {
     elapsedMs = progress * totalMs;
@@ -71,8 +76,11 @@ const turntable = createTurntableView(slot('stage'), {
 const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
 const globe = createGlobeView(turntable.labelSlot);
 const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
-const composer = new MigrationComposer();
-const soundEngine = createSoundEngine({ composer, stepSec: DAY_SEC, onPulse: globe.flock.pulse });
+globe.setFocus(() => focus);
+const dateLabel = createDateLabel(turntable.labelSlot);
+const halo = createHalo(turntable.haloCanvas, () => soundEngine.analyser);
+new ResizeObserver(() => halo.place(turntable.labelDisc())).observe(turntable.haloCanvas);
+const soundEngine = createSoundEngine({ composer: new FlockComposer() });
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
@@ -110,20 +118,28 @@ function showAlbum(index) {
   albumColumn.setAlbum(albumIndex);
   turntable.setTrackStarts(trackBoundaries(album).slice(1, -1));
   albumCredit.render(album);
-  flockTracks = [];
-  shownFlockTrack = null;
-  globe.flock.hide();
-  loadFlocks(album);
+  songs = [];
+  showSong(null, null);
+  loadSongs(album);
 }
 
-// Loads the flock years of `target`'s tracks and fits the composer to them, unless another album is shown by then.
-async function loadFlocks(target) {
-  if (!target.tracks.some((track) => track.flockUrl)) return;
-  const years = await Promise.all(target.tracks.map((track) => (track.flockUrl ? loadFlockYear(track.flockUrl) : null)));
+// Loads the birds of `target`'s tracks, unless another album is shown by then.
+async function loadSongs(target) {
+  if (!target.tracks.some((track) => track.birdsUrl)) return;
+  const perTrack = await Promise.all(target.tracks.map((track) => (track.birdsUrl ? loadBirdTracks(track.birdsUrl) : null)));
   if (album !== target) return;
-  composer.setAlbum(years.filter(Boolean));
-  flockTracks = years.map((year, i) => year && { year, lead: target.tracks[i].lead });
+  songs = perTrack.map((tracks, i) => tracks && { tracks, lead: target.tracks[i].lead, msPerSec: target.msPerSec });
   render();
+  globe.glide();
+}
+
+// Puts `song`'s birds on the globe in `color`, and the glow in it; null takes them off.
+function showSong(song, color) {
+  shownSong = song;
+  focus = null;
+  globe.birds.reset(color);
+  dateLabel.show(null);
+  if (color) halo.setColor(color);
 }
 
 // Audio may only start from a user gesture, so every gesture that can start playback unlocks it.
@@ -183,20 +199,25 @@ function render() {
   const trackIndex = trackIndexAt(album, progress);
   turntable.render(state, progress);
   albumColumn.render(trackIndex);
-  renderFlock(trackIndex);
+  renderSong(trackIndex);
 }
 
-// Moves the globe's flock to the clock and, while playing, lets the music follow it.
-function renderFlock(trackIndex) {
-  const flockTrack = flockTracks[trackIndex];
-  if (!flockTrack) return;
-  const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
-  if (shownFlockTrack !== flockTrack) {
-    shownFlockTrack = flockTrack;
-    globe.flock.show(flockTrack.year, album.tracks[trackIndex].color);
+// Draws the birds, the date and the flock's place at the clock and, while playing, lets the music follow it.
+function renderSong(trackIndex) {
+  const song = songs[trackIndex];
+  if (!song) return;
+  if (shownSong !== song) {
+    showSong(song, album.tracks[trackIndex].color);
+    globe.glide();
   }
-  globe.flock.setDay(elapsedSec / DAY_SEC);
-  if (state === PlaybackState.PLAYING) soundEngine.follow(flockTrack, elapsedSec);
+  const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  const time = elapsedSec * album.msPerSec;
+  globe.birds.render(song.tracks, time);
+  dateLabel.show(time);
+  focus = sampleFlock(song.tracks, time) ?? focus;
+  if (state !== PlaybackState.PLAYING) return;
+  soundEngine.follow(song, elapsedSec);
+  halo.wake();
 }
 
 function setState(next) {
@@ -209,7 +230,8 @@ function setState(next) {
 
 function tick(ts) {
   if (state !== PlaybackState.PLAYING) return;
-  if (lastFrameTs !== null) elapsedMs += ts - lastFrameTs;
+  const dtMs = lastFrameTs === null ? 0 : ts - lastFrameTs;
+  elapsedMs += dtMs;
   lastFrameTs = ts;
   if (elapsedMs >= totalMs) {
     elapsedMs = 0;
@@ -217,6 +239,7 @@ function tick(ts) {
     return;
   }
   render();
+  if (!globe.gliding) globe.follow(dtMs / 1000);
   tickFrame = requestAnimationFrame(tick);
 }
 
