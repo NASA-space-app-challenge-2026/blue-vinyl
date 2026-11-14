@@ -212,3 +212,6 @@ notebooks/.cache/
 
 # Album data downloaded for analysis (local only, see docs/data-guide.md)
 data/*/raw/
+
+# Node packages for scripts/
+node_modules/

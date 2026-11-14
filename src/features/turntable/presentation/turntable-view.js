@@ -8,6 +8,7 @@ import {
   REST_BEARING,
   TONEARM,
   armBearing,
+  grooveProgress,
   grooveRadius,
   needleAt,
   needleRadius,
@@ -40,6 +41,9 @@ const NEEDLE_RADIUS = 0.008;
 // Time constant (s) of the arm's ease toward its target, and how close (deg) counts as arrived.
 const GLIDE_TAU_SEC = 0.15;
 const GLIDE_SETTLE_DEG = 0.05;
+// A move of the needle's groove by more than this (deg of arm swing) at once, such as a seek, glides there instead of
+// jumping; playback itself moves far less than this a frame.
+const ARM_JUMP_DEG = 0.5;
 
 const COLOR = Object.freeze({
   vinyl: '#0d0d0d',
@@ -213,6 +217,107 @@ function layer(className, markup) {
   return node;
 }
 
+// The progress ring in the label's own units (radius 1 at its rim, where the globe's edge is): the rail runs centred
+// on that edge; how thick it is, and how wide a band round it takes a click.
+const RING = Object.freeze({ radius: 1, width: 0.014, dotRadius: 0.024, hitWidth: 0.09 });
+// A change of more than JUMP (share of a turn) within a track, such as a seek, glides there over GLIDE_MS instead of
+// jumping; playback itself moves far less than JUMP a frame.
+const RING_GLIDE = Object.freeze({ jump: 0.02, ms: 450 });
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+}
+
+/** The point on the rail `share` (0..1) of a turn clockwise from 12 o'clock. */
+function ringPoint(share) {
+  const angle = share * 2 * Math.PI;
+  return [RING.radius * Math.sin(angle), -RING.radius * Math.cos(angle)];
+}
+
+/** Path of the rail from 12 o'clock clockwise for `share` (0..1) of a turn; a full turn is drawn as two halves. */
+function arcFromTop(share) {
+  const r = RING.radius;
+  const top = `M 0 ${-r}`;
+  if (share <= 0) return '';
+  if (share >= 1) return `${top} A ${r} ${r} 0 1 1 0 ${r} A ${r} ${r} 0 1 1 0 ${-r}`;
+  const [x, y] = ringPoint(share);
+  return `${top} A ${r} ${r} 0 ${share > 0.5 ? 1 : 0} 1 ${x} ${y}`;
+}
+
+/**
+ * The current track's progress round the label's rim: a faint rail, filled clockwise from 12 o'clock as far as the
+ * track has played, with a dot at the head. Clicking the rail calls `onSeek` with the point of the track there.
+ *
+ * @param {(trackProgress: number) => void} onSeek
+ */
+function createProgressRing(onSeek) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'record-progress');
+  svg.setAttribute('viewBox', '-1 -1 2 2');
+  svg.innerHTML = `
+    <circle class="record-progress-rail" r="${RING.radius}" fill="none" stroke-width="${RING.width}"/>
+    <path class="record-progress-fill" fill="none" stroke-width="${RING.width}"/>
+    <circle class="record-progress-hit" r="${RING.radius}" fill="none" stroke="transparent" stroke-width="${RING.hitWidth}"/>
+    <circle class="record-progress-dot" r="${RING.dotRadius}"/>`;
+  const fill = svg.querySelector('.record-progress-fill');
+  const dot = svg.querySelector('.record-progress-dot');
+
+  svg.querySelector('.record-progress-hit').addEventListener('click', (event) => {
+    const rect = svg.getBoundingClientRect();
+    const x = event.clientX - (rect.left + rect.width / 2);
+    const y = event.clientY - (rect.top + rect.height / 2);
+    // Clockwise from 12 o'clock, 0..1.
+    const turn = (Math.atan2(x, -y) / (2 * Math.PI) + 1) % 1;
+    onSeek(turn);
+  });
+
+  // The share the ring shows, the one it is headed for, the track they belong to, and the glide under way, if any.
+  let shown = 0;
+  let target = 0;
+  let track = null;
+  let glide = null;
+
+  function draw(share) {
+    shown = share;
+    const [x, y] = ringPoint(share);
+    fill.setAttribute('d', arcFromTop(share));
+    dot.setAttribute('cx', String(x));
+    dot.setAttribute('cy', String(y));
+  }
+
+  // Eases from where the glide began to the target, which may keep moving while the track plays.
+  function step(now) {
+    glide.start ??= now;
+    const t = Math.min(1, (now - glide.start) / RING_GLIDE.ms);
+    draw(glide.from + easeInOutCubic(t) * (target - glide.from));
+    glide.frame = t < 1 ? requestAnimationFrame(step) : null;
+    if (t === 1) glide = null;
+  }
+
+  /**
+   * @param {number} trackProgress 0..1
+   * @param {unknown} trackKey which track it is; another track starts the ring from its place at once
+   */
+  function render(trackProgress, trackKey) {
+    const next = Math.min(1, Math.max(0, trackProgress));
+    const jumped = Math.abs(next - target) > RING_GLIDE.jump;
+    target = next;
+    if (trackKey !== track) {
+      track = trackKey;
+      if (glide) cancelAnimationFrame(glide.frame);
+      glide = null;
+      draw(target);
+    } else if (jumped) {
+      if (glide) cancelAnimationFrame(glide.frame);
+      glide = { from: shown, start: null, frame: requestAnimationFrame(step) };
+    } else if (!glide) {
+      draw(target);
+    }
+  }
+
+  return { el: svg, render };
+}
+
 /**
  * Record player: the vinyl (SVG) under an HTML label that features mount canvases into (the globe), under the
  * tonearm (SVG). The platter spins up while its motor runs and coasts to a stop otherwise.
@@ -222,6 +327,12 @@ function layer(className, markup) {
  * record, the needle sets down, the motor starts and `onDrop(progress)` is called; released off it, the arm
  * returns to rest and `onLift()` is called.
  *
+ * Round the label's rim runs the current track's progress ring: one turn per track from 12 o'clock, its rail filled
+ * where the track has played. Clicking the ring calls `onSeek(trackProgress)` with the point of the track clicked.
+ *
+ * Clicking the grooves calls `onSelectGroove(progress)` with the album progress of the groove clicked; clicking the
+ * record off the grooves calls `onToggle()`.
+ *
  * @param {HTMLElement} parent
  * @param {{
  *   onToggle: () => void,
@@ -230,11 +341,13 @@ function layer(className, markup) {
  *   onScrub: (progress: number | null) => void,
  *   onDrop: (progress: number) => void,
  *   onLift: () => void,
+ *   onSeek: (trackProgress: number) => void,
+ *   onSelectGroove: (progress: number) => void,
  * }} options
- *   onToggle: called when the record is clicked.
+ *   onToggle: called when the record is clicked off the grooves.
  *   onCued: called when the arm, swung on by render(CUEING), has reached its groove.
  */
-export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub, onDrop, onLift }) {
+export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek, onSelectGroove }) {
   const root = document.createElement('div');
   root.className = 'turntable';
   root.style.aspectRatio = `${BOUNDS.width} / ${BOUNDS.height}`;
@@ -256,12 +369,8 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
   labelSlot.className = 'record-label-slot';
   const rim = document.createElement('div');
   rim.className = 'record-label-rim';
-  const progressRing = document.createElement('div');
-  progressRing.className = 'record-progress';
-  const dot = document.createElement('div');
-  dot.className = 'record-progress-dot';
-  progressRing.append(dot);
-  label.append(labelSlot, rim, progressRing);
+  const progressRing = createProgressRing(onSeek);
+  label.append(labelSlot, rim, progressRing.el);
 
   const armLayer = layer('turntable-arm-layer', armLayerSvg());
   const arm = armLayer.querySelector('.arm');
@@ -270,10 +379,17 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
   const record = document.createElement('div');
   record.className = 'turntable-record';
   record.style.transformOrigin = `${(-BOUNDS.left / BOUNDS.width) * 100}% ${(-BOUNDS.top / BOUNDS.height) * 100}%`;
-  record.append(vinylLayer, label);
+  // A canvas over the whole record, between the vinyl and the label, for a glow around the globe.
+  const haloCanvas = document.createElement('canvas');
+  haloCanvas.className = 'record-halo';
+  record.append(vinylLayer, haloCanvas, label);
 
   root.append(record, armLayer);
-  vinylLayer.addEventListener('click', onToggle);
+  vinylLayer.addEventListener('click', (event) => {
+    const progress = grooveProgress(pointerRadius(event));
+    if (progress >= 0 && progress <= 1) onSelectGroove(progress);
+    else onToggle();
+  });
   parent.append(root);
 
   let bearing = REST_BEARING;
@@ -348,13 +464,24 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     glide();
   }
 
-  // Moves the needle to the groove for `progress`; during a glide the arm eases there instead of jumping.
+  // Moves the needle to the groove for `progress`; during a glide, or for a far move, the arm eases there instead of
+  // jumping.
   function setProgress(progress) {
     if (!onRecord || dragging) return;
     targetBearing = armBearing(grooveRadius(progress));
     if (glideFrame !== null) return;
+    if (Math.abs(targetBearing - bearing) > ARM_JUMP_DEG) {
+      glide();
+      return;
+    }
     bearing = targetBearing;
     placeArm();
+  }
+
+  // Distance (vinyl radii) from the record centre to a pointer event; the grooves are round, so the spin doesn't matter.
+  function pointerRadius(event) {
+    const { x, y, r } = recordGeometry();
+    return Math.hypot(event.clientX - x, event.clientY - y) / r;
   }
 
   // Bearing (degrees clockwise from up, 0..360) from the pivot to a pointer event.
@@ -421,10 +548,12 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
 
   /**
    * @param {string} state one of PlaybackState
-   * @param {number} progress 0..1
+   * @param {number} progress 0..1 through the album
+   * @param {number} trackProgress 0..1 through the current track
+   * @param {unknown} trackKey the current track, to tell when it changes
    */
-  function render(state, progress) {
-    progressRing.style.transform = `rotate(${progress}turn)`;
+  function render(state, progress, trackProgress, trackKey) {
+    progressRing.render(trackProgress, trackKey);
     if (state === PlaybackState.STOPPED) {
       if (onRecord) lift();
     } else if (state === PlaybackState.CUEING) {
@@ -435,5 +564,11 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     }
   }
 
-  return { labelSlot, recordEl: record, recordGeometry, setTrackStarts, render };
+  /** The label's centre and radius in the halo canvas's CSS pixels. */
+  function labelDisc() {
+    const r = label.offsetWidth / 2;
+    return { x: label.offsetLeft + r, y: label.offsetTop + r, r };
+  }
+
+  return { labelSlot, haloCanvas, labelDisc, recordEl: record, recordGeometry, setTrackStarts, render };
 }

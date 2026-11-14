@@ -47,8 +47,8 @@ export const SeaStyle = Object.freeze({
   /** One bass note a year, on the root of the year's chord. */
   LINE: 'line',
   /**
-   * Tolling, after the opening of Rachmaninoff's Piano Concerto No. 2: the left hand's low F1 half a bar after the
-   * chord, as in the score, the same note every year, struck in each year the sea rose and harder the higher it is.
+   * Tolling, after the opening of Rachmaninoff's Piano Concerto No. 2: the low F1, doubled an octave up, half a bar
+   * after the ice note, the same notes every year, struck in each year the sea rose and harder the higher it is.
    */
   BELLS: 'bells',
 });
@@ -73,8 +73,8 @@ export const Harmony = Object.freeze({
     timpani: 36,
   }),
   /**
-   * The first bars of Rachmaninoff's Second Concerto, all over F: F minor, then with D♭, then with D♮ added in the
-   * middle of both hands (the left hand F2 C3 D♭3 A♭3), over and over; F2 and C3 held under them.
+   * After the first bars of Rachmaninoff's Second Concerto, all over F: F minor, then with D♭, then with D♮ added,
+   * over and over; F2 and C3 held under them.
    */
   OPENING: Object.freeze({
     chords: [[5, 8, 0], [5, 8, 0, 1], [5, 8, 0, 2]],
@@ -110,9 +110,6 @@ export const KEY_TONIC = 0;
  * @property {number} homeMidi
  * @property {number} kmPerStep million km² per scale step
  * @property {number} lengthBeats how long each year's note lasts, in beats (legato above 1)
- * @property {boolean} [chord] play each year as a chord for both hands, as in the opening of Rachmaninoff's Second
- *   Concerto: in the right hand the ice note on top with the year's chord under it within an octave, in the left hand
- *   the root, its fifth, any added tone and the third an octave up, low in the bass
  * @property {Harmony} [harmony] Harmony.CYCLE when left out
  * @property {number} [level] gain on top of the instrument's MIX level (1 when left out)
  * @property {SeaVoice} sea
@@ -121,19 +118,14 @@ export const KEY_TONIC = 0;
 // Sea level is heard as strength, not pitch. The held sea line, the harp wave and the wave stroke play harder the higher
 // the sea, from very soft at the first year to strong at +100 mm. The sea line plays the root of the year's chord low
 // in the bass; over it, on the harp, each year a wave washes in and recedes through the chord; under it a wave stroke
-// says it is water. The bells too, from pp in the first year to ff at +100 mm.
+// says it is water. The bells too, from mf in the first year to fff at +100 mm.
 const SEA_TOP_MM = 100;
 const SEA_LINE = Object.freeze({ velocity: 40, velocityRise: 80, overlapSec: 0.12 });
 // Attack and release of the sea line, by whether it is held.
 const SEA_ENVELOPE = Object.freeze({ held: { attackSec: 0.18, releaseSec: 0.5 }, struck: { attackSec: 0.02, releaseSec: 0.5 } });
-// Bells: the left hand's low single note, F1, as in the score, from pp at the first year's sea level (as the score
-// opens) to ff at +100 mm.
-const BELL = Object.freeze({ keys: [29], velocity: 32, velocityRise: 86 });
-// The left hand's chord on the beat, a little softer than the right hand.
-const LEFT_HAND = Object.freeze({ velocity: -6 });
-// A right-hand chord: under the top note, this many tones of the year's chord within an octave, rolled upwards a
-// little, the inner voices softer than the top.
-const RIGHT_HAND = Object.freeze({ under: 3, rollSec: 0.015, inner: -8 });
+// Bells: the score's low F1, doubled an octave up (F2) so it is heard on small speakers that cannot play F1's 44 Hz,
+// from mf at the first year's sea level, already clear, to fff at +100 mm.
+const BELL = Object.freeze({ keys: [29, 41], velocity: 64, velocityRise: 63 });
 const WAVE_NOTES = 6;
 const WAVE_VELOCITY = Object.freeze({ base: 34, rise: 64, swell: 16 });
 const WATER_VELOCITY = Object.freeze({ base: 45, rise: 80 });
@@ -201,8 +193,8 @@ function seaLine(years, timeline, end, mix, voice, harmony) {
   return notes;
 }
 
-// The tolling sea: the low F1 `offsetBeats` after the chord, held to the end of the bar as the score's half note, in the
-// first year and in every year the sea rose, harder the higher it is. The last one lasts to `end`.
+// The tolling sea: the low F1 and F2 `offsetBeats` after the ice note, held to the end of the bar as the score's half
+// note, in the first year and in every year the sea rose, harder the higher it is. The last one lasts to `end`.
 function seaBells(years, timeline, end, mix, voice) {
   const offsetSec = voice.offsetBeats * timeline.beatSec;
   return years.flatMap((year, i) => {
@@ -220,24 +212,6 @@ function seaBells(years, timeline, end, mix, voice) {
       ...SEA_ENVELOPE.struck,
     }));
   });
-}
-
-// The left hand's chord of a year: the root low in the bass, its fifth, any added tone of the chord above the fifth,
-// and the third an octave up (in the score F2, C3, then D♭3 or D3, A♭3).
-function leftHandChord(index, harmony) {
-  const [root, third, , ...added] = harmony.chords[index % harmony.chords.length];
-  const bass = harmony.roots[index % harmony.roots.length];
-  const fifth = bass + 7;
-  const above = (pc) => fifth + ((((pc - fifth) % 12) + 12) % 12 || 12);
-  return [bass, fifth, ...added.map(above), bass + 12 + ((third - root + 12) % 12)].sort((a, b) => a - b);
-}
-
-// The year's chord tones under `top`, within an octave, the highest `count` of them.
-function chordUnder(top, index, count, harmony) {
-  const chord = harmony.chords[index % harmony.chords.length];
-  const tones = [];
-  for (let midi = top - 12; midi < top; midi++) if (chord.includes(((midi % 12) + 12) % 12)) tones.push(midi);
-  return tones.slice(-count);
 }
 
 // The harp wave and the Seashore stroke of one year.
@@ -312,23 +286,15 @@ export function iceSeaScore(years, voice, timeline, durationSec, mix = MIX) {
     const top = minorDegree(voice.homeMidi, steps[i], KEY_TONIC);
     const velocity = Math.min(VELOCITY.max, VELOCITY.base + VELOCITY.perStep * change);
     const level = mix[voice.instrument] * (voice.level ?? 1);
-    // The ice note, and in a chord for both hands the year's chord under it, rolled up to the top.
-    const left = voice.chord ? leftHandChord(i, harmony) : [];
-    // The right hand stays above the left, so the hands never strike the same key.
-    const right = voice.chord ? chordUnder(top, i, RIGHT_HAND.under, harmony).filter((midi) => midi > Math.max(...left)) : [];
-    const keys = [...left, ...right, top];
-    keys.forEach((midi, k) => {
-      const at = timeSec + k * RIGHT_HAND.rollSec;
-      notes.push({
-        timeSec: at,
-        durationSec: last ? end - at : timeline.beatSec * voice.lengthBeats,
-        instrument: voice.instrument,
-        part: Part.ICE,
-        midi,
-        gain: velocityGain(Math.max(1, velocity + (midi === top ? 0 : k < left.length ? LEFT_HAND.velocity : RIGHT_HAND.inner))) * level,
-        attackSec: 0.02,
-        releaseSec: 0.5,
-      });
+    notes.push({
+      timeSec,
+      durationSec: last ? end - timeSec : timeline.beatSec * voice.lengthBeats,
+      instrument: voice.instrument,
+      part: Part.ICE,
+      midi: top,
+      gain: velocityGain(velocity) * level,
+      attackSec: 0.02,
+      releaseSec: 0.5,
     });
     notes.push(...seaWave(timeSec + seaOffsetSec, year.seaLevelMm, i, mix, harmony));
     if (year.recordLow) {

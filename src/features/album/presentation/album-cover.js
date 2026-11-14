@@ -1,4 +1,4 @@
-import { AlbumCategory } from '../domain/album.js';
+import { AlbumCategory, trackCover } from '../domain/album.js';
 
 const CATEGORY_LABEL = Object.freeze({
   [AlbumCategory.BIODIVERSITY]: 'Biodiversity',
@@ -33,16 +33,20 @@ function formatDuration(sec) {
 }
 
 /**
- * Album sleeve with title and track list. Falls back to a plain backdrop while the cover image is missing.
- * The face leans in 3D toward the mouse like a card held in the hand.
+ * Album sleeve with title and track list. It shows the current track's cover (see trackCover), fading from one to the
+ * next, and falls back to a plain backdrop while the cover image is missing.
+ * The face leans in 3D toward the mouse like a card held in the hand. Clicking a track calls `onSelectTrack` with its
+ * index.
  *
  * @param {HTMLElement} parent
+ * @param {{ onSelectTrack?: (trackIndex: number) => void }} [options]
  */
-export function createAlbumCover(parent) {
+export function createAlbumCover(parent, { onSelectTrack } = {}) {
   const cover = el('article', 'album-cover');
   const counter = el('p', 'album-cover-counter');
   const body = el('div', 'album-cover-body');
   const face = el('div', 'album-cover-face');
+  let album = null;
   let image = null;
   let items = [];
 
@@ -64,23 +68,41 @@ export function createAlbumCover(parent) {
     face.style.removeProperty('--hover-y');
   });
 
-  /** @param {{ album: import('../domain/album.js').Album, index: number, count: number }} options */
-  function setAlbum({ album, index, count }) {
-    image?.remove();
+  // Fades `url` in over the covers shown, which go once it is in; another album's cover replaces them at once.
+  function showCover(url, fade) {
+    if (image?.getAttribute('src') === url) return;
     const img = el('img', 'album-cover-image');
-    img.src = album.coverUrl;
+    img.src = url;
     img.alt = '';
     img.addEventListener('error', () => img.remove());
-    face.prepend(img);
+    const removeOthers = () => face.querySelectorAll('.album-cover-image').forEach((other) => other !== img && other.remove());
+    if (!fade) {
+      removeOthers();
+      img.classList.add('is-shown');
+    } else {
+      img.addEventListener('load', () => img.classList.add('is-shown'), { once: true });
+      img.addEventListener('transitionend', removeOthers, { once: true });
+    }
+    face.querySelector('.album-cover-shade').before(img);
     image = img;
+  }
+
+  /** @param {{ album: import('../domain/album.js').Album, index: number, count: number }} options */
+  function setAlbum({ album: next, index, count }) {
+    album = next;
+    showCover(trackCover(album, 0).url, false);
     cover.style.setProperty('--tilt', `${tiltDeg(index)}deg`);
 
     counter.textContent = `${index + 1} / ${count}`;
 
     const list = el('ol', 'album-cover-tracks');
-    items = album.tracks.map((track) => {
+    items = album.tracks.map((track, i) => {
       const item = el('li', 'album-cover-track');
-      item.append(el('span', 'album-cover-track-title', track.title), el('span', 'album-cover-track-duration', formatDuration(track.durationSec)));
+      const button = el('button', 'album-cover-track-button');
+      button.type = 'button';
+      button.append(el('span', 'album-cover-track-title', track.title), el('span', 'album-cover-track-duration', formatDuration(track.durationSec)));
+      button.addEventListener('click', () => onSelectTrack?.(i));
+      item.append(button);
       return item;
     });
     list.append(...items);
@@ -89,6 +111,7 @@ export function createAlbumCover(parent) {
 
   /** @param {number} activeTrackIndex */
   function render(activeTrackIndex) {
+    showCover(trackCover(album, activeTrackIndex).url, true);
     items.forEach((item, i) => item.classList.toggle('is-active', i === activeTrackIndex));
   }
 

@@ -1,11 +1,16 @@
 {
   "name": "blue-vinyl",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "npx --yes browser-sync@3.0.4 start --server --files \"index.html\" \"src/**/*\" \"data/**/*\" --no-notify --no-ui",
     "dev": "npm start",
     "watch": "npm start",
     "serve": "npx --yes serve@14.2.6 .",
-    "notebook": "uvx --with pandas --with matplotlib --with requests --with geopandas jupyter lab notebooks"
+    "notebook": "uvx --with pandas --with matplotlib --with requests --with geopandas jupyter lab notebooks",
+    "soundfont": "node scripts/build-soundfont.mjs"
+  },
+  "devDependencies": {
+    "spessasynth_core": "4.3.20"
   }
 }

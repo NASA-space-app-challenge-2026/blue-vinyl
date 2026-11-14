@@ -1,6 +1,14 @@
-import { Harmony, Instrument, SeaStyle } from '../../music/domain/ice-sea-score.js';
+import { Harmony, Instrument as IceSeaInstrument, SeaStyle } from '../../music/domain/ice-sea-score.js';
 import { YEAR_TIMELINE, trackDurationSec } from '../../tracks/domain/year-timeline.js';
 import { AlbumCategory } from '../domain/album.js';
+import { Instrument } from '../../music/domain/instruments.js';
+import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
+
+const ARCTIC_BIRD_TRACKS = 'data/arctic_bird/tracks';
+const ARCTIC_BIRD_COVERS = 'assets/albums/arctic-bird';
+// A week of the year a second: a bird's year in about 52 s.
+const WEEK_A_SECOND_MS = 7 * DAY_MS;
+const BIRD_YEAR_SEC = YEAR_MS / WEEK_A_SECOND_MS;
 
 const GLACIER_DATA = 'data/glacier/tracks';
 // 32 years (1993–2024), one a bar at the score's tempo (1.82 s) with no intro, then the last chord's tail: 59.5 s.
@@ -9,6 +17,37 @@ const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
+  {
+    id: 'arctic-bird',
+    category: AlbumCategory.BIODIVERSITY,
+    title: 'A Year on the Wing',
+    coverUrl: 'assets/albums/arctic-bird/cover.jpg',
+    coverCredit: 'Data: Arctic Animal Movement Archive, Movebank · NASA SVS 4877',
+    msPerSec: WEEK_A_SECOND_MS,
+    // The Buff-breasted sandpiper, from Alaska's Arctic coast to the Pampas, two of the four species of the archive's
+    // public bird studies that fly the farthest in a year, and the Northern pintail, from northern Japan to eastern
+    // Siberia (see notebooks/arctic_bird_album.ipynb, section 9).
+    tracks: [
+      // Covers: the lead photos of the species' English Wikipedia articles, from Wikimedia Commons (the Hudsonian
+      // whimbrel, the whimbrel of the Americas that the Alaska study tags).
+      {
+        title: 'Buff-breasted Sandpiper', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/buff_breasted_sandpiper.csv`, lead: Instrument.FLUTE, color: '#f0a040',
+        coverUrl: `${ARCTIC_BIRD_COVERS}/buff_breasted_sandpiper.jpg`, coverCredit: 'Photo: Tim Lenz, CC BY 2.0, via Wikimedia Commons',
+      },
+      {
+        title: 'Whimbrel', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/whimbrel.csv`, lead: Instrument.OBOE, color: '#e8785a',
+        coverUrl: `${ARCTIC_BIRD_COVERS}/whimbrel.jpg`, coverCredit: 'Photo: Charles J. Sharp, CC BY-SA 4.0, via Wikimedia Commons',
+      },
+      {
+        title: 'Yellow-billed Loon', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/yellow_billed_loon.csv`, lead: Instrument.FRENCH_HORN, color: '#68b4dc',
+        coverUrl: `${ARCTIC_BIRD_COVERS}/yellow_billed_loon.jpg`, coverCredit: 'Photo: Ryan Askren, USGS Alaska Science Center, public domain, via Wikimedia Commons',
+      },
+      {
+        title: 'Northern Pintail', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/northern_pintail.csv`, lead: Instrument.OCARINA, color: '#a8aeb8',
+        coverUrl: `${ARCTIC_BIRD_COVERS}/northern_pintail.jpg`, coverCredit: 'Photo: J.M.Garg, CC BY-SA 3.0, via Wikimedia Commons',
+      },
+    ],
+  },
   {
     id: 'glacier',
     category: AlbumCategory.CLIMATE,
@@ -29,14 +68,14 @@ export const albums = [
           // score's first chord), and each 0.4 million km² is one step of C minor. Half a bar later the left hand strikes
           // the score's low F1, in each year the sea rose, harder the higher the sea.
           voice: {
-            instrument: Instrument.PIANO,
+            instrument: IceSeaInstrument.PIANO,
             homeMidi: 77,
             kmPerStep: 0.4,
             lengthBeats: 1,
             chord: true,
             harmony: Harmony.OPENING,
             level: 0.407,
-            sea: { instrument: Instrument.PIANO, style: SeaStyle.BELLS, offsetBeats: 0.5, held: false, transpose: 0, level: 0.32 },
+            sea: { instrument: IceSeaInstrument.PIANO, style: SeaStyle.BELLS, offsetBeats: 0.5, held: false, transpose: 0, level: 0.32 },
           },
         },
       },
@@ -49,11 +88,11 @@ export const albums = [
           poleLat: -90,
           // Cello; the normal is C4 and each 0.15 million km² is one step of C minor. The sea is a held horn line.
           voice: {
-            instrument: Instrument.CELLO,
+            instrument: IceSeaInstrument.CELLO,
             homeMidi: 60,
             kmPerStep: 0.15,
             lengthBeats: 1.12,
-            sea: { instrument: Instrument.HORN, offsetBeats: 0, held: true, transpose: 12, level: 1 },
+            sea: { instrument: IceSeaInstrument.HORN, offsetBeats: 0, held: true, transpose: 12, level: 1 },
           },
         },
       },

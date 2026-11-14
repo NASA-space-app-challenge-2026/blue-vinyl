@@ -13,8 +13,7 @@ const COLLAPSE_DELAY_MS = 2500;
  * It folds back after COLLAPSE_DELAY_MS without the pointer or keyboard focus inside.
  *
  * @param {HTMLElement} parent
- * @param {{ onChange?: (level: number) => void }} [options] onChange gets the level (0..1, 0 when muted) each time the
- *   control updates, the first time when it is created.
+ * @param {{ onChange?: (level: number) => void }} [options] `onChange` gets the level heard, 0 (silent or muted) to 1
  */
 export function createVolumeControl(parent, { onChange } = {}) {
   let volume = DEFAULT_VOLUME;

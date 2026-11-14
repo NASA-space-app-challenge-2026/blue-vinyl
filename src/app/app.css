@@ -1,6 +1,20 @@
+/* Registered as colors so the backdrop fades when backdrop.js sets them from the cover's main color. */
+@property --bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #4b3a24;
+}
+
+@property --bg-deep {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3a2c1a;
+}
+
 :root {
   --bg: #4b3a24;
   --bg-deep: #3a2c1a;
+  transition: --bg 1.2s ease, --bg-deep 1.2s ease;
   --ink: #f3ece1;
   --ink-muted: rgb(243 236 225 / 0.65);
   --gutter: clamp(16px, 2vw, 32px);

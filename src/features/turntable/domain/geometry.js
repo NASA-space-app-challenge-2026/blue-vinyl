@@ -55,10 +55,14 @@ export function needleRadius(bearing) {
   return Math.hypot(needle.x, needle.y);
 }
 
+/** Inverse of grooveRadius: album progress of the groove at `radius`, below 0 or above 1 off the grooves. */
+export function grooveProgress(radius) {
+  return (GROOVE.outerRadius - radius) / (GROOVE.outerRadius - GROOVE.innerRadius);
+}
+
 /** Inverse of armBearing: album progress (clamped to 0..1) of the groove under the needle at `bearing`. */
 export function progressAt(bearing) {
-  const progress = (GROOVE.outerRadius - needleRadius(bearing)) / (GROOVE.outerRadius - GROOVE.innerRadius);
-  return Math.min(1, Math.max(0, progress));
+  return Math.min(1, Math.max(0, grooveProgress(needleRadius(bearing))));
 }
 
 /** The arm swings between its rest and the innermost groove. */
