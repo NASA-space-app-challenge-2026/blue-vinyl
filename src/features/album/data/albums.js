@@ -98,7 +98,7 @@ export const albums = [
   {
     id: 'lightning',
     category: AlbumCategory.EXTREME_WEATHER,
-    title: 'Lightning Follows the Summer',
+    title: 'Lightning Crosses the Equator',
     coverUrl: `${LIGHTNING_COVERS}/americas_africa.jpg`,
     coverCredit: 'NASA, International Space Station, public domain, via Wikimedia Commons',
     dataCredit: 'Data: ISS LIS V3.0 (NASA GHRC/MSFC) · NASA SVS 5011',
@@ -116,7 +116,7 @@ export const albums = [
       {
         title: 'Asia and Australia', durationSec: LIGHTNING_YEAR_SEC, color: '#d9a35a',
         coverUrl: `${LIGHTNING_COVERS}/asia_australia.jpg`, coverCredit: 'Photo: ISS Expedition 49 crew, thunderstorms over South East Asia, cropped',
-        lightning: { tracksDir: EXTREME_WEATHER_TRACKS, file: 'asia_australia_2021.csv', north: NorthInstrument.DULCIMER, south: SouthInstrument.KOTO },
+        lightning: { tracksDir: EXTREME_WEATHER_TRACKS, file: 'asia_australia_2021.csv', north: NorthInstrument.DULCIMER, south: SouthInstrument.MELODIC_TOM },
       },
     ],
   },

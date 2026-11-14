@@ -1,10 +1,11 @@
 // A year of lightning drawn on the globe, with the sunlight of the season (see tracks/domain/lightning-season.js).
-//   - Sunlight: the globe lies in shadow except a warm band around the latitude the noon sun stands over, brightest
-//     there and darkening toward the poles (by the noon sun's height; day and night are left out, as a year plays in a
-//     minute), so the hemisphere having its summer is the lit one.
-//   - Lines: the equator between the two hemispheres, flaring wider, brighter and in the colour of the hemisphere taking
-//     the lead as the lead changes hands, then settling over CROSSING_GLOW_SEC; the two tropics dashed (the sun's
-//     reach); and the centre of the lightning in sight, in the colour of the hemisphere it is in.
+//   - Sunlight: a faint warm band around the latitude the noon sun stands over, fading out toward the poles (by the
+//     noon sun's height; day and night are left out, as a year plays in a minute), so the hemisphere having its summer
+//     is the lit one. Nothing is darkened.
+//   - Lines: the equator between the two hemispheres and the two tropics (the sun's reach), all dashed and faint.
+//   - Bolt: the centre of the lightning in sight drawn as a bolt of lightning across the globe at that latitude, in the
+//     colour of the hemisphere it is in: a jagged white-hot core in a glow, a fainter fork splitting off it here and
+//     there, re-striking in a new shape BOLT.restrikeHz times a second and flashing as it does.
 //   - Flashes: each a dim point of light in its hemisphere's colour (FLASH_COLOR: warm in the north, cool in the south)
 //     that brightens in over FADE_IN_DAYS and fades out over VISIBLE_DAYS of data time, so the last days' lightning
 //     hangs over the land as a glow, nothing popping, and the season shows in which colour fills the globe.
@@ -21,24 +22,37 @@ const TROPIC_DEG = 23.44;
 // Lifted above the map: the sunlight and lines just above, the flashes above them.
 const ALTITUDE = Object.freeze({ sky: 0.002, flash: 0.004 });
 const SPHERE_SEGMENTS = Object.freeze({ width: 128, height: 64 });
-// Sunlight: full within `fullDeg` of the sun's latitude, shadow beyond `noneDeg`; the shadow's and the light's colour
-// and opacity.
+// Sunlight: full within `fullDeg` of the sun's latitude, gone beyond `noneDeg`; the light's colour and opacity.
 const SUNLIGHT = Object.freeze({
   fullDeg: 20,
   noneDeg: 70,
-  shadow: Object.freeze({ color: '#000000', opacity: 0.6 }),
   light: Object.freeze({ color: '#ffd27a', opacity: 0.12 }),
 });
-// Each line's colour, opacity and width (CSS px); the tropics dashed every DASH_DEG of longitude.
+// Each line's colour, opacity and width (CSS px), dashed every DASH_DEG of longitude.
 const LINE = Object.freeze({
-  equator: Object.freeze({ color: '#ffffff', opacity: 0.6, widthPx: 1.5 }),
-  tropic: Object.freeze({ color: '#ffffff', opacity: 0.4, widthPx: 1 }),
-  centre: Object.freeze({ opacity: 0.9, widthPx: 3 }),
+  equator: Object.freeze({ color: '#ffffff', opacity: 0.45, widthPx: 1 }),
+  tropic: Object.freeze({ color: '#ffffff', opacity: 0.3, widthPx: 0.75 }),
+  centre: Object.freeze({ opacity: 0.9 }),
+});
+// The bolt: how far (degrees of latitude) its zigzag strays from the centre latitude, the zigzags' sizes (segments per
+// degree of longitude, each a whole number of segments around the globe so the bolt meets itself behind it) and
+// weights, its core's width and its glow's reach (CSS px), how bright the glow and the fork are against the core, how
+// far the fork strays, and how often it re-strikes.
+const BOLT = Object.freeze({
+  jagDeg: 2,
+  zigzags: Object.freeze([
+    Object.freeze({ perDeg: 0.125, weight: 1 }),
+    Object.freeze({ perDeg: 0.5, weight: 0.45 }),
+    Object.freeze({ perDeg: 1.5, weight: 0.15 }),
+  ]),
+  coreWidthPx: 2,
+  glowPx: 7,
+  glow: 0.75,
+  fork: 0.55,
+  forkJag: 2.2,
+  restrikeHz: 6,
 });
 const DASH_DEG = 4;
-// How long (playing time) the equator's flare at a change of lead takes to settle, and how much wider it flares.
-const CROSSING_GLOW_SEC = 1.2;
-const CROSSING_WIDEN = 3;
 // A flash's size (CSS px) and its glow, a struck one's and the rest's, as it fades out over VISIBLE_DAYS of data time;
 // the rest brighten in over FADE_IN_DAYS. A struck one flares FLARE times that size as it strikes and settles over
 // FLARE_SEC (playing time), FLARE_WHITE of the way to white, so its hemisphere's colour still shows.
@@ -68,15 +82,44 @@ uniform vec3 uLon0;
 uniform vec3 uLon90;
 uniform float uSun;
 uniform float uPixelRatio;
-uniform vec3 uShadow;
 uniform vec3 uLight;
-uniform vec3 uLineColors[2];
-uniform float uLineOpacities[2];
-uniform float uLineWidths[2];
+uniform vec3 uEquatorColor;
+uniform vec3 uTropicColor;
 uniform float uCentre;
 uniform float uCentreShown;
 uniform vec3 uCentreColor;
+uniform float uTime;
 varying vec3 vPos;
+
+float hash(float n) {
+  return fract(sin(n) * 43758.5453);
+}
+
+// Random heights in -1..1 joined by straight segments, perDeg segments per degree of longitude, the same every lap
+// round the globe.
+float zigzag(float lon, float perDeg, float seed) {
+  float x = (lon + 180.0) * perDeg;
+  float laps = 360.0 * perDeg;
+  float i = floor(x);
+  float a = hash(mod(i, laps) + seed);
+  float b = hash(mod(i + 1.0, laps) + seed);
+  return mix(a, b, fract(x)) * 2.0 - 1.0;
+}
+
+// A bolt's offset from the centre latitude (degrees) at lon.
+float bolt(float lon, float seed, float jag) {
+  return jag * (${BOLT.zigzags.map((z, k) => `${glsl(z.weight)} * zigzag(lon, ${glsl(z.perDeg)}, seed + ${glsl(17 * k)})`).join(' + ')});
+}
+
+// How far (CSS px) the point at lat, lon lies from a bolt: in latitude (.x), for the glow, and across the bolt (.y),
+// for its core, shortened where the bolt runs steep (a degree of longitude is cos(lat) of a degree of latitude on the
+// globe) so the core keeps its width.
+vec2 fromBolt(float lat, float lon, float seed, float jag) {
+  float at = uCentre + bolt(lon, seed, jag);
+  float slope = (bolt(lon + 0.05, seed, jag) - bolt(lon - 0.05, seed, jag)) / 0.1 / max(cos(radians(lat)), 0.05);
+  float px = abs(lat - at) / (max(fwidth(lat), 1e-6) / uPixelRatio);
+  return vec2(px, px / sqrt(1.0 + slope * slope));
+}
 
 float line(float lat, float at, float widthPx) {
   float w = fwidth(lat);
@@ -94,14 +137,26 @@ void main() {
   float lat = degrees(asin(clamp(dot(n, uNorth), -1.0, 1.0)));
   float lon = degrees(atan(dot(n, uLon90), dot(n, uLon0)));
   float lit = 1.0 - smoothstep(${glsl(SUNLIGHT.fullDeg)}, ${glsl(SUNLIGHT.noneDeg)}, abs(lat - uSun));
-  // Shadow fading out toward the sun's latitude, and a faint warm light laid over where it shines.
-  vec4 c = vec4(uShadow, ${glsl(SUNLIGHT.shadow.opacity)} * (1.0 - lit));
-  over(c, uLight, ${glsl(SUNLIGHT.light.opacity)} * lit);
+  // A faint warm light where the sun shines.
+  vec4 c = vec4(uLight, ${glsl(SUNLIGHT.light.opacity)} * lit);
   float dash = step(0.5, fract(lon / ${glsl(DASH_DEG)}));
-  over(c, uLineColors[0], uLineOpacities[0] * line(lat, 0.0, uLineWidths[0]));
-  float tropics = max(line(lat, ${glsl(TROPIC_DEG)}, uLineWidths[1]), line(lat, ${glsl(-TROPIC_DEG)}, uLineWidths[1]));
-  over(c, uLineColors[1], uLineOpacities[1] * tropics * dash);
-  over(c, uCentreColor, uCentreShown * ${glsl(LINE.centre.opacity)} * line(lat, uCentre, ${glsl(LINE.centre.widthPx)}));
+  over(c, uEquatorColor, ${glsl(LINE.equator.opacity)} * line(lat, 0.0, ${glsl(LINE.equator.widthPx)}) * dash);
+  float tropics = max(line(lat, ${glsl(TROPIC_DEG)}, ${glsl(LINE.tropic.widthPx)}), line(lat, ${glsl(-TROPIC_DEG)}, ${glsl(LINE.tropic.widthPx)}));
+  over(c, uTropicColor, ${glsl(LINE.tropic.opacity)} * tropics * dash);
+  // The bolt, re-striking in a new shape every 1/restrikeHz s, flashing bright as it strikes and settling.
+  float strike = floor(uTime * ${glsl(BOLT.restrikeHz)});
+  float flash = 0.55 + 0.45 * exp(-3.0 * fract(uTime * ${glsl(BOLT.restrikeHz)})) * (0.6 + 0.4 * hash(strike * 1.7));
+  float seed = hash(strike) * 1000.0;
+  vec2 boltPx = fromBolt(lat, lon, seed, ${glsl(BOLT.jagDeg)});
+  vec2 forkPx = fromBolt(lat, lon, seed + 101.0, ${glsl(BOLT.jagDeg * BOLT.forkJag)});
+  // The fork shows only on some stretches of the bolt.
+  float forkShown = smoothstep(0.0, 0.5, zigzag(lon, 0.04, seed + 7.0));
+  float core = 1.0 - smoothstep(${glsl(BOLT.coreWidthPx / 2)}, ${glsl(BOLT.coreWidthPx / 2 + 1)}, boltPx.y);
+  float forkCore = forkShown * (1.0 - smoothstep(0.4, 1.4, forkPx.y));
+  float glow = ${glsl(BOLT.glow)} * (exp(-boltPx.x / ${glsl(BOLT.glowPx)}) + forkShown * ${glsl(BOLT.fork)} * exp(-forkPx.x / ${glsl(BOLT.glowPx / 2)}));
+  float shown = uCentreShown * ${glsl(LINE.centre.opacity)} * flash;
+  over(c, uCentreColor, shown * min(1.0, glow));
+  over(c, mix(uCentreColor, vec3(1.0), 0.8), shown * max(core, ${glsl(BOLT.fork)} * forkCore));
   gl_FragColor = c;
   #include <colorspace_fragment>
 }`;
@@ -145,8 +200,6 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
-const LINES = [LINE.equator, LINE.tropic];
-
 /** @param {Object} globe the globe.gl instance */
 export function createLightningLayer(globe) {
   const unit = (lat, lng) => new THREE.Vector3().copy(globe.getCoords(lat, lng, 0)).normalize();
@@ -156,14 +209,13 @@ export function createLightningLayer(globe) {
     uLon90: { value: unit(0, 90) },
     uSun: { value: 0 },
     uPixelRatio: { value: 1 },
-    uShadow: { value: rgb(SUNLIGHT.shadow.color) },
     uLight: { value: rgb(SUNLIGHT.light.color) },
-    uLineColors: { value: LINES.map((l) => rgb(l.color)) },
-    uLineOpacities: { value: LINES.map((l) => l.opacity) },
-    uLineWidths: { value: LINES.map((l) => l.widthPx) },
+    uEquatorColor: { value: rgb(LINE.equator.color) },
+    uTropicColor: { value: rgb(LINE.tropic.color) },
     uCentre: { value: 0 },
     uCentreShown: { value: 0 },
     uCentreColor: { value: rgb(FLASH_COLOR.north) },
+    uTime: { value: 0 },
   };
   const skyMesh = new THREE.Mesh(
     new THREE.SphereGeometry(globe.getGlobeRadius() * (1 + ALTITUDE.sky), SPHERE_SEGMENTS.width, SPHERE_SEGMENTS.height),
@@ -241,17 +293,6 @@ export function createLightningLayer(globe) {
     if (changed) show.needsUpdate = true;
   }
 
-  // Flares the equator as the last change of lead at or before `time` comes and settles.
-  function flareEquator(time, msPerSec) {
-    const last = season.crossings.findLast((c) => c.time <= time);
-    const glow = last ? Math.exp(-(time - last.time) / msPerSec / CROSSING_GLOW_SEC) : 0;
-    const { equator } = LINE;
-    sky.uLineOpacities.value[0] = equator.opacity + (1 - equator.opacity) * glow;
-    sky.uLineWidths.value[0] = equator.widthPx * (1 + CROSSING_WIDEN * glow);
-    const lead = last?.north ? FLASH_COLOR.north : FLASH_COLOR.south;
-    sky.uLineColors.value[0].set(equator.color).lerp(rgb(lead), glow);
-  }
-
   /**
    * Draws `next` at data `time`, or nothing when it is null.
    *
@@ -266,7 +307,6 @@ export function createLightningLayer(globe) {
     updateShow();
     const pixelRatio = globe.renderer().getPixelRatio();
     sky.uSun.value = seriesAt(season, season.sun, time);
-    flareEquator(time, msPerSec);
     const centre = centreLat(season, time);
     sky.uCentreShown.value = centre === null ? 0 : 1;
     if (centre !== null) {
@@ -274,6 +314,7 @@ export function createLightningLayer(globe) {
       sky.uCentreColor.value.set(Hemisphere.NORTH.has(centre) ? FLASH_COLOR.north : FLASH_COLOR.south);
     }
     sky.uPixelRatio.value = pixelRatio;
+    sky.uTime.value = performance.now() / 1000;
     flash.uNow.value = time - origin;
     flash.uMsPerSec.value = msPerSec;
     flash.uPixelRatio.value = pixelRatio;

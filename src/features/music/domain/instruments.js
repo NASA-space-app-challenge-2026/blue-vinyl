@@ -21,10 +21,12 @@ export const Instrument = Object.freeze({
   CELLO: { program: 42, volume: 90 },
   VIOLA: { program: 41, volume: 75 },
   VIOLIN: { program: 40, volume: 75 },
-  // The lightning album (see composers/lightning.js): its pad, and what each hemisphere's flashes are struck on.
+  // The lightning album (see composers/lightning.js): its pad, and what each hemisphere's flashes are struck on, the
+  // south's on drums. Volumes from nell-v2, the melodic tom's set so the south sits against the north as on the taiko
+  // track (rendered offline, mean RMS over each part's range).
   HALO_PAD: { program: 94, volume: 58 },
   CELESTA: { program: 8, volume: 100 },
   DULCIMER: { program: 15, volume: 127 },
   TAIKO: { program: 116, volume: 66 },
-  KOTO: { program: 107, volume: 112 },
+  MELODIC_TOM: { program: 117, volume: 85 },
 });

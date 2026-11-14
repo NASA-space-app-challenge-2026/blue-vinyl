@@ -1,7 +1,7 @@
 // A year of lightning seen by the space station's lightning sensor (ISS LIS) over one side of the Earth, one CSV per
 // track exported by notebooks/extreme_weather_album.ipynb (section 7) into data/extreme_weather/tracks/, and what the
 // globe and the music read from it: its hemispheres, its values at any time, which flashes are struck (heard and
-// flared), when the lead between the hemispheres changes hands, and where the lightning in sight is centred.
+// flared), and where the lightning in sight is centred.
 
 import { lastIndexAtOrBefore } from './bird-track.js';
 
@@ -11,8 +11,6 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export const VISIBLE_DAYS = 6;
 // How many flashes are struck a day of data, from the track's quietest day to its busiest.
 const STRIKES_PER_DAY = Object.freeze({ quiet: 0.4, busy: 2.4 });
-// How many days the north's share must stay past one half for a change of lead to count.
-const CROSSING_HOLD_DAYS = 10;
 
 // The two halves of the Earth the flashes are split between. `key`: the CSV rows (and the season's per-day values) of
 // it; `has(lat)`: whether a flash at `lat` is in it.
@@ -46,7 +44,6 @@ const Column = Object.freeze({ time: 'time', kind: 'kind', lat: 'lat_deg', lon: 
  * @property {Float32Array} amount both hemispheres' values added
  * @property {{ min: number, max: number }} amountRange
  * @property {Flashes} flashes
- * @property {{ time: number, north: boolean }[]} crossings see crossingsOf
  */
 
 /**
@@ -84,7 +81,7 @@ export function parseLightningSeason(csv) {
 }
 
 // Adds what the rest of this file reads: the hemispheres' amount and its range, the flashes' running latitude sum,
-// which are struck and when they were heard, and the changes of lead.
+// and which are struck and when they were heard.
 function prepare(season) {
   const north = season[Hemisphere.NORTH.key];
   const south = season[Hemisphere.SOUTH.key];
@@ -95,7 +92,6 @@ function prepare(season) {
   for (let i = 0; i < t.length; i++) season.flashes.latSum[i + 1] = season.flashes.latSum[i] + lat[i];
   season.flashes.struck = strike(season);
   season.flashes.heardAt = new Float64Array(t.length).fill(NaN);
-  season.crossings = crossingsOf(season);
   return season;
 }
 
@@ -145,29 +141,6 @@ function strike(season) {
     earned -= 1;
   }
   return struck;
-}
-
-/** The north's share of the lightning at `time`, 0 (all south) to 1 (all north). */
-function northShareAt(season, time) {
-  const north = seriesAt(season, season[Hemisphere.NORTH.key], time);
-  const south = seriesAt(season, season[Hemisphere.SOUTH.key], time);
-  return north + south > 0 ? north / (north + south) : 0.5;
-}
-
-// The days the north's share crosses one half, each { time, north (true when the north takes the lead) }: the day it
-// crosses and then stays on that side for at least CROSSING_HOLD_DAYS, so days of wavering around the half count once.
-function crossingsOf(season) {
-  const crossings = [];
-  let northLeads = northShareAt(season, season.t[0]) > 0.5;
-  for (let i = 1; i < season.t.length; i++) {
-    const leads = northShareAt(season, season.t[i]) > 0.5;
-    if (leads === northLeads) continue;
-    const held = season.t.slice(i, i + CROSSING_HOLD_DAYS).every((time) => northShareAt(season, time) > 0.5 === leads);
-    if (!held) continue;
-    northLeads = leads;
-    crossings.push({ time: season.t[i], north: leads });
-  }
-  return crossings;
 }
 
 /** The mean latitude of the flashes in sight at `time` (struck in the VISIBLE_DAYS before it), or null when none are. */

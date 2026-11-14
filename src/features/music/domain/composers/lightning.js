@@ -1,7 +1,7 @@
 // Composer for the lightning album: a year of lightning over one side of the Earth. The two hemispheres are two
 // different musics, and the track turns from one into the other and back as the lightning moves north and south.
 //
-//   south: dark and heavy. A low struck instrument (the track's `south`, see SouthInstrument) on the strong beats, a
+//   south: dark and heavy. A low drum (the track's `south`, see SouthInstrument) on the strong beats, a
 //     deep analog bass thumping under it, in D minor.
 //   north: bright and light. A shining struck instrument (the track's `north`, see NorthInstrument) answering on the
 //     off-beats, a ticking hi-hat of noise, in D major.
@@ -52,7 +52,7 @@ const Key = Object.freeze({
 
 // The instruments a track's hemispheres can be played on (its `north` and `south`).
 export const NorthInstrument = Object.freeze({ CELESTA: Instrument.CELESTA, DULCIMER: Instrument.DULCIMER });
-export const SouthInstrument = Object.freeze({ TAIKO: Instrument.TAIKO, KOTO: Instrument.KOTO });
+export const SouthInstrument = Object.freeze({ TAIKO: Instrument.TAIKO, MELODIC_TOM: Instrument.MELODIC_TOM });
 
 // Each hemisphere's part: the channel volume its instrument plays at, its pattern's steps in the order a busier bar
 // adds them (strong beats first for the south, off-beats first for the north), its pitch at the equator (`baseMidi`)
