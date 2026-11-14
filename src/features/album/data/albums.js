@@ -57,7 +57,7 @@ export const albums = [
     dataCredit: 'Data: NSIDC Sea Ice Index v4 · NOAA Laboratory for Satellite Altimetry',
     tracks: [
       {
-        title: 'North',
+        title: 'Arctic',
         durationSec: POLAR_TRACK_SEC,
         iceSea: {
           csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
@@ -68,7 +68,7 @@ export const albums = [
         },
       },
       {
-        title: 'South',
+        title: 'Antarctic',
         durationSec: POLAR_TRACK_SEC,
         iceSea: {
           csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,

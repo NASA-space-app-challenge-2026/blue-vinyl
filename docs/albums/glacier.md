@@ -14,8 +14,8 @@ The ice data is sea ice, the only ice data in the EIC gallery. It stands for pol
 
 | # | Track | Ice | Sea | Years | Length |
 | --- | --- | --- | --- | --- | --- |
-| 1 | North | Arctic September extent vs. its 1981–2010 normal | Global mean sea level, change since 1993 | 1993–2024 | 0:40 |
-| 2 | South | Antarctic February extent vs. its 1981–2010 normal | The same series | 1993–2024 | 0:40 |
+| 1 | Arctic | Arctic September extent vs. its 1981–2010 normal | Global mean sea level, change since 1993 | 1993–2024 | 0:40 |
+| 2 | Antarctic | Antarctic February extent vs. its 1981–2010 normal | The same series | 1993–2024 | 0:40 |
 
 Data files: `data/glacier/tracks/` (see `tracks.json` for every source, version and credit).
 
@@ -29,11 +29,11 @@ The score is written to be understood by ear alone, by listeners who cannot see 
 
 | Part | Data | Mapping |
 | --- | --- | --- |
-| Ice: vibraphone (North), piano (South), a little right | Ice extent against its 1981–2010 normal | Pitch: less ice is lower. One note a year, struck on the downbeat and held to the next. The normal is G5 and each 4% of it is one step of C minor (C4 to B♭6), fine enough that most years sound different from the year before (North: 25 of 31). Quieter too with less ice, velocity 70 + 30 × extent / normal. Each note is evened out by its sample's measured level (the vibraphone's jump by up to 10 dB from key to key, the piano's by 8 dB), and the piano plays at the vibraphone's level. |
+| Ice: vibraphone (Arctic), piano (Antarctic), a little right | Ice extent against its 1981–2010 normal | Pitch: less ice is lower. One note a year, struck on the downbeat and held to the next. The normal is G5 and each 4% of it is one step of C minor (C4 to B♭6), fine enough that most years sound different from the year before (Arctic: 25 of 31). Quieter too with less ice, velocity 70 + 30 × extent / normal. Each note is evened out by its sample's measured level (the vibraphone's jump by up to 10 dB from key to key, the piano's by 8 dB), and the piano plays at the vibraphone's level. |
 | Sea: low strings (String Ensemble 1), a little left | Sea level | Pitch, like a bottle filling with water. A held note from C3 at the 1993 level, one step of C minor up for each 15 mm, to C4 at +100 mm; it moves only when the sea reaches another step, and is louder as it rises. |
 | Timpani | Record low | A stroke in every year lower than all years since 1979; the track's lowest year is the loudest. |
 
-The ice falls as the sea rises, so the two lines draw together: on North the ice goes from G5 in 1993 to F4 in 2024 (C4 in 2012) while the sea climbs from C3 to C4. They are told apart by sound (struck against bowed strings), by register and by side. The ice's instrument is the one thing that differs between the tracks, a vibraphone on North and a piano on South; the rest of the score is shared, so what is learned on one track holds on the other.
+The ice falls as the sea rises, so the two lines draw together: on Arctic the ice goes from G5 in 1993 to F4 in 2024 (C4 in 2012) while the sea climbs from C3 to C4. They are told apart by sound (struck against bowed strings), by register and by side. The ice's instrument is the one thing that differs between the tracks, a vibraphone on Arctic and a piano on Antarctic; the rest of the score is shared, so what is learned on one track holds on the other.
 
 Mix: set from the RMS of the samples (the first 1.82 s, decoded outside the browser), the ice at the normal about 3 dB over the sea line in the middle of its rise. Not yet measured in a browser render of the whole score.
 

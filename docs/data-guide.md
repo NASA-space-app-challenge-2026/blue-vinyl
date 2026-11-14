@@ -95,7 +95,7 @@ Each GeoJSON file:
 [
   {
     "file": "arctic_sea_ice_and_global_sea_level.csv",
-    "title": "North",
+    "title": "Arctic",
     "pages": [
       {
         "svsId": 5382,
