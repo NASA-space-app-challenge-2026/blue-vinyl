@@ -93,6 +93,51 @@ function mask(context, geometry, pole) {
   return out;
 }
 
+const poleOf = (poleLat) => Math.sign(poleLat) || 1;
+
+/**
+ * The signed distance fields of each track's years of ice, made once per track and kept. Making them takes a while,
+ * so `prepare` makes them a year at a time between other work, before the track is shown; `get` finishes any left.
+ */
+export function createIceFields() {
+  const canvas = document.createElement('canvas');
+  canvas.width = GRID;
+  canvas.height = GRID;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  /** @type {Map<string, { pole: number, shapes: (object | null)[], fields: Float32Array[] }>} */
+  const tracks = new Map();
+
+  const field = (track) => signedDistanceField(mask(context, track.shapes[track.fields.length], track.pole), GRID);
+
+  function entry({ key, poleLat, shapes }) {
+    if (!tracks.has(key)) tracks.set(key, { pole: poleOf(poleLat), shapes, fields: [] });
+    return tracks.get(key);
+  }
+
+  /** @param {{ key: string, poleLat: number, shapes: (object | null)[] }} view */
+  function prepare(view) {
+    const track = entry(view);
+    const next = () => {
+      if (track.fields.length >= track.shapes.length) return;
+      track.fields.push(field(track));
+      setTimeout(next);
+    };
+    setTimeout(next);
+  }
+
+  /**
+   * @param {{ key: string, poleLat: number, shapes: (object | null)[] }} view
+   * @returns {Float32Array[]} one field a year
+   */
+  function get(view) {
+    const track = entry(view);
+    while (track.fields.length < track.shapes.length) track.fields.push(field(track));
+    return track.fields;
+  }
+
+  return { prepare, get };
+}
+
 /**
  * Sea ice drawn as a soft-edged layer over a pole that morphs from one year's shape into the next: each year's ice
  * becomes a signed distance field, and any moment in between blends the two fields, so the ice edge slides instead
@@ -100,13 +145,10 @@ function mask(context, geometry, pole) {
  * lost shows around the ice that is left.
  *
  * @param {object} globe a globe.gl instance
+ * @param {ReturnType<typeof createIceFields>} iceFields where each track's fields are made and kept
  */
-export function createIceMorph(globe) {
+export function createIceMorph(globe, iceFields) {
   const THREE = threeClasses(globe);
-  const canvas = document.createElement('canvas');
-  canvas.width = GRID;
-  canvas.height = GRID;
-  const context = canvas.getContext('2d', { willReadFrequently: true });
   // One vertex at the centre of every cell, so each reads its own cell of the fields.
   const count = GRID * GRID;
   const index = [];
@@ -118,6 +160,9 @@ export function createIceMorph(globe) {
     }
   }
 
+  // One grid for each pole, built once and kept, so moving between tracks builds nothing.
+  /** @type {Map<number, object>} */
+  const meshes = new Map();
   let mesh = null;
   let series = null;
   let shownAt = null;
@@ -159,6 +204,17 @@ export function createIceMorph(globe) {
     };
     const next = new THREE.Mesh(geometry, material);
     next.renderOrder = 1;
+    return next;
+  }
+
+  /** Builds the grid over the pole at `poleLat` ahead of showing it. */
+  function prepare(poleLat) {
+    const pole = poleOf(poleLat);
+    if (meshes.has(pole)) return meshes.get(pole);
+    const next = build(pole);
+    next.visible = false;
+    globe.scene().add(next);
+    meshes.set(pole, next);
     return next;
   }
 
@@ -210,17 +266,12 @@ export function createIceMorph(globe) {
       return;
     }
     if (series?.key !== view.key) {
-      const pole = Math.sign(view.poleLat) || 1;
+      const pole = poleOf(view.poleLat);
       if (series?.pole !== pole) {
-        if (mesh) {
-          globe.scene().remove(mesh);
-          mesh.geometry.dispose();
-          mesh.material.dispose();
-        }
-        mesh = build(pole);
-        globe.scene().add(mesh);
+        if (mesh) mesh.visible = false;
+        mesh = prepare(view.poleLat);
       }
-      series = { key: view.key, pole, fields: view.shapes.map((shape) => signedDistanceField(mask(context, shape, pole), GRID)) };
+      series = { key: view.key, pole, fields: iceFields.get(view) };
       shownAt = null;
     }
     mesh.visible = true;
@@ -259,5 +310,5 @@ export function createIceMorph(globe) {
     return { count: Math.max(0, cells.length - gained), points };
   }
 
-  return { show, lost };
+  return { prepare, show, lost };
 }

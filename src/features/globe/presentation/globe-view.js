@@ -1,5 +1,5 @@
 import { createIceFall } from './ice-fall.js';
-import { createIceMorph } from './ice-morph.js';
+import { createIceFields, createIceMorph } from './ice-morph.js';
 
 import { DEFAULT_GLOBE_LENS } from '../domain/globe-lens.js';
 import { createBirdsLayer } from './birds-layer.js';
@@ -101,6 +101,9 @@ export function createGlobeView(container) {
 
   // Made on first use: it borrows three.js classes from the globe's objects, which exist once the globe has drawn.
   let ice = null;
+  const iceFields = createIceFields();
+  // The poles of the tracks prepared, whose grids the ice builds as soon as it is made.
+  const icePoles = new Set();
   const fall = createIceFall(container);
   // The year the ice last morphed from, to notice when playback moves on to the next one.
   let fromYear = null;
@@ -155,9 +158,23 @@ export function createGlobeView(container) {
    *   (2.5 is halfway from the third year to the fourth); fallSec is how long the ice lost in a year keeps falling.
    */
   function showIce(view) {
-    if (view && !ice) ice = createIceMorph(globe);
+    if (view && !ice) {
+      ice = createIceMorph(globe, iceFields);
+      for (const poleLat of icePoles) ice.prepare(poleLat);
+    }
     ice?.show(view && { key: view.key, poleLat: view.poleLat, shapes: view.shapes, at: view.at });
     dropLostIce(view);
+  }
+
+  /**
+   * Makes a track's ice ready ahead of showing it, so moving to the track later draws at once.
+   *
+   * @param {{ key: string, poleLat: number, shapes: (object | null)[] }} view as for showIce
+   */
+  function prepareIce(view) {
+    iceFields.prepare(view);
+    icePoles.add(view.poleLat);
+    ice?.prepare(view.poleLat);
   }
 
   // When the ice starts morphing into the next year (playing on, not jumping), what it loses falls.
@@ -272,6 +289,7 @@ export function createGlobeView(container) {
     setTheme,
     setLens,
     showIce,
+    prepareIce,
     setWaterLine,
     birds,
     lightning,
