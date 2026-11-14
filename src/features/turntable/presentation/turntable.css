@@ -37,8 +37,14 @@
   user-select: none;
 }
 
+/* The record can be clicked, or held and turned by hand (see turntable-view.js). */
 .turntable-vinyl-top .vinyl-hit {
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+}
+
+.turntable-vinyl-top.held .vinyl-hit {
+  cursor: grabbing;
 }
 
 /* Only the arm itself catches pointers, so the globe under the layer stays draggable. */

@@ -101,6 +101,8 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | Click on the record grooves | Play / pause |
 | Click on the progress ring | Play the current track from that point; sets the arm down first when stopped |
 | Drag the tonearm | Scrub; drop on the record to play from there, off it to stop |
+| Hold the record | Stops it under the hand. While playing, the music pauses until it is let go, then plays on. A press shorter than 300 ms that doesn't turn it is a click |
+| Turn the record by hand | It follows the pointer round its centre. While playing, the position moves forward or back as far as it is turned (one turn is one turn's worth of music, 1.8 s), the needle following, and letting go plays on from there. Let go while moving, the record keeps the hand's speed and eases back to the motor's (or coasts to a stop) |
 | Drag on the globe | Rotate the globe |
 | Scroll on the globe | Zoom in / out (out to the fitted size) |
 | Play button (bottom left) | Play / pause, same as Space |
@@ -109,7 +111,7 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | Fullscreen button (top right) | Enter / exit fullscreen; hidden where the browser has no fullscreen support |
 | Settings button (top right) | Open the settings menu; Escape or a click outside closes it |
 
-Playback states (`PlaybackState`): `stopped` → `cueing` (arm eases on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position. Grabbing the arm enters `scrubbing` from any state.
+Playback states (`PlaybackState`): `stopped` → `cueing` (arm eases on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position. Grabbing the arm enters `scrubbing` from any state. Holding the playing record enters `held`, where turning it moves the position; letting go returns to `playing`.
 
 Volume sets the level of the music (see the album docs in [albums/](albums/) for what plays). Language, view options and notes will be added in later issues. Albums other than the first are placeholders.
 

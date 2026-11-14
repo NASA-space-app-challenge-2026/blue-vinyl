@@ -84,6 +84,8 @@ let tickFrame = null;
 // True while the records change; steps asked for meanwhile add up in pendingSteps.
 let swapping = false;
 let pendingSteps = 0;
+// True while a hand holds the record that was playing.
+let handHeld = false;
 
 const slot = (id) => document.getElementById(id);
 
@@ -113,6 +115,24 @@ const turntable = createTurntableView(slot('stage'), {
   onLift: () => setState(PlaybackState.STOPPED),
   onSeek: seekTrack,
   onSelectGroove: (progress) => playFromTrack(trackIndexAt(album, progress)),
+  // A hand on the playing record pauses it; turning it moves the music forward or back as far as it is turned, and
+  // letting go plays on from there.
+  onHandHold: () => {
+    if (state !== PlaybackState.PLAYING) return;
+    handHeld = true;
+    setState(PlaybackState.HELD);
+  },
+  onHandTurn: (sec) => {
+    if (!handHeld || state !== PlaybackState.HELD) return;
+    elapsedMs = Math.min(totalMs - 1, Math.max(0, elapsedMs + sec * 1000));
+    render();
+    globe.glide();
+  },
+  onHandRelease: () => {
+    if (!handHeld) return;
+    handHeld = false;
+    if (state === PlaybackState.HELD) startPlaying();
+  },
 });
 // The album's credits run round the record's rim.
 const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
