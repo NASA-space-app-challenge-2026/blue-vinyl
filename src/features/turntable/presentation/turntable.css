@@ -1,6 +1,7 @@
-/* Sits above the album sleeve, which tucks in behind the record. */
+/* Sits above the album sleeve, which tucks in behind the record, and a little higher than it. */
 .turntable {
   position: relative;
+  top: -3vh;
   z-index: 1;
   flex: none;
   width: min(54vw, 100vh);
