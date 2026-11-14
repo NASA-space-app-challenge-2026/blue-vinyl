@@ -1,3 +1,5 @@
+import { attachFlockLayer } from './flock-layer.js';
+
 // globe.gl is loaded as a UMD bundle in index.html: it ships one copy of three.js,
 // while the ESM build pulls several three.js versions from the CDN.
 const { Globe } = globalThis;
@@ -47,5 +49,5 @@ export function createGlobeView(container) {
     globe.globeTileEngineUrl(source.tileUrl ?? null).globeImageUrl(source.imageUrl ?? null);
   }
 
-  return { setTheme };
+  return { setTheme, flock: attachFlockLayer(globe) };
 }

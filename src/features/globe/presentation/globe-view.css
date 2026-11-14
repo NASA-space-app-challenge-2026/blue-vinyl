@@ -8,3 +8,13 @@
   font-size: 12px;
   color: var(--ink-muted);
 }
+
+/* Where the flock is now; it pulses with the lead (see flock-layer.js). */
+.globe-flock {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--flock-color);
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.85), 0 0 12px 2px var(--flock-color);
+  pointer-events: none;
+}
