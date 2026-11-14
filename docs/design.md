@@ -91,6 +91,7 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 
 - Chrome arm pivoting at about 1 o'clock on a dark base: ringed counterweight, gimbal, pivot cap, a tube that runs straight and then bends, and a headshell turned toward the centre with a cartridge, needle and finger lift.
 - It reads the right side of the record. At rest the needle sits just off the record's right edge.
+- The record sits a little higher (`RECORD_RAISE`, 0.07 radii) than where it was first laid out with the arm; the arm stays where it was mounted, so its pivot is a little closer to the record and its angles follow from that.
 - It casts a soft drop shadow down and to the right onto the record, falling a little away from it as it stands above the record.
 - It eases (exponentially) between positions instead of jumping: onto the groove when cued, back to rest when lifted. While playing it follows the groove for the current position.
 - The listener can grab and drag it. While held, the clock stops and the needle position scrubs the album; released over the record, playback resumes from there; released off it, the arm returns to rest.
