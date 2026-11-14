@@ -13,7 +13,7 @@ const FOLLOW_TAU_SEC = 1.5;
 // A glide turns the globe to the focus with this time constant over GLIDE_SEC.
 const GLIDE_TAU_SEC = 0.2;
 const GLIDE_SEC = 1;
-// A globe turned by hand glides back to the focus this long after it is let go.
+// A globe turned or zoomed by hand glides back to the focus this long after it is let go.
 const RETURN_DELAY_MS = 1000;
 
 /** Camera altitude at which the globe's silhouette exactly fills a square viewport. */
@@ -24,7 +24,7 @@ function fittedAltitude(camera) {
 /**
  * Interactive WebGL globe that fills its container. Drag to rotate, scroll to zoom in.
  * Zooming out stops at the fitted size, so the globe never shrinks away from the label edge.
- * It turns to keep a focus point (the flock) at its centre; turned by hand, it glides back a moment after release.
+ * It turns to keep a focus point (the flock) at its centre; turned or zoomed by hand, it glides back a moment after release.
  *
  * @param {HTMLElement} container
  */
@@ -76,7 +76,7 @@ export function createGlobeView(container) {
     }, RETURN_DELAY_MS);
   });
 
-  /** Eases the north-up globe so the focus moves toward its centre over `dt` seconds. */
+  /** Eases the north-up globe so the focus moves toward its centre, and the zoom back to the fitted size, over `dt` seconds. */
   function follow(dt, tau = FOLLOW_TAU_SEC) {
     if (userTurning) return;
     const focus = getFocus();
@@ -84,7 +84,11 @@ export function createGlobeView(container) {
     const view = globe.pointOfView();
     const k = 1 - Math.exp(-dt / tau);
     const dLng = ((((focus.lon - view.lng) % 360) + 540) % 360) - 180;
-    globe.pointOfView({ lat: view.lat + k * (focus.lat - view.lat), lng: view.lng + k * dLng });
+    globe.pointOfView({
+      lat: view.lat + k * (focus.lat - view.lat),
+      lng: view.lng + k * dLng,
+      altitude: view.altitude + k * (fitAltitude - view.altitude),
+    });
   }
 
   /** Eases the globe to the focus for GLIDE_SEC, then settles it there. */
