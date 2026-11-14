@@ -213,9 +213,9 @@ function layer(className, markup) {
   return node;
 }
 
-// The progress ring in the label's own units (radius 1 at its rim): where the rail runs, how thick it is, and how
-// wide a band round it takes a click.
-const RING = Object.freeze({ radius: 0.975, width: 0.014, dotRadius: 0.024, hitWidth: 0.09 });
+// The progress ring in the label's own units (radius 1 at its rim, where the globe's edge is): the rail runs centred
+// on that edge; how thick it is, and how wide a band round it takes a click.
+const RING = Object.freeze({ radius: 1, width: 0.014, dotRadius: 0.024, hitWidth: 0.09 });
 
 /** The point on the rail `share` (0..1) of a turn clockwise from 12 o'clock. */
 function ringPoint(share) {
