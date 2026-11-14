@@ -26,8 +26,9 @@ function el(tag, className, text) {
 }
 
 function formatDuration(sec) {
-  const minutes = Math.floor(sec / 60);
-  const seconds = String(Math.round(sec % 60)).padStart(2, '0');
+  const whole = Math.round(sec);
+  const minutes = Math.floor(whole / 60);
+  const seconds = String(whole % 60).padStart(2, '0');
   return `${minutes}:${seconds}`;
 }
 

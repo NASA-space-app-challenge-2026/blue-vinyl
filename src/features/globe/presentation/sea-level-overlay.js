@@ -18,7 +18,7 @@ const SWELL = Object.freeze({ width: 230, height: 16, amplitude: 5 });
  * @property {number} year
  * @property {number} firstYear the year the sea level is measured from
  * @property {number} extent sea ice extent, million km²
- * @property {number} normal 1981–2010 normal, million km²
+ * @property {number} firstExtent sea ice extent of the first year, million km²
  * @property {number} seaLevelMm measured sea level of the year, change since the first year
  * @property {number} waterMm level of the water, which moves smoothly from one year's value to the next
  */
@@ -89,6 +89,9 @@ export function createSeaLevelOverlay(container) {
 
   const year = el('p', 'sea-overlay-year');
   const ice = el('p', 'sea-overlay-ice');
+  const iceArea = el('span', 'sea-overlay-ice-line');
+  const iceChange = el('span', 'sea-overlay-ice-line');
+  ice.append(iceArea, iceChange);
   root.append(sea, ruler, reading, year, ice);
   container.append(root);
 
@@ -102,10 +105,18 @@ export function createSeaLevelOverlay(container) {
     const rise = `${frame.seaLevelMm >= 0 ? '+' : '−'}${Math.abs(frame.seaLevelMm).toFixed(0)} mm`;
     readingTo.textContent = frame.year === frame.firstYear ? '' : rise;
     year.textContent = String(frame.year);
-    const change = Math.round((frame.extent / frame.normal - 1) * 100);
-    const versus = change === 0 ? 'at the 1981–2010 normal' : `${Math.abs(change)}% ${change < 0 ? 'below' : 'above'} 1981–2010`;
-    ice.textContent = `Sea ice ${frame.extent.toFixed(2)} million km² · ${versus}`;
+    // Like the sea level, the ice is read against the first year: the share it has shrunk (or grown) by since.
+    iceArea.textContent = `Sea ice ${frame.extent.toFixed(2)} million km²`;
+    const change = Math.round((frame.extent / frame.firstExtent - 1) * 100);
+    iceChange.textContent = frame.year === frame.firstYear
+      ? ''
+      : `${change >= 0 ? '+' : '−'}${Math.abs(change)}% since ${frame.firstYear}`;
   }
 
-  return { render };
+  /** Height of the water surface above the bottom of the label for a level (mm), as a share of the label height. */
+  function waterLine(mm) {
+    return heightOf(mm);
+  }
+
+  return { render, waterLine };
 }

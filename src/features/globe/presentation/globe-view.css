@@ -33,6 +33,10 @@
   letter-spacing: 0.08em;
 }
 
+.sea-overlay-ice-line {
+  display: block;
+}
+
 .sea-overlay-ice {
   position: absolute;
   top: calc(9% + clamp(24px, 4.2vw, 58px));
@@ -171,4 +175,13 @@
 .sea-overlay-reading-to {
   top: 0;
   transform: translateY(-50%);
+}
+
+/* Falling pieces of lost ice (ice-fall.js), between the globe and the porthole water. */
+.ice-fall {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }

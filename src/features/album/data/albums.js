@@ -1,9 +1,11 @@
-import { Instrument } from '../../music/domain/ice-sea-score.js';
+import { Harmony, Instrument, SeaStyle } from '../../music/domain/ice-sea-score.js';
+import { YEAR_TIMELINE, trackDurationSec } from '../../tracks/domain/year-timeline.js';
 import { AlbumCategory } from '../domain/album.js';
 
 const GLACIER_DATA = 'data/glacier/tracks';
-// Intro 4 s, 32 years of 1.5 s (1993–2024), then the last note held and its tail.
-const POLAR_TRACK_SEC = 58;
+// 32 years (1993–2024), one a bar at the score's tempo (1.82 s) with no intro, then the last chord's tail: 59.5 s.
+const POLAR_YEARS = 32;
+const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -22,8 +24,20 @@ export const albums = [
           csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
           shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
           poleLat: 90,
-          // Piano; the normal is D5 and each 0.25 million km² is one step of D minor.
-          voice: { instrument: Instrument.PIANO, homeMidi: 74, kmPerStep: 0.25, lengthBeats: 0.95 },
+          // Piano, after the opening of Rachmaninoff's Second Concerto. On the downbeat both hands play the ice as a
+          // chord over F, held the whole bar: the right hand's top note is the ice, the normal is F5 (the top of the
+          // score's first chord), and each 0.4 million km² is one step of C minor. Half a bar later the left hand strikes
+          // the score's low F1, in each year the sea rose, harder the higher the sea.
+          voice: {
+            instrument: Instrument.PIANO,
+            homeMidi: 77,
+            kmPerStep: 0.4,
+            lengthBeats: 1,
+            chord: true,
+            harmony: Harmony.OPENING,
+            level: 0.407,
+            sea: { instrument: Instrument.PIANO, style: SeaStyle.BELLS, offsetBeats: 0.5, held: false, transpose: 0, level: 0.32 },
+          },
         },
       },
       {
@@ -33,8 +47,14 @@ export const albums = [
           csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,
           shapesUrl: `${GLACIER_DATA}/antarctic_february_sea_ice_extent.geojson`,
           poleLat: -90,
-          // Cello; the normal is D4 and each 0.15 million km² is one step of D minor.
-          voice: { instrument: Instrument.CELLO, homeMidi: 62, kmPerStep: 0.15, lengthBeats: 1.12 },
+          // Cello; the normal is C4 and each 0.15 million km² is one step of C minor. The sea is a held horn line.
+          voice: {
+            instrument: Instrument.CELLO,
+            homeMidi: 60,
+            kmPerStep: 0.15,
+            lengthBeats: 1.12,
+            sea: { instrument: Instrument.HORN, offsetBeats: 0, held: true, transpose: 12, level: 1 },
+          },
         },
       },
     ],

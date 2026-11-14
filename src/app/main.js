@@ -23,7 +23,6 @@ import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
 import { loadIceSeaTrack } from '../features/tracks/data/track-repository.js';
-import { recordYearAt } from '../features/tracks/domain/ice-sea-series.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
@@ -202,8 +201,8 @@ function render() {
 }
 
 /**
- * Draws the year that plays at `progress` on the globe: its ice, the normal ice edge, the edge of the latest record
- * low, and the sea level. The intro, and the record at rest before it plays, show the first year.
+ * Draws the year that plays at `progress` on the globe: its ice and the sea level; ice lost from
+ * one year to the next falls into the water. The intro, and the record at rest before it plays, show the first year.
  */
 function renderData(progress) {
   const index = trackIndexAt(album, progress);
@@ -222,28 +221,31 @@ function renderData(progress) {
   const at = Math.max(0, now.index);
   const trackKey = `${album.id}:${index}`;
   const year = years[at];
-  // Share of this year's beat played: the ice moves from last year's shape to this year's over the beat, starting
-  // on the note and settling into the shape; the water eases from this year's level towards the next.
+  // Share of this year's bar played: the ice moves from last year's shape to this year's over the bar, starting on
+  // the chord and settling into the shape. The water rises from last year's level to this year's when the sea is
+  // heard (half a bar in, with the low F1, on the piano), easing in over the rest of the bar.
   const along = now.index < 0 ? 0 : Math.min(1, now.beatSec / YEAR_TIMELINE.beatSec);
   const settle = 1 - (1 - along) ** 3;
-  const next = years[Math.min(at + 1, years.length - 1)];
-  const recordYear = recordYearAt(data.years, at);
+  const seaAt = track.iceSea.voice.sea.offsetBeats;
+  const rising = Math.min(1, Math.max(0, (along - seaAt) / (1 - seaAt)));
+  const before = years[Math.max(0, at - 1)];
+  const waterMm = before.seaLevelMm + (year.seaLevelMm - before.seaLevelMm) * (1 - (1 - rising) ** 2);
+  globe.setWaterLine(seaOverlay.waterLine(waterMm));
   globe.showIce({
     key: trackKey,
     poleLat: track.iceSea.poleLat,
     shapes: data.iceShapes,
     at: at === 0 ? 0 : at - 1 + settle,
-    normal: data.normal,
-    record: recordYear === null ? null : data.iceByYear.get(recordYear) ?? null,
-    linesKey: `${trackKey}:${recordYear}`,
+    // The lost ice falls for as long as the year's chord is held.
+    fallSec: YEAR_TIMELINE.beatSec,
   });
   seaOverlay.render({
     year: year.year,
     firstYear: years[0].year,
     extent: year.extent,
-    normal: year.normal,
+    firstExtent: years[0].extent,
     seaLevelMm: year.seaLevelMm,
-    waterMm: year.seaLevelMm + (next.seaLevelMm - year.seaLevelMm) * along,
+    waterMm,
   });
 }
 

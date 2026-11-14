@@ -1,3 +1,4 @@
+import { createIceFall } from './ice-fall.js';
 import { createIceMorph } from './ice-morph.js';
 
 // globe.gl is loaded as a UMD bundle in index.html: it ships one copy of three.js,
@@ -6,12 +7,10 @@ const { Globe } = globalThis;
 
 // Closest zoom, as camera altitude in globe radii above the surface.
 const MIN_ZOOM_ALTITUDE = 0.15;
-// Lines drawn on the globe sit just above the ice (see ice-morph.js).
-const LINE_ALTITUDE = 0.006;
-const NORMAL_LINE = Object.freeze({ color: '#e3b23c', stroke: 0.9 });
-// The record low usually lies inside the current ice, so its edge needs a colour that shows on the pale ice and on
-// the dark map alike.
-const RECORD_LINE = Object.freeze({ color: 'rgba(255, 112, 92, 0.95)', stroke: 0.6, dash: 0.012, gap: 0.008 });
+// Pieces of ice that fall when a year loses ice: one per PIECE_CELLS cells of net loss (a cell is about 1,000 km²),
+// at most MAX_PIECES; none when the ice grew.
+const PIECE_CELLS = 20;
+const MAX_PIECES = 90;
 const FOCUS_MS = 1200;
 
 /** Camera altitude at which the globe's silhouette exactly fills a square viewport. */
@@ -19,51 +18,12 @@ function fittedAltitude(camera) {
   return 1 / Math.sin((camera.fov * Math.PI) / 360) - 1;
 }
 
-// Rings of a GeoJSON geometry as lines; polygons give only their outer rings.
-function rings(geometry) {
-  if (!geometry) return [];
-  switch (geometry.type) {
-    case 'LineString':
-      return [geometry.coordinates];
-    case 'MultiLineString':
-      return geometry.coordinates;
-    case 'Polygon':
-      return [geometry.coordinates[0]];
-    case 'MultiPolygon':
-      return geometry.coordinates.map((polygon) => polygon[0]);
-    default:
-      return [];
-  }
-}
-
-// Shapes that wrap round a pole are closed along the pole and split at the 180° meridian; those edges are not part
-// of the ice edge, so outlines break there.
-function isSeam([lng1, lat1], [lng2, lat2]) {
-  return (Math.abs(lat1) > 89.9 && Math.abs(lat2) > 89.9) || (Math.abs(lng1) > 179.99 && Math.abs(lng2) > 179.99);
-}
-
-function outline(geometry) {
-  const lines = [];
-  for (const ring of rings(geometry)) {
-    let run = [ring[0]];
-    for (let i = 1; i < ring.length; i++) {
-      if (isSeam(ring[i - 1], ring[i])) {
-        if (run.length > 1) lines.push(run);
-        run = [];
-      }
-      run.push(ring[i]);
-    }
-    if (run.length > 1) lines.push(run);
-  }
-  return lines;
-}
-
 /**
  * Interactive WebGL globe that fills its container. Drag to rotate, scroll to zoom in.
  * Zooming out stops at the fitted size, so the globe never shrinks away from the label edge.
  *
- * It can draw a track's sea ice: the ice morphing from year to year, the 1981–2010 normal ice edge and the edge of
- * the latest record low.
+ * It can draw a track's sea ice, morphing from year to year. When a year loses ice, pieces of it fall from where it
+ * was into the water at the bottom of the label.
  *
  * @param {HTMLElement} container
  */
@@ -91,20 +51,10 @@ export function createGlobeView(container) {
 
   // Made on first use: it borrows three.js classes from the globe's objects, which exist once the globe has drawn.
   let ice = null;
-  let linesKey = null;
+  const fall = createIceFall(container);
+  // The year the ice last morphed from, to notice when playback moves on to the next one.
+  let fromYear = null;
   let focusLat = null;
-
-  globe
-    .pathsData([])
-    .pathPoints((line) => line.points)
-    .pathPointLat((point) => point[1])
-    .pathPointLng((point) => point[0])
-    .pathPointAlt(LINE_ALTITUDE)
-    .pathColor((line) => line.color)
-    .pathStroke((line) => line.stroke)
-    .pathDashLength((line) => line.dash)
-    .pathDashGap((line) => line.gap)
-    .pathTransitionDuration(0);
 
   /**
    * @param {string} theme one of GlobeTheme
@@ -116,26 +66,35 @@ export function createGlobeView(container) {
   }
 
   /**
-   * Shows a track's sea ice at a position in its years, morphing between years, with the normal ice edge and the
-   * edge of the latest record low. Pass null to clear.
+   * Shows a track's sea ice at a position in its years, morphing between years. Pass null to clear.
    *
-   * @param {{
-   *   key: string, poleLat: number, shapes: (object | null)[], at: number,
-   *   normal: object | null, record: object | null, linesKey: string,
-   * } | null} view
+   * @param {{ key: string, poleLat: number, shapes: (object | null)[], at: number, fallSec?: number } | null} view
    *   key names the track; shapes are GeoJSON geometries of each year's ice, in order; at is the position in them
-   *   (2.5 is halfway from the third year to the fourth); normal and record are GeoJSON geometries; linesKey changes
-   *   when normal or record do.
+   *   (2.5 is halfway from the third year to the fourth); fallSec is how long the ice lost in a year keeps falling.
    */
   function showIce(view) {
     if (view && !ice) ice = createIceMorph(globe);
     ice?.show(view && { key: view.key, poleLat: view.poleLat, shapes: view.shapes, at: view.at });
-    const nextLinesKey = view?.linesKey ?? null;
-    if (nextLinesKey !== linesKey) {
-      linesKey = nextLinesKey;
-      const toPaths = (geometry, style) => outline(geometry).map((points) => ({ points, ...style }));
-      globe.pathsData(view ? [...toPaths(view.normal, NORMAL_LINE), ...toPaths(view.record, RECORD_LINE)] : []);
+    dropLostIce(view);
+  }
+
+  // When the ice starts morphing into the next year (playing on, not jumping), what it loses falls.
+  function dropLostIce(view) {
+    const year = view ? Math.floor(view.at) : null;
+    const key = view ? `${view.key}:${year}` : null;
+    if (key === fromYear) return;
+    const previous = fromYear;
+    fromYear = key;
+    if (!view || previous !== `${view.key}:${year - 1}` || view.at - year > 0.5) return;
+    const { count, points } = ice.lost(year, year + 1, MAX_PIECES);
+    const pieces = Math.min(MAX_PIECES, Math.round(count / PIECE_CELLS));
+    const step = points.length / Math.max(1, pieces);
+    const screen = [];
+    for (let k = 0; k < pieces; k++) {
+      const { lat, lng } = points[Math.floor(k * step)];
+      screen.push(globe.getScreenCoords(lat, lng, 0.004));
     }
+    fall.drop(screen, view.fallSec);
   }
 
   /**
@@ -151,5 +110,10 @@ export function createGlobeView(container) {
     globe.pointOfView({ lat: target, lng: 0, altitude: fitAltitude }, FOCUS_MS);
   }
 
-  return { setTheme, showIce, focus };
+  /** @param {number} share height of the water surface above the bottom of the globe, as a share of its height */
+  function setWaterLine(share) {
+    fall.setWaterLine(share);
+  }
+
+  return { setTheme, showIce, focus, setWaterLine };
 }

@@ -43,14 +43,3 @@ export function parseIceSeaCsv(text) {
     };
   });
 }
-
-/**
- * Year of the latest record low at or before `index`, or null when none has happened yet.
- *
- * @param {IceSeaYear[]} years
- * @param {number} index
- */
-export function recordYearAt(years, index) {
-  for (let i = Math.min(index, years.length - 1); i >= 0; i--) if (years[i].recordLow) return years[i].year;
-  return null;
-}

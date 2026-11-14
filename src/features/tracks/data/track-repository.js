@@ -7,7 +7,6 @@ import { parseIceSeaCsv } from '../domain/ice-sea-series.js';
  * @property {import('../domain/ice-sea-series.js').IceSeaYear[]} years
  * @property {Map<number, object>} iceByYear GeoJSON geometry of each year's ice
  * @property {(object | null)[]} iceShapes the same geometries in the order of `years`, null where one is missing
- * @property {object | null} normal GeoJSON geometry of the 1981–2010 normal ice edge
  */
 
 const cache = new Map();
@@ -30,12 +29,10 @@ export function loadIceSeaTrack({ csvUrl, shapesUrl }) {
     const loading = Promise.all([fetchText(csvUrl), fetchText(shapesUrl)]).then(([csv, shapes]) => {
       const years = parseIceSeaCsv(csv);
       const iceByYear = new Map();
-      let normal = null;
       for (const feature of JSON.parse(shapes).features) {
-        if (feature.properties.kind === 'normal') normal = feature.geometry;
-        else iceByYear.set(feature.properties.year, feature.geometry);
+        if (feature.properties.kind === 'ice') iceByYear.set(feature.properties.year, feature.geometry);
       }
-      return { years, iceByYear, iceShapes: years.map((y) => iceByYear.get(y.year) ?? null), normal };
+      return { years, iceByYear, iceShapes: years.map((y) => iceByYear.get(y.year) ?? null) };
     });
     // A failed load is not kept, so the next attempt fetches again.
     loading.catch(() => cache.delete(key));

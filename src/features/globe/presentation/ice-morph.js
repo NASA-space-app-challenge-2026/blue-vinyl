@@ -230,5 +230,34 @@ export function createIceMorph(globe) {
     }
   }
 
-  return { show };
+  /**
+   * Where ice was lost between two years of the track shown: up to `max` cells that were ice in year `from` and are
+   * not in year `to`, spread over the loss, and the net loss in cells: cells lost less cells gained, 0 when the ice
+   * grew (one cell is about 1,000 km²).
+   *
+   * @param {number} from
+   * @param {number} to
+   * @param {number} max
+   * @returns {{ count: number, points: { lat: number, lng: number }[] }}
+   */
+  function lost(from, to, max) {
+    if (!series || !series.fields[from] || !series.fields[to]) return { count: 0, points: [] };
+    const before = series.fields[from];
+    const after = series.fields[to];
+    const cells = [];
+    let gained = 0;
+    for (let v = 0; v < count; v++) {
+      if (before[v] < 0 && after[v] >= 0) cells.push(v);
+      else if (before[v] >= 0 && after[v] < 0) gained++;
+    }
+    const step = Math.max(1, cells.length / max);
+    const points = [];
+    for (let k = 0; k < cells.length && points.length < max; k += step) {
+      const v = cells[Math.floor(k)];
+      points.push(cellLatLng(Math.floor(v / GRID), v % GRID, series.pole));
+    }
+    return { count: Math.max(0, cells.length - gained), points };
+  }
+
+  return { show, lost };
 }
