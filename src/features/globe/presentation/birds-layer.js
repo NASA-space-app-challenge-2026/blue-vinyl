@@ -16,9 +16,9 @@ const TURN_TAU_MS = 250;
 
 const BIRD_SIZE_PX = 22;
 // Seen from above, beak up (north). The right wing is mirrored for the left; each folds at its root to flap.
-const WING = '<path d="M1.4 -2.6 C4.5 -4.6 8.5 -3.4 11.6 0.6 L9.4 0.4 L9.6 1.5 L7.4 1.2 C5.2 1.8 3 2.2 1.4 2.2Z"/>';
+const WING = '<path d="M1.4 -2.8 C2.8 -3.7 4.6 -4.2 6.6 -3.9 C8.8 -3.5 10.4 -1.8 11.6 0.6 L9.4 0.4 L9.6 1.5 L7.4 1.2 C5.2 1.8 3 2.2 1.4 2.2Z"/>';
 const BODY =
-  '<path d="M0 -9.8 C0.9 -9.8 1.4 -8.4 1.3 -7.2 C2.2 -5.6 2.4 -2.4 2.1 1.2 C1.9 3.2 1.4 4.6 1.1 5.4 L2.9 8.8 L0 7.6 L-2.9 8.8 L-1.1 5.4 C-1.4 4.6 -1.9 3.2 -2.1 1.2 C-2.4 -2.4 -2.2 -5.6 -1.3 -7.2 C-1.4 -8.4 -0.9 -9.8 0 -9.8Z"/>';
+  '<path d="M0 -10.2 L0.45 -7.7 C1.5 -7.6 1.7 -6 1.1 -4.9 C2.1 -3.6 2.3 -1 2 1.6 C1.8 3.4 1.3 4.8 1.1 5.4 L2.8 8.6 L0 7.7 L-2.8 8.6 L-1.1 5.4 C-1.3 4.8 -1.8 3.4 -2 1.6 C-2.3 -1 -2.1 -3.6 -1.1 -4.9 C-1.7 -6 -1.5 -7.6 -0.45 -7.7Z"/>';
 const SHAPE = `<g class="bird-wing">${WING}</g><g transform="scale(-1 1)"><g class="bird-wing">${WING}</g></g>${BODY}`;
 // Drawn twice, an outlined copy under a filled one, so only the outer edge is outlined.
 const BIRD_SVG = `<svg viewBox="-12 -12 24 24" width="${BIRD_SIZE_PX}" height="${BIRD_SIZE_PX}">
