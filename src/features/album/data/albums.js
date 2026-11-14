@@ -4,8 +4,10 @@ import { YEAR_TIMELINE, trackDurationSec } from '../../tracks/domain/year-timeli
 import { AlbumCategory } from '../domain/album.js';
 import { GlobeLens } from '../../globe/domain/globe-lens.js';
 import { Instrument } from '../../music/domain/instruments.js';
+import { Lead } from '../../music/domain/patches.js';
 import { NorthInstrument, SouthInstrument } from '../../music/domain/composers/lightning.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
+import { Hemisphere, seasonDurationSec, seasonSpan } from '../../tracks/domain/storm-season.js';
 
 const ARCTIC_BIRD_TRACKS = 'data/arctic_bird/tracks';
 const ARCTIC_BIRD_COVERS = 'assets/albums/arctic-bird';
@@ -25,6 +27,20 @@ const LIGHTNING_COVERS = 'assets/albums/lightning';
 const LIGHTNING_YEAR_SEC = 60;
 const HOT_OCEANS_DATA = 'data/hot_oceans/tracks';
 const HOT_OCEANS_COVERS = 'assets/albums/hot-oceans';
+
+const HEMISPHERES_DATA = 'data/hemispheres/tracks';
+const HEMISPHERES_COVERS = 'assets/albums/hemispheres';
+// Degrees of arc from an ocean's centre to the label's edge: the globe drawn 1.5 times the label's size, where the edge
+// is asin(1 / 1.5) from the centre. The southern oceans' storms spread over a hundred degrees of longitude, so their
+// globe is drawn 1.2 times the label's size.
+const NORTHERN_ARC_DEG = 41.8;
+const SOUTHERN_ARC_DEG = 56.4;
+// What each season track plays: its file's first record to its last.
+const SEASON_SPANS = Object.freeze({
+  atlantic: seasonSpan('2023-06-01T12:00Z', '2023-10-28T18:00Z'),
+  southIndian: seasonSpan('2023-01-01T00:00Z', '2023-04-15T06:00Z'),
+});
+const STORMS_CREDIT = 'Data: IBTrACS v04r01 (NOAA/NCEI), NHC and JTWC best tracks · NASA SVS 5097';
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -162,6 +178,49 @@ export const albums = [
         coverUrl: `${HOT_OCEANS_COVERS}/helene_2024.jpg`,
         coverCredit: 'Cover: MODIS on Aqua, Sep 26 2024 (NASA Worldview)',
         storm: { csvUrl: `${HOT_OCEANS_DATA}/helene_2024.csv`, kit: Kit.ORCHESTRA },
+      },
+    ],
+  },
+  {
+    id: 'hemispheres',
+    category: AlbumCategory.CLIMATE,
+    title: 'Mirror Storms',
+    coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
+    coverCredit: 'Public domain, via Wikimedia Commons',
+    dataCredit: STORMS_CREDIT,
+    // Two storm seasons around 2023, the year the oceans ran hottest on record, every storm of each: one northern ocean
+    // and one southern (see docs/albums/hemispheres.md). Each cover is one of the season's strongest storms.
+    tracks: [
+      {
+        title: 'North Atlantic 2023',
+        durationSec: seasonDurationSec(SEASON_SPANS.atlantic),
+        color: '#7fc4e8',
+        coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
+        coverCredit: 'Cover: Hurricane Lee, Sep 2023, MODIS (NASA GSFC)',
+        season: {
+          url: `${HEMISPHERES_DATA}/atlantic_2023.csv`,
+          span: SEASON_SPANS.atlantic,
+          hemisphere: Hemisphere.NORTH,
+          lead: Lead.WHISTLE,
+          focus: { lat: 24, lon: -59, arcDeg: NORTHERN_ARC_DEG },
+        },
+      },
+      {
+        // The southern summer of 2023, January to April, when Freddy crossed the whole ocean in the longest life of
+        // any tropical cyclone on record.
+        title: 'South Indian 2023',
+        durationSec: seasonDurationSec(SEASON_SPANS.southIndian),
+        color: '#b29ae6',
+        coverUrl: `${HEMISPHERES_COVERS}/cyclone_freddy_2023.jpg`,
+        coverCredit: 'Cover: Cyclone Freddy, Feb 19 2023, Suomi NPP VIIRS (NASA)',
+        dataCredit: `${STORMS_CREDIT}, 14312 Freddy`,
+        season: {
+          url: `${HEMISPHERES_DATA}/south_indian_2023.csv`,
+          span: SEASON_SPANS.southIndian,
+          hemisphere: Hemisphere.SOUTH,
+          lead: Lead.BOWED,
+          focus: { lat: -18, lon: 80, arcDeg: SOUTHERN_ARC_DEG },
+        },
       },
     ],
   },

@@ -5,6 +5,7 @@ import { DEFAULT_GLOBE_LENS } from '../domain/globe-lens.js';
 import { createBirdsLayer } from './birds-layer.js';
 import { createLightningLayer } from './lightning-layer.js';
 import { createStormLayer } from './storm-view.js';
+import { createStormsLayer } from './storms-layer.js';
 
 // globe.gl is loaded as a UMD bundle in index.html: it ships one copy of three.js,
 // while the ESM build pulls several three.js versions from the CDN.
@@ -31,6 +32,12 @@ const RETURN_DELAY_MS = 1000;
 /** Camera altitude at which the globe's silhouette exactly fills a square viewport. */
 function fittedAltitude(camera) {
   return 1 / Math.sin((camera.fov * Math.PI) / 360) - 1;
+}
+
+/** Camera altitude at which the edge of a square viewport falls `arcDeg` of arc from the point in its centre. */
+function altitudeForArc(camera, arcDeg) {
+  const half = (camera.fov * Math.PI) / 360;
+  return Math.sin((arcDeg * Math.PI) / 180 + half) / Math.sin(half) - 1;
 }
 
 /**
@@ -177,7 +184,8 @@ export function createGlobeView(container) {
     fall.setWaterLine(share);
   }
 
-  // `getFocus()`: the { lat, lon } to bring to the centre, or null when there is none.
+  // `getFocus()`: the { lat, lon } to bring to the centre, or null when there is none. With `arcDeg` the globe also
+  // zooms in until the label's edge is that many degrees of arc from it; otherwise it fits the label.
   let getFocus = () => null;
   let userTurning = false;
   let returnTimer = null;
@@ -207,10 +215,11 @@ export function createGlobeView(container) {
     const view = globe.pointOfView();
     const k = 1 - Math.exp(-dt / tau);
     const dLng = ((((focus.lon - view.lng) % 360) + 540) % 360) - 180;
+    const altitude = focus.arcDeg ? altitudeForArc(globe.camera(), focus.arcDeg) : fitAltitude;
     globe.pointOfView({
       lat: view.lat + k * (focus.lat - view.lat),
       lng: view.lng + k * dLng,
-      altitude: view.altitude + k * (fitAltitude - view.altitude),
+      altitude: view.altitude + k * (altitude - view.altitude),
     });
     pinTileLevel();
   }
@@ -250,11 +259,10 @@ export function createGlobeView(container) {
     return (2 * gap * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(1, container.clientHeight);
   }
 
-  const birds = createBirdsLayer({
-    globe,
-    unitsPerPx,
-    setElements: (elements) => globe.htmlElementsData(elements),
-  });
+  // Birds and storms are never on the globe together: each layer sets the globe's HTML elements while it is shown.
+  const layerView = { globe, unitsPerPx, setElements: (elements) => globe.htmlElementsData(elements) };
+  const birds = createBirdsLayer(layerView);
+  const storms = createStormsLayer(layerView);
   globe.htmlElement('el').htmlTransitionDuration(0);
   const storm = createStormLayer({ globe, container });
 
@@ -268,7 +276,8 @@ export function createGlobeView(container) {
     birds,
     lightning,
     storm,
-    /** @param {() => ({ lat: number, lon: number } | null)} next */
+    storms,
+    /** @param {() => ({ lat: number, lon: number, arcDeg?: number } | null)} next */
     setFocus(next) {
       getFocus = next;
     },

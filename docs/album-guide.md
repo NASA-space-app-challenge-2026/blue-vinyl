@@ -71,5 +71,5 @@ Every album must pass all four criteria.
 ## Constraints
 
 - Every track in an album has a different main instrument.
-- Each track is about 30 seconds long (25 to 35 seconds).
+- Each track is 30 to 60 seconds long.
 - An album has at most 4 tracks.

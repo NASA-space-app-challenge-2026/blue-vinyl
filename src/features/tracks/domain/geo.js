@@ -11,6 +11,11 @@ export function distanceKm(lat1, lon1, lat2, lon2) {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(Math.min(1, a)));
 }
 
+/** Great-circle distance in degrees of arc. */
+export function arcDeg(lat1, lon1, lat2, lon2) {
+  return distanceKm(lat1, lon1, lat2, lon2) / EARTH_RADIUS_KM / RAD;
+}
+
 /** Initial bearing from the first point to the second, in radians clockwise from north. */
 export function bearing(lat1, lon1, lat2, lon2) {
   const dLon = (lon2 - lon1) * RAD;

@@ -209,6 +209,39 @@
   to { transform: scale(0.35, 0.9) rotate(22deg); }
 }
 
+/* A storm of a season (storms-layer.js): its sign turns counterclockwise (mirrored south of the equator), its name
+   stays upright. */
+.season-storm svg {
+  display: block;
+  overflow: visible;
+}
+
+.season-storm-sign {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  animation: season-storm-turn 1.6s linear infinite;
+}
+
+.season-storm-sign circle {
+  fill: #111;
+}
+
+@keyframes season-storm-turn {
+  to { transform: rotate(-360deg); }
+}
+
+.season-storm-name {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #fff;
+  stroke: #111;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
 /* The date at 6 o'clock on the globe (date-label.js), sized with the globe. */
 .globe-view {
   container-type: size;

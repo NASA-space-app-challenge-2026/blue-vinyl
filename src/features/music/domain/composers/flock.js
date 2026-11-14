@@ -77,9 +77,12 @@ function degreeToMidi(degree) {
  * @property {(instrument: Object, sound: { program: number, volume: number }, at: number) => void} program  another
  *   sound of the same kind (melodic or drums) on the instrument's channel
  * @property {(patch: Object, midi: number, velocity: number, at: number, steps: number, shape: Object) => void} synthNote
- *   a note on the analog synth (see data/analog-synth.js)
- * @property {(velocity: number, at: number, steps: number, fromHz: number, toHz: number) => void} noise a noise hit
- * @property {(effect: Object, value: number, at: number) => void} effect turns an Effect on the whole mix (see effects.js)
+ *   a note of a Patch on the analog synth (see data/analog-synth.js)
+ * @property {(velocity: number, at: number, steps: number, fromHz: number, toHz: number) => void} noise  a noise hit
+ * @property {(lead: Object, sound: Object, at: number) => { move: Function, close: Function }} voice  a held voice of a
+ *   Lead on the analog synth, moved and closed by the composer
+ * @property {(effect: Object, value: number, at: number) => void} effect  an Effect on the whole mix (see
+ *   domain/effects.js)
  */
 
 export class FlockComposer {
