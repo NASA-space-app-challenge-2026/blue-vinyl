@@ -11,9 +11,9 @@ EIC shows that Arctic animals move with the seasons, with all years folded into 
 | 1 | Buff-breasted Sandpiper | not ranked (no bird tracked a full year) | Flute |
 | 2 | Whimbrel | 20,306 | Oboe |
 | 3 | Yellow-billed Loon | 10,289 | French horn |
-| 4 | Red-throated Loon | 9,699 | Ocarina |
+| 4 | Northern Pintail | 3,819 (one bird tracked a full year) | Ocarina |
 
-The Buff-breasted sandpiper (our choice, in place of the Lesser yellowlegs) flies from Alaska's Arctic coast to the Pampas of Argentina and Uruguay; it plays a fixed list of 93 birds we picked. The Whimbrel and the two loons are three of the four species that fly the farthest in a year. The shorebirds cross the equator to South America; the loons stay in the North Pacific.
+The Buff-breasted sandpiper (our choice, in place of the Lesser yellowlegs) flies from Alaska's Arctic coast to the Pampas of Argentina and Uruguay; it plays a fixed list of 93 birds we picked. The Whimbrel and the Yellow-billed loon are two of the four species that fly the farthest in a year. The Northern pintail (our choice, in place of the Red-throated loon) flies from northern Japan to the tundra of eastern Siberia. The shorebirds cross the equator to South America; the loon and the pintail stay in the North Pacific.
 
 ## Data
 

@@ -16,13 +16,14 @@ export const albums = [
     coverUrl: 'assets/albums/arctic-bird/cover.jpg',
     coverCredit: 'Data: Arctic Animal Movement Archive, Movebank · NASA SVS 4877',
     msPerSec: WEEK_A_SECOND_MS,
-    // The Buff-breasted sandpiper, from Alaska's Arctic coast to the Pampas, then three of the four species of the
-    // archive's public bird studies that fly the farthest in a year (see notebooks/arctic_bird_album.ipynb, section 9).
+    // The Buff-breasted sandpiper, from Alaska's Arctic coast to the Pampas, two of the four species of the archive's
+    // public bird studies that fly the farthest in a year, and the Northern pintail, from northern Japan to eastern
+    // Siberia (see notebooks/arctic_bird_album.ipynb, section 9).
     tracks: [
       { title: 'Buff-breasted Sandpiper', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/buff_breasted_sandpiper.csv`, lead: Instrument.FLUTE, color: '#f0a040' },
       { title: 'Whimbrel', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/whimbrel.csv`, lead: Instrument.OBOE, color: '#e8785a' },
       { title: 'Yellow-billed Loon', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/yellow_billed_loon.csv`, lead: Instrument.FRENCH_HORN, color: '#68b4dc' },
-      { title: 'Red-throated Loon', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/red_throated_loon.csv`, lead: Instrument.OCARINA, color: '#9ccc64' },
+      { title: 'Northern Pintail', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/northern_pintail.csv`, lead: Instrument.OCARINA, color: '#9ccc64' },
     ],
   },
   {
