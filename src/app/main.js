@@ -26,10 +26,13 @@ import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
+import { HurricaneComposer } from '../features/music/domain/composers/hurricane.js';
 import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
 import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
+import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack } from '../features/tracks/data/track-repository.js';
-import { sampleFlock } from '../features/tracks/domain/bird-track.js';
+import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
+import { isGrowingSea, sampleStorm, sstMapAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
@@ -43,10 +46,10 @@ let totalMs;
 let trackData = [];
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
-// What each track of the album plays, by track index, once its birds have loaded: { tracks, lead }, or null for a
-// track without birds. Empty until then.
+// What each track of the album plays, by track index, once its data has loaded (see the Song of sound-engine.js): its
+// birds (`tracks`, `lead`) or its storm (`storm`), or null for a track with neither. Empty until then.
 let songs = [];
-// The song whose birds the globe shows, and where its flock is now (the globe keeps it in the middle).
+// The song whose birds or storm the globe shows, and where they are now (the globe keeps them in the middle).
 let shownSong = null;
 let focus = null;
 // The pole the globe looks down on for an ice track, to glide there when it changes; null for other tracks.
@@ -99,7 +102,9 @@ globe.setFocus(() => focus);
 const dateLabel = createDateLabel(turntable.labelSlot);
 const halo = createHalo(turntable.haloCanvas, () => soundEngine.analyser);
 new ResizeObserver(() => halo.place(turntable.labelDisc())).observe(turntable.haloCanvas);
-const soundEngine = createSoundEngine({ composer: new FlockComposer() });
+const soundEngine = createSoundEngine();
+const flockComposer = new FlockComposer();
+const hurricaneComposer = new HurricaneComposer();
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
@@ -180,21 +185,66 @@ async function loadAlbumData(loading) {
   globe.glide();
 }
 
-// Loads the birds of `target`'s tracks, unless another album is shown by then.
+// Loads the birds or the storm of each of `target`'s tracks, unless another album is shown by then.
 async function loadSongs(target) {
-  if (!target.tracks.some((track) => track.birdsUrl)) return;
-  const perTrack = await Promise.all(target.tracks.map((track) => (track.birdsUrl ? loadBirdTracks(track.birdsUrl) : null)));
+  if (!target.tracks.some((track) => track.birdsUrl || track.storm)) return;
+  let perTrack;
+  try {
+    perTrack = await Promise.all(target.tracks.map((track) => loadSong(track, target)));
+  } catch (error) {
+    console.warn('Album data unavailable:', error);
+    return;
+  }
   if (album !== target) return;
-  songs = perTrack.map((tracks, i) => tracks && { tracks, lead: target.tracks[i].lead, msPerSec: target.msPerSec });
+  songs = perTrack;
   render();
   globe.glide();
 }
 
-// Puts `song`'s birds on the globe in `color`, and the glow in it; null takes them off.
+/**
+ * @param {import('../features/album/domain/album.js').Track} track
+ * @param {import('../features/album/domain/album.js').Album} target the album it is on
+ * @returns {Promise<import('../features/music/data/sound-engine.js').Song | null>}
+ */
+async function loadSong(track, target) {
+  if (track.birdsUrl) {
+    const tracks = await loadBirdTracks(track.birdsUrl);
+    return {
+      tracks,
+      lead: track.lead,
+      composer: flockComposer,
+      startMs: 0,
+      msPerSec: target.msPerSec,
+      sampleAt: (time) => sampleFlock(tracks, time),
+      path: dailyFlock(tracks),
+    };
+  }
+  if (track.storm) {
+    const storm = await loadStormTrack(track.storm);
+    const { track: stormTrack } = storm;
+    return {
+      storm,
+      track: stormTrack,
+      kit: track.storm.kit,
+      neutralSstC: track.storm.neutralSstC,
+      composer: hurricaneComposer,
+      startMs: stormTrack.t[0],
+      msPerSec: stormMsPerSec(stormTrack, track.durationSec),
+      sampleAt: (time) => sampleStorm(stormTrack, time),
+      path: stormTrack.t.map((_, i) => ({ lat: stormTrack.lat[i], lon: stormTrack.lon[i] })),
+    };
+  }
+  return null;
+}
+
+// Puts `song`'s birds on the globe in `color`, and the glow in it; null takes them off. A storm's song clears the
+// birds and draws its storm instead (renderStorm).
 function showSong(song, color) {
   shownSong = song;
   focus = null;
   globe.birds.reset(color);
+  globe.storm.show(null);
+  globe.sstField.show(null);
   dateLabel.show(null);
   if (color) halo.setColor(color);
 }
@@ -350,7 +400,14 @@ function renderData(trackIndex) {
 // Draws the birds, the date and the flock's place at the clock and, while playing, lets the music follow it.
 function renderSong(trackIndex) {
   const song = songs[trackIndex];
-  if (!song) return;
+  if (!song) {
+    if (shownSong) showSong(null, null);
+    return;
+  }
+  if (song.storm) {
+    renderStorm(trackIndex, song);
+    return;
+  }
   if (shownSong !== song) {
     showSong(song, album.tracks[trackIndex].color);
     globe.glide();
@@ -362,6 +419,34 @@ function renderSong(trackIndex) {
   focus = sampleFlock(song.tracks, time) ?? focus;
   if (state !== PlaybackState.PLAYING) return;
   soundEngine.follow(song, elapsedSec);
+  halo.wake();
+}
+
+// The storm fades in over its track's first seconds and out over its last.
+const STORM_FADE_SEC = 2.5;
+
+/**
+ * Draws the storm at the clock over the sea surface temperature of its month, its wind and the sea under it, and the
+ * date; the globe keeps it in the middle and the glow takes its colour. While playing, the music follows it.
+ */
+function renderStorm(trackIndex, song) {
+  const { durationSec } = album.tracks[trackIndex];
+  if (shownSong !== song) {
+    showSong(song, null);
+    globe.glide();
+  }
+  const sec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  const time = stormTimeAt(song.track, sec, durationSec);
+  const sample = sampleStorm(song.track, time);
+  const fade = Math.max(0, Math.min(1, sec / STORM_FADE_SEC, (durationSec - sec) / STORM_FADE_SEC));
+  globe.sstField.show(sstMapAt(song.storm.field, time));
+  globe.storm.show({ sample, fade, growing: sample.sstC !== null && isGrowingSea(sample.sstC, song.neutralSstC) });
+  const color = globe.storm.color;
+  if (color) halo.setColor(color);
+  dateLabel.show(time);
+  focus = { lat: sample.lat, lon: sample.lon };
+  if (state !== PlaybackState.PLAYING) return;
+  soundEngine.follow(song, sec);
   halo.wake();
 }
 

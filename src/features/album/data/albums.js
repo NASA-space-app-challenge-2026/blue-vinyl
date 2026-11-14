@@ -1,4 +1,5 @@
 import { IceVoice } from '../../music/domain/ice-sea-score.js';
+import { Kit } from '../../music/domain/composers/hurricane.js';
 import { YEAR_TIMELINE, trackDurationSec } from '../../tracks/domain/year-timeline.js';
 import { AlbumCategory } from '../domain/album.js';
 import { Instrument } from '../../music/domain/instruments.js';
@@ -15,6 +16,12 @@ const GLACIER_COVERS = 'assets/albums/glacier';
 // 32 years (1993–2024), one a bar (1.2 s) with no intro, then the last note's tail: 39.7 s.
 const POLAR_YEARS = 32;
 const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
+
+const HOT_OCEANS_DATA = 'data/hot_oceans/tracks';
+const HOT_OCEANS_COVERS = 'assets/albums/hot-oceans';
+// The Atlantic's neutral SST (°C), where storms on average neither strengthen nor weaken over the next 24 hours
+// (notebooks/hot_oceans_album.ipynb, section 5.1): the sea above it lets a storm grow.
+const ATLANTIC_NEUTRAL_SST_C = 26.9;
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -82,6 +89,55 @@ export const albums = [
           poleLat: -90,
           // The ice on a piano, so the two tracks are told apart.
           iceVoice: IceVoice.PIANO,
+        },
+      },
+    ],
+  },
+  {
+    id: 'hot-oceans',
+    category: AlbumCategory.CLIMATE,
+    title: 'Hurricanes over Warm Water',
+    coverUrl: `${HOT_OCEANS_COVERS}/emily_2005.jpg`,
+    coverCredit: 'NASA, public domain, via Wikimedia Commons',
+    dataCredit: 'Data: NASA SVS 5097, 5072 · HURDAT2 (NOAA/NHC) · GHRSST MUR SST v4.1 (NASA JPL, via NOAA CoastWatch)',
+    // Three Atlantic hurricanes, each its whole life: two that weaken on land and one that weakens over cool water
+    // (see docs/albums/hot-oceans.md). Each plays its wind on its own percussion family. Each track takes 40–60 s, so
+    // the storms' lives (4.75 to 12.5 days) play at their own pace. Covers: each storm near its peak, from NASA.
+    tracks: [
+      {
+        title: 'Emily 2005',
+        durationSec: 60,
+        coverUrl: `${HOT_OCEANS_COVERS}/emily_2005.jpg`,
+        coverCredit: 'Cover: MODIS, Jul 16 2005 (Jeff Schmaltz, NASA MODIS Rapid Response Team)',
+        storm: {
+          csvUrl: `${HOT_OCEANS_DATA}/emily_2005.csv`,
+          fieldUrl: `${HOT_OCEANS_DATA}/emily_2005_sst.geojson`,
+          kit: Kit.LATIN,
+          neutralSstC: ATLANTIC_NEUTRAL_SST_C,
+        },
+      },
+      {
+        title: 'Felix 2007',
+        durationSec: 48,
+        coverUrl: `${HOT_OCEANS_COVERS}/felix_2007.jpg`,
+        coverCredit: 'Cover: International Space Station, Sep 3 2007 (NASA)',
+        storm: {
+          csvUrl: `${HOT_OCEANS_DATA}/felix_2007.csv`,
+          fieldUrl: `${HOT_OCEANS_DATA}/felix_2007_sst.geojson`,
+          kit: Kit.DRUMLINE,
+          neutralSstC: ATLANTIC_NEUTRAL_SST_C,
+        },
+      },
+      {
+        title: 'Sam 2021',
+        durationSec: 60,
+        coverUrl: `${HOT_OCEANS_COVERS}/sam_2021.jpg`,
+        coverCredit: 'Cover: NASA Worldview, Sep 26 2021',
+        storm: {
+          csvUrl: `${HOT_OCEANS_DATA}/sam_2021.csv`,
+          fieldUrl: `${HOT_OCEANS_DATA}/sam_2021_sst.geojson`,
+          kit: Kit.ORCHESTRA,
+          neutralSstC: ATLANTIC_NEUTRAL_SST_C,
         },
       },
     ],

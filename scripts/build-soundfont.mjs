@@ -26,11 +26,15 @@ async function source() {
 }
 
 const bank = SoundBankLoader.fromArrayBuffer(await source());
-const programs = new Set(Object.values(Instrument).map((inst) => inst.program));
-const isKept = (p) => p.bankMSB === 0 && p.bankLSB === 0 && !p.isGMGSDrum && programs.has(p.program);
+// Melodic programs and drum kits are numbered apart: kit 16 (Power) is not program 16 (an organ).
+const programsOf = (drums) => new Set(Object.values(Instrument).filter((inst) => Boolean(inst.drums) === drums).map((inst) => inst.program));
+const programs = { melodic: programsOf(false), drums: programsOf(true) };
+const isKept = (p) => p.bankMSB === 0 && p.bankLSB === 0 && (p.isGMGSDrum ? programs.drums : programs.melodic).has(p.program);
 for (const preset of [...bank.presets]) if (!isKept(preset)) bank.deletePreset(preset);
 bank.removeUnusedElements();
-const missing = [...programs].filter((program) => !bank.presets.some((p) => p.program === program));
-if (missing.length) throw new Error(`programs not in the source: ${missing.join(', ')}`);
+const missing = Object.values(Instrument).filter(
+  (inst) => !bank.presets.some((p) => p.program === inst.program && p.isGMGSDrum === Boolean(inst.drums)),
+);
+if (missing.length) throw new Error(`programs not in the source: ${missing.map((inst) => inst.program).join(', ')}`);
 await writeFile(OUTPUT, Buffer.from(bank.writeSF2()));
 console.log(`${OUTPUT.pathname}: ${bank.presets.map((p) => `${p.program} ${p.name}`).join(', ')}`);
