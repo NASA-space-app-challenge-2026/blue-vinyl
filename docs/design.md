@@ -68,7 +68,7 @@ An album whose tracks have data draws each year of the playing track on the glob
 | Normal | Gold line, the 1981–2010 ice edge, as on SVS 5382 | Fixed for the track |
 | Record low | Dashed coral line, the edge of the latest record low | Moves only in a record-low year |
 | Year and ice | Year in bold at the top, extent and change from the normal below it | Each year |
-| Sea level | The porthole of SVS 5235: water whose top edge is cut to a sliding wave, a paler swell behind it and light rays; a centimetre ruler in the middle and a blue mark from the first year's sea level to this year's, all with a dark halo so they show on ice and map alike | The water rises smoothly between years; the mark moves a year at a time |
+| Sea level | The porthole of SVS 5235: water whose top edge is cut to a sliding wave, a paler swell behind it and light rays; a centimetre ruler in the middle with a dark halo so it shows on ice and map alike, the first year's sea level at its foot and this year's rise (such as +71 mm) at its height | The water rises smoothly between years; the reading moves a year at a time |
 
 Before a track plays and during its intro, the globe shows its first year. The text and water never take pointer events, so the globe stays draggable.
 

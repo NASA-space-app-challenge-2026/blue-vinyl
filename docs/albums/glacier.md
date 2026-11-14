@@ -29,17 +29,18 @@ All parts are in D minor and played from the FluidR3_GM SoundFont (CC BY 3.0).
 
 | Part | Data | Mapping |
 | --- | --- | --- |
-| Main instrument: cello (North), piano (South) | Ice extent | The 1981–2010 normal is home, D4 (North) or D5 (South); each 0.25 (North) or 0.15 (South) million km² is one scale step. Less ice is lower, so a pole that never returns to its normal never returns home. |
-| Harp ripple | Sea level | Each year a ripple from D2 up to the water line, one octave from D3 (0 mm) to D4 (100 mm): longer, higher and louder as the sea rises. |
+| Main instrument: piano (North), cello (South) | Ice extent | The 1981–2010 normal is home, D5 (North) or D4 (South); each 0.25 (North) or 0.15 (South) million km² is one scale step. Less ice is lower, so a pole that never returns to its normal never returns home. The more the ice changed from the year before, the louder the note. |
+| Harp | Sea level | Each year a wave washes in and recedes: it climbs the chord of the year to the water line, a note from D3 (1993) to A4 (+100 mm), and falls back two notes. The higher the sea, the more notes (4 to 8) and the louder. |
+| Harmony | (time) | One chord a year, cycling Dm, B♭, F, C, so the waves move instead of repeating. Small fixed variations in timing and velocity keep them from sounding machine-made. |
 | Wave | Sea level | A Seashore stroke each year under the harp, higher as the water rises, like the note of a filling vessel. |
 | Held strings, D2 and A2 | The normal | The whole track, like the gold line on the globe. |
 | Timpani | Record low | A stroke in every year lower than all years since 1979; the track's lowest year is the loudest. |
 
-Mix (RMS while the years play, measured in a browser render): the main instrument on top; the sea reaches 6 dB under it in the last third; the wave sits 8 dB under the harp; the strings 14 dB and the timpani 12 dB under the main instrument.
+Mix (RMS while the years play, measured in a browser render): piano and cello at the same level on top; the sea reaches 5 dB under them in the last third; the wave sits 8 dB under the harp; the strings 14 dB and the timpani 12 dB under the main instrument.
 
 ## Globe
 
-See [design.md](../design.md#data-on-the-globe): the ice morphing from one year's shape into the next over a fading blue trail of the years before, the gold normal line, the dashed record-low line, the year and extent, and the label as the porthole of SVS 5235: water rising past a centimetre ruler, with a blue mark from the 1993 sea level to the year's measured level. The 1993 sea level sits 14% up the label and each 10 cm of rise takes 30% of its height.
+See [design.md](../design.md#data-on-the-globe): the ice morphing from one year's shape into the next over a fading blue trail of the years before, the gold normal line, the dashed record-low line, the year and extent, and the label as the porthole of SVS 5235: water rising past a centimetre ruler, with the 1993 sea level at its foot and the year's measured rise at its height. The 1993 sea level sits 14% up the label and each 10 cm of rise takes 30% of its height.
 
 ## Credits
 
