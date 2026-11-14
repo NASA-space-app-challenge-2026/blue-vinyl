@@ -38,7 +38,7 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 - Full-viewport stage; nothing scrolls on desktop.
 - The sleeve is tilted by -3deg and tucked **behind** the record. The record overlaps the sleeve's right edge.
 - The sleeve has a dark gradient at the bottom so the title and track list stay readable over any cover photo.
-- Top right: the settings button. Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
+- Top right, left to right: play/pause, volume, fullscreen and settings buttons. Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
 - At 760px wide and below, the sleeve and the record stack vertically and the page scrolls.
 
 ## Record
@@ -82,8 +82,15 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | Drag the tonearm | Scrub; drop on the record to play from there, off it to stop |
 | Drag on the globe | Rotate the globe |
 | Scroll on the globe | Zoom in / out (out to the fitted size) |
+| Play button (top right) | Play / pause, same as Space |
+| Volume button (top right) | First click expands it into a slider; while expanded, the speaker toggles mute. It folds back into one button after a short idle time without the mouse or keyboard focus on it |
+| Fullscreen button (top right) | Enter / exit fullscreen; hidden where the browser has no fullscreen support |
 | Settings button (top right) | Open the settings menu; Escape or a click outside closes it |
 
 Playback states (`PlaybackState`): `stopped` → `cueing` (arm eases on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position. Grabbing the arm enters `scrubbing` from any state.
 
-The settings button is the only on-screen button for now. Language, view options, album switching and notes will be added in later issues.
+Volume is held by the control only; nothing plays sound yet. Language, view options, album switching and notes will be added in later issues.
+
+## Controls
+
+The top-right buttons share a liquid-glass surface (`src/features/controls/presentation/glass.css`): a translucent white gradient over a blurred, saturated backdrop, with a bright inner top edge. Icons are defined once in `ControlIcon` (`control-icons.js`).

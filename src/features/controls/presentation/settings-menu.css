@@ -2,24 +2,10 @@
   position: relative;
 }
 
-.settings-toggle {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgb(243 236 225 / 0.28);
-  border-radius: 50%;
-  background: rgb(0 0 0 / 0.15);
-  color: var(--ink-muted);
-  cursor: pointer;
-}
-
-.settings-toggle:hover,
 .settings-toggle[aria-expanded='true'] {
   color: var(--ink);
 }
 
-.settings-toggle:focus-visible,
 .settings-option:focus-within {
   outline: 2px solid var(--ink);
   outline-offset: 2px;

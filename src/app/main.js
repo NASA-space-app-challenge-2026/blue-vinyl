@@ -7,8 +7,11 @@ import { albumDurationSec, trackBoundaries, trackIndexAt } from '../features/alb
 import { createAlbumCover } from '../features/album/presentation/album-cover.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
+import { createFullscreenButton } from '../features/controls/presentation/fullscreen-button.js';
+import { createPlayButton } from '../features/controls/presentation/play-button.js';
 import { createPlayHint } from '../features/controls/presentation/play-hint.js';
 import { createSettingsMenu } from '../features/controls/presentation/settings-menu.js';
+import { createVolumeControl } from '../features/controls/presentation/volume-control.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_THEME, GlobeTheme } from '../features/globe/domain/globe-theme.js';
 import { createGlobeAttribution } from '../features/globe/presentation/globe-attribution.js';
@@ -52,6 +55,9 @@ const turntable = createTurntableView(slot('stage'), {
 const globe = createGlobeView(turntable.labelSlot);
 const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
 
+const playButton = createPlayButton(slot('corner-top-right'), { onToggle: togglePlayback });
+createVolumeControl(slot('corner-top-right'));
+createFullscreenButton(slot('corner-top-right'));
 createSettingsMenu(slot('corner-top-right'), {
   globeThemes: Object.values(GlobeTheme).map((theme) => ({ value: theme, label: GLOBE_THEMES[theme].label })),
   globeTheme: DEFAULT_GLOBE_THEME,
@@ -91,6 +97,7 @@ function render() {
 function setState(next) {
   state = next;
   playHint.render(state);
+  playButton.render(state);
   render();
 }
 

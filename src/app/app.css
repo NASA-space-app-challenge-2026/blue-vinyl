@@ -37,6 +37,8 @@ body {
 #corner-top-right {
   top: var(--gutter);
   right: var(--gutter);
+  display: flex;
+  gap: 10px;
 }
 
 #corner-bottom-right {
