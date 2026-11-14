@@ -72,6 +72,7 @@ const turntable = createTurntableView(slot('stage'), {
     startPlaying();
   },
   onLift: () => setState(PlaybackState.STOPPED),
+  onSeek: seekTrack,
 });
 const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
 const globe = createGlobeView(turntable.labelSlot);
@@ -181,6 +182,25 @@ async function switchAlbum(step) {
   }
 }
 
+// 0..1 through the track at `trackIndex`.
+function trackProgressAt(trackIndex) {
+  return (elapsedMs / 1000 - trackStartSec(album, trackIndex)) / album.tracks[trackIndex].durationSec;
+}
+
+// Plays the current track from `trackProgress` (0..1) on: the arm moves there, and sets down first if it was off.
+function seekTrack(trackProgress) {
+  if (swapping) return;
+  const trackIndex = trackIndexAt(album, elapsedMs / totalMs);
+  elapsedMs = (trackStartSec(album, trackIndex) + trackProgress * album.tracks[trackIndex].durationSec) * 1000;
+  globe.glide();
+  if (state === PlaybackState.PLAYING) {
+    render();
+    return;
+  }
+  unlockSound();
+  setState(PlaybackState.CUEING);
+}
+
 function togglePlayback() {
   if (swapping) return;
   unlockSound();
@@ -197,7 +217,7 @@ function startPlaying() {
 function render() {
   const progress = elapsedMs / totalMs;
   const trackIndex = trackIndexAt(album, progress);
-  turntable.render(state, progress);
+  turntable.render(state, progress, trackProgressAt(trackIndex));
   albumColumn.render(trackIndex);
   renderSong(trackIndex);
 }

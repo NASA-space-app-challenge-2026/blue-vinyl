@@ -75,16 +75,27 @@
 }
 
 .record-progress {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
   pointer-events: none;
 }
 
+/* The current track's progress round the rim; only the band round the rail takes a click. */
+.record-progress-rail {
+  stroke: rgb(255 255 255 / 0.18);
+}
+
+.record-progress-fill {
+  stroke: #fff;
+  stroke-linecap: round;
+}
+
+.record-progress-hit {
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
 .record-progress-dot {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 3.6%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: #fff;
-  transform: translate(-50%, -50%);
+  fill: #fff;
 }

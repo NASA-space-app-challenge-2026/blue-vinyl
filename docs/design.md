@@ -53,7 +53,7 @@ Geometry is defined once in `src/features/turntable/domain/geometry.js`, in viny
 - **Sheen**: two opposite reflections of a light at the upper left (a wide soft wedge and a narrow bright one each). They stay still while the record spins under them.
 - **Platter** runs at 33⅓ rpm. It spins up when the needle sets down and coasts to a stop when it lifts.
 - **Label** is a large center area that hosts the globe. It starts exactly at the innermost groove, with no gap. It is an HTML layer between the vinyl (SVG) and the tonearm (SVG), clipped to a circle, so features can mount canvases into the label slot.
-- **Progress dot** is a white dot on the label rim that travels one full turn over the album.
+- **Progress ring** runs round the label rim: one full turn per track, from 12 o'clock clockwise. A faint rail is filled in white as far as the track has played, with a white dot at the head. Clicking the ring plays the current track from that point.
 - **Globe** is rendered with [globe.gl](https://github.com/vasturiano/globe.gl) (MIT, no API key), loaded as the pinned UMD bundle in `index.html`. It is lit flat (ambient light only) like a printed map, has no atmosphere and does not spin with the record. Its fitted size fills the label edge to edge. Drag rotates it; scrolling zooms in, and zooming out stops at the fitted size so no gap opens between the globe and the grooves.
 
 ## Globe Themes
@@ -81,6 +81,7 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | --- | --- |
 | Space | Play / pause |
 | Click on the record grooves | Play / pause |
+| Click on the progress ring | Play the current track from that point; sets the arm down first when stopped |
 | Drag the tonearm | Scrub; drop on the record to play from there, off it to stop |
 | Drag on the globe | Rotate the globe |
 | Scroll on the globe | Zoom in / out (out to the fitted size) |

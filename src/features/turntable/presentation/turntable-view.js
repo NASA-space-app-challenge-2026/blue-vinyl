@@ -213,6 +213,52 @@ function layer(className, markup) {
   return node;
 }
 
+// The progress ring in the label's own units (radius 1 at its rim): where the rail runs, how thick it is, and how
+// wide a band round it takes a click.
+const RING = Object.freeze({ radius: 0.975, width: 0.014, dotRadius: 0.024, hitWidth: 0.09 });
+
+/**
+ * The current track's progress round the label's rim: a faint rail, filled clockwise from 12 o'clock as far as the
+ * track has played, with a dot at the head. Clicking the rail calls `onSeek` with the point of the track there.
+ *
+ * @param {(trackProgress: number) => void} onSeek
+ */
+function createProgressRing(onSeek) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'record-progress');
+  svg.setAttribute('viewBox', '-1 -1 2 2');
+  // rotate(-90): the rail starts at 12 o'clock; pathLength 1 makes the dash length the share played.
+  svg.innerHTML = `
+    <g transform="rotate(-90)">
+      <circle class="record-progress-rail" r="${RING.radius}" fill="none" stroke-width="${RING.width}"/>
+      <circle class="record-progress-fill" r="${RING.radius}" fill="none" stroke-width="${RING.width}" pathLength="1"/>
+      <circle class="record-progress-hit" r="${RING.radius}" fill="none" stroke="transparent" stroke-width="${RING.hitWidth}"/>
+    </g>
+    <circle class="record-progress-dot" r="${RING.dotRadius}"/>`;
+  const fill = svg.querySelector('.record-progress-fill');
+  const dot = svg.querySelector('.record-progress-dot');
+
+  svg.querySelector('.record-progress-hit').addEventListener('click', (event) => {
+    const rect = svg.getBoundingClientRect();
+    const x = event.clientX - (rect.left + rect.width / 2);
+    const y = event.clientY - (rect.top + rect.height / 2);
+    // Clockwise from 12 o'clock, 0..1.
+    const turn = (Math.atan2(x, -y) / (2 * Math.PI) + 1) % 1;
+    onSeek(turn);
+  });
+
+  /** @param {number} trackProgress 0..1 */
+  function render(trackProgress) {
+    const share = Math.min(1, Math.max(0, trackProgress));
+    fill.setAttribute('stroke-dasharray', `${share} 1`);
+    const angle = share * 2 * Math.PI;
+    dot.setAttribute('cx', String(RING.radius * Math.sin(angle)));
+    dot.setAttribute('cy', String(-RING.radius * Math.cos(angle)));
+  }
+
+  return { el: svg, render };
+}
+
 /**
  * Record player: the vinyl (SVG) under an HTML label that features mount canvases into (the globe), under the
  * tonearm (SVG). The platter spins up while its motor runs and coasts to a stop otherwise.
@@ -222,6 +268,9 @@ function layer(className, markup) {
  * record, the needle sets down, the motor starts and `onDrop(progress)` is called; released off it, the arm
  * returns to rest and `onLift()` is called.
  *
+ * Round the label's rim runs the current track's progress ring: one turn per track from 12 o'clock, its rail filled
+ * where the track has played. Clicking the ring calls `onSeek(trackProgress)` with the point of the track clicked.
+ *
  * @param {HTMLElement} parent
  * @param {{
  *   onToggle: () => void,
@@ -230,11 +279,12 @@ function layer(className, markup) {
  *   onScrub: (progress: number | null) => void,
  *   onDrop: (progress: number) => void,
  *   onLift: () => void,
+ *   onSeek: (trackProgress: number) => void,
  * }} options
  *   onToggle: called when the record is clicked.
  *   onCued: called when the arm, swung on by render(CUEING), has reached its groove.
  */
-export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub, onDrop, onLift }) {
+export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek }) {
   const root = document.createElement('div');
   root.className = 'turntable';
   root.style.aspectRatio = `${BOUNDS.width} / ${BOUNDS.height}`;
@@ -256,12 +306,8 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
   labelSlot.className = 'record-label-slot';
   const rim = document.createElement('div');
   rim.className = 'record-label-rim';
-  const progressRing = document.createElement('div');
-  progressRing.className = 'record-progress';
-  const dot = document.createElement('div');
-  dot.className = 'record-progress-dot';
-  progressRing.append(dot);
-  label.append(labelSlot, rim, progressRing);
+  const progressRing = createProgressRing(onSeek);
+  label.append(labelSlot, rim, progressRing.el);
 
   const armLayer = layer('turntable-arm-layer', armLayerSvg());
   const arm = armLayer.querySelector('.arm');
@@ -424,10 +470,11 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
 
   /**
    * @param {string} state one of PlaybackState
-   * @param {number} progress 0..1
+   * @param {number} progress 0..1 through the album
+   * @param {number} trackProgress 0..1 through the current track
    */
-  function render(state, progress) {
-    progressRing.style.transform = `rotate(${progress}turn)`;
+  function render(state, progress, trackProgress) {
+    progressRing.render(trackProgress);
     if (state === PlaybackState.STOPPED) {
       if (onRecord) lift();
     } else if (state === PlaybackState.CUEING) {
