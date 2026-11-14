@@ -2,7 +2,7 @@
 
 // Composition root: wires the features together.
 
-import { albums } from '../features/album/data/albums.js';
+import { albums, WILDFIRE_DAY_TIMELINE, WILDFIRE_YEAR_TIMELINE } from '../features/album/data/albums.js';
 import { albumDurationSec, trackBoundaries, trackCover, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
@@ -22,6 +22,7 @@ import { createDateLabel } from '../features/globe/presentation/date-label.js';
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
 import { createHalo } from '../features/globe/presentation/halo.js';
 import { createSeaLevelOverlay } from '../features/globe/presentation/sea-level-overlay.js';
+import { createWildfireOverlay } from '../features/globe/presentation/wildfire-overlay.js';
 import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
@@ -30,17 +31,22 @@ import { HurricaneComposer } from '../features/music/domain/composers/hurricane.
 import { LightningComposer } from '../features/music/domain/composers/lightning.js';
 import { seasonSong, StormSeasonComposer } from '../features/music/domain/composers/storm-season.js';
 import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
+import { annualBurnScore, seasonScore } from '../features/music/domain/wildfire-score.js';
 import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
 import { loadLightningTrack } from '../features/tracks/data/lightning-season-source.js';
 import { loadStormSeason } from '../features/tracks/data/storm-season-source.js';
 import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
-import { loadIceSeaTrack } from '../features/tracks/data/track-repository.js';
+import { loadIceSeaTrack, loadWildfireTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
 import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
+
+// The contiguous United States, zoomed until the label's edge is 30 degrees of arc from its middle, so the West's fires
+// and the burn field read large.
+const CONUS_FOCUS = Object.freeze({ lat: 39, lon: -98, arcDeg: 30 });
 
 // Set by showAlbum().
 let albumIndex = 0;
@@ -66,6 +72,9 @@ let shownSong = null;
 let focus = null;
 // The pole the globe looks down on for an ice track, to glide there when it changes; null for other tracks.
 let shownPole = null;
+// What a wildfire track shows now (album, track and year or day), so the globe changes only when it does; null when
+// no wildfire track is shown.
+let shownFireKey = null;
 
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
@@ -110,6 +119,7 @@ const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
 const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
 const globe = createGlobeView(turntable.labelSlot);
 const seaOverlay = createSeaLevelOverlay(turntable.labelSlot);
+const wildfireOverlay = createWildfireOverlay(turntable.labelSlot);
 const music = createMusicPlayer();
 globe.setFocus(() => focus);
 const dateLabel = createDateLabel(turntable.labelSlot);
@@ -215,16 +225,24 @@ function showAlbum(index) {
 }
 
 /**
- * Loads the ice and sea data of the album's tracks, then builds the album's music: each track's notes, moved to where
- * the track starts. Playback that is already running picks the music up where it is.
+ * Loads score-driven track data (ice/sea or wildfire), then builds the album's music: each track's notes, moved to
+ * where the track starts. Playback that is already running picks the music up where it is.
  *
  * @param {import('../features/album/domain/album.js').Album} loading
  */
 async function loadAlbumData(loading) {
-  if (!loading.tracks.some((track) => track.iceSea)) return;
+  const hasIce = loading.tracks.some((track) => track.iceSea);
+  const hasFire = loading.tracks.some((track) => track.wildfire);
+  if (!hasIce && !hasFire) return;
   let data;
   try {
-    data = await Promise.all(loading.tracks.map((track) => (track.iceSea ? loadIceSeaTrack(track.iceSea) : null)));
+    data = await Promise.all(
+      loading.tracks.map((track) => {
+        if (track.iceSea) return loadIceSeaTrack(track.iceSea);
+        if (track.wildfire) return loadWildfireTrack(track.wildfire);
+        return null;
+      }),
+    );
   } catch (error) {
     console.warn('Album data unavailable:', error);
     return;
@@ -234,8 +252,26 @@ async function loadAlbumData(loading) {
   const starts = trackBoundaries(album).map((edge) => (edge * totalMs) / 1000);
   const notes = album.tracks.flatMap((track, i) => {
     if (!data[i]) return [];
-    return iceSeaScore(data[i].years, track.iceSea.iceVoice, YEAR_TIMELINE, track.durationSec)
-      .map((note) => ({ ...note, timeSec: note.timeSec + starts[i] }));
+    const offset = starts[i];
+    if (track.iceSea) {
+      return iceSeaScore(data[i].years, track.iceSea.iceVoice, YEAR_TIMELINE, track.durationSec).map((note) => ({
+        ...note,
+        timeSec: note.timeSec + offset,
+      }));
+    }
+    if (track.wildfire?.kind === 'annual') {
+      return annualBurnScore(data[i].years, WILDFIRE_YEAR_TIMELINE, track.durationSec).map((note) => ({
+        ...note,
+        timeSec: note.timeSec + offset,
+      }));
+    }
+    if (track.wildfire?.kind === 'season') {
+      return seasonScore(data[i].days, WILDFIRE_DAY_TIMELINE, track.durationSec).map((note) => ({
+        ...note,
+        timeSec: note.timeSec + offset,
+      }));
+    }
+    return [];
   });
   music.load(notes);
   musicCredits = [SOUNDFONT_CREDIT];
@@ -469,10 +505,21 @@ function renderSeason(trackIndex) {
 /**
  * Draws the year that plays at the clock on the globe, looking down on the track's pole: its ice and the sea level;
  * ice lost from one year to the next falls into the water. The record at rest before it plays shows the first year.
+ * Wildfire tracks look at CONUS and show acres / active fires instead.
  */
 function renderData(trackIndex) {
   const track = album.tracks[trackIndex];
   const data = trackData[trackIndex];
+  if (track.wildfire && data) {
+    renderWildfire(data, trackIndex);
+    return;
+  }
+  if (shownFireKey !== null) {
+    shownFireKey = null;
+    wildfireOverlay.render(null);
+    globe.showFires(null);
+    dateLabel.show(null);
+  }
   if (!track.iceSea || !data) {
     shownPole = null;
     globe.showIce(null);
@@ -516,6 +563,51 @@ function renderData(trackIndex) {
     seaLevelMm: year.seaLevelMm,
     waterMm,
   });
+}
+
+/**
+ * Draws the year or day of a wildfire track that plays at the clock, looking at the contiguous United States: the
+ * year's burn field over the West (Burned Acres), or each large fire's scar, front and smoke that day (2020 Fire
+ * Season). The globe and the read-out change only when the year or day does; the fires ease and flicker by themselves.
+ *
+ * @param {import('../features/tracks/data/track-repository.js').WildfireTrackData} data
+ * @param {number} trackIndex
+ */
+function renderWildfire(data, trackIndex) {
+  const trackSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  const timeline = data.kind === 'annual' ? WILDFIRE_YEAR_TIMELINE : WILDFIRE_DAY_TIMELINE;
+  const count = data.kind === 'annual' ? data.years.length : data.days.length;
+  const at = Math.max(0, yearAt(timeline, trackSec, count).index);
+  const key = `${album.id}:${trackIndex}:${at}`;
+  focus = CONUS_FOCUS;
+  if (key === shownFireKey) return;
+  if (shownFireKey === null) {
+    shownPole = null;
+    globe.showIce(null);
+    seaOverlay.render(null);
+    globe.glide();
+  }
+  shownFireKey = key;
+
+  if (data.kind === 'annual') {
+    const year = data.years[at];
+    globe.showFires({ mode: 'annual', acres: year.acres, acresMax: data.acresMax });
+    const acresM = (year.acres / 1e6).toFixed(1);
+    wildfireOverlay.render({
+      title: String(year.year),
+      detail: year.isTop10 ? `${acresM} M acres · among the 10 largest` : `${acresM} M acres burned`,
+    });
+    dateLabel.show(null);
+    return;
+  }
+
+  const day = data.days[at];
+  globe.showFires({ mode: 'season', day: at, fires: data.fires });
+  // The date itself is on the date label.
+  wildfireOverlay.render({
+    detail: `${Math.round(day.areaKm2).toLocaleString('en')} km² active · ${day.nFires} large fires`,
+  });
+  dateLabel.show(Date.parse(`${day.day}T12:00:00Z`));
 }
 
 // Draws the birds, the date and the flock's place at the clock and, while playing, lets the music follow it.

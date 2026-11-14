@@ -6,6 +6,7 @@ import { createBirdsLayer } from './birds-layer.js';
 import { createLightningLayer } from './lightning-layer.js';
 import { createStormLayer } from './storm-view.js';
 import { createStormsLayer } from './storms-layer.js';
+import { createFiresLayer } from './fires-layer.js';
 
 // globe.gl is loaded as a UMD bundle in index.html: it ships one copy of three.js,
 // while the ESM build pulls several three.js versions from the CDN.
@@ -263,6 +264,7 @@ export function createGlobeView(container) {
   const layerView = { globe, unitsPerPx, setElements: (elements) => globe.htmlElementsData(elements) };
   const birds = createBirdsLayer(layerView);
   const storms = createStormsLayer(layerView);
+  const fires = createFiresLayer({ globe });
   globe.htmlElement('el').htmlTransitionDuration(0);
   const storm = createStormLayer({ globe, container });
 
@@ -272,6 +274,7 @@ export function createGlobeView(container) {
     setTheme,
     setLens,
     showIce,
+    showFires: fires.show,
     setWaterLine,
     birds,
     lightning,
