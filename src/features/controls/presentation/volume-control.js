@@ -2,6 +2,8 @@ import { ControlIcon, createControlIcon } from './control-icons.js';
 
 const MAX_VOLUME = 100;
 const DEFAULT_VOLUME = 80;
+/** How far one press of the up or down arrow key moves the volume. */
+const VOLUME_STEP = 10;
 /** Below this the speaker shows one wave instead of two. */
 const LOW_VOLUME = 50;
 /** Idle time after which the expanded control folds back into a single button. */
@@ -11,6 +13,7 @@ const COLLAPSE_DELAY_MS = 2500;
  * Speaker button that expands into a volume slider, like a video player.
  * The first click expands it; once expanded, the speaker toggles mute.
  * It folds back after COLLAPSE_DELAY_MS without the pointer or keyboard focus inside.
+ * `step(direction)` turns it up (1) or down (-1) by VOLUME_STEP, opening it for a moment to show the level.
  *
  * @param {HTMLElement} parent
  * @param {{ onChange?: (level: number) => void }} [options] `onChange` gets the level heard, 0 (silent or muted) to 1
@@ -91,7 +94,18 @@ export function createVolumeControl(parent, { onChange } = {}) {
   });
   root.addEventListener('focusout', scheduleCollapse);
 
+  /** @param {number} direction 1 louder, -1 quieter */
+  function step(direction) {
+    const from = muted ? 0 : volume;
+    volume = Math.min(MAX_VOLUME, Math.max(0, from + direction * VOLUME_STEP));
+    muted = volume === 0;
+    open = true;
+    render();
+    scheduleCollapse();
+  }
+
   root.append(toggle, slider);
   parent.append(root);
   render();
+  return { step };
 }

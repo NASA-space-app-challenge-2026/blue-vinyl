@@ -99,6 +99,7 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | Input | Action |
 | --- | --- |
 | Space | Play / pause |
+| Up / down arrow keys | Volume up / down by 10 (of 100); holding the key keeps turning it. The volume slider opens to show the level and folds back after the same idle time |
 | Click on the record grooves | Play / pause |
 | Click on the progress ring | Play the current track from that point; sets the arm down first when stopped |
 | Drag the tonearm | Scrub; drop on the record to play from there, off it to stop |
