@@ -1,0 +1,8 @@
+{
+  "name": "blue-vinyl",
+  "private": true,
+  "scripts": {
+    "start": "npx --yes serve@14.2.6 .",
+    "notebook": "uvx --with pandas --with matplotlib jupyter lab notebooks"
+  }
+}
