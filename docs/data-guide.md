@@ -20,8 +20,9 @@ data/
       api/         #   SVS API responses (<id>.json)
       media/       #   EIC images and videos
       ...          #   source datasets (CSV, NetCDF, HDF, ...)
-    tracks/        # committed: the data the music uses
+    tracks/        # committed: the data the music and the globe use
       <track>.csv  #   one file per track
+      <name>.geojson #  shapes the globe draws (optional)
       tracks.json  #   source, credit and message of every track
 ```
 
@@ -73,6 +74,7 @@ What belongs here:
 
 - only the series a track actually plays, already trimmed, resampled and cleaned
 - one file per track, named after what it shows, in `snake_case`: `arctic_sea_ice_extent_daily.csv`
+- GeoJSON files with the shapes the globe draws for a track, such as yearly ice polygons, when the track needs them
 - one `tracks.json` that describes every track in the folder
 
 Each track file:
@@ -81,23 +83,43 @@ Each track file:
 - keeps the original units of the source data; the unit is part of the column name (`extent_million_km2`)
 - stays small: a few hundred KB at most. Downsample or crop to what the music needs instead of committing the full dataset.
 
+Each GeoJSON file:
+
+- is a `FeatureCollection` in longitude and latitude (WGS 84), already split at the 180° meridian, so the globe can draw it as is
+- gives each feature the properties the app needs to pick it, such as `year`
+- stays small, like a track file: simplify and round the shapes to what is visible on the record label
+
 `tracks.json` lists, for each track:
 
 ```json
 [
   {
-    "file": "arctic_sea_ice_extent_daily.csv",
-    "title": "Arctic sea ice extent, daily",
-    "message": "Quoted from the EIC page the track comes from.",
-    "svsId": 5370,
-    "svsUrl": "https://svs.gsfc.nasa.gov/5370/",
-    "source": "NSIDC Sea Ice Index, Version 4 (G02135)",
-    "sourceUrl": "https://nsidc.org/data/g02135",
-    "downloadUrl": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/daily/data/N_seaice_extent_daily_v4.0.csv",
-    "substitute": "EIC names JAXA AMSR2 but gives no link. Omit this key when the source is the one EIC cites.",
-    "credit": "NSIDC / NOAA",
+    "file": "arctic_sea_ice_and_global_sea_level.csv",
+    "title": "North",
+    "pages": [
+      {
+        "svsId": 5382,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5382/",
+        "message": "Quoted from the EIC page the track comes from."
+      }
+    ],
+    "note": "Ours: what we computed or chose beyond what EIC says.",
+    "sources": [
+      {
+        "source": "NSIDC Sea Ice Index, Version 4 (G02135)",
+        "sourceUrl": "https://nsidc.org/data/g02135",
+        "downloadUrl": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/monthly/data/N_09_extent_v4.0.csv",
+        "version": "4.0",
+        "doi": "https://doi.org/10.7265/a98x-0f50",
+        "downloaded": "2026-11-14",
+        "license": "Open access; cite as asked on the dataset page",
+        "credit": "Fetterer, F., et al. Sea Ice Index, Version 4. NSIDC.",
+        "substitute": "EIC names JAXA AMSR2 but gives no link. Omit this key when the source is the one EIC cites."
+      }
+    ],
+    "visuals": ["arctic_september_sea_ice_extent.geojson"],
     "units": { "extent_million_km2": "million km²" },
-    "timeRange": ["1978-10-26", "2024-12-31"]
+    "timeRange": ["1979-09-01", "2024-09-01"]
   }
 ]
 ```
@@ -106,7 +128,10 @@ Rules:
 
 - `tracks/` is written only by the notebook. Do not edit its files by hand; change the notebook and export again.
 - Re-export after every change to the data steps, and commit the notebook and `tracks/` together.
-- Every file in `tracks/` must appear in `tracks.json`, and every entry must point to a file that exists.
+- `pages` lists every EIC page the track comes from, each with its message quoted. A track that combines two pages lists both.
+- `sources` lists every file the track's data comes from, one entry per download. A track that plays two datasets lists both.
+- `visuals` lists the GeoJSON files the globe draws for the track; omit it when there are none.
+- Every file in `tracks/` must appear in `tracks.json`, as a `file` or in `visuals`, and every entry must point to a file that exists.
 
 ## Committing Checklist
 
