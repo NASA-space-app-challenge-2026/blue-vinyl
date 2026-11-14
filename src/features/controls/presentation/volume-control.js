@@ -7,7 +7,7 @@ const VOLUME_STEP = 10;
 /** Below this the speaker shows one wave instead of two. */
 const LOW_VOLUME = 50;
 /** Idle time after which the expanded control folds back into a single button. */
-const COLLAPSE_DELAY_MS = 2500;
+const COLLAPSE_DELAY_MS = 1500;
 
 /**
  * Speaker button that expands into a volume slider, like a video player.
