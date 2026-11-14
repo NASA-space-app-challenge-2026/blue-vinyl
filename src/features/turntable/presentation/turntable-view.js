@@ -8,6 +8,7 @@ import {
   REST_BEARING,
   TONEARM,
   armBearing,
+  grooveProgress,
   grooveRadius,
   needleAt,
   needleRadius,
@@ -40,6 +41,9 @@ const NEEDLE_RADIUS = 0.008;
 // Time constant (s) of the arm's ease toward its target, and how close (deg) counts as arrived.
 const GLIDE_TAU_SEC = 0.15;
 const GLIDE_SETTLE_DEG = 0.05;
+// A move of the needle's groove by more than this (deg of arm swing) at once, such as a seek, glides there instead of
+// jumping; playback itself moves far less than this a frame.
+const ARM_JUMP_DEG = 0.5;
 
 const COLOR = Object.freeze({
   vinyl: '#0d0d0d',
@@ -326,6 +330,9 @@ function createProgressRing(onSeek) {
  * Round the label's rim runs the current track's progress ring: one turn per track from 12 o'clock, its rail filled
  * where the track has played. Clicking the ring calls `onSeek(trackProgress)` with the point of the track clicked.
  *
+ * Clicking the grooves calls `onSelectGroove(progress)` with the album progress of the groove clicked; clicking the
+ * record off the grooves calls `onToggle()`.
+ *
  * @param {HTMLElement} parent
  * @param {{
  *   onToggle: () => void,
@@ -335,11 +342,12 @@ function createProgressRing(onSeek) {
  *   onDrop: (progress: number) => void,
  *   onLift: () => void,
  *   onSeek: (trackProgress: number) => void,
+ *   onSelectGroove: (progress: number) => void,
  * }} options
- *   onToggle: called when the record is clicked.
+ *   onToggle: called when the record is clicked off the grooves.
  *   onCued: called when the arm, swung on by render(CUEING), has reached its groove.
  */
-export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek }) {
+export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek, onSelectGroove }) {
   const root = document.createElement('div');
   root.className = 'turntable';
   root.style.aspectRatio = `${BOUNDS.width} / ${BOUNDS.height}`;
@@ -377,7 +385,11 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
   record.append(vinylLayer, haloCanvas, label);
 
   root.append(record, armLayer);
-  vinylLayer.addEventListener('click', onToggle);
+  vinylLayer.addEventListener('click', (event) => {
+    const progress = grooveProgress(pointerRadius(event));
+    if (progress >= 0 && progress <= 1) onSelectGroove(progress);
+    else onToggle();
+  });
   parent.append(root);
 
   let bearing = REST_BEARING;
@@ -452,13 +464,24 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     glide();
   }
 
-  // Moves the needle to the groove for `progress`; during a glide the arm eases there instead of jumping.
+  // Moves the needle to the groove for `progress`; during a glide, or for a far move, the arm eases there instead of
+  // jumping.
   function setProgress(progress) {
     if (!onRecord || dragging) return;
     targetBearing = armBearing(grooveRadius(progress));
     if (glideFrame !== null) return;
+    if (Math.abs(targetBearing - bearing) > ARM_JUMP_DEG) {
+      glide();
+      return;
+    }
     bearing = targetBearing;
     placeArm();
+  }
+
+  // Distance (vinyl radii) from the record centre to a pointer event; the grooves are round, so the spin doesn't matter.
+  function pointerRadius(event) {
+    const { x, y, r } = recordGeometry();
+    return Math.hypot(event.clientX - x, event.clientY - y) / r;
   }
 
   // Bearing (degrees clockwise from up, 0..360) from the pivot to a pointer event.

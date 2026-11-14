@@ -3,9 +3,10 @@
 // Composition root: wires the features together.
 
 import { albums } from '../features/album/data/albums.js';
-import { albumDurationSec, trackBoundaries, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
+import { albumDurationSec, trackBoundaries, trackCover, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
+import { createBackdrop } from '../features/album/presentation/backdrop.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
 import { createAlbumSwitcher } from '../features/controls/presentation/album-switcher.js';
 import { createFullscreenButton } from '../features/controls/presentation/fullscreen-button.js';
@@ -49,6 +50,7 @@ let pendingSteps = 0;
 const slot = (id) => document.getElementById(id);
 
 const albumCredit = createAlbumCredit(slot('corner-bottom-right'));
+const backdrop = createBackdrop(document.documentElement);
 const playHint = createPlayHint(slot('bottom-center'));
 
 const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack });
@@ -73,6 +75,7 @@ const turntable = createTurntableView(slot('stage'), {
   },
   onLift: () => setState(PlaybackState.STOPPED),
   onSeek: seekTrack,
+  onSelectGroove: (progress) => playFromTrack(trackIndexAt(album, progress)),
 });
 const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
 const globe = createGlobeView(turntable.labelSlot);
@@ -118,7 +121,6 @@ function showAlbum(index) {
   totalMs = albumDurationSec(album) * 1000;
   albumColumn.setAlbum(albumIndex);
   turntable.setTrackStarts(trackBoundaries(album).slice(1, -1));
-  albumCredit.render(album);
   songs = [];
   showSong(null, null);
   loadSongs(album);
@@ -229,6 +231,8 @@ function render() {
   const trackIndex = trackIndexAt(album, progress);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex);
+  albumCredit.render(album, trackIndex);
+  backdrop.show(trackCover(album, trackIndex).url);
   renderSong(trackIndex);
 }
 
