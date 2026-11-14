@@ -42,6 +42,18 @@ const SEASON_SPANS = Object.freeze({
 });
 const STORMS_CREDIT = 'Data: IBTrACS v04r01 (NOAA/NCEI), NHC and JTWC best tracks · NASA SVS 5097';
 
+const WILDFIRE_DATA = 'data/wildfire/tracks';
+const WILDFIRE_COVERS = 'assets/albums/wildfire';
+// 42 years (1983–2024), one a bar of 0.68 s, then the last note's tail: 29.9 s.
+export const WILDFIRE_YEAR_TIMELINE = Object.freeze({ introSec: 0, beatSec: 0.68, tailSec: 1.3 });
+const WILDFIRE_YEARS = 42;
+const WILDFIRE_ANNUAL_SEC = trackDurationSec(WILDFIRE_YEAR_TIMELINE, WILDFIRE_YEARS);
+// 214 days of the 2020 large-fire season (Jun 1 – Dec 31), a day a beat of 0.13 s, then a tail: 29.0 s. The year
+// timeline's functions read it the same way, one beat a day instead of a year.
+export const WILDFIRE_DAY_TIMELINE = Object.freeze({ introSec: 0, beatSec: 0.13, tailSec: 1.2 });
+const WILDFIRE_DAYS = 214;
+const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAYS);
+
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
   {
@@ -220,6 +232,39 @@ export const albums = [
           hemisphere: Hemisphere.SOUTH,
           lead: Lead.BOWED,
           focus: { lat: -18, lon: 80, arcDeg: SOUTHERN_ARC_DEG },
+        },
+      },
+    ],
+  },
+  {
+    id: 'wildfire',
+    category: AlbumCategory.CLIMATE,
+    title: 'As the Season Burns',
+    coverUrl: `${WILDFIRE_COVERS}/creek_fire_2020.jpg`,
+    coverCredit: 'Photo: CAL FIRE, public domain, via Wikimedia Commons',
+    dataCredit: 'Data: NIFC / NICC · NASA FEDS (VEDA)',
+    tracks: [
+      {
+        title: 'Burned Acres',
+        durationSec: WILDFIRE_ANNUAL_SEC,
+        // The Creek Fire, California, 8 Sep 2020: 2020 is one of the two peak years of the graph (EIC 5453).
+        coverUrl: `${WILDFIRE_COVERS}/creek_fire_2020.jpg`,
+        coverCredit: 'Cover: Creek Fire, California, Sep 8 2020 (CAL FIRE, public domain)',
+        wildfire: {
+          kind: 'annual',
+          csvUrl: `${WILDFIRE_DATA}/us_annual_burned_acres.csv`,
+        },
+      },
+      {
+        title: '2020 Fire Season',
+        durationSec: WILDFIRE_SEASON_SEC,
+        // San Francisco's "Orange Skies Day", 9 Sep 2020: the season's smoke turned a city's noon orange.
+        coverUrl: `${WILDFIRE_COVERS}/orange_skies_2020.jpg`,
+        coverCredit: 'Cover: Orange Skies Day, San Francisco, Sep 9 2020 (Photo: Dllu, CC BY-SA 4.0, via Wikimedia Commons)',
+        wildfire: {
+          kind: 'season',
+          csvUrl: `${WILDFIRE_DATA}/feds_2020_daily_large_fires.csv`,
+          firesUrl: `${WILDFIRE_DATA}/feds_2020_fire_days.csv`,
         },
       },
     ],
