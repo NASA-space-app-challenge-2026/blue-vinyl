@@ -123,12 +123,52 @@ createSettingsMenu(viewControls, {
 });
 applyGlobeTheme(DEFAULT_GLOBE_THEME);
 
-document.addEventListener('keydown', (event) => {
-  // Focused controls (buttons, radios) already react to Space on their own.
-  if (event.code !== 'Space' || event.target.closest('button, input')) return;
-  event.preventDefault();
-  togglePlayback();
+// Album switch keys, as the previous and next chevrons.
+const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
+
+// Space always plays or pauses, and the arrows switch albums, wherever the focus is.
+// Captured before any control sees the key, so a button left focused by a click is not pressed again.
+document.addEventListener(
+  'keydown',
+  (event) => {
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.code === 'Space') {
+      event.preventDefault();
+      releaseClickFocus();
+      if (!event.repeat) togglePlayback();
+      return;
+    }
+    const direction = ALBUM_KEYS[event.key];
+    if (!direction) return;
+    // The volume slider and the theme radios keep their arrows while used from the keyboard.
+    if (event.target instanceof HTMLInputElement && event.target !== clickFocused) return;
+    event.preventDefault();
+    releaseClickFocus();
+    if (!event.repeat) switchAlbum(direction);
+  },
+  { capture: true },
+);
+// The control a click focused, which shows no focus ring until a key is pressed. Focus reached from the keyboard
+// shows its ring at once and is not kept here.
+let clickFocused = null;
+document.addEventListener('focusin', (event) => {
+  clickFocused = event.target instanceof HTMLElement && !event.target.matches(':focus-visible') ? event.target : null;
 });
+
+/** Lets go of the focus a click left on a control, before the key would light up its focus ring. */
+function releaseClickFocus() {
+  if (clickFocused && clickFocused === document.activeElement) clickFocused.blur();
+  clickFocused = null;
+}
+
+// A focused button is pressed on Space's keyup, so that is held back too.
+document.addEventListener(
+  'keyup',
+  (event) => {
+    if (event.code === 'Space') event.preventDefault();
+  },
+  { capture: true },
+);
 
 function applyGlobeTheme(theme) {
   globe.setTheme(theme, GLOBE_THEMES[theme]);
