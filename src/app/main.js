@@ -18,7 +18,6 @@ import { createVolumeControl } from '../features/controls/presentation/volume-co
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_THEME, GlobeTheme } from '../features/globe/domain/globe-theme.js';
 import { createDateLabel } from '../features/globe/presentation/date-label.js';
-import { createGlobeAttribution } from '../features/globe/presentation/globe-attribution.js';
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
 import { createHalo } from '../features/globe/presentation/halo.js';
 import { createSeaLevelOverlay } from '../features/globe/presentation/sea-level-overlay.js';
@@ -46,6 +45,8 @@ let totalMs;
 let trackData = [];
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
+// The attribution of the globe's map and imagery, shown with the album's credits.
+let mapCredit = '';
 // What each track of the album plays, by track index, once its data has loaded (see the Song of sound-engine.js): its
 // birds (`tracks`, `lead`) or its storm (`storm`), or null for a track with neither. Empty until then.
 let songs = [];
@@ -65,7 +66,6 @@ let pendingSteps = 0;
 
 const slot = (id) => document.getElementById(id);
 
-const albumCredit = createAlbumCredit(slot('corner-bottom-right'));
 const backdrop = createBackdrop(document.documentElement);
 const playHint = createPlayHint(slot('bottom-center'));
 
@@ -93,11 +93,13 @@ const turntable = createTurntableView(slot('stage'), {
   onSeek: seekTrack,
   onSelectGroove: (progress) => playFromTrack(trackIndexAt(album, progress)),
 });
+// The album's credits run round the record's rim.
+const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
+
 const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
 const globe = createGlobeView(turntable.labelSlot);
 const seaOverlay = createSeaLevelOverlay(turntable.labelSlot);
 const music = createMusicPlayer();
-const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
 globe.setFocus(() => focus);
 const dateLabel = createDateLabel(turntable.labelSlot);
 const halo = createHalo(turntable.haloCanvas, () => soundEngine.analyser);
@@ -137,7 +139,8 @@ document.addEventListener('keydown', (event) => {
 
 function applyGlobeTheme(theme) {
   globe.setTheme(theme, GLOBE_THEMES[theme]);
-  globeAttribution.render(GLOBE_THEMES[theme].attribution);
+  mapCredit = GLOBE_THEMES[theme].attribution;
+  if (album) render();
 }
 
 function showAlbum(index) {
@@ -345,7 +348,7 @@ function render() {
   const trackIndex = trackIndexAt(album, progress);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex);
-  albumCredit.render(album, trackIndex, musicCredits);
+  albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
   backdrop.show(trackCover(album, trackIndex).url);
   renderSong(trackIndex);
   renderData(trackIndex);

@@ -23,6 +23,10 @@ const GROOVE_PITCH = 0.012;
 const GROOVE_GLINT = Object.freeze({ minDeg: 20, spreadDeg: 70 });
 // Fixed reflections of a light at the upper left: two opposite wedges, a wide soft one and a narrow bright one.
 const SHEEN = Object.freeze({ angleDeg: -50, wide: { halfDeg: 16, opacity: 0.09 }, narrow: { halfDeg: 4, opacity: 0.14 }, blur: 0.03 });
+// The credits run round the record's rim, in the band outside the grooves, turning with the record: centred on
+// `radius`, read clockwise from 6 o'clock so they sit upright and centred at 12 at rest, at `fontSize` unless they need
+// less to fit `maxTurn` of the circle.
+const CREDIT = Object.freeze({ radius: (GROOVE.outerRadius + 1) / 2, fontSize: 0.026, maxTurn: 0.96 });
 const ARM_WIDTH = 0.018;
 // Invisible stroke along the tube that makes the thin arm easy to grab.
 const ARM_GRAB_WIDTH = 0.08;
@@ -52,6 +56,7 @@ const COLOR = Object.freeze({
   grooveGlint: 'rgba(255, 255, 255, 0.04)',
   sheen: '#fff',
   trackGap: 'rgba(255, 255, 255, 0.2)',
+  credit: 'rgba(255, 255, 255, 0.15)',
   labelBackdrop: '#1c1d22',
   arm: '#cfcfcf',
   armEdge: 'rgba(0, 0, 0, 0.3)',
@@ -121,6 +126,12 @@ function stops(colors) {
   return colors.map(([offset, color]) => `<stop offset="${offset}" stop-color="${color}"/>`).join('');
 }
 
+// The circle the credits run along: from 6 o'clock clockwise round and back, so its middle is at 12.
+function creditPath() {
+  const r = CREDIT.radius;
+  return `M 0 ${r} A ${r} ${r} 0 1 1 0 ${-r} A ${r} ${r} 0 1 1 0 ${r}`;
+}
+
 function vinylSvg() {
   const grooves = [];
   const glints = [];
@@ -134,12 +145,18 @@ function vinylSvg() {
   return `<defs>
       <clipPath id="vinyl-disc"><circle r="1"/></clipPath>
       <filter id="vinyl-sheen-blur"><feGaussianBlur stdDeviation="${SHEEN.blur}"/></filter>
+      <path id="vinyl-credit-path" d="${creditPath()}"/>
     </defs>
     <g class="vinyl">
       ${circle(1, COLOR.vinyl, COLOR.vinylEdge)}
       ${grooves.join('')}
       <g class="vinyl-track-gaps"></g>
-      <g class="vinyl-spin">${glints.join('')}</g>
+      <g class="vinyl-spin">
+        ${glints.join('')}
+        <text class="vinyl-credit" fill="${COLOR.credit}" dominant-baseline="middle">
+          <textPath href="#vinyl-credit-path" startOffset="50%" text-anchor="middle"></textPath>
+        </text>
+      </g>
       <g clip-path="url(#vinyl-disc)"><g filter="url(#vinyl-sheen-blur)">${sheenSvg()}</g></g>
       ${circle(LABEL_RADIUS, COLOR.labelBackdrop, 'none')}
     </g>`;
@@ -330,6 +347,8 @@ function createProgressRing(onSeek) {
  * Round the label's rim runs the current track's progress ring: one turn per track from 12 o'clock, its rail filled
  * where the track has played. Clicking the ring calls `onSeek(trackProgress)` with the point of the track clicked.
  *
+ * Round the record's own rim, outside the grooves, run the credits (setCredit), turning with the record.
+ *
  * Clicking the grooves calls `onSelectGroove(progress)` with the album progress of the groove clicked; clicking the
  * record off the grooves calls `onToggle()`.
  *
@@ -355,6 +374,8 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
   const vinylLayer = layer('turntable-vinyl-layer', vinylSvg());
   const spinner = vinylLayer.querySelector('.vinyl-spin');
   const trackGaps = vinylLayer.querySelector('.vinyl-track-gaps');
+  const credit = vinylLayer.querySelector('.vinyl-credit');
+  const creditText = credit.querySelector('textPath');
 
   // Label area, positioned over the label circle in percentages of the layers' view box.
   const label = document.createElement('div');
@@ -541,6 +562,15 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     };
   }
 
+  /** @param {string} text the credits, run round the record's rim (see CREDIT) */
+  function setCredit(text) {
+    creditText.textContent = text;
+    credit.setAttribute('font-size', String(CREDIT.fontSize));
+    const room = CREDIT.maxTurn * 2 * Math.PI * CREDIT.radius;
+    const length = credit.getComputedTextLength();
+    if (length > room) credit.setAttribute('font-size', String((CREDIT.fontSize * room) / length));
+  }
+
   /** @param {number[]} trackStarts progress (0..1) where each track after the first begins, drawn as brighter grooves */
   function setTrackStarts(trackStarts) {
     trackGaps.innerHTML = trackStarts.map((p) => circle(grooveRadius(p), 'none', COLOR.trackGap)).join('');
@@ -570,5 +600,5 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     return { x: label.offsetLeft + r, y: label.offsetTop + r, r };
   }
 
-  return { labelSlot, haloCanvas, labelDisc, recordEl: record, recordGeometry, setTrackStarts, render };
+  return { labelSlot, haloCanvas, labelDisc, recordEl: record, recordGeometry, setCredit, setTrackStarts, render };
 }

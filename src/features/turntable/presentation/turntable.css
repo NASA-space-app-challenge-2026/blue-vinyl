@@ -27,6 +27,14 @@
   cursor: pointer;
 }
 
+/* The credits round the rim (setCredit) let clicks through to the record. */
+.turntable-vinyl-layer .vinyl-credit {
+  font-family: var(--font);
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* Only the arm itself catches pointers, so the globe under the layer stays draggable. */
 .turntable-arm-layer {
   pointer-events: none;
