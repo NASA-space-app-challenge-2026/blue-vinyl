@@ -8,15 +8,13 @@
  * @property {number} tailSec time after the last bar, for the last note to ring out
  */
 
-// The opening of Rachmaninoff's Piano Concerto No. 2: Moderato, half note = 66, in cut time, so a bar is two half notes.
-const HALF_NOTE_SEC = 60 / 66;
-
 /**
- * One year a bar at the score's tempo (1.82 s), with no intro: the concerto opens on the piano's first chord.
+ * One year a bar of 1.2 s, with no intro: long enough to hear each year's note and how it moved from the year before,
+ * short enough that the years run on as one line (32 years in 40 s).
  *
  * @type {YearTimeline}
  */
-export const YEAR_TIMELINE = Object.freeze({ introSec: 0, beatSec: 2 * HALF_NOTE_SEC, tailSec: 1.3 });
+export const YEAR_TIMELINE = Object.freeze({ introSec: 0, beatSec: 1.2, tailSec: 1.3 });
 
 /** Length of a track of `count` years: the intro, one bar a year, and the tail. */
 export function trackDurationSec(timeline, count) {

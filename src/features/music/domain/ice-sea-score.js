@@ -1,14 +1,26 @@
 import { yearStartSec } from '../../tracks/domain/year-timeline.js';
 import { minorDegree, velocityGain } from './pitch.js';
 
+// The score is written to be understood by ear alone, without the globe: two streams a listener can tell apart at
+// once, each with one meaning, on sounds whose meaning is familiar from life.
+//
+// - Ice is the pitch of a mallet instrument, one note a year held to the next: less ice is lower. Pitch is what the ear
+//   tells apart most finely, so the small changes from one year to the next are heard: each step of C minor is 4% of
+//   the 1981–2010 normal, which sits on G5. Each track has its own: a vibraphone (struck metal) in the north, a piano
+//   in the south.
+// - Sea is the pitch of a low held string line that climbs as the water rises, like a bottle filling with water, a
+//   step of C minor for each 15 mm, one octave over the 100 mm the sea rose from 1993 to 2024.
+// - A record low is a single timpani stroke, the only other sound.
+//
+// So the ice falls as the sea rises, and the two lines draw together. They are told apart by sound (struck against
+// bowed strings), by register (the ice above, the sea below) and by side (the ice a little right, the sea a
+// little left). The two tracks share the rest of the score, so what a listener learns on one holds on the other.
+
 /** General MIDI instruments the score uses, by their SoundFont file names. */
 export const Instrument = Object.freeze({
-  CELLO: 'cello',
+  VIBRAPHONE: 'vibraphone',
   PIANO: 'acoustic_grand_piano',
-  HARP: 'orchestral_harp',
-  HORN: 'french_horn',
-  WAVES: 'seashore',
-  STRINGS: 'string_ensemble_2',
+  STRINGS: 'string_ensemble_1',
   TIMPANI: 'timpani',
 });
 
@@ -18,12 +30,6 @@ export const Part = Object.freeze({
   ICE: 'ice',
   /** The sea level line. */
   SEA: 'sea',
-  /** The harp wave over the sea level line. */
-  SEA_WAVE: 'sea-wave',
-  /** The Seashore stroke under the harp. */
-  WATER: 'water',
-  /** The 1981–2010 normal. */
-  NORMAL: 'normal',
   /** A record low. */
   RECORD: 'record',
 });
@@ -40,270 +46,172 @@ export const Part = Object.freeze({
  * @property {number} gain linear
  * @property {number} attackSec
  * @property {number} releaseSec
+ * @property {number} [pan] stereo position, -1 (left) to 1 (right); centre when left out
  */
 
-/** How the sea level line is played. */
-export const SeaStyle = Object.freeze({
-  /** One bass note a year, on the root of the year's chord. */
-  LINE: 'line',
-  /**
-   * Tolling, after the opening of Rachmaninoff's Piano Concerto No. 2: the low F1, doubled an octave up, half a bar
-   * after the ice note, the same notes every year, struck in each year the sea rose and harder the higher it is.
-   */
-  BELLS: 'bells',
-});
-
-/**
- * The chords a track moves through, one a bar, in C minor.
- *
- * @typedef {Object} Harmony
- * @property {number[][]} chords pitch classes of each chord: root, third, fifth, then any added tone
- * @property {number[]} roots the root of each chord low in the bass (MIDI)
- * @property {number[]} drone the held string notes under the whole track (MIDI)
- * @property {number} timpani the timpani's note (MIDI)
- */
-
-/** The harmonies a track can move through. */
-export const Harmony = Object.freeze({
-  /** Cm, A♭, E♭, B♭ (i, VI, III, VII), so the waves move instead of repeating; C2 and G2 held under them. */
-  CYCLE: Object.freeze({
-    chords: [[0, 3, 7], [8, 0, 3], [3, 7, 10], [10, 2, 5]],
-    roots: [36, 32, 39, 34],
-    drone: [36, 43],
-    timpani: 36,
-  }),
-  /**
-   * After the first bars of Rachmaninoff's Second Concerto, all over F: F minor, then with D♭, then with D♮ added,
-   * over and over; F2 and C3 held under them.
-   */
-  OPENING: Object.freeze({
-    chords: [[5, 8, 0], [5, 8, 0, 1], [5, 8, 0, 2]],
-    roots: [41, 41, 41],
-    drone: [41, 48],
-    timpani: 41,
-  }),
-});
-
-/** Pitch class of the album's key: C minor, the key of Rachmaninoff's Second Concerto. */
+/** Pitch class of the album's key: C minor. */
 export const KEY_TONIC = 0;
 
-/**
- * How a track plays its sea level line.
- *
- * @typedef {Object} SeaVoice
- * @property {string} instrument one of Instrument
- * @property {string} [style] one of SeaStyle, LINE when left out
- * @property {number} offsetBeats how far after the ice the sea plays each year, in beats; the harp wave and the
- *   Seashore stroke follow it
- * @property {boolean} held a year on the same note as the last holds it on (for a horn); otherwise every year is
- *   struck again (for a piano, whose note dies away)
- * @property {number} transpose semitones above the low bass the line plays at (a horn sounds best an octave up)
- * @property {number} level gain on top of the instrument's MIX level
- */
+// Ice: G5 at the 1981–2010 normal, a step of C minor down (or up) for every `perStep` of the normal the extent is below
+// (or above) it, between C4 and B♭6. Quieter too with less ice: velocity base + perNormal × (extent / normal).
+const ICE = Object.freeze({
+  homeMidi: 79,
+  perStep: 0.04,
+  lowest: 60,
+  highest: 94,
+  velocity: { base: 70, perNormal: 30, min: 50, max: 115 },
+  attackSec: 0.005,
+  releaseSec: 0.8,
+  overlapSec: 0.1,
+  pan: 0.3,
+});
 
 /**
- * How a track plays its ice: the main instrument, the note for the 1981–2010 normal (a note of C minor), how much ice
- * one scale step stands for, the harmony, and how the sea level is played.
+ * The instrument a track plays its ice on, with the RMS (dB) of each of its samples the ice can play, over a bar
+ * (1.2 s, decoded with afconvert). Each note is evened out to `referenceDb`, so only the ice changes how loud it is:
+ * the vibraphone's and the piano's samples come from a few recordings each and jump by up to 10 dB and 8 dB from one key
+ * to the next.
  *
  * @typedef {Object} IceVoice
  * @property {string} instrument one of Instrument
- * @property {number} homeMidi
- * @property {number} kmPerStep million km² per scale step
- * @property {number} lengthBeats how long each year's note lasts, in beats (legato above 1)
- * @property {Harmony} [harmony] Harmony.CYCLE when left out
- * @property {number} [level] gain on top of the instrument's MIX level (1 when left out)
- * @property {SeaVoice} sea
+ * @property {Record<number, number>} levelsDb by MIDI note, C4 to B♭6 in C minor
+ * @property {number} referenceDb
  */
 
-// Sea level is heard as strength, not pitch. The held sea line, the harp wave and the wave stroke play harder the higher
-// the sea, from very soft at the first year to strong at +100 mm. The sea line plays the root of the year's chord low
-// in the bass; over it, on the harp, each year a wave washes in and recedes through the chord; under it a wave stroke
-// says it is water. The bells too, from f in the first year to fff at +100 mm.
-const SEA_TOP_MM = 100;
-const SEA_LINE = Object.freeze({ velocity: 40, velocityRise: 80, overlapSec: 0.12 });
-// Attack and release of the sea line, by whether it is held.
-const SEA_ENVELOPE = Object.freeze({ held: { attackSec: 0.18, releaseSec: 0.5 }, struck: { attackSec: 0.02, releaseSec: 0.5 } });
-// Bells: the score's low F1, doubled an octave up (F2) so it is heard on small speakers that cannot play F1's 44 Hz,
-// from f at the first year's sea level, already clear (about 6 dB under the ice), to fff at +100 mm.
-const BELL = Object.freeze({ keys: [29, 41], velocity: 80, velocityRise: 47 });
-const WAVE_NOTES = 6;
-const WAVE_VELOCITY = Object.freeze({ base: 34, rise: 64, swell: 16 });
-const WATER_VELOCITY = Object.freeze({ base: 45, rise: 80 });
-const WAVE_GAP_SEC = 0.11;
-const RECEDE_SEC = Object.freeze([0.26, 0.48]);
-const HARP_NOTE_SEC = 1.6;
-const LOWEST_HARP = 36;
-const WAVE_HOME = 62;
-const WAVE_SEC = 2.6;
-// Small fixed variations in time (s) and velocity, so the waves do not sound machine-made; the same every time.
-const HUMAN = Object.freeze({ timeSec: 0.012, velocity: 6 });
-// The main instrument plays a year louder the more the ice changed from the year before: VELOCITY.base, plus
-// VELOCITY.perStep for each scale step of change, up to VELOCITY.max.
-const VELOCITY = Object.freeze({ base: 84, perStep: 6, max: 122 });
+/** The instruments a track can play its ice on. */
+export const IceVoice = Object.freeze({
+  VIBRAPHONE: Object.freeze({
+    instrument: Instrument.VIBRAPHONE,
+    levelsDb: Object.freeze({
+      60: -36.7, 62: -36.7, 63: -36.7, 65: -40.9, 67: -37.4, 68: -37.4, 70: -37.4,
+      72: -38.4, 74: -38.4, 75: -38.4, 77: -38.4, 79: -46.4, 80: -46.4, 82: -44.2,
+      84: -44.3, 86: -43.2, 87: -43.3, 89: -41.7, 91: -42.0, 92: -42.1, 94: -42.6,
+    }),
+    referenceDb: -38.3,
+  }),
+  PIANO: Object.freeze({
+    instrument: Instrument.PIANO,
+    levelsDb: Object.freeze({
+      60: -34.7, 62: -35.2, 63: -39.3, 65: -39.7, 67: -35.7, 68: -36.0, 70: -36.5,
+      72: -38.2, 74: -38.7, 75: -42.2, 77: -42.6, 79: -42.0, 80: -42.3, 82: -42.8,
+      84: -43.4, 86: -39.9, 87: -40.2, 89: -40.7, 91: -40.0, 92: -40.2, 94: -40.7,
+    }),
+    referenceDb: -39,
+  }),
+});
+
+// Sea: C3 at the first year's level, a step of C minor up for every mmPerStep of rise; louder too as it rises.
+const SEA = Object.freeze({
+  homeMidi: 48,
+  mmPerStep: 15,
+  velocity: { base: 60, rise: 40 },
+  topMm: 100,
+  overlapSec: 0.12,
+  attackSec: 0.3,
+  releaseSec: 0.8,
+  pan: -0.3,
+});
+
+const TIMPANI_MIDI = 36;
 
 /**
- * Level of each instrument (linear gain), measured by rendering each part of the glacier tracks alone in a browser
- * with the FluidR3 samples (RMS while the years play, before the reverb). The ice, on piano or cello, plays at the
- * same level on top; the sea line rises to 3 dB under it in the last third (with its voice's `level`); the harp and
- * wave reach 8 dB under it, the wave 8 dB under the harp; the normal sits 14 dB under the ice and the timpani 12 dB.
+ * Level of each instrument (linear gain), set from the RMS of the FluidR3 samples (decoded with afconvert, first
+ * 1.82 s): the ice at the normal and the sea line in the middle of its rise about 3 dB apart, the ice on top; the
+ * piano at the vibraphone's level (each evened out to its `referenceDb`). Not yet measured in a browser render of the
+ * whole score.
  */
 export const MIX = Object.freeze({
-  [Instrument.CELLO]: 3.43,
-  [Instrument.PIANO]: 11.2,
-  [Instrument.HORN]: 2.24,
-  [Instrument.HARP]: 1.18,
-  [Instrument.WAVES]: 0.83,
-  [Instrument.STRINGS]: 1.15,
+  [Instrument.VIBRAPHONE]: 4.8,
+  [Instrument.PIANO]: 5.2,
+  [Instrument.STRINGS]: 1.9,
   [Instrument.TIMPANI]: 7.1,
 });
 
-// A fixed pseudo-random number in -1..1 for a year and a note.
-function jitter(year, note, salt) {
-  const x = Math.sin(year * 12.9898 + note * 78.233 + salt * 37.719) * 43758.5453;
-  return (x - Math.floor(x)) * 2 - 1;
+const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);
+const seaRise = (mm) => clamp(mm, 0, SEA.topMm) / SEA.topMm;
+
+/** The ice's note for a year: its extent against the normal, as steps of C minor from G5. */
+export function iceMidi(year) {
+  const steps = Math.round((year.extent / year.normal - 1) / ICE.perStep);
+  return clamp(minorDegree(ICE.homeMidi, steps, KEY_TONIC), ICE.lowest, ICE.highest);
 }
 
-const seaRise = (mm) => Math.min(Math.max(mm, 0), SEA_TOP_MM) / SEA_TOP_MM;
+/** The sea line's note for a sea level (mm above the first year). */
+export function seaMidi(mm) {
+  return minorDegree(SEA.homeMidi, Math.round(mm / SEA.mmPerStep), KEY_TONIC);
+}
 
-// The sea level line: the root of each year's chord in the bass, `offsetSec` after the ice, harder as the sea rises.
-// Held, a run of years on the same note is one note that lasts until the next; struck, every year is played again and
-// lasts its beat. The last note lasts to `end`.
-function seaLine(years, timeline, end, mix, voice, harmony) {
-  if (voice.style === SeaStyle.BELLS) return seaBells(years, timeline, end, mix, voice);
-  const offsetSec = voice.offsetBeats * timeline.beatSec;
-  const envelope = voice.held ? SEA_ENVELOPE.held : SEA_ENVELOPE.struck;
+// The ice note of one year on `voice`, struck at `timeSec` and held until `untilSec`.
+function iceNote(year, voice, timeSec, untilSec, mix) {
+  const v = ICE.velocity;
+  const velocity = clamp(v.base + v.perNormal * (year.extent / year.normal), v.min, v.max);
+  const midi = iceMidi(year);
+  const evenOut = 10 ** ((voice.referenceDb - voice.levelsDb[midi]) / 20);
+  return {
+    timeSec,
+    durationSec: untilSec - timeSec,
+    instrument: voice.instrument,
+    part: Part.ICE,
+    midi,
+    gain: velocityGain(velocity) * evenOut * mix[voice.instrument],
+    attackSec: ICE.attackSec,
+    releaseSec: ICE.releaseSec,
+    pan: ICE.pan,
+  };
+}
+
+// The sea line: one held string note that moves only when the sea reaches another step, so a run of years on the same
+// step is one long note. The last note lasts to `end`.
+function seaLine(years, timeline, end, mix) {
   const notes = [];
   years.forEach((year, i) => {
-    const midi = harmony.roots[i % harmony.roots.length] + voice.transpose;
-    const timeSec = yearStartSec(timeline, i) + offsetSec;
+    const midi = seaMidi(year.seaLevelMm);
+    const timeSec = yearStartSec(timeline, i);
     const previous = notes.at(-1);
-    if (voice.held && previous?.midi === midi) return;
-    if (previous) previous.durationSec = timeSec - previous.timeSec + SEA_LINE.overlapSec;
-    const velocity = SEA_LINE.velocity + SEA_LINE.velocityRise * seaRise(year.seaLevelMm);
+    if (previous?.midi === midi) return;
+    if (previous) previous.durationSec = timeSec - previous.timeSec + SEA.overlapSec;
+    const velocity = SEA.velocity.base + SEA.velocity.rise * seaRise(year.seaLevelMm);
     notes.push({
       timeSec,
       durationSec: end - timeSec,
-      instrument: voice.instrument,
+      instrument: Instrument.STRINGS,
       part: Part.SEA,
       midi,
-      gain: velocityGain(velocity) * mix[voice.instrument] * voice.level,
-      ...envelope,
+      gain: velocityGain(velocity) * mix[Instrument.STRINGS],
+      attackSec: SEA.attackSec,
+      releaseSec: SEA.releaseSec,
+      pan: SEA.pan,
     });
   });
   return notes;
 }
 
-// The tolling sea: the low F1 and F2 `offsetBeats` after the ice note, held to the end of the bar as the score's half
-// note, in the first year and in every year the sea rose, harder the higher it is. The last one lasts to `end`.
-function seaBells(years, timeline, end, mix, voice) {
-  const offsetSec = voice.offsetBeats * timeline.beatSec;
-  return years.flatMap((year, i) => {
-    const before = years[i - 1];
-    if (before && year.seaLevelMm <= before.seaLevelMm) return [];
-    const velocity = BELL.velocity + BELL.velocityRise * seaRise(year.seaLevelMm);
-    const timeSec = yearStartSec(timeline, i) + offsetSec;
-    return BELL.keys.map((midi) => ({
-      timeSec,
-      durationSec: i === years.length - 1 ? end - timeSec : timeline.beatSec * (1 - voice.offsetBeats),
-      instrument: voice.instrument,
-      part: Part.SEA,
-      midi,
-      gain: velocityGain(Math.min(127, velocity)) * mix[voice.instrument] * voice.level,
-      ...SEA_ENVELOPE.struck,
-    }));
-  });
-}
-
-// The harp wave and the Seashore stroke of one year.
-function seaWave(timeSec, mm, index, mix, harmony) {
-  const rise = seaRise(mm);
-  const chord = harmony.chords[index % harmony.chords.length];
-  // The same shape every year, low on the harp: up through the chord from its lowest tone, then back two notes.
-  const climb = [];
-  for (let midi = LOWEST_HARP; climb.length < WAVE_NOTES; midi++) if (chord.includes(midi % 12)) climb.push(midi);
-  const recede = climb.slice(-3, -1).reverse();
-  const base = WAVE_VELOCITY.base + WAVE_VELOCITY.rise * rise;
-  const note = (midi, at, velocity, k) => ({
-    timeSec: timeSec + at + jitter(index, k, 1) * HUMAN.timeSec,
-    durationSec: HARP_NOTE_SEC,
-    instrument: Instrument.HARP,
-    part: Part.SEA_WAVE,
-    midi,
-    gain: velocityGain(Math.min(127, Math.max(1, velocity + jitter(index, k, 2) * HUMAN.velocity))) * mix[Instrument.HARP],
-    attackSec: 0.005,
-    releaseSec: 0.7,
-  });
-  // Swells towards the crest, then ebbs.
-  const notes = climb.map((midi, k) => note(midi, k * WAVE_GAP_SEC, base + WAVE_VELOCITY.swell * (k / (climb.length - 1)), k));
-  const crest = (climb.length - 1) * WAVE_GAP_SEC;
-  recede.forEach((midi, k) => notes.push(note(midi, crest + RECEDE_SEC[k], base - 6 - 6 * k, climb.length + k)));
-  notes.push({
-    timeSec,
-    durationSec: WAVE_SEC,
-    instrument: Instrument.WAVES,
-    part: Part.WATER,
-    midi: WAVE_HOME,
-    gain: velocityGain(Math.min(127, WATER_VELOCITY.base + WATER_VELOCITY.rise * rise)) * mix[Instrument.WAVES],
-    attackSec: 0.3,
-    releaseSec: 1,
-  });
-  return notes;
-}
-
 /**
- * The notes of a polar track, in C minor, one year a bar: the pole's ice on the main instrument (the normal is home;
- * less ice is lower, and a bigger change from the year before is louder), the sea level as strength (a low bass line or
- * bell, a harp wave and a wave stroke), the normal as a held string chord, and a timpani stroke on every record low.
+ * The notes of a polar track, in C minor, one year a bar: the ice as a note on `iceVoice` that falls as the ice shrinks,
+ * the sea level as a low string line that climbs as the water rises, and a timpani stroke on every record low.
  *
  * @param {import('../../tracks/domain/ice-sea-series.js').IceSeaYear[]} years
- * @param {IceVoice} voice
+ * @param {IceVoice} iceVoice
  * @param {import('../../tracks/domain/year-timeline.js').YearTimeline} timeline
  * @param {number} durationSec
  * @param {Record<string, number>} [mix]
  * @returns {NoteEvent[]}
  */
-export function iceSeaScore(years, voice, timeline, durationSec, mix = MIX) {
+export function iceSeaScore(years, iceVoice, timeline, durationSec, mix = MIX) {
   const end = durationSec - timeline.tailSec;
-  const harmony = voice.harmony ?? Harmony.CYCLE;
   const lowest = Math.min(...years.map((y) => y.extent));
-  const seaOffsetSec = voice.sea.offsetBeats * timeline.beatSec;
-  const notes = harmony.drone.map((midi) => ({
-    timeSec: 0,
-    durationSec: end,
-    instrument: Instrument.STRINGS,
-    part: Part.NORMAL,
-    midi,
-    gain: velocityGain(60) * mix[Instrument.STRINGS],
-    attackSec: 1.5,
-    releaseSec: 1.2,
-  }));
-  notes.push(...seaLine(years, timeline, end, mix, voice.sea, harmony));
-  const steps = years.map((year) => Math.round((year.extent - year.normal) / voice.kmPerStep));
+  const notes = seaLine(years, timeline, end, mix);
   years.forEach((year, i) => {
     const timeSec = yearStartSec(timeline, i);
     const last = i === years.length - 1;
-    const change = i === 0 ? 0 : Math.abs(steps[i] - steps[i - 1]);
-    const top = minorDegree(voice.homeMidi, steps[i], KEY_TONIC);
-    const velocity = Math.min(VELOCITY.max, VELOCITY.base + VELOCITY.perStep * change);
-    const level = mix[voice.instrument] * (voice.level ?? 1);
-    notes.push({
-      timeSec,
-      durationSec: last ? end - timeSec : timeline.beatSec * voice.lengthBeats,
-      instrument: voice.instrument,
-      part: Part.ICE,
-      midi: top,
-      gain: velocityGain(velocity) * level,
-      attackSec: 0.02,
-      releaseSec: 0.5,
-    });
-    notes.push(...seaWave(timeSec + seaOffsetSec, year.seaLevelMm, i, mix, harmony));
+    notes.push(iceNote(year, iceVoice, timeSec, last ? end : timeSec + timeline.beatSec + ICE.overlapSec, mix));
     if (year.recordLow) {
       notes.push({
         timeSec,
         durationSec: 1.2,
         instrument: Instrument.TIMPANI,
         part: Part.RECORD,
-        midi: harmony.timpani,
+        midi: TIMPANI_MIDI,
         gain: velocityGain(year.extent === lowest ? 112 : 78) * mix[Instrument.TIMPANI],
         attackSec: 0.002,
         releaseSec: 0.8,

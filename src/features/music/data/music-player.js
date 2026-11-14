@@ -37,6 +37,21 @@ export function createMixBus(context, destination) {
   return input;
 }
 
+// The stereo position `pan` (-1 left to 1 right) in front of `destination`, one node per position, kept per context.
+const panners = new WeakMap();
+function panned(context, destination, pan) {
+  if (!pan) return destination;
+  if (!panners.has(destination)) panners.set(destination, new Map());
+  const byPan = panners.get(destination);
+  if (!byPan.has(pan)) {
+    const panner = context.createStereoPanner();
+    panner.pan.value = pan;
+    panner.connect(destination);
+    byPan.set(pan, panner);
+  }
+  return byPan.get(pan);
+}
+
 // One copy of a sample, faded in at `fadeIn` and out at `fadeOut` (context times), starting `offsetSec` into it.
 function voice(context, destination, buffer, { at, offsetSec, gain, attackSec, fadeOutAt, releaseSec }) {
   const source = context.createBufferSource();
@@ -71,10 +86,11 @@ export function scheduleNotes(context, destination, notes, samples, fromSec, sta
     if (end + note.releaseSec <= fromSec) continue;
     const buffer = samples.get(sampleKey(note.instrument, note.midi));
     if (!buffer) continue;
+    const out = panned(context, destination, note.pan);
     if (note.durationSec <= buffer.duration - note.releaseSec) {
       const offsetSec = Math.max(0, fromSec - note.timeSec);
       if (offsetSec >= buffer.duration) continue;
-      voices.push(voice(context, destination, buffer, {
+      voices.push(voice(context, out, buffer, {
         at: toContext(note.timeSec + offsetSec),
         offsetSec,
         gain: note.gain,
@@ -94,7 +110,7 @@ export function scheduleNotes(context, destination, notes, samples, fromSec, sta
       if (stop + fade <= fromSec) continue;
       const skip = first ? 0 : SUSTAIN.skipSec;
       const offsetSec = Math.max(0, fromSec - start);
-      voices.push(voice(context, destination, buffer, {
+      voices.push(voice(context, out, buffer, {
         at: toContext(start + offsetSec),
         offsetSec: skip + offsetSec,
         gain: note.gain,

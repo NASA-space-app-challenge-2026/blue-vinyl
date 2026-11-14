@@ -11,7 +11,7 @@ export const AlbumCategory = Object.freeze({
  * @property {string} csvUrl the track's yearly data
  * @property {string} shapesUrl GeoJSON of each year's ice and the normal ice edge
  * @property {number} poleLat latitude the globe looks down on: 90 or -90
- * @property {import('../../music/domain/ice-sea-score.js').IceVoice} voice how the ice is played
+ * @property {import('../../music/domain/ice-sea-score.js').IceVoice} iceVoice the instrument the ice is played on
  */
 
 /**

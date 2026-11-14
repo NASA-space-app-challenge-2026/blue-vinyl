@@ -170,7 +170,7 @@ async function loadAlbumData(loading) {
   const starts = trackBoundaries(album).map((edge) => (edge * totalMs) / 1000);
   const notes = album.tracks.flatMap((track, i) => {
     if (!data[i]) return [];
-    return iceSeaScore(data[i].years, track.iceSea.voice, YEAR_TIMELINE, track.durationSec)
+    return iceSeaScore(data[i].years, track.iceSea.iceVoice, YEAR_TIMELINE, track.durationSec)
       .map((note) => ({ ...note, timeSec: note.timeSec + starts[i] }));
   });
   music.load(notes);
@@ -321,12 +321,11 @@ function renderData(trackIndex) {
   const trackKey = `${album.id}:${trackIndex}`;
   const year = years[at];
   // Share of this year's bar played: the ice moves from last year's shape to this year's over the bar, starting on
-  // the chord and settling into the shape. The water rises from last year's level to this year's when the sea is
-  // heard (half a bar in, with the low F1, on the piano), easing in over the rest of the bar.
+  // the chord and settling into the shape. The water rises from last year's level to this year's over the bar too,
+  // from the downbeat, where the sea's string note and wave stroke sound.
   const along = now.index < 0 ? 0 : Math.min(1, now.beatSec / YEAR_TIMELINE.beatSec);
   const settle = 1 - (1 - along) ** 3;
-  const seaAt = track.iceSea.voice.sea.offsetBeats;
-  const rising = Math.min(1, Math.max(0, (along - seaAt) / (1 - seaAt)));
+  const rising = along;
   const before = years[Math.max(0, at - 1)];
   const waterMm = before.seaLevelMm + (year.seaLevelMm - before.seaLevelMm) * (1 - (1 - rising) ** 2);
   globe.setWaterLine(seaOverlay.waterLine(waterMm));

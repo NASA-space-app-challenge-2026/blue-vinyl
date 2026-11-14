@@ -1,4 +1,4 @@
-import { Harmony, Instrument as IceSeaInstrument, SeaStyle } from '../../music/domain/ice-sea-score.js';
+import { IceVoice } from '../../music/domain/ice-sea-score.js';
 import { YEAR_TIMELINE, trackDurationSec } from '../../tracks/domain/year-timeline.js';
 import { AlbumCategory } from '../domain/album.js';
 import { Instrument } from '../../music/domain/instruments.js';
@@ -11,7 +11,7 @@ const WEEK_A_SECOND_MS = 7 * DAY_MS;
 const BIRD_YEAR_SEC = YEAR_MS / WEEK_A_SECOND_MS;
 
 const GLACIER_DATA = 'data/glacier/tracks';
-// 32 years (1993–2024), one a bar at the score's tempo (1.82 s) with no intro, then the last chord's tail: 59.5 s.
+// 32 years (1993–2024), one a bar (1.2 s) with no intro, then the last note's tail: 39.7 s.
 const POLAR_YEARS = 32;
 const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
 
@@ -63,17 +63,8 @@ export const albums = [
           csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
           shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
           poleLat: 90,
-          // Piano, in the mood of the opening of Rachmaninoff's Second Concerto. On the downbeat one key plays the ice,
-          // held the whole bar: the normal is F5 and each 0.4 million km² is one step of C minor. Half a bar later the
-          // left hand tolls the score's low F1 with F2, in each year the sea rose, harder the higher the sea.
-          voice: {
-            instrument: IceSeaInstrument.PIANO,
-            homeMidi: 77,
-            kmPerStep: 0.4,
-            lengthBeats: 1,
-            harmony: Harmony.OPENING,
-            sea: { instrument: IceSeaInstrument.PIANO, style: SeaStyle.BELLS, offsetBeats: 0.5, held: false, transpose: 0, level: 0.4 },
-          },
+          // The ice on a vibraphone.
+          iceVoice: IceVoice.VIBRAPHONE,
         },
       },
       {
@@ -83,14 +74,8 @@ export const albums = [
           csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,
           shapesUrl: `${GLACIER_DATA}/antarctic_february_sea_ice_extent.geojson`,
           poleLat: -90,
-          // Cello; the normal is C4 and each 0.15 million km² is one step of C minor. The sea is a held horn line.
-          voice: {
-            instrument: IceSeaInstrument.CELLO,
-            homeMidi: 60,
-            kmPerStep: 0.15,
-            lengthBeats: 1.12,
-            sea: { instrument: IceSeaInstrument.HORN, offsetBeats: 0, held: true, transpose: 12, level: 1 },
-          },
+          // The ice on a piano, so the two tracks are told apart.
+          iceVoice: IceVoice.PIANO,
         },
       },
     ],

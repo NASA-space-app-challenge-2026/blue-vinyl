@@ -14,32 +14,28 @@ The ice data is sea ice, the only ice data in the EIC gallery. It stands for pol
 
 | # | Track | Ice | Sea | Years | Length |
 | --- | --- | --- | --- | --- | --- |
-| 1 | North | Arctic September extent vs. its 1981–2010 normal | Global mean sea level, change since 1993 | 1993–2024 | 0:59 |
-| 2 | South | Antarctic February extent vs. its 1981–2010 normal | The same series | 1993–2024 | 0:59 |
+| 1 | North | Arctic September extent vs. its 1981–2010 normal | Global mean sea level, change since 1993 | 1993–2024 | 0:40 |
+| 2 | South | Antarctic February extent vs. its 1981–2010 normal | The same series | 1993–2024 | 0:40 |
 
 Data files: `data/glacier/tracks/` (see `tracks.json` for every source, version and credit).
 
 ## Time
 
-The tempo of the opening of Rachmaninoff's Piano Concerto No. 2 (Moderato, half note = 66, cut time): one year a bar, 1.82 s, so each chord rings as long as its whole note in the score. There is no intro, as the concerto opens on the piano's first chord; after the last bar the last chord rings out for 1.3 s. 32 years make 59.5 s. The tempo comes first: every year gets its bar, and a longer series makes a longer track. The sound and the globe read the same timeline (`YEAR_TIMELINE`), so a year's notes and its picture change together.
+One year a bar of 1.2 s: long enough to hear each year's note and how it moved from the year before, short enough that the years run on as one line. There is no intro; after the last bar the last note rings out for 1.3 s. 32 years make 39.7 s. The tempo comes first: every year gets its bar, and a longer series makes a longer track. The sound and the globe read the same timeline (`YEAR_TIMELINE`), so a year's notes and its picture change together.
 
 ## Sound
 
-All parts are in C minor, the concerto's key, and played from the FluidR3_GM SoundFont (CC BY 3.0).
+The score is written to be understood by ear alone, by listeners who cannot see the globe: two streams that can be told apart at once, each with one meaning, on sounds whose meaning is familiar from life. Both tracks share it, so what is learned on one holds on the other. All parts are in C minor, played from the FluidR3_GM SoundFont (CC BY 3.0).
 
 | Part | Data | Mapping |
 | --- | --- | --- |
-| Ice, North: piano | Ice extent | One key a year, in the mood of the opening of Rachmaninoff's Piano Concerto No. 2 rather than its notes: struck on the downbeat and held the whole bar. The 1981–2010 normal is F5 and each 0.4 million km² is one step of C minor (B♭5 down to F4). Less ice is lower; a bigger change from the year before is louder. |
-| Ice, South: cello | Ice extent | One note a year. The normal is C4; each 0.15 million km² is one step of C minor. Less ice is lower; a bigger change from the year before is louder. |
-| Sea, North: piano left hand | Sea level | The score's low F1, doubled an octave up with F2 so it is heard on small speakers (F1 alone is 44 Hz): half a bar after the ice note, on the third beat, a half note to the end of the bar. It sounds when the water rises: in the first year and in every year the sea rose (all but 1998 and 2011), harder the higher the sea, from an already clear f in 1993 (about 6 dB under the ice note) to fff at +100 mm, about level with it. |
-| Sea, South: French horn | Sea level | Low, on the root of each year's chord (C3, A♭2, E♭3, B♭2), legato with the ice. Heard as strength, not pitch: from very soft in 1993 to strong at +100 mm. |
-| Harp | Sea level | Each year, with the sea line, a wave washes in and recedes: the same shape every year, low on the harp, up through the chord and back two notes, harder as the sea rises. |
-| Harmony | (time) | One chord a year: on North the score's chords over F (above); on South cycling Cm, A♭, E♭, B♭, so the waves move instead of repeating. Small fixed variations in timing and velocity keep them from sounding machine-made. |
-| Wave | Sea level | A Seashore stroke each year under the harp, stronger as the water rises. |
-| Held strings, F2 and C3 (North) or C2 and G2 (South) | The normal | The whole track: the home the ice melody leaves. |
+| Ice: vibraphone (North), piano (South), a little right | Ice extent against its 1981–2010 normal | Pitch: less ice is lower. One note a year, struck on the downbeat and held to the next. The normal is G5 and each 4% of it is one step of C minor (C4 to B♭6), fine enough that most years sound different from the year before (North: 25 of 31). Quieter too with less ice, velocity 70 + 30 × extent / normal. Each note is evened out by its sample's measured level (the vibraphone's jump by up to 10 dB from key to key, the piano's by 8 dB), and the piano plays at the vibraphone's level. |
+| Sea: low strings (String Ensemble 1), a little left | Sea level | Pitch, like a bottle filling with water. A held note from C3 at the 1993 level, one step of C minor up for each 15 mm, to C4 at +100 mm; it moves only when the sea reaches another step, and is louder as it rises. |
 | Timpani | Record low | A stroke in every year lower than all years since 1979; the track's lowest year is the loudest. |
 
-Mix (RMS while the years play, measured in a browser render of an earlier score; not measured again since the piano became one key and the low F louder): the piano and the cello at the same level on top; the horn rises to 3 dB under them in the last third, and the piano's low F is set to about match the piano at the end; harp and wave reach 8 dB under them, the wave 8 dB under the harp; the strings sit 14 dB and the timpani 12 dB under the main instrument.
+The ice falls as the sea rises, so the two lines draw together: on North the ice goes from G5 in 1993 to F4 in 2024 (C4 in 2012) while the sea climbs from C3 to C4. They are told apart by sound (struck against bowed strings), by register and by side. The ice's instrument is the one thing that differs between the tracks, a vibraphone on North and a piano on South; the rest of the score is shared, so what is learned on one track holds on the other.
+
+Mix: set from the RMS of the samples (the first 1.82 s, decoded outside the browser), the ice at the normal about 3 dB over the sea line in the middle of its rise. Not yet measured in a browser render of the whole score.
 
 ## Globe
 
