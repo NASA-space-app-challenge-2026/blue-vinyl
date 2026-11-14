@@ -26,11 +26,14 @@ import { createSoundEngine } from '../features/music/data/sound-engine.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
 import { HurricaneComposer } from '../features/music/domain/composers/hurricane.js';
+import { seasonSong, StormSeasonComposer } from '../features/music/domain/composers/storm-season.js';
 import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
 import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
+import { loadStormSeason } from '../features/tracks/data/storm-season-source.js';
 import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
+import { seasonSpan, seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
@@ -50,6 +53,10 @@ let mapCredit = '';
 // What each track of the album plays, by track index, once its data has loaded (see the Song of sound-engine.js): its
 // birds (`tracks`, `lead`) or its storm (`storm`), or null for a track with neither. Empty until then.
 let songs = [];
+// The storm season each track of the album plays, by track index, once loaded (see seasonSong), or null for a track
+// without one; empty until then. The season the globe shows.
+let seasons = [];
+let shownSeason = null;
 // The song whose birds or storm the globe shows, and where they are now (the globe keeps them in the middle).
 let shownSong = null;
 let focus = null;
@@ -192,6 +199,9 @@ function showAlbum(index) {
   songs = [];
   showSong(null, null);
   loadSongs(album);
+  seasons = [];
+  showSeason(null, null);
+  loadSeasons(album);
   trackData = album.tracks.map(() => null);
   musicCredits = [];
   music.load([]);
@@ -284,6 +294,32 @@ async function loadSong(track, target) {
     };
   }
   return null;
+}
+
+// Loads the storms of `target`'s season tracks, unless another album is shown by then. Each track's storms sing on
+// a composer of their own, set to the track's lead and hemisphere.
+async function loadSeasons(target) {
+  if (!target.tracks.some((track) => track.season)) return;
+  const perTrack = await Promise.all(target.tracks.map((track) => (track.season ? loadStormSeason(track.season.url) : null)));
+  if (album !== target) return;
+  seasons = perTrack.map((tracks, i) => {
+    if (!tracks) return null;
+    const { season, durationSec } = target.tracks[i];
+    const composer = new StormSeasonComposer(season.lead, season.hemisphere);
+    return seasonSong(composer, tracks, seasonSpan(season.from, season.to), durationSec, season.focus);
+  });
+  render();
+  globe.glide();
+}
+
+// Shows `song`'s season on the globe, the glow in `color`; null takes the storms off.
+function showSeason(song, color) {
+  shownSeason = song;
+  globe.storms.reset();
+  if (!song) return;
+  focus = song.focus;
+  halo.setColor(color);
+  globe.glide();
 }
 
 // Puts `song`'s birds on the globe in `color`, and the glow in it; null takes them off. A storm's song clears the
@@ -392,6 +428,21 @@ function render() {
   backdrop.show(trackCover(album, trackIndex).url);
   renderSong(trackIndex);
   renderData(trackIndex);
+  renderSeason(trackIndex);
+}
+
+// Draws the season at the clock on the globe, held over its ocean, with the date; while playing, the music follows it.
+function renderSeason(trackIndex) {
+  const song = seasons[trackIndex] ?? null;
+  if (shownSeason !== song) showSeason(song, album.tracks[trackIndex].color);
+  if (!song) return;
+  const trackSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  const time = seasonTimeAt(song.span, song.durationSec, trackSec);
+  globe.storms.render(song.tracks, time);
+  dateLabel.show(time);
+  if (state !== PlaybackState.PLAYING) return;
+  soundEngine.follow(song, trackSec);
+  halo.wake();
 }
 
 /**

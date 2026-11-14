@@ -1,0 +1,172 @@
+[
+  {
+    "file": "atlantic_2023.csv",
+    "title": "Atlantic 2023",
+    "pages": [
+      {
+        "svsId": 5097,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5097/",
+        "title": "2022 Hurricane Season",
+        "message": "This visualization shows the hurricanes and tropical storms of 2022 as seen by NASA’s Integrated Multi-satellitE Retrievals for GPM (IMERG) - a data product combining precipitation observations from infrared and microwave satellite sensors united by the GPM Core Observatory. IMERG provides near real-time half-hourly precipitation estimates at ~10km resolution for the entire globe, helping researchers better understand Earth’s water cycle and extreme weather events, with applications for disaster management, tracking disease, resource management, energy production and food security. IMERG rain "
+      }
+    ],
+    "note": "Ours: every storm of one basin's season, one track per run of tropical records (2023-06-01 to 2023-11-30); see notebooks/hemispheres_album.ipynb, section 11.",
+    "sources": [
+      {
+        "source": "IBTrACS v04r01, US agency (NHC/JTWC) best tracks (USA_* columns)",
+        "sourceUrl": "https://www.ncei.noaa.gov/products/international-best-track-archive",
+        "downloadUrl": "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r01/access/csv/ibtracs.ALL.list.v04r01.csv",
+        "version": "v04r01",
+        "doi": "https://doi.org/10.25921/82ty-9e16",
+        "downloaded": "2026-11-14",
+        "license": "Public domain (US government work); cite as asked on the dataset page",
+        "credit": "Knapp et al. (2010), BAMS 91, 363–376; Gahtan et al. (2024), IBTrACS v04r01, NOAA NCEI",
+        "substitute": "5097 cites the ATCF best track; IBTrACS carries the same NHC/JTWC best tracks for every basin in one file (decided 2026-11-14, issue #26)."
+      }
+    ],
+    "units": {
+      "time": "UTC",
+      "storm": "IBTrACS SID - run of tropical records",
+      "name": "storm name",
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east",
+      "wind_kt": "knots, 1-minute sustained (US agency)"
+    },
+    "timeRange": [
+      "2023-06-01",
+      "2023-10-28"
+    ]
+  },
+  {
+    "file": "west_pacific_2023.csv",
+    "title": "Western Pacific 2023",
+    "pages": [
+      {
+        "svsId": 5097,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5097/",
+        "title": "2022 Hurricane Season",
+        "message": "This visualization shows the hurricanes and tropical storms of 2022 as seen by NASA’s Integrated Multi-satellitE Retrievals for GPM (IMERG) - a data product combining precipitation observations from infrared and microwave satellite sensors united by the GPM Core Observatory. IMERG provides near real-time half-hourly precipitation estimates at ~10km resolution for the entire globe, helping researchers better understand Earth’s water cycle and extreme weather events, with applications for disaster management, tracking disease, resource management, energy production and food security. IMERG rain "
+      },
+      {
+        "svsId": 5122,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5122/",
+        "title": "Typhoon Mawar",
+        "message": "Driven by powerful winds and intense rainfall, Typhoon Mawar emerged as a rapidly intensifying storm in the western Pacific Ocean. Originating from a tropical disturbance, the typhoon swiftly developed into a significant weather system, eventually making landfall on the U.S. territory of Guam on May 25, 2023 as a category 4 typhoon. After hitting Guam, it further intensified into a category 5 typhoon, making it one of the most powerful storms on record in the month of May. The combination of NASA’s IMERG precipitation product and the GPM Core Observatory satellite with its array of active and "
+      }
+    ],
+    "note": "Ours: every storm of one basin's season, one track per run of tropical records (2023-05-01 to 2023-11-30); see notebooks/hemispheres_album.ipynb, section 11.",
+    "sources": [
+      {
+        "source": "IBTrACS v04r01, US agency (NHC/JTWC) best tracks (USA_* columns)",
+        "sourceUrl": "https://www.ncei.noaa.gov/products/international-best-track-archive",
+        "downloadUrl": "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r01/access/csv/ibtracs.ALL.list.v04r01.csv",
+        "version": "v04r01",
+        "doi": "https://doi.org/10.25921/82ty-9e16",
+        "downloaded": "2026-11-14",
+        "license": "Public domain (US government work); cite as asked on the dataset page",
+        "credit": "Knapp et al. (2010), BAMS 91, 363–376; Gahtan et al. (2024), IBTrACS v04r01, NOAA NCEI",
+        "substitute": "5097 cites the ATCF best track; IBTrACS carries the same NHC/JTWC best tracks for every basin in one file (decided 2026-11-14, issue #26)."
+      }
+    ],
+    "units": {
+      "time": "UTC",
+      "storm": "IBTrACS SID - run of tropical records",
+      "name": "storm name",
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east",
+      "wind_kt": "knots, 1-minute sustained (US agency)"
+    },
+    "timeRange": [
+      "2023-05-19",
+      "2023-11-14"
+    ]
+  },
+  {
+    "file": "south_indian_2022_23.csv",
+    "title": "South Indian 2022–23",
+    "pages": [
+      {
+        "svsId": 5097,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5097/",
+        "title": "2022 Hurricane Season",
+        "message": "This visualization shows the hurricanes and tropical storms of 2022 as seen by NASA’s Integrated Multi-satellitE Retrievals for GPM (IMERG) - a data product combining precipitation observations from infrared and microwave satellite sensors united by the GPM Core Observatory. IMERG provides near real-time half-hourly precipitation estimates at ~10km resolution for the entire globe, helping researchers better understand Earth’s water cycle and extreme weather events, with applications for disaster management, tracking disease, resource management, energy production and food security. IMERG rain "
+      },
+      {
+        "svsId": 14312,
+        "svsUrl": "https://svs.gsfc.nasa.gov/14312/",
+        "title": "NASA Tracks Freddy, Longest-lived Tropical Cyclone on Record",
+        "message": "Tropical Cyclone Freddy first made landfall along the east coast of Madagascar just north of the town of Mananjary on Feb. 21, 2023, as a Category 3 cyclone with average winds reported at ~81 mph (130 km/h) and gusts up to ~112 mph (180 km/h). After crossing over Madagascar Freddy continued westward over the Mozambique Channel before making landfall again along the east coast of Mozambique just south of Vilankulos as a moderate tropical storm with sustained winds estimated at 50 mph. Despite being weaker at landfall, Freddy caused widespread flooding across parts of Mozambique due to the storm"
+      }
+    ],
+    "note": "Ours: every storm of one basin's season, one track per run of tropical records (2022-12-01 to 2023-04-30); see notebooks/hemispheres_album.ipynb, section 11.",
+    "sources": [
+      {
+        "source": "IBTrACS v04r01, US agency (NHC/JTWC) best tracks (USA_* columns)",
+        "sourceUrl": "https://www.ncei.noaa.gov/products/international-best-track-archive",
+        "downloadUrl": "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r01/access/csv/ibtracs.ALL.list.v04r01.csv",
+        "version": "v04r01",
+        "doi": "https://doi.org/10.25921/82ty-9e16",
+        "downloaded": "2026-11-14",
+        "license": "Public domain (US government work); cite as asked on the dataset page",
+        "credit": "Knapp et al. (2010), BAMS 91, 363–376; Gahtan et al. (2024), IBTrACS v04r01, NOAA NCEI",
+        "substitute": "5097 cites the ATCF best track; IBTrACS carries the same NHC/JTWC best tracks for every basin in one file (decided 2026-11-14, issue #26)."
+      }
+    ],
+    "units": {
+      "time": "UTC",
+      "storm": "IBTrACS SID - run of tropical records",
+      "name": "storm name",
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east",
+      "wind_kt": "knots, 1-minute sustained (US agency)"
+    },
+    "timeRange": [
+      "2022-12-15",
+      "2023-04-15"
+    ]
+  },
+  {
+    "file": "south_pacific_1997_98.csv",
+    "title": "South Pacific 1997–98",
+    "pages": [
+      {
+        "svsId": 5097,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5097/",
+        "title": "2022 Hurricane Season",
+        "message": "This visualization shows the hurricanes and tropical storms of 2022 as seen by NASA’s Integrated Multi-satellitE Retrievals for GPM (IMERG) - a data product combining precipitation observations from infrared and microwave satellite sensors united by the GPM Core Observatory. IMERG provides near real-time half-hourly precipitation estimates at ~10km resolution for the entire globe, helping researchers better understand Earth’s water cycle and extreme weather events, with applications for disaster management, tracking disease, resource management, energy production and food security. IMERG rain "
+      },
+      {
+        "svsId": 185,
+        "svsUrl": "https://svs.gsfc.nasa.gov/185/",
+        "title": "Cyclone Susan TRMM Flyover: January 7, 1998",
+        "message": "An animation of the TRMM satellite taking measurements of Cyclone Susan on January 7, 1998"
+      }
+    ],
+    "note": "Ours: every storm of one basin's season, one track per run of tropical records (1997-07-01 to 1998-06-30); see notebooks/hemispheres_album.ipynb, section 11.",
+    "sources": [
+      {
+        "source": "IBTrACS v04r01, US agency (NHC/JTWC) best tracks (USA_* columns)",
+        "sourceUrl": "https://www.ncei.noaa.gov/products/international-best-track-archive",
+        "downloadUrl": "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r01/access/csv/ibtracs.ALL.list.v04r01.csv",
+        "version": "v04r01",
+        "doi": "https://doi.org/10.25921/82ty-9e16",
+        "downloaded": "2026-11-14",
+        "license": "Public domain (US government work); cite as asked on the dataset page",
+        "credit": "Knapp et al. (2010), BAMS 91, 363–376; Gahtan et al. (2024), IBTrACS v04r01, NOAA NCEI",
+        "substitute": "5097 cites the ATCF best track; IBTrACS carries the same NHC/JTWC best tracks for every basin in one file (decided 2026-11-14, issue #26)."
+      }
+    ],
+    "units": {
+      "time": "UTC",
+      "storm": "IBTrACS SID - run of tropical records",
+      "name": "storm name",
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east",
+      "wind_kt": "knots, 1-minute sustained (US agency)"
+    },
+    "timeRange": [
+      "1997-10-04",
+      "1998-05-01"
+    ]
+  }
+]

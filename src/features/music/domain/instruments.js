@@ -27,4 +27,7 @@ export const Instrument = Object.freeze({
   STANDARD_KIT: { program: 0, volume: 100, drums: true },
   POWER_KIT: { program: 16, volume: 100, drums: true },
   ORCHESTRAL_KIT: { program: 48, volume: 100, drums: true },
+  WHISTLE: { program: 78, volume: 100 },
+  TROMBONE: { program: 57, volume: 95 },
+  HALO_PAD: { program: 94, volume: 75 },
 });

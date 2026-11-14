@@ -128,7 +128,7 @@ export function createBirdsLayer(view) {
 }
 
 // Fades from the opacity it has now, so a bird that turns back mid-fade does not flash.
-function fade(bird, shown) {
+export function fade(bird, shown) {
   if (bird.shown === shown) return;
   bird.shown = shown;
   const svg = bird.el.firstElementChild;

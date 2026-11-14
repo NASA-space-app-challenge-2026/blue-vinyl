@@ -8,15 +8,16 @@ export function createAlbumCredit(show) {
   let shown = null;
 
   /**
-   * Credits the cover the sleeve shows while the track at `trackIndex` is current, the album's data, and any further
-   * credits.
+   * Credits the cover the sleeve shows while the track at `trackIndex` is current, the track's data (or the album's),
+   * and any further credits.
    *
    * @param {import('../domain/album.js').Album} album
    * @param {number} trackIndex
    * @param {string[]} [more] further credits, such as the instruments the music plays and the globe's map
    */
   function render(album, trackIndex, more = []) {
-    const text = [trackCover(album, trackIndex).credit, album.dataCredit, ...more].filter(Boolean).join(SEPARATOR);
+    const dataCredit = album.tracks[trackIndex].dataCredit ?? album.dataCredit;
+    const text = [trackCover(album, trackIndex).credit, dataCredit, ...more].filter(Boolean).join(SEPARATOR);
     if (text === shown) return;
     shown = text;
     show(text);

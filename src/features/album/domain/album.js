@@ -23,16 +23,31 @@ export const AlbumCategory = Object.freeze({
  */
 
 /**
+ * A track that plays one ocean's storm season, from the file the album notebook exports (see docs/data-guide.md).
+ *
+ * @typedef {Object} StormSeasonSource
+ * @property {string} url the season's storms
+ * @property {string} from first day the track plays, `YYYY-MM-DD`
+ * @property {string} to last day the track plays, `YYYY-MM-DD`
+ * @property {string} hemisphere one of Hemisphere (see tracks/domain/storm-season.js): where the storms sing
+ * @property {Object} lead the Instrument the storms sing on (see music/domain/instruments.js)
+ * @property {{ lat: number, lon: number, arcDeg: number }} focus the ocean's centre, held in the middle of the globe,
+ *   and how many degrees of arc from it the label's edge is
+ */
+
+/**
  * @typedef {Object} Track
  * @property {string} title
  * @property {number} durationSec
  * @property {IceSeaSource} [iceSea] data, sound and view of a polar track
  * @property {StormSource} [storm] data, sound and view of a hurricane track
+ * @property {StormSeasonSource} [season] data, sound and view of a storm season track
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
  * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
  * @property {string} [color] CSS color the track's data is drawn in
  * @property {string} [coverUrl] the track's own cover image, shown on the sleeve while it is the current track
  * @property {string} [coverCredit] credit and license of the track's cover image
+ * @property {string} [dataCredit] sources of the track's data, shown instead of the album's while it is current
  */
 
 /**
