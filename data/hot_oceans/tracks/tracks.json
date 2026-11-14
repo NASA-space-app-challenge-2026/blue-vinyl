@@ -1,7 +1,7 @@
 [
   {
-    "file": "emily_2005.csv",
-    "title": "Emily 2005",
+    "file": "kirk_2012.csv",
+    "title": "Kirk 2012",
     "pages": [
       {
         "svsId": 5097,
@@ -14,7 +14,7 @@
         "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
       }
     ],
-    "note": "Ours: Grows over warm water and weakens on land: Grenada, Yucatán, Tamaulipas. Also weakens over warm water in the Caribbean (17–18 July). The whole life of the storm (section 12); SST is the monthly mean under its centre, empty over land. The Atlantic's neutral SST, where storms neither strengthen nor weaken on average over the next 24 hours, is 26.9 °C (section 5.1).",
+    "note": "Ours: Grows over warm water and weakens as it moves north into cold water: the SST under it falls 7.7 °C in a day. No landfall. The whole life of the storm (section 12); SST is the monthly mean under its centre, empty over land. The Atlantic's neutral SST, where storms neither strengthen nor weaken on average over the next 24 hours, is 26.9 °C (section 5.1).",
     "sources": [
       {
         "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
@@ -38,7 +38,7 @@
       }
     ],
     "visuals": [
-      "emily_2005_sst.geojson"
+      "kirk_2012_sst.geojson"
     ],
     "units": {
       "wind_kt": "kt (1-minute sustained)",
@@ -48,13 +48,13 @@
       "lon": "°"
     },
     "timeRange": [
-      "2005-07-11T00:00Z",
-      "2005-07-21T06:00Z"
+      "2012-08-28T18:00Z",
+      "2012-09-03T00:00Z"
     ]
   },
   {
-    "file": "felix_2007.csv",
-    "title": "Felix 2007",
+    "file": "lee_2017.csv",
+    "title": "Lee 2017",
     "pages": [
       {
         "svsId": 5097,
@@ -67,7 +67,7 @@
         "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
       }
     ],
-    "note": "Ours: Grows over warm water, from tropical storm to category 5 in a day, and weakens on land: Grenada, Nicaragua. The whole life of the storm (section 12); SST is the monthly mean under its centre, empty over land. The Atlantic's neutral SST, where storms neither strengthen nor weaken on average over the next 24 hours, is 26.9 °C (section 5.1).",
+    "note": "Ours: Drifts weak for nine days, falls apart and comes back, grows over warm water east of Bermuda and weakens as it races north-east into cold water: the SST under it falls 7.9 °C in a day. No landfall. The whole life of the storm (section 12); SST is the monthly mean under its centre, empty over land. The Atlantic's neutral SST, where storms neither strengthen nor weaken on average over the next 24 hours, is 26.9 °C (section 5.1).",
     "sources": [
       {
         "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
@@ -91,7 +91,7 @@
       }
     ],
     "visuals": [
-      "felix_2007_sst.geojson"
+      "lee_2017_sst.geojson"
     ],
     "units": {
       "wind_kt": "kt (1-minute sustained)",
@@ -101,8 +101,8 @@
       "lon": "°"
     },
     "timeRange": [
-      "2007-08-31T12:00Z",
-      "2007-09-05T06:00Z"
+      "2017-09-14T18:00Z",
+      "2017-09-30T06:00Z"
     ]
   },
   {

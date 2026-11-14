@@ -22,7 +22,7 @@ const HOT_OCEANS_COVERS = 'assets/albums/hot-oceans';
 // The Atlantic's neutral SST (°C), where storms on average neither strengthen nor weaken over the next 24 hours
 // (notebooks/hot_oceans_album.ipynb, section 5.1): the sea above it lets a storm grow.
 const ATLANTIC_NEUTRAL_SST_C = 26.9;
-// Every storm's whole life plays in this long, whatever it lasted (4.75 to 12.5 days).
+// Every storm's whole life plays in this long, whatever it lasted (5.25 to 15.5 days).
 const STORM_TRACK_SEC = 30;
 
 /** @type {import('../domain/album.js').Album[]} */
@@ -99,33 +99,34 @@ export const albums = [
     id: 'hot-oceans',
     category: AlbumCategory.CLIMATE,
     title: 'Hurricanes over Warm Water',
-    coverUrl: `${HOT_OCEANS_COVERS}/emily_2005.jpg`,
+    coverUrl: `${HOT_OCEANS_COVERS}/lee_2017.jpg`,
     coverCredit: 'NASA, public domain, via Wikimedia Commons',
     dataCredit: 'Data: NASA SVS 5097, 5072 · HURDAT2 (NOAA/NHC) · GHRSST MUR SST v4.1 (NASA JPL, via NOAA CoastWatch)',
-    // Three Atlantic hurricanes, each its whole life: two that weaken on land and one that weakens over cool water
-    // (see docs/albums/hot-oceans.md). Each plays its wind on its own percussion family. Each track takes
-    // STORM_TRACK_SEC, so the storms' lives play at their own pace. Covers: each storm near its peak, from NASA.
+    // Three Atlantic hurricanes that grow over warm water and weaken over cool water, never near land, with the
+    // sharpest turn from one to the other (see docs/albums/hot-oceans.md). Each plays its wind on its own percussion
+    // family. Each track takes STORM_TRACK_SEC, so the storms' lives play at their own pace. Covers: each storm near
+    // its peak, from NASA.
     tracks: [
       {
-        title: 'Emily 2005',
+        title: 'Kirk 2012',
         durationSec: STORM_TRACK_SEC,
-        coverUrl: `${HOT_OCEANS_COVERS}/emily_2005.jpg`,
-        coverCredit: 'Cover: MODIS, Jul 16 2005 (Jeff Schmaltz, NASA MODIS Rapid Response Team)',
+        coverUrl: `${HOT_OCEANS_COVERS}/kirk_2012.jpg`,
+        coverCredit: 'Cover: MODIS, Aug 30 2012 (NASA MODIS/LANCE)',
         storm: {
-          csvUrl: `${HOT_OCEANS_DATA}/emily_2005.csv`,
-          fieldUrl: `${HOT_OCEANS_DATA}/emily_2005_sst.geojson`,
+          csvUrl: `${HOT_OCEANS_DATA}/kirk_2012.csv`,
+          fieldUrl: `${HOT_OCEANS_DATA}/kirk_2012_sst.geojson`,
           kit: Kit.LATIN,
           neutralSstC: ATLANTIC_NEUTRAL_SST_C,
         },
       },
       {
-        title: 'Felix 2007',
+        title: 'Lee 2017',
         durationSec: STORM_TRACK_SEC,
-        coverUrl: `${HOT_OCEANS_COVERS}/felix_2007.jpg`,
-        coverCredit: 'Cover: International Space Station, Sep 3 2007 (NASA)',
+        coverUrl: `${HOT_OCEANS_COVERS}/lee_2017.jpg`,
+        coverCredit: 'Cover: MODIS on Terra, Sep 27 2017 (NASA)',
         storm: {
-          csvUrl: `${HOT_OCEANS_DATA}/felix_2007.csv`,
-          fieldUrl: `${HOT_OCEANS_DATA}/felix_2007_sst.geojson`,
+          csvUrl: `${HOT_OCEANS_DATA}/lee_2017.csv`,
+          fieldUrl: `${HOT_OCEANS_DATA}/lee_2017_sst.geojson`,
           kit: Kit.DRUMLINE,
           neutralSstC: ATLANTIC_NEUTRAL_SST_C,
         },

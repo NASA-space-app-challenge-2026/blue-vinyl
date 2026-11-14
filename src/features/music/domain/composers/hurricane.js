@@ -443,7 +443,7 @@ const LANDFALL = Object.freeze({ drum: 50, drumVelocity: 127, bass: TONIC - 36, 
 
 /**
  * The tempo (beats a minute) for a wind of `kmh`: as many as the wind blows km/h up to the knee, then rising only
- * `slope` as fast, so a major hurricane's band still races without blurring (Felix's 278 km/h plays at about 193).
+ * `slope` as fast, so a major hurricane's band still races without blurring (150 kt, 278 km/h, plays at about 193).
  */
 export function tempoOf(kmh) {
   return kmh <= TEMPO_KNEE.bpm ? kmh : TEMPO_KNEE.bpm + (kmh - TEMPO_KNEE.bpm) * TEMPO_KNEE.slope;

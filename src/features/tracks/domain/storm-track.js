@@ -6,8 +6,8 @@ import { lastIndexAtOrBefore } from './bird-track.js';
 
 export const KMH_PER_KT = 1.852;
 
-// The wind (kt) at the top of the scale the storm's size, spin and colour follow: a little above the album's strongest
-// storm (Felix, 150 kt).
+// The wind (kt) at the top of the scale the storm's size, spin and colour follow: a little above a strong category 5 storm
+// (150 kt), so any Atlantic hurricane fits.
 const FULL_SCALE_KT = 160;
 
 /**

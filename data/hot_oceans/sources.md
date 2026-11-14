@@ -43,5 +43,5 @@ Datasets cited by 5072: HURDAT2 (NOAA/NHC), no link; ATCF – Best Track (NOAA),
 
 | File | What it is | From |
 | --- | --- | --- |
-| `tracks/emily_2005.csv`, `tracks/felix_2007.csv`, `tracks/sam_2021.csv` | Each storm's whole life, every HURDAT2 record (synoptic and special), with the SST under its centre | HURDAT2 (`AL052005`, `AL062007`, `AL182021`); MUR monthly SST of each record's month |
-| `tracks/emily_2005_sst.geojson`, `tracks/felix_2007_sst.geojson`, `tracks/sam_2021_sst.geojson` | The SST field the globe draws under each storm, one map per month it lives in, with the 26.5 °C line | MUR monthly SST: July 2005; August and September 2007; September and October 2021 |
+| `tracks/kirk_2012.csv`, `tracks/lee_2017.csv`, `tracks/sam_2021.csv` | Each storm's whole life, every HURDAT2 record (synoptic and special), with the SST under its centre | HURDAT2 (`AL112012`, `AL142017`, `AL182021`); MUR monthly SST of each record's month |
+| `tracks/kirk_2012_sst.geojson`, `tracks/lee_2017_sst.geojson`, `tracks/sam_2021_sst.geojson` | The SST field the globe draws under each storm, one map per month it lives in, with the 26.5 °C line | MUR monthly SST: August and September 2012; September 2017; September and October 2021 |
