@@ -17,6 +17,8 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(160deg, #8a7458, #4a3a27);
+  /* Slightly rounded, as a worn card sleeve is. */
+  border-radius: 2px;
   box-shadow: 0 30px 60px rgb(0 0 0 / 0.45);
   overflow: hidden;
   transform: rotateX(var(--hover-x, 0deg)) rotateY(var(--hover-y, 0deg));
