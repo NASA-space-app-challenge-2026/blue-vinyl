@@ -6,7 +6,8 @@ The app follows clean architecture, split by feature. Each feature has three lay
 
 ```
 index.html           # entry page, loads src/app/main.js
-notebooks/           # Python data prep; exports datasets into features/*/data
+data/<album>/        # album data: raw/ is local only, tracks/ is committed (see data-guide.md)
+notebooks/           # Python data prep; exports track data into data/<album>/tracks
 src/
   app/               # composition root: wires the features together
   shared/            # cross-cutting utilities used by any layer

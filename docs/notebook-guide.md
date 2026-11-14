@@ -24,16 +24,22 @@ For every EIC visualization in the album:
 
 One notebook per album, named `<album>_album.ipynb`, with these sections in order:
 
-1. **Overview**: the album, its issue number, and how to run the notebook.
-2. **EIC pages and messages**: one table with the SVS id, title, the message quoted from EIC, and the source dataset of each visualization.
-3. **One section per message**, each containing:
+1. **Overview**: the album, its issue number, the story the messages tell, and how to run the notebook.
+2. **Links**: every link the notebook uses, as described in [data-guide.md](data-guide.md#source-links).
+3. **EIC pages and messages**: the SVS id, title and message of each visualization, quoted from EIC.
+4. **One section per message**, each containing:
+   - links to the EIC page and the source data, right under the section title
    - the message, quoted from EIC
    - the source data: name, provider, link, units and time range
    - a graph that reproduces what the EIC visualization shows
    - the numbers that back the message (for example, the gap to a baseline or a ranking), checked against the numbers EIC states
    - the data series this message offers as a track
-4. **Message summary**: one table that lists, for each message, the EIC page, the message, the key number and the track data.
-5. **Track candidates**: the series that could become tracks, with their length, range and resolution.
+5. **Message summary**: one table that lists, for each message, the EIC page, the message, the key number and the track data.
+6. **Track candidates**: the series that could become tracks, with their length, range and resolution.
+
+Order the message sections so they tell a story, from what EIC shows directly to what it means. For example: the yearly cycle, the long-term trend under it, the record year, the consequence.
+
+When the data could suggest a cause EIC does not claim, say so in the notebook. For example, melting sea ice barely raises sea level; land ice and warming water do. Show such series side by side as signs of the same change, not as cause and effect.
 
 ## Graphs
 
@@ -44,8 +50,8 @@ One notebook per album, named `<album>_album.ipynb`, with these sections in orde
 
 ## Data Handling
 
-- Download through code in the notebook. Never commit raw data.
-- Cache downloads in `notebooks/.cache/` (git-ignored).
+- Follow [data-guide.md](data-guide.md) for where data goes.
+- Download through code in the notebook into `data/<album>/raw/` (git-ignored). Never commit raw data.
 - Keep credentials out of the repository. For NASA Earthdata, use a `~/.netrc` entry:
 
   ```
@@ -54,7 +60,7 @@ One notebook per album, named `<album>_album.ipynb`, with these sections in orde
 
   If a section needs a login the reader does not have, it explains how to get one and skips without failing.
 - Keep the original units in the data. Convert units only for display.
-- When tracks are decided, export them as static files into `src/features/<feature>/data/` (see [architecture.md](architecture.md)), together with the source, credit and message of each track.
+- When tracks are decided, export them into `data/<album>/tracks/` together with a `tracks.json` holding the source, credit and message of each track (see [data-guide.md](data-guide.md)).
 
 ## Running and Committing
 
