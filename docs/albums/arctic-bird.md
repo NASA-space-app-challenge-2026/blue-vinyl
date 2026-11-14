@@ -42,6 +42,7 @@ Each bar a chord that holds the lead's note plays on the pad; every fourth bar i
 - The globe turns to keep the flock in the middle; turned by hand, it glides back a second after release.
 - A WebGL halo around the globe breathes with the music: each place on the rim shows a frequency band, low at 6 o'clock to high at 12, in the track's colour.
 - The date (month and day) is printed at 6 o'clock on the globe.
+- Each track's cover is the lead photo of its species' English Wikipedia article, from Wikimedia Commons (for the Whimbrel, the Hudsonian whimbrel of the Americas, which the Alaska study tags), saved in `assets/albums/arctic-bird/`. Its credit and license are shown at the bottom right, and its main color is the backdrop.
 
 ## Sound Font
 

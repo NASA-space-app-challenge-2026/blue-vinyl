@@ -3,6 +3,7 @@ import { Instrument } from '../../music/domain/instruments.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
 
 const ARCTIC_BIRD_TRACKS = 'data/arctic_bird/tracks';
+const ARCTIC_BIRD_COVERS = 'assets/albums/arctic-bird';
 // A week of the year a second: a bird's year in about 52 s.
 const WEEK_A_SECOND_MS = 7 * DAY_MS;
 const BIRD_YEAR_SEC = YEAR_MS / WEEK_A_SECOND_MS;
@@ -20,10 +21,24 @@ export const albums = [
     // public bird studies that fly the farthest in a year, and the Northern pintail, from northern Japan to eastern
     // Siberia (see notebooks/arctic_bird_album.ipynb, section 9).
     tracks: [
-      { title: 'Buff-breasted Sandpiper', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/buff_breasted_sandpiper.csv`, lead: Instrument.FLUTE, color: '#f0a040' },
-      { title: 'Whimbrel', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/whimbrel.csv`, lead: Instrument.OBOE, color: '#e8785a' },
-      { title: 'Yellow-billed Loon', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/yellow_billed_loon.csv`, lead: Instrument.FRENCH_HORN, color: '#68b4dc' },
-      { title: 'Northern Pintail', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/northern_pintail.csv`, lead: Instrument.OCARINA, color: '#9ccc64' },
+      // Covers: the lead photos of the species' English Wikipedia articles, from Wikimedia Commons (the Hudsonian
+      // whimbrel, the whimbrel of the Americas that the Alaska study tags).
+      {
+        title: 'Buff-breasted Sandpiper', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/buff_breasted_sandpiper.csv`, lead: Instrument.FLUTE, color: '#f0a040',
+        coverUrl: `${ARCTIC_BIRD_COVERS}/buff_breasted_sandpiper.jpg`, coverCredit: 'Photo: Tim Lenz, CC BY 2.0, via Wikimedia Commons',
+      },
+      {
+        title: 'Whimbrel', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/whimbrel.csv`, lead: Instrument.OBOE, color: '#e8785a',
+        coverUrl: `${ARCTIC_BIRD_COVERS}/whimbrel.jpg`, coverCredit: 'Photo: Charles J. Sharp, CC BY-SA 4.0, via Wikimedia Commons',
+      },
+      {
+        title: 'Yellow-billed Loon', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/yellow_billed_loon.csv`, lead: Instrument.FRENCH_HORN, color: '#68b4dc',
+        coverUrl: `${ARCTIC_BIRD_COVERS}/yellow_billed_loon.jpg`, coverCredit: 'Photo: Ryan Askren, USGS Alaska Science Center, public domain, via Wikimedia Commons',
+      },
+      {
+        title: 'Northern Pintail', durationSec: BIRD_YEAR_SEC, birdsUrl: `${ARCTIC_BIRD_TRACKS}/northern_pintail.csv`, lead: Instrument.OCARINA, color: '#9ccc64',
+        coverUrl: `${ARCTIC_BIRD_COVERS}/northern_pintail.jpg`, coverCredit: 'Photo: J.M.Garg, CC BY-SA 3.0, via Wikimedia Commons',
+      },
     ],
   },
   {

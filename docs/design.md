@@ -27,9 +27,11 @@ Tokens are defined on `:root` in `src/app/app.css`.
 
 | Token | Use |
 | --- | --- |
-| `--bg`, `--bg-deep` | Warm brown backdrop, drawn as a radial gradient from the center outward |
+| `--bg`, `--bg-deep` | Backdrop, drawn as a radial gradient from the center outward. Warm brown by default; while a cover is shown, its main color darkened (see below) |
 | `--ink` | Primary text |
 | `--ink-muted` | Secondary text: inactive tracks, hint, credit |
+
+The backdrop takes the main color of the cover the sleeve shows (`src/features/album/presentation/backdrop.js`): the cover is shrunk, its pixels grouped by like color, and the largest group averaged. That color is mixed with black until it is no lighter than the default backdrop, so the light text stays readable, and the rim darker still. It fades over about a second when the cover changes.
 
 The record, label and tonearm use fixed dark and silver tones in `src/features/turntable/presentation/turntable.css`; they depict physical materials and do not follow the page tokens.
 
@@ -40,7 +42,8 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 - Each album's sleeve has its own angle between -6deg and -2deg, picked from its place in the catalog, so the sleeves differ but each always looks the same. A sleeve never stands straight.
 - Hovering the mouse over the sleeve leans it a few degrees in 3D toward the pointer, like a card in the hand; it eases back when the mouse leaves.
 - The sleeve has a dark gradient at the bottom so the title and track list stay readable over any cover photo.
-- Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
+- The sleeve shows the current track's cover when the track has one, else the album's; it fades from one to the next as the tracks change.
+- Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. Bottom right: the credit of the cover shown and the globe's map/imagery attribution.
 - At 760px wide and below, the sleeve and the record stack vertically and the page scrolls.
 
 ## Record
