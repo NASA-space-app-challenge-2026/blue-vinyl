@@ -9,10 +9,28 @@ const SPREAD_SEC = 0.6;
 const SIZE = Object.freeze({ min: 0.004, max: 0.009 });
 const SPLASH = Object.freeze({ sec: 0.7, radius: 0.03 });
 const ICE_COLOR = '232, 244, 255';
-// A thin blue edge, so a shard shows over the pale ice it falls from.
+// A soft blue rim, so a piece shows over the pale ice it falls from.
 const EDGE_COLOR = '110, 165, 225';
-const SPIN = 4;
+// Each piece is a soft round lump of snow, drawn once here (SNOW_PX across) and stamped at its size.
+const SNOW_PX = 64;
 const SPLASH_COLOR = '200, 235, 255';
+
+// A lump of snow: white in the middle, softening through a pale blue rim to nothing at its edge.
+function snowball() {
+  const sprite = document.createElement('canvas');
+  sprite.width = SNOW_PX;
+  sprite.height = SNOW_PX;
+  const context = sprite.getContext('2d');
+  const r = SNOW_PX / 2;
+  const fill = context.createRadialGradient(r, r, 0, r, r, r);
+  fill.addColorStop(0, `rgb(${ICE_COLOR})`);
+  fill.addColorStop(0.55, `rgb(${ICE_COLOR})`);
+  fill.addColorStop(0.8, `rgba(${EDGE_COLOR}, 0.7)`);
+  fill.addColorStop(1, `rgba(${EDGE_COLOR}, 0)`);
+  context.fillStyle = fill;
+  context.fillRect(0, 0, SNOW_PX, SNOW_PX);
+  return sprite;
+}
 
 /**
  * A canvas over the globe where pieces of ice fall into the water. It never takes pointer events.
@@ -25,6 +43,7 @@ export function createIceFall(container) {
   container.append(canvas);
   const context = canvas.getContext('2d');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const snow = snowball();
 
   let pieces = [];
   let splashes = [];
@@ -59,26 +78,11 @@ export function createIceFall(container) {
         splashes.push({ x: piece.x, age: 0, size: piece.size });
         continue;
       }
-      piece.angle += piece.spin * dt;
-      const alpha = Math.min(1, piece.age / 0.15) * 0.95;
-      const s = piece.size * height;
-      // A small shard of ice, turning as it falls.
-      context.save();
-      context.translate(piece.x * height, piece.y * height);
-      context.rotate(piece.angle);
-      context.beginPath();
-      context.moveTo(0, -s);
-      context.lineTo(s * 0.7, -s * 0.1);
-      context.lineTo(s * 0.2, s * 1.1);
-      context.lineTo(-s * 0.75, s * 0.2);
-      context.closePath();
-      context.fillStyle = `rgba(${ICE_COLOR}, ${alpha})`;
-      context.fill();
-      context.lineWidth = Math.max(1, s * 0.25);
-      context.strokeStyle = `rgba(${EDGE_COLOR}, ${alpha})`;
-      context.stroke();
-      context.restore();
+      const r = piece.size * height;
+      context.globalAlpha = Math.min(1, piece.age / 0.15) * 0.95;
+      context.drawImage(snow, piece.x * height - r, piece.y * height - r, 2 * r, 2 * r);
     }
+    context.globalAlpha = 1;
     pieces = pieces.filter((piece) => !piece.done);
 
     // A ring spreading on the surface where a piece went in.
@@ -124,8 +128,6 @@ export function createIceFall(container) {
         vy: Math.random() * START_SPEED,
         size: SIZE.min + Math.random() * (SIZE.max - SIZE.min),
         phase: Math.random() * 2 * Math.PI,
-        angle: Math.random() * 2 * Math.PI,
-        spin: (Math.random() * 2 - 1) * SPIN,
         wait: Math.random() * spreadSec,
         age: 0,
       });

@@ -233,6 +233,9 @@ async function loadAlbumData(loading) {
   }
   if (album !== loading) return;
   trackData = data;
+  data.forEach((track, i) => {
+    if (track) globe.prepareIce({ key: iceKey(album, i), poleLat: album.tracks[i].iceSea.poleLat, shapes: track.iceShapes });
+  });
   const starts = trackBoundaries(album).map((edge) => (edge * totalMs) / 1000);
   const notes = album.tracks.flatMap((track, i) => {
     if (!data[i]) return [];
@@ -468,6 +471,11 @@ function renderSeason(trackIndex) {
   halo.wake();
 }
 
+// Names a track's ice on the globe.
+function iceKey(shown, trackIndex) {
+  return `${shown.id}:${trackIndex}`;
+}
+
 /**
  * Draws the year that plays at the clock on the globe, looking down on the track's pole: its ice and the sea level;
  * ice lost from one year to the next falls into the water. The record at rest before it plays shows the first year.
@@ -491,7 +499,7 @@ function renderData(trackIndex) {
   const { years } = data;
   const now = yearAt(YEAR_TIMELINE, trackSec, years.length);
   const at = Math.max(0, now.index);
-  const trackKey = `${album.id}:${trackIndex}`;
+  const trackKey = iceKey(album, trackIndex);
   const year = years[at];
   // Share of this year's bar played: the ice moves from last year's shape to this year's over the bar, starting on
   // the chord and settling into the shape. The water rises from last year's level to this year's over the bar too,
@@ -507,15 +515,12 @@ function renderData(trackIndex) {
     poleLat: track.iceSea.poleLat,
     shapes: data.iceShapes,
     at: at === 0 ? 0 : at - 1 + settle,
+    year: at,
     // The lost ice falls for as long as the year's chord is held.
     fallSec: YEAR_TIMELINE.beatSec,
   });
   seaOverlay.render({
     year: year.year,
-    firstYear: years[0].year,
-    extent: year.extent,
-    firstExtent: years[0].extent,
-    seaLevelMm: year.seaLevelMm,
     waterMm,
   });
 }
