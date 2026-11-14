@@ -2,17 +2,22 @@
 //
 //   play: a note of a Patch (see domain/patches.js), its oscillators through a resonant low-pass filter that an
 //     envelope throws open as the note starts and lets fall back, held for part of its length and released over a tail.
+//   noise: a burst of white noise through a sweeping high-pass that fades out, a tick of percussion.
 //   voice: a GlideVoice of a Lead, held open while its composer moves its pitch, level, brightness and place.
 
 const HZ = Object.freeze({ min: 20, max: 18000 });
 // How fast a note's level and filter open (s).
 const ATTACK_SEC = 0.004;
-// A note's peak level at full velocity, its oscillators' gains shared out of it.
+// A note's peak level at full velocity, its oscillators' gains shared out of it; a noise hit's.
 const VOICE_GAIN = 0.22;
+const NOISE_GAIN = 0.12;
+const NOISE_SEC = 2;
 // setTargetAtTime gets about 95% of the way in three time constants.
 const TIME_CONSTANTS = 3;
 // A released note's oscillators stop once its tail has faded this many time constants.
 const TAIL_CONSTANTS = 8;
+// The noise hit's high-pass resonance.
+const NOISE_Q = 2;
 
 const hzOf = (midi) => 440 * 2 ** ((midi - 69) / 12);
 const clampHz = (hz) => Math.min(HZ.max, Math.max(HZ.min, hz));
@@ -42,10 +47,14 @@ const clampHz = (hz) => Math.min(HZ.max, Math.max(HZ.min, hz));
  */
 
 /**
- * @param {AudioContext} context
+ * @param {BaseAudioContext} context
  * @param {AudioNode} destination where everything plays into
  */
 export function createAnalogSynth(context, destination) {
+  const noiseBuffer = new AudioBuffer({ length: Math.round(NOISE_SEC * context.sampleRate), sampleRate: context.sampleRate });
+  const samples = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
+
   /**
    * Plays `midi` on `patch` at `velocity` (0-127) from `at` for `durationSec`.
    *
@@ -79,6 +88,21 @@ export function createAnalogSynth(context, destination) {
     }
   }
 
+  /** A burst of noise at `velocity` (0-127) from `at` fading over `durationSec`, through a high-pass sweeping from `fromHz` to `toHz`. */
+  function noise(velocity, at, durationSec, fromHz, toHz) {
+    const source = new AudioBufferSourceNode(context, { buffer: noiseBuffer, loop: true });
+    const filter = new BiquadFilterNode(context, { type: 'highpass', frequency: fromHz, Q: NOISE_Q });
+    filter.frequency.setValueAtTime(fromHz, at);
+    filter.frequency.exponentialRampToValueAtTime(toHz, at + durationSec);
+    const amp = new GainNode(context, { gain: 0 });
+    const peak = (NOISE_GAIN * velocity) / 127;
+    amp.gain.setValueAtTime(peak, at);
+    amp.gain.setTargetAtTime(0, at, durationSec / TIME_CONSTANTS);
+    source.connect(filter).connect(amp).connect(destination);
+    source.start(at, Math.random() * NOISE_SEC);
+    source.stop(at + durationSec);
+  }
+
   /**
    * Opens a voice of `lead` sounding `sound` from `at`.
    *
@@ -89,7 +113,7 @@ export function createAnalogSynth(context, destination) {
     return createGlideVoice(context, destination, lead, sound, at);
   }
 
-  return { play, voice };
+  return { play, noise, voice };
 }
 
 // A voice held open while its pitch, level, brightness and place glide: oscillators, each at its own level, through a

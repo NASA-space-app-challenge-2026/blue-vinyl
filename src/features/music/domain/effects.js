@@ -1,4 +1,4 @@
-// The effects on the whole mix that a composer may turn (see data/mix-space.js), each with the value that leaves the
+// The effects on the whole mix that a composer may turn (see data/master-fx.js), each with the value that leaves the
 // sound as it is. The engine sets every effect back there whenever the music starts over, so an album that never
 // touches them is never coloured by them.
 //   REVERB: how much of the mix is sent into a large room (0 to 1);

@@ -1,7 +1,9 @@
 import { createIceFall } from './ice-fall.js';
 import { createIceMorph } from './ice-morph.js';
 
+import { DEFAULT_GLOBE_LENS } from '../domain/globe-lens.js';
 import { createBirdsLayer } from './birds-layer.js';
+import { createLightningLayer } from './lightning-layer.js';
 import { createStormLayer } from './storm-view.js';
 import { createStormsLayer } from './storms-layer.js';
 
@@ -9,8 +11,10 @@ import { createStormsLayer } from './storms-layer.js';
 // while the ESM build pulls several three.js versions from the CDN.
 const { Globe } = globalThis;
 
-// Closest zoom, as camera altitude in globe radii above the surface.
-const MIN_ZOOM_ALTITUDE = 0.15;
+// Zooming in by hand stops at this many times the fitted size.
+const MAX_ZOOM = 9;
+// Edge of a map tile in texels.
+const TILE_PX = 256;
 // Pieces of ice that fall when a year loses ice: one per PIECE_CELLS cells of net loss (a cell is about 1,000 km²),
 // at most MAX_PIECES; none when the ice grew.
 const PIECE_CELLS = 20;
@@ -42,7 +46,8 @@ function altitudeForArc(camera, arcDeg) {
  * It turns to keep a focus point (the flock, or the pole of a track's ice) at its centre; turned or zoomed by hand, it glides back a moment after release.
  *
  * It can draw a track's sea ice, morphing from year to year. When a year loses ice, pieces of it fall from where it
- * was into the water at the bottom of the label. It can draw a hurricane (storm).
+ * was into the water at the bottom of the label. It can draw a hurricane (storm), and a year of lightning with the
+ * sunlight of the season.
  *
  * @param {HTMLElement} container
  */
@@ -52,19 +57,45 @@ export function createGlobeView(container) {
     .backgroundColor('rgba(0, 0, 0, 0)')
     .showAtmosphere(false);
 
-  const fitAltitude = fittedAltitude(globe.camera());
+  const camera = globe.camera();
   const radius = globe.getGlobeRadius();
   const controls = globe.controls();
-  controls.minDistance = radius * (1 + MIN_ZOOM_ALTITUDE);
-  controls.maxDistance = radius * (1 + fitAltitude);
-  globe.pointOfView({ ...INITIAL_VIEW, altitude: fitAltitude });
+  // Camera altitude at which the globe fits the label, set with the lens.
+  let fitAltitude = 0;
+
+  /**
+   * Looks at the globe through `lens` (one of GlobeLens), at its fitted size.
+   *
+   * @param {{ fovDeg: number }} lens
+   */
+  function setLens(lens) {
+    camera.fov = lens.fovDeg;
+    camera.updateProjectionMatrix();
+    fitAltitude = fittedAltitude(camera);
+    controls.minDistance = radius * (1 + fitAltitude / MAX_ZOOM);
+    controls.maxDistance = radius * (1 + fitAltitude);
+    globe.pointOfView({ altitude: fitAltitude });
+    keepGrabSpeed();
+  }
+
+  globe.pointOfView(INITIAL_VIEW);
+  setLens(DEFAULT_GLOBE_LENS);
   globe.globeMaterial().shininess = 0;
 
   // Flat, even light like a printed map: drop the directional glare, keep the ambient fill.
   const [, directional] = globe.lights();
   directional.intensity = 0;
 
-  const resize = () => globe.width(container.clientWidth).height(container.clientHeight);
+  // globe.gl's map tile engine, once it has joined the scene, and the zoom level of the tiles it is pinned to. The
+  // engine would pick its level from the camera's distance, which the narrow lens makes far, so the level is pinned
+  // to what the globe's size on screen needs instead.
+  let tileEngine = null;
+  let tileLevel = null;
+
+  const resize = () => {
+    globe.width(container.clientWidth).height(container.clientHeight);
+    pinTileLevel();
+  };
   new ResizeObserver(resize).observe(container);
   resize();
 
@@ -81,6 +112,39 @@ export function createGlobeView(container) {
   function setTheme(theme, source) {
     container.dataset.theme = theme;
     globe.globeTileEngineUrl(source.tileUrl ?? null).globeImageUrl(source.imageUrl ?? null);
+    tileLevel = null;
+    if (source.tileUrl) pinWhenReady();
+  }
+
+  // The engine joins the scene some frames after a tile map is set.
+  function pinWhenReady() {
+    if (!findTileEngine()) {
+      requestAnimationFrame(pinWhenReady);
+      return;
+    }
+    pinTileLevel();
+  }
+
+  function findTileEngine() {
+    if (!tileEngine?.parent) {
+      tileEngine = null;
+      globe.scene().traverse((object) => {
+        if (Array.isArray(object.thresholds)) tileEngine = object;
+      });
+    }
+    return tileEngine;
+  }
+
+  // Pins the tiles to the lowest zoom level at least as sharp as the screen where the globe is nearest the camera
+  // (a level-l map wraps 2^l tiles around the globe's 2π radii), and lets the engine fetch them.
+  function pinTileLevel() {
+    if (!findTileEngine()) return;
+    const devicePx = (radius / unitsPerPx()) * globe.renderer().getPixelRatio();
+    const level = Math.max(0, Math.ceil(Math.log2((2 * Math.PI * devicePx) / TILE_PX)));
+    if (level === tileLevel) return;
+    tileLevel = level;
+    tileEngine.minLevel = tileEngine.maxLevel = level;
+    controls.dispatchEvent({ type: 'change' });
   }
 
   /**
@@ -126,7 +190,12 @@ export function createGlobeView(container) {
   let userTurning = false;
   let returnTimer = null;
   let glideFrame = null;
+  controls.addEventListener('change', () => {
+    keepGrabSpeed();
+    pinTileLevel();
+  });
   controls.addEventListener('start', () => {
+    keepGrabSpeed();
     clearTimeout(returnTimer);
     userTurning = true;
     stopGlide();
@@ -152,6 +221,7 @@ export function createGlobeView(container) {
       lng: view.lng + k * dLng,
       altitude: view.altitude + k * (altitude - view.altitude),
     });
+    pinTileLevel();
   }
 
   /** Eases the globe to the focus for GLIDE_SEC, then settles it there. */
@@ -175,6 +245,13 @@ export function createGlobeView(container) {
     glideFrame = null;
   }
 
+  // globe.gl sets the drag speed from the camera's altitude on every change, which a narrow lens makes far too fast.
+  // Orbit controls turn 2π·speed radians per view height dragged; this speed keeps the grabbed point under the pointer
+  // where the globe is nearest the camera, whatever the lens and the zoom. Set after globe.gl's own handler.
+  function keepGrabSpeed() {
+    controls.rotateSpeed = (Math.max(1, controls.domElement.clientHeight) * unitsPerPx()) / (2 * Math.PI * radius);
+  }
+
   /** Scene units per screen pixel at the point of the globe nearest the camera. */
   function unitsPerPx() {
     const camera = globe.camera();
@@ -189,11 +266,15 @@ export function createGlobeView(container) {
   globe.htmlElement('el').htmlTransitionDuration(0);
   const storm = createStormLayer({ globe, container });
 
+  const lightning = createLightningLayer(globe);
+
   return {
     setTheme,
+    setLens,
     showIce,
     setWaterLine,
     birds,
+    lightning,
     storm,
     storms,
     /** @param {() => ({ lat: number, lon: number, arcDeg?: number } | null)} next */
