@@ -1,0 +1,130 @@
+[
+  {
+    "file": "arctic_sea_ice_and_global_sea_level.csv",
+    "title": "North",
+    "pages": [
+      {
+        "svsId": 5382,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5382/",
+        "message": "Every summer the Arctic ice cap melts down to what scientists call its \"minimum\" before colder weather begins to cause ice cover to increase."
+      },
+      {
+        "svsId": 5235,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5235/",
+        "message": "As the planet warms and polar ice melts, our global average sea level is rising."
+      }
+    ],
+    "note": "Ours: the September average of every year, the month of the Arctic minimum, against its 1981–2010 normal, with the global mean sea level (12-month mean centered on September 1, change since 1993). Sea ice is shown as a sign of polar ice melt; its amount does not drive the sea level values.",
+    "sources": [
+      {
+        "source": "NSIDC Sea Ice Index, Version 4 (G02135)",
+        "sourceUrl": "https://nsidc.org/data/g02135",
+        "version": "4.0",
+        "doi": "https://doi.org/10.7265/a98x-0f50",
+        "license": "Open access; cite as asked on the dataset page",
+        "credit": "Fetterer, F., et al. Sea Ice Index, Version 4. NSIDC.",
+        "substitute": "EIC names JAXA AMSR2 but gives no link; its grids need a JAXA G-Portal login and start in 2012. NSIDC is the source of the numbers EIC quotes on 5382.",
+        "downloadUrl": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/monthly/data/N_09_extent_v4.0.csv",
+        "downloaded": "2026-11-14"
+      },
+      {
+        "source": "NSIDC Sea Ice Index, Version 4 (G02135)",
+        "sourceUrl": "https://nsidc.org/data/g02135",
+        "version": "4.0",
+        "doi": "https://doi.org/10.7265/a98x-0f50",
+        "license": "Open access; cite as asked on the dataset page",
+        "credit": "Fetterer, F., et al. Sea Ice Index, Version 4. NSIDC.",
+        "substitute": "EIC names JAXA AMSR2 but gives no link; its grids need a JAXA G-Portal login and start in 2012. NSIDC is the source of the numbers EIC quotes on 5382.",
+        "downloadUrl": "https://noaadata.apps.nsidc.org/NOAA/G02135/north/monthly/shapefiles/",
+        "downloaded": "2026-11-14"
+      },
+      {
+        "source": "NOAA Laboratory for Satellite Altimetry, global mean sea level (annual signals removed)",
+        "sourceUrl": "https://www.star.nesdis.noaa.gov/socd/lsa/SeaLevelRise/",
+        "downloadUrl": "https://www.star.nesdis.noaa.gov/socd/lsa/SeaLevelRise/slr/slr_sla_gbl_free_ref_90.csv",
+        "version": "not versioned (updated in place)",
+        "license": "Open access; acknowledgment required",
+        "credit": "Altimetry data are provided by NOAA Laboratory for Satellite Altimetry.",
+        "substitute": "EIC cites NASA GSFC Global Mean Sea Level v5.1 (doi:10.5067/GMSLM-TJ151), which needs an Earthdata login. NOAA uses the same altimeter missions. Only the change since 1993 is used.",
+        "downloaded": "2026-11-14"
+      }
+    ],
+    "visuals": [
+      "arctic_september_sea_ice_extent.geojson"
+    ],
+    "units": {
+      "extent_million_km2": "million km²",
+      "normal_1981_2010_million_km2": "million km², 1981–2010 average of the same month",
+      "record_low": "1 when the extent is lower than every earlier year since 1979",
+      "sea_level_change_mm": "mm, change since 1993"
+    },
+    "timeRange": [
+      "1993-09-01",
+      "2024-09-01"
+    ]
+  },
+  {
+    "file": "antarctic_sea_ice_and_global_sea_level.csv",
+    "title": "South",
+    "pages": [
+      {
+        "svsId": 5064,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5064/",
+        "message": "This visualization shows the daily Antarctic sea ice and seasonal land cover change progressing through time"
+      },
+      {
+        "svsId": 5235,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5235/",
+        "message": "As the planet warms and polar ice melts, our global average sea level is rising."
+      }
+    ],
+    "note": "Ours: the February average of every year, the month of the Antarctic minimum, against its 1981–2010 normal, with the global mean sea level (12-month mean centered on September 1, change since 1993). Sea ice is shown as a sign of polar ice melt; its amount does not drive the sea level values.",
+    "sources": [
+      {
+        "source": "NSIDC Sea Ice Index, Version 4 (G02135)",
+        "sourceUrl": "https://nsidc.org/data/g02135",
+        "version": "4.0",
+        "doi": "https://doi.org/10.7265/a98x-0f50",
+        "license": "Open access; cite as asked on the dataset page",
+        "credit": "Fetterer, F., et al. Sea Ice Index, Version 4. NSIDC.",
+        "substitute": "EIC names JAXA AMSR2 but gives no link; its grids need a JAXA G-Portal login and start in 2012. NSIDC is the source of the numbers EIC quotes on 5382.",
+        "downloadUrl": "https://noaadata.apps.nsidc.org/NOAA/G02135/south/monthly/data/S_02_extent_v4.0.csv",
+        "downloaded": "2026-11-14"
+      },
+      {
+        "source": "NSIDC Sea Ice Index, Version 4 (G02135)",
+        "sourceUrl": "https://nsidc.org/data/g02135",
+        "version": "4.0",
+        "doi": "https://doi.org/10.7265/a98x-0f50",
+        "license": "Open access; cite as asked on the dataset page",
+        "credit": "Fetterer, F., et al. Sea Ice Index, Version 4. NSIDC.",
+        "substitute": "EIC names JAXA AMSR2 but gives no link; its grids need a JAXA G-Portal login and start in 2012. NSIDC is the source of the numbers EIC quotes on 5382.",
+        "downloadUrl": "https://noaadata.apps.nsidc.org/NOAA/G02135/south/monthly/shapefiles/",
+        "downloaded": "2026-11-14"
+      },
+      {
+        "source": "NOAA Laboratory for Satellite Altimetry, global mean sea level (annual signals removed)",
+        "sourceUrl": "https://www.star.nesdis.noaa.gov/socd/lsa/SeaLevelRise/",
+        "downloadUrl": "https://www.star.nesdis.noaa.gov/socd/lsa/SeaLevelRise/slr/slr_sla_gbl_free_ref_90.csv",
+        "version": "not versioned (updated in place)",
+        "license": "Open access; acknowledgment required",
+        "credit": "Altimetry data are provided by NOAA Laboratory for Satellite Altimetry.",
+        "substitute": "EIC cites NASA GSFC Global Mean Sea Level v5.1 (doi:10.5067/GMSLM-TJ151), which needs an Earthdata login. NOAA uses the same altimeter missions. Only the change since 1993 is used.",
+        "downloaded": "2026-11-14"
+      }
+    ],
+    "visuals": [
+      "antarctic_february_sea_ice_extent.geojson"
+    ],
+    "units": {
+      "extent_million_km2": "million km²",
+      "normal_1981_2010_million_km2": "million km², 1981–2010 average of the same month",
+      "record_low": "1 when the extent is lower than every earlier year since 1979",
+      "sea_level_change_mm": "mm, change since 1993"
+    },
+    "timeRange": [
+      "1993-02-01",
+      "2024-02-01"
+    ]
+  }
+]
