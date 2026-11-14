@@ -1,8 +1,8 @@
-# Hot Oceans Album (working title)
+# Hurricanes over Warm Water (Hot Oceans Album)
 
 Issue #21, branch `feat/#21`. Warm water feeds hurricanes: the message of EIC page [5097 2022 Hurricane Season](https://svs.gsfc.nasa.gov/5097/), heard through three Atlantic hurricanes (Emily 2005, Felix 2007, Sam 2021). Analysis: [`notebooks/hot_oceans_album.ipynb`](../../notebooks/hot_oceans_album.ipynb). Sources: [`data/hot_oceans/sources.md`](../../data/hot_oceans/sources.md).
 
-Status (2026-11-14): data analyzed and tracks chosen. Not yet implemented: track export, album entry, composer, visuals, covers. This file is the hand-off for that work.
+Status (2026-11-14): implemented. Tracks exported (notebook section 12), album in [`albums.js`](../../src/features/album/data/albums.js), sound and globe as below.
 
 ## Message
 
@@ -33,6 +33,11 @@ The album must say "warm water lets storms grow", never "every warm sea makes a 
 - **The melody of the earlier album is replaced by the ocean.** That melody drew the 24-hour wind change, which the tempo already plays. The ocean takes its place, so the number of layers stays the same.
 - **On screen, next to the storm, show the SST under it as a number**, and colour it by what it does to the storm: one colour when the water is warm enough to grow the storm, another when it is cool enough to weaken it. The line between them is the basin's neutral SST from the notebook: **26.9 °C** for the Atlantic.
 - **Implement it in this repository from scratch.** The earlier album lives in another project (`nell-v2`, see Reference below). Its design and mapping may be reused, its files may not be copied.
+- **Title**: "Hurricanes over Warm Water", with the word for the storms in it.
+- **The ocean line's instrument**: trombone, with the tuba under it over the warmest water.
+- **Two lines**: the SST number's colour and the ocean line turn at the neutral SST (26.9 °C); the field on the globe draws EIC's 26.5 °C line.
+- **Over land** the SST number is hidden (it fades out with the ocean line).
+- **Sam's percussion**: orchestral timpani and snare.
 
 ## Tracks
 
@@ -51,35 +56,49 @@ What each track shows:
 
 The SST in the analysis is a monthly mean, which hides the cooling a storm leaves in its own wake. Daily SST may show the water under a slow storm 1–2 °C cooler; Emily and Felix move fast, so it is unlikely to cross the line for them.
 
-## Data to Sound (planned)
+## Time
 
-| Layer | Data | Sound | Screen |
-| --- | --- | --- | --- |
-| Wind (result) | Maximum sustained wind (kt) | Tempo and percussion layers by category, as in the earlier album | Storm size and spin; wind speed label |
-| Water (cause) | SST under the storm against the neutral SST (26.9 °C) | A slow, low line (cello or low brass), one note held over one or two bars. Above the neutral SST: on chord tones, full and heavy. Below it: bending flat, leaving the chord, thinning | SST number next to the storm, coloured by growing / weakening; the SST field under the globe with the 26.5 °C line, as 5097 draws it |
-| Landfall (event) | Storm centre over land (no SST) | The ocean line breaks off; the big drum strikes, as in the earlier album | The storm reaches the coast |
+Each track plays its storm's whole life at an even pace, from its first record as a tropical depression to its first record after the peak below 34 kt or no longer tropical (notebook section 12): Emily 10.25 days in 60 s (4.1 hours a second), Felix 4.75 days in 48 s (2.4 hours a second), Sam 12.5 days in 60 s (5.0 hours a second). The storm fades in over the track's first 2.5 s and out over its last.
 
-- The water and the wind change at the same moment: no delay between the ocean line and the tempo (notebook 5.2).
-- The ocean is heard as weight and pressure, never brightness: warm water fuels a disaster, and bad news must not sound cheerful ([album-guide.md](../album-guide.md)).
-- Each track needs a different main instrument (album guide). The earlier album gave each storm its own percussion family: Emily Latin, Felix marching drumline (Dennis, dropped, had the drum set). Sam needs one of its own.
-- Each track lasts 40–60 seconds.
+## Sound
 
-## Next Steps
+[`composers/hurricane.js`](../../src/features/music/domain/composers/hurricane.js), on the app's SoundFont (GeneralUser GS, see [Credits](#credits)). The design follows the earlier single-storm album (see Reference below), written anew here, with its melody replaced by the ocean line.
 
-1. **Export the tracks** from the notebook into `data/hot_oceans/tracks/` (see [data-guide.md](../data-guide.md)): one CSV per storm (6-hourly time, latitude, longitude, max wind kt, pressure hPa, SST °C, over-land flag, landfall records) and `tracks.json`. Add the SST per record at the resolution the visuals need; the analysis used monthly means.
-2. Update `data/hot_oceans/sources.md` with the exported files.
-3. Add the album to [`albums.js`](../../src/features/album/data/albums.js), with covers (NASA or Wikimedia, licensed) and credits.
-4. Composer: wind → tempo and percussion; SST → ocean line; landfall → drum.
-5. Globe: storm view, wind label, SST number with the two colours, SST field and the 26.5 °C line.
-6. Fill in this file's sections as they are built, as [arctic-bird.md](arctic-bird.md) does.
+| Layer | Data | Sound |
+| --- | --- | --- |
+| Wind (result) | Maximum sustained wind | Tempo: as many beats a minute as the wind blows km/h up to 150, a third as fast above (46–193 BPM), set at each bar. Each track's percussion family plays the wind's category, one step of craft a category (pulse, backbeat, ghost notes, flams, fills from category 3, an opening stroke from category 4, rolls at 5), its ringing drums panned round the listener with the storm's spin. Behind it a double bass and a pad strike each bar, cello, viola and violin circle the chord (from tropical storm, category 1 and 2), a choir joins from category 3 |
+| Water (cause) | SST under the storm against the Atlantic's neutral SST, 26.9 °C | The ocean line: trombone, one note a chord (2 s or more), D3 at the neutral SST and a step of D minor for every 0.5 °C, between F2 and D4. At or above the neutral SST it sits on the nearest chord note, louder the warmer the water, with the tuba an octave under it from 27.9 °C. Below it the note leaves the chord, bends flat (0.5 semitone a degree, at most a whole tone, over 1.2 s), plays softer and is let go early in its chord (12 % sooner a degree, at least 45 % held) |
+| Landfall (event) | HURDAT2 `L` records | Taiko and a low D on the double bass, at the landfall's own time. Over land the ocean line stops |
 
-## Open Questions
+- Harmony: D minor, i – VI – III – VII, a chord at least 2 s long, over as many bars as that takes at the tempo it starts at.
+- The ocean line is read record by record, as the SST number is, so a new note sounds when the number changes enough to call for one. It is re-struck as each chord starts.
+- Percussion families (each track's main instrument): Emily Latin (salsa section on the 3-2 clave), Felix marching drumline, Sam orchestral timpani and snare.
+- The kits are General MIDI drum kits of GeneralUser GS (Standard, Power, Orchestral) kept in the app's SoundFont, which grew from 6.9 MB to 12 MB with them and the new programs (trombone, tuba, double bass, choir, taiko). Trimming the kits to the keys played is left for later.
 
-- Album title.
-- What the SST label shows over land (hidden, or a dash).
-- The ocean line's instrument.
-- Whether the neutral line on screen is 26.9 °C (data) while the SST field draws EIC's 26.5 °C line, or both use one value.
-- Issue #21's title and body still describe the first plan (four basins, seasons); update them.
+What a listener hears:
+
+- **Emily, Felix**: a full, steady ocean line under percussion that speeds up and thickens; it breaks off under the big drum at each landfall and returns when Emily reaches the Gulf. Where they weaken over warm water, the line stays full while the tempo slows.
+- **Sam**: the line holds through the storm's peak; from 1 October, as Sam moves north over cooler water, it sinks from F3 to F2, bends flat, thins and breaks apart while the tempo slows.
+
+## Globe
+
+- **The storm** ([`storm-view.js`](../../src/features/globe/presentation/storm-view.js)): a cloud spiral drawn by a shader on the globe, turning anticlockwise. Its wind grows it, spins it faster, clears its eye and tints its thin cloud from sea blue through yellow to magenta. The globe keeps it in the middle; the glow around the globe takes its colour.
+- **Below the storm**: its wind in km/h, in its category's colour, and the SST under it (one decimal, °C): orange while the water is at or above 26.9 °C (it lets the storm grow), blue below it. Over land the SST fades out with the ocean line.
+- **The SST field** ([`sst-field-layer.js`](../../src/features/globe/presentation/sst-field-layer.js)): the month's SST under the storm in bands, yellow to red above 26.5 °C and blue below, with EIC's 26.5 °C line in white, as 5097 draws it. It changes to the next month's map when the storm's life crosses into it (Felix, Sam).
+- **The date** at 6 o'clock (UTC).
+
+Two lines on purpose: the SST number and the ocean line turn at the neutral SST the notebook measured (26.9 °C: where a storm on average stops strengthening), while the field shows EIC's line (26.5 °C: where storms form).
+
+## Credits
+
+- Covers: each storm near its peak, public domain, from Wikimedia Commons: [Emily, MODIS, 16 July 2005](https://commons.wikimedia.org/wiki/File:Emily_2005-07-16_1545Z_(cropped).jpg) (Jeff Schmaltz, NASA MODIS Rapid Response Team), [Felix from the International Space Station, 3 September 2007](https://commons.wikimedia.org/wiki/File:Felix_2007-09-03_1138Z.jpg) (NASA), [Sam, 26 September 2021](https://commons.wikimedia.org/wiki/File:Sam_2021-09-26_2000Z.jpg) (NASA Worldview).
+- Data, on the sleeve: NASA SVS 5097, 5072 · HURDAT2 (NOAA/NHC) · GHRSST MUR SST v4.1 (NASA JPL, via NOAA CoastWatch). Details in [`sources.md`](../../data/hot_oceans/sources.md).
+
+## Not Done Yet
+
+- Listening check of the mix: the ocean line against each kit, and the kits' levels against each other, have only been set from the earlier album, not heard in this one.
+- The SST field switches to the next month's map at once, without a fade.
+- Daily SST: the line uses monthly means (see Tracks).
 
 ## Reference: the Earlier Single-Storm Album
 
