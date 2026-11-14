@@ -13,6 +13,7 @@ src/
   shared/            # cross-cutting utilities used by any layer
   features/
     album/           # albums, songs and their timelines
+    cat/             # the Live2D black cat in the bottom right corner
     controls/        # player controls and user settings
     docent/          # spoken and written descriptions (accessibility)
     globe/           # the globe and its data views
