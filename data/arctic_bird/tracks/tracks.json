@@ -1,0 +1,98 @@
+[
+  {
+    "file": "lesser_yellowlegs.csv",
+    "title": "Lesser yellowlegs, one year",
+    "species": "Lesser yellowlegs",
+    "message": "",
+    "svsId": 4877,
+    "svsUrl": "https://svs.gsfc.nasa.gov/4877/",
+    "source": "Arctic Animal Movement Archive (AAMA), Movebank study 543061768: USFWS Lesser Yellowlegs (Tringa flavipes) migratory movements",
+    "sourceUrl": "https://www.movebank.org/cms/movebank-content/arctic-animal-movement-archive",
+    "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=543061768",
+    "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
+    "units": {
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east",
+      "km_per_day": "km per day, mean bird",
+      "birds": "birds tracked"
+    },
+    "timeRange": [
+      "2001-01-01",
+      "2001-12-31"
+    ],
+    "foldedYears": "All years folded into one; dates use 2001 as a stand-in year.",
+    "annualKmMedian": 24670
+  },
+  {
+    "file": "whimbrel.csv",
+    "title": "Whimbrel, one year",
+    "species": "Whimbrel",
+    "message": "",
+    "svsId": 4877,
+    "svsUrl": "https://svs.gsfc.nasa.gov/4877/",
+    "source": "Arctic Animal Movement Archive (AAMA), Movebank study 854852176: whimbrel_USGS_ASC_argos",
+    "sourceUrl": "https://www.movebank.org/cms/movebank-content/arctic-animal-movement-archive",
+    "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=854852176",
+    "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
+    "units": {
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east",
+      "km_per_day": "km per day, mean bird",
+      "birds": "birds tracked"
+    },
+    "timeRange": [
+      "2001-01-01",
+      "2001-12-31"
+    ],
+    "foldedYears": "All years folded into one; dates use 2001 as a stand-in year.",
+    "annualKmMedian": 20306
+  },
+  {
+    "file": "yellow_billed_loon.csv",
+    "title": "Yellow-billed loon, one year",
+    "species": "Yellow-billed loon",
+    "message": "",
+    "svsId": 4877,
+    "svsUrl": "https://svs.gsfc.nasa.gov/4877/",
+    "source": "Arctic Animal Movement Archive (AAMA), Movebank study 506737915: yellowBilledLoon_USGS_ASC_argos",
+    "sourceUrl": "https://www.movebank.org/cms/movebank-content/arctic-animal-movement-archive",
+    "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=506737915",
+    "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
+    "units": {
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east",
+      "km_per_day": "km per day, mean bird",
+      "birds": "birds tracked"
+    },
+    "timeRange": [
+      "2001-01-01",
+      "2001-12-31"
+    ],
+    "foldedYears": "All years folded into one; dates use 2001 as a stand-in year.",
+    "annualKmMedian": 10289
+  },
+  {
+    "file": "red_throated_loon.csv",
+    "title": "Red-throated loon, one year",
+    "species": "Red-throated loon",
+    "message": "",
+    "svsId": 4877,
+    "svsUrl": "https://svs.gsfc.nasa.gov/4877/",
+    "source": "Arctic Animal Movement Archive (AAMA), Movebank study 506722909: redThroatedLoon_USGS_ASC_argos",
+    "sourceUrl": "https://www.movebank.org/cms/movebank-content/arctic-animal-movement-archive",
+    "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=506722909",
+    "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
+    "units": {
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east",
+      "km_per_day": "km per day, mean bird",
+      "birds": "birds tracked"
+    },
+    "timeRange": [
+      "2001-01-01",
+      "2001-12-31"
+    ],
+    "foldedYears": "All years folded into one; dates use 2001 as a stand-in year.",
+    "annualKmMedian": 9699
+  }
+]
