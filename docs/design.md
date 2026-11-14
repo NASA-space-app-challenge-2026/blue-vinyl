@@ -56,6 +56,21 @@ Geometry is defined once in `src/features/turntable/domain/geometry.js`, in viny
 - **Progress dot** is a white dot on the label rim that travels one full turn over the album.
 - **Globe** is rendered with [globe.gl](https://github.com/vasturiano/globe.gl) (MIT, no API key), loaded as the pinned UMD bundle in `index.html`. It is lit flat (ambient light only) like a printed map, has no atmosphere and does not spin with the record. Its fitted size fills the label edge to edge. Drag rotates it; scrolling zooms in, and zooming out stops at the fitted size so no gap opens between the globe and the grooves.
 
+## Data on the Globe
+
+An album whose tracks have data draws each year of the playing track on the globe, in step with its music (the sound sets the clock while it plays). See [albums/glacier.md](albums/glacier.md) for what the glacier album shows.
+
+| Element | Look | Changes |
+| --- | --- | --- |
+| Camera | Looks down on the track's pole | Turns there in 1.2 s when the track changes; back to the start view for an album without data |
+| Ice | Pale cap (`232, 244, 255` at 85%) just above the surface | Cross-fades to the new year's shape in 0.3 s |
+| Normal | Gold line, the 1981–2010 ice edge, as on SVS 5382 | Fixed for the track |
+| Record low | Dashed coral line, the edge of the latest record low | Moves only in a record-low year |
+| Year and ice | Year in bold at the top, extent and change from the normal below it | Each year |
+| Sea level | Translucent water rising from the bottom of the label, up to 32% of its height at the top of a mm ruler | Each year, eased over 0.3 s |
+
+The intro of a track shows only the normal line. The text and water never take pointer events, so the globe stays draggable.
+
 ## Globe Themes
 
 Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/globe/domain/globe-theme.js`) and their sources in `src/features/globe/data/globe-themes.js`.
@@ -92,7 +107,7 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 
 Playback states (`PlaybackState`): `stopped` → `cueing` (arm eases on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position. Grabbing the arm enters `scrubbing` from any state.
 
-Volume is held by the control only; nothing plays sound yet. Language, view options and notes will be added in later issues. Albums other than the first are placeholders.
+The volume control sets the level of the music. Language, view options and notes will be added in later issues. Albums other than the first are placeholders.
 
 ## Changing Albums
 
