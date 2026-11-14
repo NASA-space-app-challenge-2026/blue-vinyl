@@ -2,6 +2,7 @@ import { AlbumCategory } from '../domain/album.js';
 
 const CATEGORY_LABEL = Object.freeze({
   [AlbumCategory.BIODIVERSITY]: 'Biodiversity',
+  [AlbumCategory.CLIMATE]: 'Climate',
 });
 
 // Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always

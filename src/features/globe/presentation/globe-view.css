@@ -8,3 +8,89 @@
   font-size: 12px;
   color: var(--ink-muted);
 }
+
+/* Year, ice and rising water over the globe (sea-level-overlay.js). The label is round and clips it. */
+.sea-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  text-align: center;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 0.8);
+}
+
+.sea-overlay[hidden] {
+  display: none;
+}
+
+.sea-overlay-year {
+  position: absolute;
+  top: 9%;
+  left: 0;
+  right: 0;
+  margin: 0;
+  font-size: clamp(18px, 3.2vw, 44px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.sea-overlay-ice {
+  position: absolute;
+  top: calc(9% + clamp(24px, 4.2vw, 58px));
+  left: 15%;
+  right: 15%;
+  margin: 0;
+  font-size: clamp(10px, 1vw, 14px);
+  color: var(--ink-muted);
+}
+
+.sea-overlay-water {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: linear-gradient(to bottom, rgb(120 175 215 / 0.4), rgb(40 90 140 / 0.5));
+  border-top: 1px solid rgb(200 230 255 / 0.8);
+  transition: height 0.3s ease-out;
+}
+
+.sea-overlay-level {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: translateY(calc(-100% - 4px));
+  font-size: clamp(10px, 1vw, 14px);
+  color: rgb(200 230 255);
+}
+
+.sea-overlay-ruler {
+  position: absolute;
+  left: 18%;
+  bottom: 0;
+  top: 0;
+}
+
+.sea-overlay-tick {
+  position: absolute;
+  left: 0;
+  transform: translateY(50%);
+  padding-left: 14px;
+  white-space: nowrap;
+  font-size: clamp(8px, 0.75vw, 11px);
+  color: rgb(255 255 255 / 0.35);
+  transition: color 0.3s;
+}
+
+.sea-overlay-tick::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 10px;
+  border-top: 1px solid currentcolor;
+}
+
+.sea-overlay-tick.is-reached {
+  color: rgb(200 230 255 / 0.95);
+}

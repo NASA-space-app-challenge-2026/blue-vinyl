@@ -1,11 +1,24 @@
 export const AlbumCategory = Object.freeze({
   BIODIVERSITY: 'biodiversity',
+  CLIMATE: 'climate',
 });
+
+/**
+ * A track that plays one pole's sea ice with the global sea level, from the files the album notebook exports
+ * (see docs/data-guide.md).
+ *
+ * @typedef {Object} IceSeaSource
+ * @property {string} csvUrl the track's yearly data
+ * @property {string} shapesUrl GeoJSON of each year's ice and the normal ice edge
+ * @property {number} poleLat latitude the globe looks down on: 90 or -90
+ * @property {import('../../music/domain/ice-sea-score.js').IceVoice} voice how the ice is played
+ */
 
 /**
  * @typedef {Object} Track
  * @property {string} title
  * @property {number} durationSec
+ * @property {IceSeaSource} [iceSea] data, sound and view of a polar track
  */
 
 /**
@@ -17,6 +30,7 @@ export const AlbumCategory = Object.freeze({
  * @property {string} title
  * @property {string} coverUrl
  * @property {string} coverCredit
+ * @property {string} [dataCredit] sources of the album's data, shown with the cover credit
  * @property {Track[]} tracks
  */
 

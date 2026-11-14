@@ -13,8 +13,10 @@ const COLLAPSE_DELAY_MS = 2500;
  * It folds back after COLLAPSE_DELAY_MS without the pointer or keyboard focus inside.
  *
  * @param {HTMLElement} parent
+ * @param {{ onChange?: (level: number) => void }} [options] onChange gets the level (0..1, 0 when muted) each time the
+ *   control updates, the first time when it is created.
  */
-export function createVolumeControl(parent) {
+export function createVolumeControl(parent, { onChange } = {}) {
   let volume = DEFAULT_VOLUME;
   let muted = false;
   let open = false;
@@ -43,6 +45,7 @@ export function createVolumeControl(parent) {
 
   function render() {
     const shown = muted ? 0 : volume;
+    onChange?.(shown / MAX_VOLUME);
     root.classList.toggle('is-open', open);
     slider.tabIndex = open ? 0 : -1;
     slider.value = String(shown);

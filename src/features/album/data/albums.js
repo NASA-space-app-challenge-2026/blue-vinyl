@@ -1,7 +1,44 @@
+import { Instrument } from '../../music/domain/ice-sea-score.js';
 import { AlbumCategory } from '../domain/album.js';
+
+const GLACIER_DATA = 'data/glacier/tracks';
+// Intro 4 s, 32 years of 1.5 s (1993–2024), then the last note held and its tail.
+const POLAR_TRACK_SEC = 58;
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
+  {
+    id: 'glacier',
+    category: AlbumCategory.CLIMATE,
+    title: 'As the Ice Melts',
+    coverUrl: 'assets/albums/glacier/cover.jpg',
+    coverCredit: 'Cover: NASA Scientific Visualization Studio (SVS 5382)',
+    dataCredit: 'Data: NSIDC Sea Ice Index v4 · NOAA Laboratory for Satellite Altimetry',
+    tracks: [
+      {
+        title: 'North',
+        durationSec: POLAR_TRACK_SEC,
+        iceSea: {
+          csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
+          shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
+          poleLat: 90,
+          // Cello; the normal is D4 and each 0.25 million km² is one step of D minor.
+          voice: { instrument: Instrument.CELLO, homeMidi: 62, kmPerStep: 0.25, lengthBeats: 1.12 },
+        },
+      },
+      {
+        title: 'South',
+        durationSec: POLAR_TRACK_SEC,
+        iceSea: {
+          csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,
+          shapesUrl: `${GLACIER_DATA}/antarctic_february_sea_ice_extent.geojson`,
+          poleLat: -90,
+          // Piano; the normal is D5 and each 0.15 million km² is one step of D minor.
+          voice: { instrument: Instrument.PIANO, homeMidi: 74, kmPerStep: 0.15, lengthBeats: 0.95 },
+        },
+      },
+    ],
+  },
   {
     id: 'curlew',
     category: AlbumCategory.BIODIVERSITY,
