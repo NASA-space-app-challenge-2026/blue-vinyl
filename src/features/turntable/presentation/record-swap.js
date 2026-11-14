@@ -11,7 +11,7 @@ const Place = Object.freeze({ AT_PLATTER: 'atPlatter', CLEAR: 'clear', IN_SLEEVE
 const Stage = Object.freeze({ ON: 0, ALONG: 1 });
 // Share of the sleeve's half side the shrunk record spans; the rest hides its drop shadow too.
 const SLEEVE_FILL = 0.88;
-// Gap (in record radii) kept between the lifted record and the sleeve's edge, its tilted corners included.
+// Gap (in record radii) kept between the lifted record and the sleeve's right edge, its tilted corners included.
 const CLEAR_GAP = 0.08;
 
 // Poses in the order they are reached, each eased into from the one before over `ms`. `tucked` puts the sleeve over
@@ -37,7 +37,7 @@ const EASING = 'ease-in-out';
  *   recordEl: HTMLElement,
  *   recordGeometry: () => { x: number, y: number, r: number },
  *   column: {
- *     place: () => { x: number, y: number, size: number, spacing: number },
+ *     place: () => { x: number, y: number, size: number, right: number, spacing: number },
  *     setTucked: (tucked: boolean) => void,
  *     moves: (from: number, to: number, options: KeyframeAnimationOptions) => Animation[],
  *     settle: () => void,
@@ -60,7 +60,7 @@ export function createRecordSwap({ recordEl, recordGeometry, column }) {
     scales = { [Place.AT_PLATTER]: 1, [Place.CLEAR]: shrunk, [Place.IN_SLEEVE]: shrunk };
     offsets = {
       [Place.AT_PLATTER]: { x: 0, y: 0 },
-      [Place.CLEAR]: { x: sleeve.x + sleeve.size / 2 - (record.x - shrunk * record.r) + CLEAR_GAP * record.r, y: toSleeveY },
+      [Place.CLEAR]: { x: sleeve.right - (record.x - shrunk * record.r) + CLEAR_GAP * record.r, y: toSleeveY },
       [Place.IN_SLEEVE]: { x: sleeve.x - record.x, y: toSleeveY },
     };
     spacing = sleeve.spacing;

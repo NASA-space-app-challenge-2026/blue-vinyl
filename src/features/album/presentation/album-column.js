@@ -37,7 +37,10 @@ export function createAlbumColumn(parent, albums) {
     }
   }
 
-  /** Lines the neighbours up above and below the sleeve and shows them; returns the sleeve in client pixels. */
+  /**
+   * Lines the neighbours up above and below the sleeve and shows them; returns the sleeve in client pixels: its centre,
+   * side, right edge (its tilted corners included) and the spacing between sleeves.
+   */
   function place() {
     const { el } = sleeve;
     spacing = window.innerHeight;
@@ -51,7 +54,7 @@ export function createAlbumColumn(parent, albums) {
     }
     // The tilt turns the sleeve round its centre, so its bounding box keeps the centre.
     const rect = el.getBoundingClientRect();
-    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, size: el.offsetWidth, spacing };
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, size: el.offsetWidth, right: rect.right, spacing };
   }
 
   /** @param {boolean} tucked whether the sleeve is drawn over the record */

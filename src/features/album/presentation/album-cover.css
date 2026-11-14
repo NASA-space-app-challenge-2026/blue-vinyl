@@ -1,14 +1,26 @@
+/* The sleeve's angle (--tilt) is set per album by album-cover.js. --record-overlap is how far the record covers it. */
 .album-cover {
+  --tilt: -3deg;
+  --record-overlap: min(8vw, 14vh);
   position: relative;
   flex: none;
   width: min(46vw, 80vh);
   aspect-ratio: 1;
-  margin-right: calc(-1 * min(8vw, 14vh));
-  transform: rotate(-3deg);
+  margin-right: calc(-1 * var(--record-overlap));
+  transform: rotate(var(--tilt));
+  perspective: 1200px;
+  color: var(--ink);
+}
+
+/* Leans toward the mouse (--hover-x, --hover-y, set by album-cover.js) and eases back when it leaves. */
+.album-cover-face {
+  position: absolute;
+  inset: 0;
   background: linear-gradient(160deg, #8a7458, #4a3a27);
   box-shadow: 0 30px 60px rgb(0 0 0 / 0.45);
-  color: var(--ink);
   overflow: hidden;
+  transform: rotateX(var(--hover-x, 0deg)) rotateY(var(--hover-y, 0deg));
+  transition: transform 0.3s ease-out;
 }
 
 .album-cover-image {
@@ -37,7 +49,8 @@
 .album-cover-body {
   position: absolute;
   left: 9%;
-  right: 9%;
+  /* Keeps the text clear of the record lying over the sleeve's right side. */
+  right: calc(9% + var(--record-overlap));
   bottom: 6%;
 }
 

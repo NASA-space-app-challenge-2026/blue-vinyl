@@ -36,7 +36,9 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 ## Layout
 
 - Full-viewport stage; nothing scrolls on desktop.
-- The sleeve is tilted by -3deg and tucked **behind** the record. The record overlaps the sleeve's right edge.
+- The sleeve is tilted a little and tucked **behind** the record. The record overlaps the sleeve's right edge; the title and track list wrap before it so no text hides behind the record.
+- Each album's sleeve has its own slight angle around -3deg, picked from its place in the catalog, so the sleeves differ but each always looks the same.
+- Hovering the mouse over the sleeve leans it a few degrees in 3D toward the pointer, like a card in the hand; it eases back when the mouse leaves.
 - The sleeve has a dark gradient at the bottom so the title and track list stay readable over any cover photo.
 - Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
 - At 760px wide and below, the sleeve and the record stack vertically and the page scrolls.
