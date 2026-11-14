@@ -7,6 +7,7 @@ import { albumDurationSec, trackBoundaries, trackCover, trackIndexAt, trackStart
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
+import { createCatView } from '../features/cat/presentation/cat-view.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
 import { createAlbumSwitcher } from '../features/controls/presentation/album-switcher.js';
 import { createFullscreenButton } from '../features/controls/presentation/fullscreen-button.js';
@@ -141,6 +142,7 @@ createSettingsMenu(viewControls, {
   onGlobeThemeChange: applyGlobeTheme,
 });
 applyGlobeTheme(DEFAULT_GLOBE_THEME);
+createCatView();
 
 // Album switch keys, as the previous and next chevrons.
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
