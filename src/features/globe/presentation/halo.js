@@ -1,7 +1,8 @@
 // A glow around the globe that breathes with the music, drawn by a WebGL shader. Each place on the rim shows one
 // frequency band, mirrored left and right: low notes at 6 o'clock rising to high ones at 12. Like sunlight scattered
 // in the air, a thin near-white band hugs the rim and a haze in the track's colour fades out beyond it; where a band
-// is loud the rim brightens and the haze reaches further. It fades away with the music.
+// is loud the rim brightens and the haze reaches further. It fades away with the music. Given a swirl (setSwirl), the
+// haze streams out in spiral arms that turn with it, anticlockwise, as wind leaving a storm.
 
 // The same three.js revision globe.gl@2.46.2 bundles.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
@@ -18,13 +19,16 @@ const TILT_DB_PER_OCTAVE = 5;
 const CONTRAST = 1.5;
 // Shape of the light, in globe radii: the rim band's half-width and the haze's falloff length, silent to loud.
 const RIM_WIDTH = 0.015;
-const HAZE_REACH = Object.freeze({ silent: 0.04, loud: 0.2 });
+const HAZE_REACH = Object.freeze({ silent: 0.04, loud: 0.12 });
 // Strength of the rim band and the haze, silent to loud, and how far the rim is whitened.
 const RIM_GAIN = Object.freeze({ silent: 0.35, loud: 1 });
 const HAZE_GAIN = Object.freeze({ silent: 0.2, loud: 0.9 });
 const RIM_WHITENING = 0.75;
 // A new track's colour eases in with this time constant.
 const COLOR_TAU_SEC = 0.4;
+// The swirl's spiral arms around the rim, and how fast they climb outward (radians of phase per globe radius); at full
+// strength the haze ranges from `floor` between arms to 1 + `lift` on them.
+const SWIRL = Object.freeze({ arms: 6, outward: 14, floor: 0.12, lift: 1.2 });
 
 // A JS number as a GLSL float literal.
 const f = (v) => v.toFixed(4);
@@ -41,6 +45,8 @@ uniform sampler2D uLevels;
 uniform vec2 uCenter;
 uniform float uRadius;
 uniform vec3 uColor;
+uniform float uSwirlPhase;
+uniform float uSwirlStrength;
 void main() {
   vec2 p = gl_FragCoord.xy - uCenter;
   // 0 at 6 o'clock to 1 at 12 on both sides, sampled between texel centres so the bands blend.
@@ -52,6 +58,10 @@ void main() {
   float rim = exp(-x * x) * mix(${f(RIM_GAIN.silent)}, ${f(RIM_GAIN.loud)}, level);
   float haze = exp(-max(h, 0.0) / mix(${f(HAZE_REACH.silent)}, ${f(HAZE_REACH.loud)}, level)) * step(0.0, h)
     * mix(${f(HAZE_GAIN.silent)}, ${f(HAZE_GAIN.loud)}, level);
+  // Arms turning anticlockwise with the phase (angles grow anticlockwise, y up) and so climbing outward: a crest sits
+  // where the angle less the phase, times the arms, plus the climb is constant.
+  float arm = 0.5 + 0.5 * sin(${f(SWIRL.arms)} * (atan(p.x, -p.y) - uSwirlPhase) + ${f(SWIRL.outward)} * max(h, 0.0));
+  haze *= mix(1.0, ${f(SWIRL.floor)} + ${f(1 - SWIRL.floor + SWIRL.lift)} * arm * arm * arm, uSwirlStrength);
   float alpha = clamp(rim + haze, 0.0, 1.0);
   vec3 color = mix(uColor, vec3(1.0), ${f(RIM_WHITENING)} * rim / max(rim + haze, 1e-4));
   gl_FragColor = vec4(color * alpha, alpha);
@@ -81,6 +91,8 @@ export function createHalo(canvas, getAnalyser) {
       uCenter: { value: new THREE.Vector2() },
       uRadius: { value: 1 },
       uColor: { value: color },
+      uSwirlPhase: { value: 0 },
+      uSwirlStrength: { value: 0 },
     },
     blending: THREE.NoBlending,
     depthTest: false,
@@ -89,6 +101,7 @@ export function createHalo(canvas, getAnalyser) {
   scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material));
   const camera = new THREE.Camera();
   let bins = null;
+  let getSwirl = null;
   let frame = null;
   let lastFrame = null;
 
@@ -107,6 +120,14 @@ export function createHalo(canvas, getAnalyser) {
     const { r, g, b } = new THREE.Color(css).getRGB({}, THREE.SRGBColorSpace);
     targetColor.set(r, g, b);
     if (frame === null) color.copy(targetColor);
+  }
+
+  /**
+   * @param {(() => { phase: number, strength: number }) | null} next the swirl the haze streams out with (phase in
+   *   radians, anticlockwise; strength 0..1), read every frame; null for none
+   */
+  function setSwirl(next) {
+    getSwirl = next;
   }
 
   /** Starts drawing frames, if not already; they stop by themselves once the music has fallen silent. */
@@ -129,6 +150,9 @@ export function createHalo(canvas, getAnalyser) {
       texture.image.data[i] = Math.round(level * 255);
     });
     texture.needsUpdate = true;
+    const swirl = getSwirl?.() ?? { phase: 0, strength: 0 };
+    material.uniforms.uSwirlPhase.value = swirl.phase;
+    material.uniforms.uSwirlStrength.value = swirl.strength;
     renderer.render(scene, camera);
     wake();
   }
@@ -158,5 +182,5 @@ export function createHalo(canvas, getAnalyser) {
     return levels.some((level) => level > 0) ? levels : null;
   }
 
-  return { place, setColor, wake };
+  return { place, setColor, setSwirl, wake };
 }

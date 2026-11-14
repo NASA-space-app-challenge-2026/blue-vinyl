@@ -98,9 +98,9 @@ export const albums = [
     coverCredit: 'NASA/GSFC MODIS Rapid Response, public domain, via Wikimedia Commons',
     dataCredit: 'Data: NASA SVS 5072 · HURDAT2 (NOAA/NHC)',
     // Four Atlantic hurricanes that come ashore and die on land (see docs/albums/hot-oceans.md). Each plays its wind as
-    // the tempo of one beat on its own percussion family, from its birth to its last record. Each track's length
-    // (notebooks/hot_oceans_album.ipynb, section 12) plays the storm's life in 30 s and its dying on land on at the same
-    // pace. Covers: each storm near its peak, from NASA.
+    // the tempo of one beat on its own percussion family, from its birth until its wind falls below 50 km/h. Each
+    // track's length (notebooks/hot_oceans_album.ipynb, section 12) plays the storm's life in 30 s and its dying on land
+    // on at the same pace. Covers: each storm near its peak, from NASA.
     tracks: [
       {
         title: 'Katrina 2005',
@@ -111,21 +111,21 @@ export const albums = [
       },
       {
         title: 'Felix 2007',
-        durationSec: 39.5,
+        durationSec: 30,
         coverUrl: `${HOT_OCEANS_COVERS}/felix_2007.jpg`,
         coverCredit: 'Cover: International Space Station, Sep 3 2007 (NASA)',
         storm: { csvUrl: `${HOT_OCEANS_DATA}/felix_2007.csv`, kit: Kit.DRUMLINE },
       },
       {
         title: 'Laura 2020',
-        durationSec: 33.6,
+        durationSec: 30,
         coverUrl: `${HOT_OCEANS_COVERS}/laura_2020.jpg`,
         coverCredit: 'Cover: VIIRS, Aug 26 2020 (NASA LANCE)',
         storm: { csvUrl: `${HOT_OCEANS_DATA}/laura_2020.csv`, kit: Kit.LATIN },
       },
       {
         title: 'Helene 2024',
-        durationSec: 39.2,
+        durationSec: 36.9,
         coverUrl: `${HOT_OCEANS_COVERS}/helene_2024.jpg`,
         coverCredit: 'Cover: MODIS on Aqua, Sep 26 2024 (NASA Worldview)',
         storm: { csvUrl: `${HOT_OCEANS_DATA}/helene_2024.csv`, kit: Kit.ORCHESTRA },

@@ -3,8 +3,8 @@
 // The app owns the clock: while a track plays it calls follow() every frame with how far into the track it is. The
 // engine lines the audio clock up with it, then steps the song's composer a little ahead on the audio clock, each step
 // given what the song's data is at the data time it sounds at (its sample). When the app's clock jumps (a seek or
-// another track), the music starts over from there. A composer may set each bar's length from the data (stepSecAt);
-// the data clock runs on regardless.
+// another track), the music starts over from there. A composer may set its tempo from the data (stepSecAt), every bar
+// or every `stepsPerTempo` steps; the data clock runs on regardless.
 //
 // Space: the whole mix sits where the sample is, as seen from where the song starts (north ahead, east to the
 // right), further away the further it has gone.
@@ -42,7 +42,8 @@ const PITCH_WHEEL = Object.freeze({ centre: 8192, rangeSemitones: 2 });
  *
  * @typedef {Object} Song
  * @property {Object} composer what decides what plays: its `instruments`, `stepSec` and `stepsPerBar`, optionally
- *   `stepSecAt(sample)` (a bar's step length from the data) and `bendRangeSemitones`, and setSong(song), reset() and
+ *   `stepSecAt(sample)` (the step length from the data, set every bar or every `stepsPerTempo` steps) and
+ *   `bendRangeSemitones`, and setSong(song), reset() and
  *   playStep(music, { sample, time, step, bar, at, stepSec, stepMs })
  * @property {number} startMs  data time at the start of the track
  * @property {number} msPerSec  ms of data time that pass in a second of the track
@@ -169,7 +170,9 @@ export function createSoundEngine() {
     while (nextStepAt < now + LOOKAHEAD_SEC) {
       const time = song.startMs + (anchor.elapsedSec + (nextStepAt - anchor.audioSec)) * song.msPerSec;
       const sample = song.sampleAt(time);
-      if (step === 0) stepSec = (sample && composer.stepSecAt?.(sample)) ?? composer.stepSec;
+      if (step % (composer.stepsPerTempo ?? composer.stepsPerBar) === 0) {
+        stepSec = (sample && composer.stepSecAt?.(sample)) ?? composer.stepSec;
+      }
       if (sample) {
         if (step === 0) place(sample, nextStepAt);
         composer.playStep(music, { sample, time, step, bar, at: nextStepAt, stepSec, stepMs: stepSec * song.msPerSec });

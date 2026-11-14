@@ -9,7 +9,7 @@
         "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
       }
     ],
-    "note": "Ours: Grows over the Gulf of Mexico to category 5, comes ashore in Louisiana and Mississippi at 110 and 105 kt and dies over land, its remnants fading over the Ohio Valley. From its birth to its last record, where it dissipates (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
+    "note": "Ours: Grows over the Gulf of Mexico to category 5, comes ashore in Louisiana and Mississippi at 110 and 105 kt and dies over land, fading over the Ohio Valley. From its birth until its wind falls below 50 km/h over land (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
     "sources": [
       {
         "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
@@ -42,7 +42,7 @@
         "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
       }
     ],
-    "note": "Ours: Grows across the Caribbean to category 5, comes ashore in Nicaragua at 140 kt and dies over land, its remnant low crossing Central America (briefly over the Gulf of Honduras) into southern Mexico. From its birth to its last record, where it dissipates (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
+    "note": "Ours: Grows across the Caribbean to category 5, comes ashore in Nicaragua at 140 kt and dies over land in Honduras within a day. From its birth until its wind falls below 50 km/h over land (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
     "sources": [
       {
         "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
@@ -62,7 +62,7 @@
     },
     "timeRange": [
       "2007-08-31T12:00Z",
-      "2007-09-06T18:00Z"
+      "2007-09-05T06:00Z"
     ]
   },
   {
@@ -75,7 +75,7 @@
         "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
       }
     ],
-    "note": "Ours: Crosses the Caribbean as a tropical storm, five landfalls on the way, grows over the Gulf of Mexico to 130 kt, comes ashore in Louisiana at its peak and dies over land, fading over Kentucky. From its birth to its last record, where it dissipates (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
+    "note": "Ours: Crosses the Caribbean as a tropical storm, five landfalls on the way, grows over the Gulf of Mexico to 130 kt, comes ashore in Louisiana at its peak and dies over land, fading over Arkansas. From its birth until its wind falls below 50 km/h over land (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
     "sources": [
       {
         "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
@@ -95,7 +95,7 @@
     },
     "timeRange": [
       "2020-08-20T00:00Z",
-      "2020-08-29T06:00Z"
+      "2020-08-28T06:00Z"
     ]
   },
   {
@@ -108,7 +108,7 @@
         "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
       }
     ],
-    "note": "Ours: Grows over the Gulf of Mexico to 120 kt, comes ashore in Florida's Big Bend at its peak and dies over land, its remnant low turning over Kentucky. From its birth to its last record, where it dissipates (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
+    "note": "Ours: Grows over the Gulf of Mexico to 120 kt, comes ashore in Florida's Big Bend at its peak and dies over land, its remnant low turning over Kentucky. From its birth until its wind falls below 50 km/h over land (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
     "sources": [
       {
         "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
@@ -128,7 +128,7 @@
     },
     "timeRange": [
       "2024-09-24T12:00Z",
-      "2024-09-28T18:00Z"
+      "2024-09-28T12:00Z"
     ]
   }
 ]

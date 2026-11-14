@@ -2,19 +2,28 @@
 // docs/albums/hot-oceans.md). The earlier single-storm album's band (nell-v2, "Chasing the Rising Storm") without its
 // melody.
 //
-//   wind: the tempo, on one straight line from the album's weakest wind to its strongest (tempoOf), set at each bar. A
-//     percussion family of the track's own (its Kit) plays one beat all track long, so the speed is all that changes;
-//     at the storm's peak it plays its fill, once. Behind it a bass and a pad strike each bar and strings circle a
-//     fixed minor progression, a part joining at each category.
+//   wind: the tempo, in proportion to the wind (tempoOf), set at each beat: a wind three times as strong plays three
+//     times as fast. A percussion family of the track's own (its Kit) plays one beat all track long, so the speed is
+//     all that changes; at the storm's peak a single cymbal crashes, once, the loudest sound of the track, and rings out.
+//     Behind it a bass and a pad strike each bar and strings circle a fixed minor progression, a part joining at each
+//     category. The whole band fades in and out with the storm on the globe (stormFadeAt).
 
 import { CC, Instrument } from '../instruments.js';
-import { StormCategory, atLeast, categoryOf, easeSpin, intensityOf, spinOf } from '../../../tracks/domain/storm-track.js';
+import {
+  StormCategory,
+  atLeast,
+  categoryOf,
+  easeSpin,
+  intensityOf,
+  spinOf,
+  stormFadeAt,
+} from '../../../tracks/domain/storm-track.js';
 
 const STEPS_PER_BEAT = 4;
 const STEPS_PER_BAR = 16;
-// The tempo's line: `slowBpm` at the album's weakest wind, `fastBpm` at its strongest, as fast as a drummer can still
-// play the beats below.
-const TEMPO = Object.freeze({ slowBpm: 60, fastBpm: 200 });
+// The tempo at the album's strongest wind, as fast as a drummer can still play the beats below; every other wind plays in
+// proportion to it.
+const FASTEST_BPM = 200;
 // A chord lasts at least this long (s), over as many bars as that takes at the tempo it starts at.
 const CHORD_MIN_SEC = 2;
 
@@ -34,31 +43,27 @@ const STRING_MIN_SEC = 0.1;
 // The strings' notes fall in groups of 3 + 3 + 2, each group's first note louder, so they drive rather than whir.
 const STRING_GROUPS = Object.freeze({ every: 8, accents: [0, 3, 6], accent: 18 });
 
-// How a drum is struck, by the letter that writes it in a kit's tab: its velocity, `grace` strokes played quickly into
-// it (a flam has one, a drag two), or a `roll` through the step (see ROLL). '.' is a rest.
+// How a drum is struck, by the letter that writes it in a kit's tab: its velocity, and `grace` strokes played quickly
+// into it (a flam has one). '.' is a rest.
 const Stroke = Object.freeze({
   X: Object.freeze({ velocity: 112, grace: 0 }),
   x: Object.freeze({ velocity: 84, grace: 0 }),
   g: Object.freeze({ velocity: 36, grace: 0 }),
   F: Object.freeze({ velocity: 112, grace: 1 }),
-  D: Object.freeze({ velocity: 112, grace: 2 }),
-  r: Object.freeze({ roll: true }),
 });
 // Grace strokes: each this long (s) at any tempo, and this loud.
 const GRACE = Object.freeze({ sec: 0.03, velocity: 52 });
-// A roll's strokes a second at any tempo, swelling from `from` to `to` velocity across the bar.
-const ROLL = Object.freeze({ perSec: 24, from: 48, to: 120 });
+// The cymbal at the storm's peak: on a channel of its own at full volume, as loud as a drum can be struck, bent down
+// `bendSemitones` so it sounds bigger and rings longer, and held `ringSec` so it rings out to the end of its sample.
+const PEAK = Object.freeze({ velocity: 127, bendSemitones: -4, ringSec: 6 });
 
 // Each kit's pieces, by their key on the kit. Those that `ring` play on the kit's second channel, panned to the storm's
 // turn, so they swirl round the listener; the rest keep the middle.
 const DrumSetPiece = Object.freeze({
   KICK: { key: 36, ring: false },
   SNARE: { key: 38, ring: false },
-  HIGH_TOM: { key: 50, ring: true },
-  MID_TOM: { key: 47, ring: true },
-  LOW_TOM: { key: 43, ring: true },
-  FLOOR_TOM: { key: 41, ring: true },
   RIDE: { key: 51, ring: true },
+  CRASH: { key: 49, ring: true },
 });
 const LatinPiece = Object.freeze({
   CLAVE: { key: 75, ring: false },
@@ -66,8 +71,7 @@ const LatinPiece = Object.freeze({
   CONGA_MUTE: { key: 62, ring: true },
   CONGA_OPEN: { key: 63, ring: true },
   TUMBA: { key: 64, ring: true },
-  TIMBALE_HIGH: { key: 65, ring: true },
-  TIMBALE_LOW: { key: 66, ring: true },
+  CRASH: { key: 49, ring: true },
 });
 const DrumlinePiece = Object.freeze({
   SNARE: { key: 38, ring: false },
@@ -80,46 +84,39 @@ const DrumlinePiece = Object.freeze({
   TENOR_4: { key: 45, ring: true },
   CYMBALS: { key: 49, ring: true },
 });
-// The orchestral kit's timpani tuned to D, C, A and G, and its concert snare.
+// The orchestral kit's timpani tuned to D and A, its concert snare and its crash cymbal (key 57: its orchestral
+// cymbal on 59 dies away in 2.3 s, the crash rings for 3.8).
 const OrchestraPiece = Object.freeze({
   SNARE: { key: 38, ring: false },
   TIMPANI_D: { key: 50, ring: true },
-  TIMPANI_C: { key: 48, ring: true },
   TIMPANI_A: { key: 45, ring: true },
-  TIMPANI_G: { key: 43, ring: true },
+  CRASH: { key: 57, ring: true },
 });
 
 /**
  * The percussion families a storm can be played on: its drum `inst`; `volume`, which evens out how loud the kits play
- * as the foreground; `bar`, the one beat it plays all track long; and `fill`, the bar it plays once, in the beat's
- * place, at the storm's peak. Each is a drummer's tab, a piece to 16 steps. The beats are the earlier album's
- * major-hurricane grooves, which a drummer can still play at TEMPO.fastBpm; the fills are its category 5 fills.
+ * as the foreground; `bar`, the one beat it plays all track long, a drummer's tab, a piece to 16 steps; and `peak`,
+ * the cymbal it crashes once on the downbeat of the bar the storm peaks in (see PEAK). The beats are the earlier album's
+ * major-hurricane grooves, which a drummer can still play at FASTEST_BPM.
  */
 export const Kit = Object.freeze({
-  // A rock drummer: the ride keeps the time over the kick on 3 + 3 + 2 and flams on the backbeat; at the peak, a run
-  // down the toms into a snare roll.
+  // A rock drummer: the ride keeps the time over the kick on 3 + 3 + 2 and flams on the backbeat; a crash at the peak.
   DRUM_SET: Object.freeze({
     inst: Instrument.STANDARD_KIT,
     volume: 89,
+    peak: DrumSetPiece.CRASH,
     bar: [
       [DrumSetPiece.KICK, 'X.....X...X..x..'],
       [DrumSetPiece.SNARE, '....F..g.g..F.gg'],
       [DrumSetPiece.RIDE, 'x.x.x.x.x.x.x.x.'],
     ],
-    fill: [
-      [DrumSetPiece.KICK, 'X...X...X.......'],
-      [DrumSetPiece.HIGH_TOM, 'Xx..............'],
-      [DrumSetPiece.MID_TOM, '..Xx............'],
-      [DrumSetPiece.LOW_TOM, '....Xx..........'],
-      [DrumSetPiece.FLOOR_TOM, '......Xx........'],
-      [DrumSetPiece.SNARE, '........rrrrrrrr'],
-    ],
   }),
   // A salsa section on the 3-2 son clave, the bar read in cut time: the conga's tumbao with a flam on the slap, the
-  // bongo bell in eighths; at the peak, the timbales and congas run down into a timbale roll.
+  // bongo bell in eighths; a crash at the peak.
   LATIN: Object.freeze({
     inst: Instrument.STANDARD_KIT,
     volume: 127,
+    peak: LatinPiece.CRASH,
     bar: [
       [LatinPiece.CLAVE, 'X..X..X...X.X...'],
       [LatinPiece.CONGA_MUTE, 'g.g.F.g.g.g.....'],
@@ -127,20 +124,13 @@ export const Kit = Object.freeze({
       [LatinPiece.TUMBA, '..............X.'],
       [LatinPiece.COWBELL, 'X.x.x.x.X.x.x.x.'],
     ],
-    fill: [
-      [LatinPiece.CLAVE, 'X...............'],
-      [LatinPiece.TIMBALE_HIGH, 'Xx..............'],
-      [LatinPiece.TIMBALE_LOW, '..Xx............'],
-      [LatinPiece.CONGA_OPEN, '....Xx..........'],
-      [LatinPiece.TUMBA, '......Xx........'],
-      [LatinPiece.TIMBALE_LOW, '........rrrrrrrr'],
-    ],
   }),
   // A marching drumline, every piece together on the eighths: the basses' pulse and splits under the snare's flams,
-  // the tenors sweeping round their drums; at the peak, the tenors sweep the whole bar under the cymbals.
+  // the tenors sweeping round their drums; the cymbals crash at the peak.
   DRUMLINE: Object.freeze({
     inst: Instrument.POWER_KIT,
     volume: 71,
+    peak: DrumlinePiece.CYMBALS,
     bar: [
       [DrumlinePiece.BASS, 'X.......X.......'],
       [DrumlinePiece.BASS_HIGH, '..x...X.....X...'],
@@ -151,37 +141,23 @@ export const Kit = Object.freeze({
       [DrumlinePiece.TENOR_3, '....x.......x...'],
       [DrumlinePiece.TENOR_4, '......x.......x.'],
     ],
-    fill: [
-      [DrumlinePiece.BASS, 'X...X...X...X...'],
-      [DrumlinePiece.TENOR_1, 'X.x.............'],
-      [DrumlinePiece.TENOR_2, '....X.x.........'],
-      [DrumlinePiece.TENOR_3, '........X.x.....'],
-      [DrumlinePiece.TENOR_4, '............X.X.'],
-      [DrumlinePiece.CYMBALS, '........x...X...'],
-    ],
   }),
-  // An orchestra's timpani and snare alone: the timpani rocking between D and A in eighths under the snare's flams and
-  // ghost strokes; at the peak, the timpani fall D, C, A, G into a timpani and snare roll.
+  // An orchestra's timpani and snare: the timpani rocking between D and A in eighths under the snare's flams and ghost
+  // strokes; a crash at the peak.
   ORCHESTRA: Object.freeze({
     inst: Instrument.ORCHESTRAL_KIT,
     volume: 98,
+    peak: OrchestraPiece.CRASH,
     bar: [
       [OrchestraPiece.TIMPANI_D, 'X...x...X...x...'],
       [OrchestraPiece.TIMPANI_A, '..x...x...x...x.'],
       [OrchestraPiece.SNARE, 'F.ggx.g.F.ggx.gg'],
     ],
-    fill: [
-      [OrchestraPiece.TIMPANI_D, 'Xx......rrrrrrrr'],
-      [OrchestraPiece.TIMPANI_C, '..Xx............'],
-      [OrchestraPiece.TIMPANI_A, '....Xx..........'],
-      [OrchestraPiece.TIMPANI_G, '......Xx........'],
-      [OrchestraPiece.SNARE, '........rrrrrrrr'],
-    ],
   }),
 });
 // Every kit's tabs are well formed.
 for (const [name, kit] of Object.entries(Kit)) {
-  for (const [, tab] of [...kit.bar, ...kit.fill]) {
+  for (const [, tab] of kit.bar) {
     if (tab.length !== STEPS_PER_BAR || [...tab].some((letter) => letter !== '.' && !Stroke[letter])) {
       throw new Error(`${name}: bad drum tab ${tab}`);
     }
@@ -191,6 +167,13 @@ for (const [name, kit] of Object.entries(Kit)) {
 // The kit's two channels (see the pieces' `ring`); each song puts its kit on both.
 const KIT_MIDDLE = Object.freeze({ program: 0, volume: 100, drums: true });
 const KIT_RING = Object.freeze({ program: 0, volume: 100, drums: true });
+
+// The peak's cymbal plays alone on this channel, at full volume in the middle.
+const KIT_PEAK = Object.freeze({ program: 0, volume: 127, drums: true });
+
+function channelOf(piece) {
+  return piece.ring ? KIT_RING : KIT_MIDDLE;
+}
 
 // The band, each part playing from its category up. A part either holds the bar's chord (`hold`: octave offsets of its
 // notes from TONIC) or circles it (`circle`: the octave it starts in, `turn`, how far round the circle it starts,
@@ -205,44 +188,44 @@ const PARTS = Object.freeze([
 ]);
 
 /**
- * The album's weakest and strongest wind (kt), over every record of every track: the ends of the tempo's line.
- *
- * @typedef {{ minKt: number, maxKt: number }} WindRange
- */
-
-/**
- * The tempo (beats a minute) for a wind of `kt`: on the line from TEMPO.slowBpm at the album's weakest wind to
- * TEMPO.fastBpm at its strongest.
+ * The tempo (beats a minute) for a wind of `kt`, in proportion to it: FASTEST_BPM at the album's strongest wind
+ * (`fastestKt`, over every record of every track), so 80 km/h plays a third as fast as 240 km/h.
  *
  * @param {number} kt
- * @param {WindRange} range
+ * @param {number} fastestKt
  */
-export function tempoOf(kt, range) {
-  const share = range.maxKt > range.minKt ? (kt - range.minKt) / (range.maxKt - range.minKt) : 1;
-  return TEMPO.slowBpm + (TEMPO.fastBpm - TEMPO.slowBpm) * Math.min(1, Math.max(0, share));
+export function tempoOf(kt, fastestKt) {
+  return (FASTEST_BPM * kt) / fastestKt;
 }
 
 /**
  * @typedef {Object} StormSong
  * @property {import('../../../tracks/domain/storm-track.js').StormTrack} track
  * @property {Object} kit one of Kit
- * @property {WindRange} windRange the album's (see tempoOf)
+ * @property {number} fastestKt the album's strongest wind (see tempoOf)
  */
 
 export class HurricaneComposer {
-  instruments = Object.freeze([KIT_MIDDLE, KIT_RING, ...new Set(PARTS.map((part) => part.inst))]);
+  instruments = Object.freeze([KIT_MIDDLE, KIT_RING, KIT_PEAK, ...new Set(PARTS.map((part) => part.inst))]);
 
   stepsPerBar = STEPS_PER_BAR;
-  // A bar at the slowest tempo, for a step no storm sets the tempo of.
-  stepSec = 60 / TEMPO.slowBpm / STEPS_PER_BEAT;
+  // The pitch wheel bends as far as the peak's cymbal does.
+  bendRangeSemitones = Math.abs(PEAK.bendSemitones);
+  // The tempo follows the wind every beat, so it rises and falls with it even while a slow bar lasts several seconds.
+  stepsPerTempo = STEPS_PER_BEAT;
+  // A beat a second, for a step no storm sets the tempo of.
+  stepSec = 1 / STEPS_PER_BEAT;
 
   /** @param {StormSong} song */
   setSong(song) {
     this.kit = song.kit;
-    this.windRange = song.windRange;
+    this.fastestKt = song.fastestKt;
     // The storm's peak: its first record at its strongest wind.
     const { t, windKt } = song.track;
     this.peakTime = t[windKt.indexOf(Math.max(...windKt))];
+    this.startMs = t[0];
+    this.msPerSec = song.msPerSec;
+    this.durationSec = (t[t.length - 1] - t[0]) / song.msPerSec;
   }
 
   /** Back to the opening state, as the music starts. */
@@ -253,15 +236,16 @@ export class HurricaneComposer {
     this.chordBar = 0;
     this.chord = PROGRESSION[0];
     this.category = StormCategory.DEPRESSION;
-    this.tabs = this.kit.bar;
+    this.peaks = false;
     this.held = new Set();
     this.spin = 0;
     this.spinRate = null;
+    this.expression = null;
   }
 
-  /** The step length of the bar starting with `sample`: its tempo is the wind's. */
+  /** The step length from `sample` on: its tempo is the wind's. */
   stepSecAt(sample) {
-    return 60 / tempoOf(sample.windKt, this.windRange) / STEPS_PER_BEAT;
+    return 60 / tempoOf(sample.windKt, this.fastestKt) / STEPS_PER_BEAT;
   }
 
   /**
@@ -275,18 +259,29 @@ export class HurricaneComposer {
       const sound = { program: this.kit.inst.program, volume: this.kit.volume };
       music.program(KIT_MIDDLE, sound, at);
       music.program(KIT_RING, sound, at);
+      music.program(KIT_PEAK, { program: this.kit.inst.program, volume: KIT_PEAK.volume }, at);
+      music.bend(KIT_PEAK, PEAK.bendSemitones, at);
       for (const part of PARTS) if (part.pan !== undefined) music.control(part.inst, CC.PAN, part.pan, at);
       this.kitDue = false;
     }
     if (step === 0) this.startBar(time, stepSec, stepMs);
     this.spinRate = easeSpin(this.spinRate, spinOf(intensityOf(sample.windKt)), stepSec);
     this.spin += stepSec * this.spinRate;
-    this.playKit(music, step, at, stepSec);
+    this.fade(music, time, at);
+    this.playKit(music, step, at);
     this.playParts(music, step, at);
   }
 
+  // Every channel's expression follows the storm's fade on the globe at the data time `time`.
+  fade(music, time, at) {
+    const expression = Math.round(127 * stormFadeAt((time - this.startMs) / this.msPerSec, this.durationSec));
+    if (expression === this.expression) return;
+    this.expression = expression;
+    for (const inst of this.instruments) music.control(inst, CC.EXPRESSION, expression, at);
+  }
+
   // Moves on a bar starting at data time `time`. A chord lasts as many bars as CHORD_MIN_SEC takes at the tempo it
-  // starts at. The bar the storm peaks in is the fill.
+  // starts at. The bar the storm peaks in opens with the peak's cymbal.
   startBar(time, stepSec, stepMs) {
     if (this.chordBar + 1 >= this.chordBars) {
       this.chordIndex = (this.chordIndex + 1) % PROGRESSION.length;
@@ -297,33 +292,25 @@ export class HurricaneComposer {
     }
     this.chord = PROGRESSION[this.chordIndex];
     this.stringEvery = STRING_SPACINGS.find((every) => every * stepSec >= STRING_MIN_SEC) ?? STRING_SPACINGS.at(-1);
-    const peaks = this.peakTime >= time && this.peakTime < time + STEPS_PER_BAR * stepMs;
-    this.tabs = peaks ? this.kit.fill : this.kit.bar;
+    this.peaks = this.peakTime >= time && this.peakTime < time + STEPS_PER_BAR * stepMs;
     this.held.clear();
   }
 
-  // The kit's ringing pieces panned to the storm's turn every step, and the strokes the bar's tabs write for it.
-  playKit(music, step, at, stepSec) {
+  // The kit's ringing pieces panned to the storm's turn every step, the strokes the beat writes for it, and the peak's
+  // cymbal on the downbeat of the bar the storm peaks in.
+  playKit(music, step, at) {
     music.control(KIT_RING, CC.PAN, Math.round(64 + 63 * Math.cos(this.spin)), at);
-    for (const [piece, tab] of this.tabs) {
+    for (const [piece, tab] of this.kit.bar) {
       const stroke = Stroke[tab[step]];
       if (!stroke) continue;
-      const channel = piece.ring ? KIT_RING : KIT_MIDDLE;
-      if (stroke.roll) {
-        this.playRoll(music, channel, piece.key, step, at, stepSec);
-        continue;
-      }
+      const channel = channelOf(piece);
       for (let k = 0; k < stroke.grace; k++) music.note(channel, piece.key, GRACE.velocity, at + k * GRACE.sec, 1);
       music.note(channel, piece.key, stroke.velocity, at + stroke.grace * GRACE.sec, 1);
     }
-  }
-
-  // A roll through this step at ROLL's pace whatever the tempo, as loud as its place in the bar's swell.
-  playRoll(music, channel, key, step, at, stepSec) {
-    const count = Math.max(1, Math.round(stepSec * ROLL.perSec));
-    for (let k = 0; k < count; k++) {
-      const place = (step + k / count) / STEPS_PER_BAR;
-      music.note(channel, key, ROLL.from + (ROLL.to - ROLL.from) * place, at + (k / count) * stepSec, 1 / count);
+    if (this.peaks && step === 0) {
+      const { key } = this.kit.peak;
+      music.hold(KIT_PEAK, key, PEAK.velocity, at);
+      music.release(KIT_PEAK, key, at + PEAK.ringSec);
     }
   }
 

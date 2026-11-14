@@ -40,14 +40,18 @@ export function intensityOf(kt) {
   return Math.min(1, Math.max(0, kt / FULL_SCALE_KT));
 }
 
-// How fast the storm turns, in radians a second of playback: from `calm` in calm air, rising with its intensity to
-// `full` at full scale. The storm on the globe turns at this rate, and the music swirls its ringing drums with it. Both
-// ease toward it over `easeSec`, so a sharp change of wind between two records speeds it up or slows it down gently.
-const SPIN = Object.freeze({ calm: 2, full: 6, easeSec: 3 });
+// How fast the storm turns, in radians a second of playback: the earlier single-storm album's rate, from `calm` in calm
+// air rising with its intensity to `full` at full scale, sped up `speedup` times. The storm on the globe turns at this
+// rate, and the music swirls its ringing drums with it. Both ease toward it over `easeSec`, so a sharp change of wind
+// between two records speeds it up or slows it down gently.
+const SPIN = Object.freeze({ calm: 2, full: 6, speedup: 1.5, easeSec: 3 });
+
+// The glow around the globe turns at the earlier album's rate, not sped up: this share of the storm's turn.
+export const GLOW_SPIN_SHARE = 1 / SPIN.speedup;
 
 /** @param {number} intensity 0..1 (see intensityOf) */
 export function spinOf(intensity) {
-  return SPIN.calm + (SPIN.full - SPIN.calm) * intensity;
+  return (SPIN.calm + (SPIN.full - SPIN.calm) * intensity) * SPIN.speedup;
 }
 
 /** The spin rate `rate` eased `dt` seconds toward `target`; `target` itself when there is none yet (null). */
@@ -117,6 +121,14 @@ export function sampleStorm(track, time) {
 export function stormTimeAt(track, sec, durationSec) {
   const span = track.t[track.t.length - 1] - track.t[0];
   return track.t[0] + (Math.min(Math.max(sec, 0), durationSec) / durationSec) * span;
+}
+
+// The storm fades in over its track's first seconds and out over its last, on the globe and in the music alike.
+const FADE_SEC = 2.5;
+
+/** How far the storm has faded in (0..1), `sec` into a track `durationSec` long. */
+export function stormFadeAt(sec, durationSec) {
+  return Math.max(0, Math.min(1, sec / FADE_SEC, (durationSec - sec) / FADE_SEC));
 }
 
 /** How much data time (ms) a second of the track plays. */

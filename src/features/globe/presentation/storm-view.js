@@ -2,10 +2,11 @@
 // that clears as the storm strengthens, the whole turning anticlockwise as Atlantic storms do. Its wind (intensityOf)
 // grows it, spins it faster (spinOf, the rate the music swirls its ringing drums at), organises its bands and tints its
 // thin cloud from sea blue through yellow to magenta. Below it its wind is printed (km/h, in its category's colour).
+// The glow around the globe streams out in spiral arms with its spin (see swirl).
 
 // The same three.js revision globe.gl@2.46.2 bundles, so the mesh fits its scene.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
-import { KMH_PER_KT, categoryOf, easeSpin, intensityOf, spinOf } from '../../tracks/domain/storm-track.js';
+import { GLOW_SPIN_SHARE, KMH_PER_KT, categoryOf, easeSpin, intensityOf, spinOf } from '../../tracks/domain/storm-track.js';
 
 // Above the ice, so the clouds cover it.
 const ALTITUDE = 0.008;
@@ -21,6 +22,9 @@ const MAX_FRAME_SEC = 0.1;
 // The labels' gap (px) below the storm's visible edge, which the soft clouds put at about this share of its extent.
 const LABEL_GAP_PX = 4;
 const VISIBLE_EXTENT = 0.6;
+// How strongly the glow around the globe streams out with the storm's spin (see swirl): from `calm` for calm air to 1 at
+// full scale.
+const SWIRL_STRENGTH = Object.freeze({ calm: 0.4 });
 
 // The storm's colour by intensity: sea blue, a tropical storm's green, a category 1's yellow, a category 3's orange,
 // the red and magenta of categories 4 and 5.
@@ -236,6 +240,12 @@ export function createStormLayer({ globe, container }) {
 
   return {
     show,
+    /** The glow's swirl (see halo.js): its share of the storm's spin, and how strongly the glow streams with it. */
+    get swirl() {
+      const intensity = (extent - EXTENT.calm) / (EXTENT.full - EXTENT.calm);
+      const strength = SWIRL_STRENGTH.calm + (1 - SWIRL_STRENGTH.calm) * intensity;
+      return { phase: spin * GLOW_SPIN_SHARE, strength: mesh.visible ? uniforms.uFade.value * strength : 0 };
+    },
     /** The storm's colour now, for the glow around the globe; null while none is shown. */
     get color() {
       return mesh.visible ? stormColor((extent - EXTENT.calm) / (EXTENT.full - EXTENT.calm)) : null;
