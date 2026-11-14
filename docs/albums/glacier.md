@@ -8,7 +8,7 @@ The album's story, data and mappings. It follows [album-guide.md](../album-guide
 
 Each track plays one pole: its sea ice shrinking year after year, and the global sea level rising on the same timeline. The seasonal freeze and thaw is left out, so the long-term change is what the listener hears and sees.
 
-The ice data is sea ice, the only ice data in the EIC gallery. It stands for polar ice melt; its amount never drives the sea level values.
+The ice data is sea ice, the only ice data in the EIC gallery. It stands for polar ice melt.
 
 ## Tracks
 
@@ -31,7 +31,7 @@ All parts are in C minor, the concerto's key, and played from the FluidR3_GM Sou
 | --- | --- | --- |
 | Ice, North: piano | Ice extent | One key a year, in the mood of the opening of Rachmaninoff's Piano Concerto No. 2 rather than its notes: struck on the downbeat and held the whole bar. The 1981–2010 normal is F5 and each 0.4 million km² is one step of C minor (B♭5 down to F4). Less ice is lower; a bigger change from the year before is louder. |
 | Ice, South: cello | Ice extent | One note a year. The normal is C4; each 0.15 million km² is one step of C minor. Less ice is lower; a bigger change from the year before is louder. |
-| Sea, North: piano left hand | Sea level | The score's low F1, doubled an octave up with F2 so it is heard on small speakers (F1 alone is 44 Hz): half a bar after the ice note, on the third beat, a half note to the end of the bar. It sounds when the water rises: in the first year and in every year the sea rose (all but 1998 and 2011), harder the higher the sea, from an already clear mf in 1993 to fff at +100 mm. |
+| Sea, North: piano left hand | Sea level | The score's low F1, doubled an octave up with F2 so it is heard on small speakers (F1 alone is 44 Hz): half a bar after the ice note, on the third beat, a half note to the end of the bar. It sounds when the water rises: in the first year and in every year the sea rose (all but 1998 and 2011), harder the higher the sea, from an already clear f in 1993 (about 6 dB under the ice note) to fff at +100 mm, about level with it. |
 | Sea, South: French horn | Sea level | Low, on the root of each year's chord (C3, A♭2, E♭3, B♭2), legato with the ice. Heard as strength, not pitch: from very soft in 1993 to strong at +100 mm. |
 | Harp | Sea level | Each year, with the sea line, a wave washes in and recedes: the same shape every year, low on the harp, up through the chord and back two notes, harder as the sea rises. |
 | Harmony | (time) | One chord a year: on North the score's chords over F (above); on South cycling Cm, A♭, E♭, B♭, so the waves move instead of repeating. Small fixed variations in timing and velocity keep them from sounding machine-made. |

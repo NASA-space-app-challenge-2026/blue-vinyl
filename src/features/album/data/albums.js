@@ -63,19 +63,16 @@ export const albums = [
           csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
           shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
           poleLat: 90,
-          // Piano, after the opening of Rachmaninoff's Second Concerto. On the downbeat both hands play the ice as a
-          // chord over F, held the whole bar: the right hand's top note is the ice, the normal is F5 (the top of the
-          // score's first chord), and each 0.4 million km² is one step of C minor. Half a bar later the left hand strikes
-          // the score's low F1, in each year the sea rose, harder the higher the sea.
+          // Piano, in the mood of the opening of Rachmaninoff's Second Concerto. On the downbeat one key plays the ice,
+          // held the whole bar: the normal is F5 and each 0.4 million km² is one step of C minor. Half a bar later the
+          // left hand tolls the score's low F1 with F2, in each year the sea rose, harder the higher the sea.
           voice: {
             instrument: IceSeaInstrument.PIANO,
             homeMidi: 77,
             kmPerStep: 0.4,
             lengthBeats: 1,
-            chord: true,
             harmony: Harmony.OPENING,
-            level: 0.407,
-            sea: { instrument: IceSeaInstrument.PIANO, style: SeaStyle.BELLS, offsetBeats: 0.5, held: false, transpose: 0, level: 0.32 },
+            sea: { instrument: IceSeaInstrument.PIANO, style: SeaStyle.BELLS, offsetBeats: 0.5, held: false, transpose: 0, level: 0.4 },
           },
         },
       },

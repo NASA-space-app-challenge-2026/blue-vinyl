@@ -118,14 +118,14 @@ export const KEY_TONIC = 0;
 // Sea level is heard as strength, not pitch. The held sea line, the harp wave and the wave stroke play harder the higher
 // the sea, from very soft at the first year to strong at +100 mm. The sea line plays the root of the year's chord low
 // in the bass; over it, on the harp, each year a wave washes in and recedes through the chord; under it a wave stroke
-// says it is water. The bells too, from mf in the first year to fff at +100 mm.
+// says it is water. The bells too, from f in the first year to fff at +100 mm.
 const SEA_TOP_MM = 100;
 const SEA_LINE = Object.freeze({ velocity: 40, velocityRise: 80, overlapSec: 0.12 });
 // Attack and release of the sea line, by whether it is held.
 const SEA_ENVELOPE = Object.freeze({ held: { attackSec: 0.18, releaseSec: 0.5 }, struck: { attackSec: 0.02, releaseSec: 0.5 } });
 // Bells: the score's low F1, doubled an octave up (F2) so it is heard on small speakers that cannot play F1's 44 Hz,
-// from mf at the first year's sea level, already clear, to fff at +100 mm.
-const BELL = Object.freeze({ keys: [29, 41], velocity: 64, velocityRise: 63 });
+// from f at the first year's sea level, already clear (about 6 dB under the ice), to fff at +100 mm.
+const BELL = Object.freeze({ keys: [29, 41], velocity: 80, velocityRise: 47 });
 const WAVE_NOTES = 6;
 const WAVE_VELOCITY = Object.freeze({ base: 34, rise: 64, swell: 16 });
 const WATER_VELOCITY = Object.freeze({ base: 45, rise: 80 });
