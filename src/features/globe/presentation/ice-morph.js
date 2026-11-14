@@ -53,10 +53,13 @@ function cellLatLng(i, j, pole) {
   return { lat: pole * (90 - r), lng: (Math.atan2(pole * y, x) * 180) / Math.PI };
 }
 
+// The polygons of a geometry; a collection gives the polygons among its members, so stray points or lines beside the
+// ice never hide it.
 function polygons(geometry) {
   if (!geometry) return [];
   if (geometry.type === 'Polygon') return [geometry.coordinates];
   if (geometry.type === 'MultiPolygon') return geometry.coordinates;
+  if (geometry.type === 'GeometryCollection') return geometry.geometries.flatMap(polygons);
   return [];
 }
 

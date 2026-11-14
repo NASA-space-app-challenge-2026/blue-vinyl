@@ -106,10 +106,8 @@
   }
 }
 
-/* Ruler and measured mark, as in 5235. White on the dark map and blue on pale ice would both get lost, so every line
-   and label carries a dark halo. */
-.sea-overlay-ruler,
-.sea-overlay-mark {
+/* Ruler, as in 5235. White on pale ice would get lost, so its lines and labels carry a dark halo. */
+.sea-overlay-ruler {
   filter: drop-shadow(0 0 1px rgb(0 0 0 / 0.95)) drop-shadow(0 0 3px rgb(0 0 0 / 0.6));
 }
 
@@ -146,50 +144,31 @@
   color: #fff;
 }
 
-/* The measured rise, as in 5235: a blue bar with end caps from the first year's level to this year's, labelled on
-   the right. It moves a year at a time. */
-.sea-overlay-mark {
+/* The readings beside the ruler: the first year's sea level at its foot and this year's rise at its height. The box
+   spans the ruler between them and draws nothing itself; it moves a year at a time. */
+.sea-overlay-reading {
   position: absolute;
   left: 50%;
   width: 0;
-  border-left: 3px solid #3d7bff;
-  transform: translateX(-0.5px);
   transition: height 0.3s ease-out;
 }
 
-.sea-overlay-mark::before,
-.sea-overlay-mark::after {
-  content: '';
-  position: absolute;
-  left: -8px;
-  width: 13px;
-  border-top: 3px solid #3d7bff;
-}
-
-.sea-overlay-mark::before {
-  top: -1.5px;
-}
-
-.sea-overlay-mark::after {
-  bottom: -1.5px;
-  border-color: #fff;
-}
-
-.sea-overlay-mark-label {
+.sea-overlay-reading-label {
   position: absolute;
   left: 14px;
   white-space: nowrap;
   font-size: clamp(9px, 0.95vw, 13px);
   font-weight: 700;
-  color: #d4e3ff;
+  color: #fff;
+  text-shadow: 0 0 2px rgb(0 0 0 / 0.95), 0 0 5px rgb(0 0 0 / 0.7);
 }
 
-.sea-overlay-mark-from {
+.sea-overlay-reading-from {
   bottom: 0;
   transform: translateY(50%);
 }
 
-.sea-overlay-mark-to {
+.sea-overlay-reading-to {
   top: 0;
   transform: translateY(-50%);
 }

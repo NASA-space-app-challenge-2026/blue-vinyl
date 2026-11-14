@@ -22,8 +22,8 @@ export const albums = [
           csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
           shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
           poleLat: 90,
-          // Cello; the normal is D4 and each 0.25 million km² is one step of D minor.
-          voice: { instrument: Instrument.CELLO, homeMidi: 62, kmPerStep: 0.25, lengthBeats: 1.12 },
+          // Piano; the normal is D5 and each 0.25 million km² is one step of D minor.
+          voice: { instrument: Instrument.PIANO, homeMidi: 74, kmPerStep: 0.25, lengthBeats: 0.95 },
         },
       },
       {
@@ -33,8 +33,8 @@ export const albums = [
           csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,
           shapesUrl: `${GLACIER_DATA}/antarctic_february_sea_ice_extent.geojson`,
           poleLat: -90,
-          // Piano; the normal is D5 and each 0.15 million km² is one step of D minor.
-          voice: { instrument: Instrument.PIANO, homeMidi: 74, kmPerStep: 0.15, lengthBeats: 0.95 },
+          // Cello; the normal is D4 and each 0.15 million km² is one step of D minor.
+          voice: { instrument: Instrument.CELLO, homeMidi: 62, kmPerStep: 0.15, lengthBeats: 1.12 },
         },
       },
     ],

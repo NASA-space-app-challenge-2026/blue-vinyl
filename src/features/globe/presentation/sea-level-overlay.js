@@ -46,9 +46,9 @@ function waveMask({ width, height, amplitude }) {
 
 /**
  * Text and water over the globe. The year and its ice sit at the top. Below, the label becomes the porthole of SVS
- * 5235: water with a moving surface rises past a centimetre ruler, and a blue mark spans the rise from the first
- * year's sea level to the measured level of this year. As in 5235, the mark shows the measurement and moves a year
- * at a time, while the water moves smoothly. The overlay never takes pointer events, so the globe stays draggable.
+ * 5235: water with a moving surface rises past a centimetre ruler. The ruler marks the first year's sea level, and
+ * the measured rise of this year (such as +71 mm) is written beside it at that height; it moves a year at a time,
+ * while the water moves smoothly. The overlay never takes pointer events, so the globe stays draggable.
  *
  * @param {HTMLElement} container
  */
@@ -80,15 +80,16 @@ export function createSeaLevelOverlay(container) {
     ruler.append(tick);
   }
 
-  const mark = el('div', 'sea-overlay-mark');
-  mark.style.bottom = percent(heightOf(0));
-  const markFrom = el('span', 'sea-overlay-mark-label sea-overlay-mark-from');
-  const markTo = el('span', 'sea-overlay-mark-label sea-overlay-mark-to');
-  mark.append(markFrom, markTo);
+  // Spans the ruler from the first year's level to this year's; it only places the two readings beside the ruler.
+  const reading = el('div', 'sea-overlay-reading');
+  reading.style.bottom = percent(heightOf(0));
+  const readingFrom = el('span', 'sea-overlay-reading-label sea-overlay-reading-from');
+  const readingTo = el('span', 'sea-overlay-reading-label sea-overlay-reading-to');
+  reading.append(readingFrom, readingTo);
 
   const year = el('p', 'sea-overlay-year');
   const ice = el('p', 'sea-overlay-ice');
-  root.append(sea, ruler, mark, year, ice);
+  root.append(sea, ruler, reading, year, ice);
   container.append(root);
 
   /** @param {SeaLevelFrame | null} frame null hides the overlay */
@@ -96,10 +97,10 @@ export function createSeaLevelOverlay(container) {
     root.hidden = frame === null;
     if (!frame) return;
     sea.style.height = `calc(${percent(heightOf(frame.waterMm))} + ${WAVE.height / 2}px)`;
-    mark.style.height = percent(Math.max(0, heightOf(frame.seaLevelMm) - heightOf(0)));
-    markFrom.textContent = `${frame.firstYear} sea level`;
+    reading.style.height = percent(Math.max(0, heightOf(frame.seaLevelMm) - heightOf(0)));
+    readingFrom.textContent = `${frame.firstYear} sea level`;
     const rise = `${frame.seaLevelMm >= 0 ? '+' : '−'}${Math.abs(frame.seaLevelMm).toFixed(0)} mm`;
-    markTo.textContent = frame.year === frame.firstYear ? '' : `${frame.year} sea level ${rise}`;
+    readingTo.textContent = frame.year === frame.firstYear ? '' : rise;
     year.textContent = String(frame.year);
     const change = Math.round((frame.extent / frame.normal - 1) * 100);
     const versus = change === 0 ? 'at the 1981–2010 normal' : `${Math.abs(change)}% ${change < 0 ? 'below' : 'above'} 1981–2010`;
