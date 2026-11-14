@@ -7,6 +7,7 @@ import { albumDurationSec, trackBoundaries, trackIndexAt } from '../features/alb
 import { createAlbumCover } from '../features/album/presentation/album-cover.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
+import { createAlbumSwitcher } from '../features/controls/presentation/album-switcher.js';
 import { createFullscreenButton } from '../features/controls/presentation/fullscreen-button.js';
 import { createGlassCapsule } from '../features/controls/presentation/glass-capsule.js';
 import { createPlayButton } from '../features/controls/presentation/play-button.js';
@@ -19,10 +20,10 @@ import { createGlobeAttribution } from '../features/globe/presentation/globe-att
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 
-// Album switching comes later; show the first album for now.
-const albumIndex = 0;
-const album = albums[albumIndex];
-const totalMs = albumDurationSec(album) * 1000;
+// Set by showAlbum().
+let albumIndex = 0;
+let album;
+let totalMs;
 
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
@@ -31,12 +32,11 @@ let tickFrame = null;
 
 const slot = (id) => document.getElementById(id);
 
-createAlbumCredit(slot('corner-bottom-right'), album);
+const albumCredit = createAlbumCredit(slot('corner-bottom-right'));
 const playHint = createPlayHint(slot('bottom-center'));
 
-const cover = createAlbumCover(slot('stage'), { album, index: albumIndex, count: albums.length });
+const cover = createAlbumCover(slot('stage'));
 const turntable = createTurntableView(slot('stage'), {
-  trackStarts: trackBoundaries(album).slice(1, -1),
   onToggle: togglePlayback,
   onCued: () => {
     if (state === PlaybackState.CUEING) startPlaying();
@@ -59,6 +59,11 @@ const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
 createVolumeControl(transportControls);
+const albumControls = createGlassCapsule(slot('corner-bottom-left'));
+createAlbumSwitcher(albumControls, {
+  onPrevious: () => switchAlbum(-1),
+  onNext: () => switchAlbum(1),
+});
 const viewControls = createGlassCapsule(slot('corner-top-right'));
 createFullscreenButton(viewControls);
 createSettingsMenu(viewControls, {
@@ -78,6 +83,22 @@ document.addEventListener('keydown', (event) => {
 function applyGlobeTheme(theme) {
   globe.setTheme(theme, GLOBE_THEMES[theme]);
   globeAttribution.render(GLOBE_THEMES[theme].attribution);
+}
+
+function showAlbum(index) {
+  albumIndex = index;
+  album = albums[albumIndex];
+  totalMs = albumDurationSec(album) * 1000;
+  cover.setAlbum({ album, index: albumIndex, count: albums.length });
+  turntable.setTrackStarts(trackBoundaries(album).slice(1, -1));
+  albumCredit.render(album);
+}
+
+/** Changing the record lifts the arm and starts the next one from the beginning; the list wraps around. */
+function switchAlbum(step) {
+  showAlbum((albumIndex + step + albums.length) % albums.length);
+  elapsedMs = 0;
+  setState(PlaybackState.STOPPED);
 }
 
 function togglePlayback() {
@@ -117,4 +138,5 @@ function tick(ts) {
   tickFrame = requestAnimationFrame(tick);
 }
 
+showAlbum(albumIndex);
 setState(PlaybackState.STOPPED);

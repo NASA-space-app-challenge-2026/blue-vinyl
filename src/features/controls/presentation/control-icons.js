@@ -12,6 +12,8 @@ export const ControlIcon = Object.freeze({
   VOLUME_LOW: { fill: [SPEAKER], stroke: [NEAR_WAVE] },
   VOLUME_HIGH: { fill: [SPEAKER], stroke: [NEAR_WAVE, FAR_WAVE] },
   FULLSCREEN_ENTER: { fill: [], stroke: ['M4 9V4h5', 'M15 4h5v5', 'M20 15v5h-5', 'M9 20H4v-5'] },
+  CHEVRON_UP: { fill: [], stroke: ['M6 15l6-6 6 6'] },
+  CHEVRON_DOWN: { fill: [], stroke: ['M6 9l6 6 6-6'] },
   FULLSCREEN_EXIT: { fill: [], stroke: ['M9 4v5H4', 'M20 9h-5V4', 'M15 20v-5h5', 'M4 15h5v5'] },
 });
 

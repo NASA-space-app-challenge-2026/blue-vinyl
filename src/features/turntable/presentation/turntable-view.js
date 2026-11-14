@@ -117,8 +117,7 @@ function stops(colors) {
   return colors.map(([offset, color]) => `<stop offset="${offset}" stop-color="${color}"/>`).join('');
 }
 
-/** @param {number[]} trackStarts progress (0..1) where each track after the first begins */
-function vinylSvg(trackStarts) {
+function vinylSvg() {
   const grooves = [];
   const glints = [];
   for (let g = GROOVE.innerRadius, i = 0; g <= GROOVE.outerRadius; g += GROOVE_PITCH, i++) {
@@ -128,7 +127,6 @@ function vinylSvg(trackStarts) {
     const length = GROOVE_GLINT.minDeg + ((i * 53) % GROOVE_GLINT.spreadDeg);
     glints.push(arc(g, start, start + length, COLOR.grooveGlint));
   }
-  const gaps = trackStarts.map((p) => circle(grooveRadius(p), 'none', COLOR.trackGap));
   return `<defs>
       <clipPath id="vinyl-disc"><circle r="1"/></clipPath>
       <filter id="vinyl-sheen-blur"><feGaussianBlur stdDeviation="${SHEEN.blur}"/></filter>
@@ -136,7 +134,7 @@ function vinylSvg(trackStarts) {
     <g class="vinyl">
       ${circle(1, COLOR.vinyl, COLOR.vinylEdge)}
       ${grooves.join('')}
-      ${gaps.join('')}
+      <g class="vinyl-track-gaps"></g>
       <g class="vinyl-spin">${glints.join('')}</g>
       <g clip-path="url(#vinyl-disc)"><g filter="url(#vinyl-sheen-blur)">${sheenSvg()}</g></g>
       ${circle(LABEL_RADIUS, COLOR.labelBackdrop, 'none')}
@@ -226,7 +224,6 @@ function layer(className, markup) {
  *
  * @param {HTMLElement} parent
  * @param {{
- *   trackStarts: number[],
  *   onToggle: () => void,
  *   onCued: () => void,
  *   onGrab: () => void,
@@ -234,17 +231,17 @@ function layer(className, markup) {
  *   onDrop: (progress: number) => void,
  *   onLift: () => void,
  * }} options
- *   trackStarts: progress (0..1) where each track after the first begins, drawn as brighter grooves.
  *   onToggle: called when the record is clicked.
  *   onCued: called when the arm, swung on by render(CUEING), has reached its groove.
  */
-export function createTurntableView(parent, { trackStarts, onToggle, onCued, onGrab, onScrub, onDrop, onLift }) {
+export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub, onDrop, onLift }) {
   const root = document.createElement('div');
   root.className = 'turntable';
   root.style.aspectRatio = `${BOUNDS.width} / ${BOUNDS.height}`;
 
-  const vinylLayer = layer('turntable-vinyl-layer', vinylSvg(trackStarts));
+  const vinylLayer = layer('turntable-vinyl-layer', vinylSvg());
   const spinner = vinylLayer.querySelector('.vinyl-spin');
+  const trackGaps = vinylLayer.querySelector('.vinyl-track-gaps');
 
   // Label area, positioned over the label circle in percentages of the layers' view box.
   const label = document.createElement('div');
@@ -401,6 +398,11 @@ export function createTurntableView(parent, { trackStarts, onToggle, onCued, onG
 
   placeArm();
 
+  /** @param {number[]} trackStarts progress (0..1) where each track after the first begins, drawn as brighter grooves */
+  function setTrackStarts(trackStarts) {
+    trackGaps.innerHTML = trackStarts.map((p) => circle(grooveRadius(p), 'none', COLOR.trackGap)).join('');
+  }
+
   /**
    * @param {string} state one of PlaybackState
    * @param {number} progress 0..1
@@ -417,5 +419,5 @@ export function createTurntableView(parent, { trackStarts, onToggle, onCued, onG
     }
   }
 
-  return { labelSlot, render };
+  return { labelSlot, setTrackStarts, render };
 }

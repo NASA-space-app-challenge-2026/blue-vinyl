@@ -38,7 +38,7 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 - Full-viewport stage; nothing scrolls on desktop.
 - The sleeve is tilted by -3deg and tucked **behind** the record. The record overlaps the sleeve's right edge.
 - The sleeve has a dark gradient at the bottom so the title and track list stay readable over any cover photo.
-- Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume. Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
+- Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons. Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
 - At 760px wide and below, the sleeve and the record stack vertically and the page scrolls.
 
 ## Record
@@ -84,12 +84,13 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | Scroll on the globe | Zoom in / out (out to the fitted size) |
 | Play button (bottom left) | Play / pause, same as Space |
 | Volume button (bottom left) | First click expands it into a slider; while expanded, the speaker toggles mute. It folds back into one button after a short idle time without the mouse or keyboard focus on it |
+| Up / down chevrons (bottom left) | Previous / next album; wraps around at either end. Switching lifts the arm and resets the position to the start |
 | Fullscreen button (top right) | Enter / exit fullscreen; hidden where the browser has no fullscreen support |
 | Settings button (top right) | Open the settings menu; Escape or a click outside closes it |
 
 Playback states (`PlaybackState`): `stopped` → `cueing` (arm eases on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position. Grabbing the arm enters `scrubbing` from any state.
 
-Volume is held by the control only; nothing plays sound yet. Language, view options, album switching and notes will be added in later issues.
+Volume is held by the control only; nothing plays sound yet. Language, view options and notes will be added in later issues. Albums other than the first are placeholders.
 
 ## Controls
 

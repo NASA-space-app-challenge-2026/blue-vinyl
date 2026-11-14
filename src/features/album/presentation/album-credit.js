@@ -1,10 +1,13 @@
-/**
- * @param {HTMLElement} parent
- * @param {import('../domain/album.js').Album} album
- */
-export function createAlbumCredit(parent, album) {
+/** @param {HTMLElement} parent */
+export function createAlbumCredit(parent) {
   const credit = document.createElement('p');
   credit.className = 'album-credit';
-  credit.textContent = album.coverCredit;
   parent.append(credit);
+
+  /** @param {import('../domain/album.js').Album} album */
+  function render(album) {
+    credit.textContent = album.coverCredit;
+  }
+
+  return { render };
 }
