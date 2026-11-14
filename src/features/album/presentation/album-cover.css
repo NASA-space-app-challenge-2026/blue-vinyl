@@ -1,4 +1,5 @@
-/* The sleeve's angle (--tilt) is set per album by album-cover.js. --record-overlap is how far the record covers it. */
+/* The sleeve's angle (--tilt) is set per album by album-cover.js. --record-overlap is how far the record covers it.
+   The text is sized with the sleeve (cqw, a hundredth of its side), as print on a sleeve is. */
 .album-cover {
   --tilt: -3deg;
   --record-overlap: min(8vw, 14vh);
@@ -9,7 +10,10 @@
   margin-right: calc(-1 * var(--record-overlap));
   transform: rotate(var(--tilt));
   perspective: 1200px;
+  container-type: inline-size;
   color: var(--ink);
+  /* Every line of text on the sleeve keeps readable over a light cover photo; it is inherited. */
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.8), 0 0 8px rgb(0 0 0 / 0.6);
 }
 
 /* Leans toward the mouse (--hover-x, --hover-y, set by album-cover.js) and eases back when it leaves. */
@@ -17,6 +21,8 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(160deg, #8a7458, #4a3a27);
+  /* Slightly rounded, as a worn card sleeve is. */
+  border-radius: 2px;
   box-shadow: 0 30px 60px rgb(0 0 0 / 0.45);
   overflow: hidden;
   transform: rotateX(var(--hover-x, 0deg)) rotateY(var(--hover-y, 0deg));
@@ -37,41 +43,40 @@
   opacity: 1;
 }
 
-.album-cover-shade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, rgb(0 0 0 / 0.15) 0%, rgb(0 0 0 / 0) 35%, rgb(0 0 0 / 0.55) 75%, rgb(0 0 0 / 0.7) 100%);
-}
-
 .album-cover-counter {
   position: absolute;
-  top: 6%;
-  left: 7%;
+  top: 5cqw;
+  left: 6cqw;
   margin: 0;
-  font-size: clamp(16px, 1.8vw, 28px);
-  letter-spacing: 0.3em;
+  font-size: 2.6cqw;
+  letter-spacing: 0.2em;
+  color: color-mix(in srgb, var(--ink) 90%, transparent);
 }
 
 .album-cover-body {
   position: absolute;
-  left: 9%;
-  /* Keeps the text clear of the record lying over the sleeve's right side. */
-  right: calc(9% + var(--record-overlap));
-  bottom: 6%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* The right padding keeps the text clear of the record lying over the sleeve's right side (--record-overlap). */
+  padding: 16cqw 18cqw 5cqw 6cqw;
+  /* Darkens the cover photo under the text, deepening toward the bottom edge. */
+  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 0.6) 35%, rgb(0 0 0 / 0.85));
 }
 
 .album-cover-category {
-  margin: 0 0 0.4em;
-  font-size: clamp(12px, 1.3vw, 20px);
-  letter-spacing: 0.3em;
+  margin: 0;
+  font-size: 2.2cqw;
+  letter-spacing: 0.35em;
   text-transform: uppercase;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
 }
 
 .album-cover-title {
-  margin: 0 0 0.7em;
-  font-size: clamp(28px, 4vw, 64px);
+  margin: 1.2cqw 0 3.5cqw;
+  font-size: 6.4cqw;
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 .album-cover-tracks {
@@ -79,13 +84,14 @@
   padding: 0;
   list-style: none;
   counter-reset: track;
-  font-size: clamp(14px, 1.7vw, 28px);
+  font-size: 2.9cqw;
+  letter-spacing: 0.02em;
 }
 
 .album-cover-track {
   counter-increment: track;
-  margin-top: 0.35em;
-  color: var(--ink-muted);
+  margin: 0.9cqw 0;
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
 }
 
 .album-cover-track-button {

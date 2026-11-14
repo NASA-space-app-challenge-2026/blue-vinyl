@@ -39,9 +39,10 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 
 - Full-viewport stage; nothing scrolls on desktop.
 - The sleeve is tilted a little and tucked **behind** the record. The record overlaps the sleeve's right edge; the title and track list wrap before it so no text hides behind the record.
-- Each album's sleeve has its own angle between -6deg and -2deg, picked from its place in the catalog, so the sleeves differ but each always looks the same. A sleeve never stands straight.
+- Each album's sleeve has its own angle between -3deg and -1deg, picked from its place in the catalog, so the sleeves differ but each always looks the same. A sleeve never stands straight.
 - Hovering the mouse over the sleeve leans it a few degrees in 3D toward the pointer, like a card in the hand; it eases back when the mouse leaves.
-- The sleeve has a dark gradient at the bottom so the title and track list stay readable over any cover photo.
+- The sleeve's corners are rounded by 2px, just off sharp.
+- The sleeve's text is sized with the sleeve, as print on a sleeve is. It sits on a dark gradient at the bottom, and every line has a soft dark shadow, so the title and track list stay readable over any cover photo.
 - The sleeve shows the current track's cover when the track has one, else the album's; it fades from one to the next as the tracks change.
 - Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. The credits of the cover shown, the album's data, the instruments and the globe's map/imagery run round the record's rim, outside the grooves, turning with the record (centred at 12 o'clock at rest) and shrunk to fit if long.
 - Always landscape: the screen maintains the horizontal sleeve-and-turntable layout on all viewports without vertical stacking. In portrait orientation (e.g. mobile phones held vertically), the screen is rotated 90 degrees via CSS transform so it completely fills the viewport in a forced landscape layout.
@@ -90,6 +91,8 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 
 - Chrome arm pivoting at about 1 o'clock on a dark base: ringed counterweight, gimbal, pivot cap, a tube that runs straight and then bends, and a headshell turned toward the centre with a cartridge, needle and finger lift.
 - It reads the right side of the record. At rest the needle sits just off the record's right edge.
+- The record sits a little higher (`RECORD_RAISE`, 0.07 radii) than where it was first laid out with the arm; the arm stays where it was mounted, so its pivot is a little closer to the record and its angles follow from that.
+- It casts a soft drop shadow down and to the right onto the record, falling a little away from it as it stands above the record.
 - It eases (exponentially) between positions instead of jumping: onto the groove when cued, back to rest when lifted. While playing it follows the groove for the current position.
 - The listener can grab and drag it. While held, the clock stops and the needle position scrubs the album; released over the record, playback resumes from there; released off it, the arm returns to rest.
 
@@ -98,6 +101,7 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | Input | Action |
 | --- | --- |
 | Space | Play / pause |
+| Up / down arrow keys | Volume up / down by 10 (of 100); holding the key keeps turning it. The volume slider opens to show the level and folds back after the same idle time |
 | Click on the record grooves | Play / pause |
 | Click on the progress ring | Play the current track from that point; sets the arm down first when stopped |
 | Drag the tonearm | Scrub; drop on the record to play from there, off it to stop |
@@ -122,6 +126,8 @@ The sleeves stand in a vertical column in catalog order, like pages: the previou
 1. The record (vinyl and globe label, not the tonearm) shrinks and lifts off the platter clear of the sleeve, then slides into it.
 2. The column moves one place, carrying the record off with its sleeve: up for the next album, down for the previous one. It moves like a toss, fast off the mark and slowing to land: the leaving sleeve spins away, and the new sleeve spins in, swings a little past its own album's angle and settles on it.
 3. The albums shift back by one at once, so the record is now in the new sleeve, and it is drawn back out onto the platter.
+
+Every change asked for meanwhile moves the column on one more place once it is there. One asked while the record is being drawn out turns it straight back into the sleeve, which the column then carries off, so pressing again and again never waits for the record to land.
 
 Only CSS `translate` and `scale` animate, so the layout and the sleeve's tilt stay put. The stage cannot be touched while it plays.
 

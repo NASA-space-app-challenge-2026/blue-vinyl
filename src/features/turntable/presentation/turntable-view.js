@@ -5,6 +5,7 @@ import {
   LABEL_RADIUS,
   PIVOT,
   PLATTER,
+  RECORD_RAISE,
   REST_BEARING,
   TONEARM,
   armBearing,
@@ -93,7 +94,8 @@ const BOUNDS = (() => {
   const right = Math.max(1, PIVOT.x + BASE_RADIUS, needleAt(REST_BEARING).x + HEADSHELL.width);
   // The counterweight swings around the pivot, so reserve its reach in every direction above it.
   const top = Math.min(-1, PIVOT.y - Math.max(BASE_RADIUS, COUNTERWEIGHT.length));
-  const bottom = 1;
+  // The room the record was raised out of stays below it, so the arm stands where it did.
+  const bottom = 1 + RECORD_RAISE;
   return Object.freeze({ left, top, width: right - left, height: bottom - top });
 })();
 

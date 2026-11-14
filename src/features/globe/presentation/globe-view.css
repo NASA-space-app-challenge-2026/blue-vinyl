@@ -1,3 +1,9 @@
+/* globe.gl's scene (its canvas and the markers it lays over it) is one layer of its own. The markers' renderer stacks
+   them by depth with z-indexes, which would otherwise rise over the date and the other text drawn on the globe. */
+.globe-view .scene-container {
+  isolation: isolate;
+}
+
 /* Turns the Blue Marble texture into a muted dark map: lighter land on a deep sea. */
 .globe-view[data-theme='satellite'] canvas {
   filter: grayscale(0.85) brightness(0.85) contrast(1.15);

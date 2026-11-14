@@ -153,7 +153,7 @@ const lightningComposer = new LightningComposer();
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
-createVolumeControl(transportControls, {
+const volumeControl = createVolumeControl(transportControls, {
   onChange: (level) => {
     music.setVolume(level);
     soundEngine.setVolume(level);
@@ -176,8 +176,10 @@ createCatView();
 
 // Album switch keys, as the previous and next chevrons.
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
+// Volume keys: up louder, down quieter.
+const VOLUME_KEYS = Object.freeze({ ArrowUp: 1, ArrowDown: -1 });
 
-// Space always plays or pauses, and the arrows switch albums, wherever the focus is.
+// Space always plays or pauses, left and right switch albums and up and down set the volume, wherever the focus is.
 // Captured before any control sees the key, so a button left focused by a click is not pressed again.
 document.addEventListener(
   'keydown',
@@ -189,13 +191,16 @@ document.addEventListener(
       if (!event.repeat) togglePlayback();
       return;
     }
-    const direction = ALBUM_KEYS[event.key];
-    if (!direction) return;
+    const albumStep = ALBUM_KEYS[event.key];
+    const volumeStep = VOLUME_KEYS[event.key];
+    if (!albumStep && !volumeStep) return;
     // The volume slider and the theme radios keep their arrows while used from the keyboard.
     if (event.target instanceof HTMLInputElement && event.target !== clickFocused) return;
     event.preventDefault();
     releaseClickFocus();
-    if (!event.repeat) switchAlbum(direction);
+    // Holding an up or down key keeps turning the volume; holding left or right switches albums once.
+    if (volumeStep) volumeControl.step(volumeStep);
+    else if (!event.repeat) switchAlbum(albumStep);
   },
   { capture: true },
 );
@@ -433,13 +438,13 @@ function takePendingStep() {
 }
 
 /**
- * Changes records, once for `step` (-1 or 1) and once more for each step asked for meanwhile: the arm lifts, the
- * record goes into its sleeve and the column of sleeves moves along to the new album, whose record comes out stopped
- * at its start. The catalog wraps around.
+ * Changes records, once for `step` (-1 or 1) and once more for each step asked for meanwhile, even while the new
+ * record is being drawn out (see createRecordSwap): the arm lifts, the record goes into its sleeve and the column of
+ * sleeves moves along to the new album, whose record comes out stopped at its start. The catalog wraps around.
  */
 async function switchAlbum(step) {
   if (swapping) {
-    pendingSteps += step;
+    if (recordSwap.skip()) pendingSteps += step;
     return;
   }
   swapping = true;
