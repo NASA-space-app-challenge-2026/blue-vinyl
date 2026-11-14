@@ -2,6 +2,7 @@ import { createIceFall } from './ice-fall.js';
 import { createIceMorph } from './ice-morph.js';
 
 import { createBirdsLayer } from './birds-layer.js';
+import { createForestLayer } from './forest-layer.js';
 
 // globe.gl is loaded as a UMD bundle in index.html: it ships one copy of three.js,
 // while the ESM build pulls several three.js versions from the CDN.
@@ -31,7 +32,7 @@ function fittedAltitude(camera) {
 /**
  * Interactive WebGL globe that fills its container. Drag to rotate, scroll to zoom in.
  * Zooming out stops at the fitted size, so the globe never shrinks away from the label edge.
- * It turns to keep a focus point (the flock, or the pole of a track's ice) at its centre; turned or zoomed by hand, it glides back a moment after release.
+ * It turns to keep a focus point (the flock, the ISS, or the pole of a track's ice) at its centre; turned or zoomed by hand, it glides back a moment after release.
  *
  * It can draw a track's sea ice, morphing from year to year. When a year loses ice, pieces of it fall from where it
  * was into the water at the bottom of the label.
@@ -129,7 +130,10 @@ export function createGlobeView(container) {
     }, RETURN_DELAY_MS);
   });
 
-  /** Eases the north-up globe so the focus moves toward its centre, and the zoom back to the fitted size, over `dt` seconds. */
+  /**
+   * Eases the north-up globe so the focus moves toward its centre, and the zoom toward the fitted size (or the share of
+   * it the focus asks for with `zoom`, closer below 1), over `dt` seconds.
+   */
   function follow(dt, tau = FOLLOW_TAU_SEC) {
     if (userTurning) return;
     const focus = getFocus();
@@ -140,7 +144,7 @@ export function createGlobeView(container) {
     globe.pointOfView({
       lat: view.lat + k * (focus.lat - view.lat),
       lng: view.lng + k * dLng,
-      altitude: view.altitude + k * (fitAltitude - view.altitude),
+      altitude: view.altitude + k * (fitAltitude * (focus.zoom ?? 1) - view.altitude),
     });
   }
 
@@ -172,11 +176,9 @@ export function createGlobeView(container) {
     return (2 * gap * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(1, container.clientHeight);
   }
 
-  const birds = createBirdsLayer({
-    globe,
-    unitsPerPx,
-    setElements: (elements) => globe.htmlElementsData(elements),
-  });
+  const layerView = { globe, unitsPerPx, setElements: (elements) => globe.htmlElementsData(elements) };
+  const birds = createBirdsLayer(layerView);
+  const forest = createForestLayer(layerView);
   globe.htmlElement('el').htmlTransitionDuration(0);
 
   return {
@@ -184,7 +186,8 @@ export function createGlobeView(container) {
     showIce,
     setWaterLine,
     birds,
-    /** @param {() => ({ lat: number, lon: number } | null)} next */
+    forest,
+    /** @param {() => ({ lat: number, lon: number, zoom?: number } | null)} next */
     setFocus(next) {
       getFocus = next;
     },

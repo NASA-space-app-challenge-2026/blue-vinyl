@@ -20,6 +20,8 @@ export const AlbumCategory = Object.freeze({
  * @property {number} durationSec
  * @property {IceSeaSource} [iceSea] data, sound and view of a polar track
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
+ * @property {{ orbitUrl: string, cellsUrl: string, airUrl: string }} [forest] the orbit, forest cells and CO₂ months
+ *   the track plays (see tracks/domain/forest-track.js)
  * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
  * @property {string} [color] CSS color the track's data is drawn in
  * @property {string} [coverUrl] the track's own cover image, shown on the sleeve while it is the current track

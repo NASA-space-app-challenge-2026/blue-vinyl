@@ -2,6 +2,9 @@
 // frequency band, mirrored left and right: low notes at 6 o'clock rising to high ones at 12. Like sunlight scattered
 // in the air, a thin near-white band hugs the rim and a haze in the track's colour fades out beyond it; where a band
 // is loud the rim brightens and the haze reaches further. It fades away with the music.
+//
+// An album can also thicken the air (setAir): the haze then reaches further and stronger all round, whatever the
+// music, like the blanket of CO₂ the forest album plays.
 
 // The same three.js revision globe.gl@2.46.2 bundles.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
@@ -23,6 +26,8 @@ const HAZE_REACH = Object.freeze({ silent: 0.04, loud: 0.2 });
 const RIM_GAIN = Object.freeze({ silent: 0.35, loud: 1 });
 const HAZE_GAIN = Object.freeze({ silent: 0.2, loud: 0.9 });
 const RIM_WHITENING = 0.75;
+// What a fully thick air (setAir(1)) adds to the haze's reach (globe radii) and strength.
+const AIR = Object.freeze({ reach: 0.16, gain: 0.45 });
 // A new track's colour eases in with this time constant.
 const COLOR_TAU_SEC = 0.4;
 
@@ -41,6 +46,7 @@ uniform sampler2D uLevels;
 uniform vec2 uCenter;
 uniform float uRadius;
 uniform vec3 uColor;
+uniform float uAir;
 void main() {
   vec2 p = gl_FragCoord.xy - uCenter;
   // 0 at 6 o'clock to 1 at 12 on both sides, sampled between texel centres so the bands blend.
@@ -50,8 +56,9 @@ void main() {
   float h = length(p) / uRadius - 1.0;
   float x = h / ${f(RIM_WIDTH)};
   float rim = exp(-x * x) * mix(${f(RIM_GAIN.silent)}, ${f(RIM_GAIN.loud)}, level);
-  float haze = exp(-max(h, 0.0) / mix(${f(HAZE_REACH.silent)}, ${f(HAZE_REACH.loud)}, level)) * step(0.0, h)
-    * mix(${f(HAZE_GAIN.silent)}, ${f(HAZE_GAIN.loud)}, level);
+  float reach = mix(${f(HAZE_REACH.silent)}, ${f(HAZE_REACH.loud)}, level) + uAir * ${f(AIR.reach)};
+  float haze = exp(-max(h, 0.0) / reach) * step(0.0, h)
+    * (mix(${f(HAZE_GAIN.silent)}, ${f(HAZE_GAIN.loud)}, level) + uAir * ${f(AIR.gain)});
   float alpha = clamp(rim + haze, 0.0, 1.0);
   vec3 color = mix(uColor, vec3(1.0), ${f(RIM_WHITENING)} * rim / max(rim + haze, 1e-4));
   gl_FragColor = vec4(color * alpha, alpha);
@@ -81,6 +88,7 @@ export function createHalo(canvas, getAnalyser) {
       uCenter: { value: new THREE.Vector2() },
       uRadius: { value: 1 },
       uColor: { value: color },
+      uAir: { value: 0 },
     },
     blending: THREE.NoBlending,
     depthTest: false,
@@ -107,6 +115,11 @@ export function createHalo(canvas, getAnalyser) {
     const { r, g, b } = new THREE.Color(css).getRGB({}, THREE.SRGBColorSpace);
     targetColor.set(r, g, b);
     if (frame === null) color.copy(targetColor);
+  }
+
+  /** @param {number} thickness 0 (the music alone) to 1 (the thickest air) */
+  function setAir(thickness) {
+    material.uniforms.uAir.value = thickness;
   }
 
   /** Starts drawing frames, if not already; they stop by themselves once the music has fallen silent. */
@@ -158,5 +171,5 @@ export function createHalo(canvas, getAnalyser) {
     return levels.some((level) => level > 0) ? levels : null;
   }
 
-  return { place, setColor, wake };
+  return { place, setColor, setAir, wake };
 }

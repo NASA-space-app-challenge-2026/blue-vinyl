@@ -74,6 +74,16 @@ An album whose tracks have data draws each year of the playing track on the glob
 
 Before a track plays, the globe shows its first year. The text and water never take pointer events, so the globe stays draggable.
 
+The forest album draws one ISS orbit instead (see [albums/forest.md](albums/forest.md)):
+
+| Element | Look | Changes |
+| --- | --- | --- |
+| Camera | Follows the ISS, closer than the fitted view (45% of its altitude) | Turns with a time constant of 0.5 s, so it keeps up with the orbit |
+| ISS and ground track | A white dot ringed in the track's colour, with a glow; a comet tail of the last 24 steps behind it | Moves along the orbit a step (0.22 s) at a time, the sea four times as fast as the land |
+| Forest | Columns on 0.25° cells within 1.5° of the orbit, as tall as the canopy (45 m stands 6 globe units), coloured like SVS 4950: brown and dark green short, bright green and white tall; tops lit, sides darker | Each grows out of the ground over 3 steps as the ISS passes it. Where the ISS crosses tall forest (25 m or more, under a step of 20 m or more), its tall columns flash white as the celesta rings. Scrubbing back takes them down again |
+| Air | The halo around the globe thickens: its haze reaches further and shines stronger, in the track's colour | Follows the month's CO₂ from the song's lowest month (none) to its highest (fully thick), so it swells over the years and thins a little each northern summer |
+| Month and CO₂ | At 6 o'clock, such as `Aug 2020 · 410.3 ppm` | Every month (two steps) |
+
 ## Globe Themes
 
 Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/globe/domain/globe-theme.js`) and their sources in `src/features/globe/data/globe-themes.js`.

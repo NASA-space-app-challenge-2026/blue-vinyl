@@ -7,7 +7,7 @@
     "dev": "npm start",
     "watch": "npm start",
     "serve": "npx --yes serve@14.2.6 .",
-    "notebook": "uvx --with pandas --with matplotlib --with requests --with geopandas jupyter lab notebooks",
+    "notebook": "uvx --with pandas --with matplotlib --with requests --with geopandas --with h5py jupyter lab notebooks",
     "soundfont": "node scripts/build-soundfont.mjs"
   },
   "devDependencies": {

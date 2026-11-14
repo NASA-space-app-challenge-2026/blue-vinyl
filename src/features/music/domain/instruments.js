@@ -6,6 +6,8 @@ export const SOUND_FONT = 'orchestra.sf2';
 export const CC = Object.freeze({
   VOLUME: 7,
   EXPRESSION: 11,
+  // Lowers the filter cutoff below 64 (the sound font's own); 64 leaves it as it is.
+  BRIGHTNESS: 74,
   RESET_ALL: 121,
 });
 
@@ -20,4 +22,12 @@ export const Instrument = Object.freeze({
   CELLO: { program: 42, volume: 90 },
   VIOLA: { program: 41, volume: 75 },
   VIOLIN: { program: 40, volume: 75 },
+  // The forest album: wooden leads, and the air around them.
+  MARIMBA: { program: 12, volume: 120 },
+  HARP: { program: 46, volume: 115 },
+  KOTO: { program: 107, volume: 110 },
+  PIZZICATO: { program: 45, volume: 120 },
+  CELESTA: { program: 8, volume: 85 },
+  CHOIR: { program: 52, volume: 80 },
+  SEASHORE: { program: 122, volume: 70 },
 });
