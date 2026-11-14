@@ -513,6 +513,7 @@ function renderData(trackIndex) {
     poleLat: track.iceSea.poleLat,
     shapes: data.iceShapes,
     at: at === 0 ? 0 : at - 1 + settle,
+    year: at,
     // The lost ice falls for as long as the year's chord is held.
     fallSec: YEAR_TIMELINE.beatSec,
   });

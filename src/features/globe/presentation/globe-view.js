@@ -105,7 +105,7 @@ export function createGlobeView(container) {
   // The poles of the tracks prepared, whose grids the ice builds as soon as it is made.
   const icePoles = new Set();
   const fall = createIceFall(container);
-  // The year the ice last morphed from, to notice when playback moves on to the next one.
+  // The year whose bar last played, to notice when playback moves on to the next one.
   let fromYear = null;
 
   /**
@@ -153,9 +153,10 @@ export function createGlobeView(container) {
   /**
    * Shows a track's sea ice at a position in its years, morphing between years. Pass null to clear.
    *
-   * @param {{ key: string, poleLat: number, shapes: (object | null)[], at: number, fallSec?: number } | null} view
+   * @param {{ key: string, poleLat: number, shapes: (object | null)[], at: number, year: number, fallSec?: number } | null} view
    *   key names the track; shapes are GeoJSON geometries of each year's ice, in order; at is the position in them
-   *   (2.5 is halfway from the third year to the fourth); fallSec is how long the ice lost in a year keeps falling.
+   *   (2.5 is halfway from the third year to the fourth); year is the index of the year whose bar is playing, which
+   *   the ice morphs into; fallSec is how long the ice lost in a year keeps falling.
    */
   function showIce(view) {
     if (view && !ice) {
@@ -179,13 +180,13 @@ export function createGlobeView(container) {
 
   // When the ice starts morphing into the next year (playing on, not jumping), what it loses falls.
   function dropLostIce(view) {
-    const year = view ? Math.floor(view.at) : null;
-    const key = view ? `${view.key}:${year}` : null;
+    const key = view ? `${view.key}:${view.year}` : null;
     if (key === fromYear) return;
     const previous = fromYear;
     fromYear = key;
-    if (!view || previous !== `${view.key}:${year - 1}` || view.at - year > 0.5) return;
-    const { count, points } = ice.lost(year, year + 1, MAX_PIECES);
+    const from = view ? view.year - 1 : null;
+    if (!view || previous !== `${view.key}:${from}` || view.at - from > 0.5) return;
+    const { count, points } = ice.lost(from, view.year, MAX_PIECES);
     const pieces = Math.min(MAX_PIECES, Math.round(count / PIECE_CELLS));
     const step = points.length / Math.max(1, pieces);
     const screen = [];
