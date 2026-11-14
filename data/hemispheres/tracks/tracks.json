@@ -82,8 +82,8 @@
     ]
   },
   {
-    "file": "south_indian_2022_23.csv",
-    "title": "South Indian 2022–23",
+    "file": "south_indian_2023.csv",
+    "title": "South Indian 2023",
     "pages": [
       {
         "svsId": 5097,
@@ -98,7 +98,7 @@
         "message": "Tropical Cyclone Freddy first made landfall along the east coast of Madagascar just north of the town of Mananjary on Feb. 21, 2023, as a Category 3 cyclone with average winds reported at ~81 mph (130 km/h) and gusts up to ~112 mph (180 km/h). After crossing over Madagascar Freddy continued westward over the Mozambique Channel before making landfall again along the east coast of Mozambique just south of Vilankulos as a moderate tropical storm with sustained winds estimated at 50 mph. Despite being weaker at landfall, Freddy caused widespread flooding across parts of Mozambique due to the storm"
       }
     ],
-    "note": "Ours: every storm of one basin's season, one track per run of tropical records (2022-12-01 to 2023-04-30); see notebooks/hemispheres_album.ipynb, section 11.",
+    "note": "Ours: every storm of one basin's season, one track per run of tropical records (2023-01-01 to 2023-04-30); see notebooks/hemispheres_album.ipynb, section 11.",
     "sources": [
       {
         "source": "IBTrACS v04r01, US agency (NHC/JTWC) best tracks (USA_* columns)",
@@ -121,7 +121,7 @@
       "wind_kt": "knots, 1-minute sustained (US agency)"
     },
     "timeRange": [
-      "2022-12-15",
+      "2023-01-01",
       "2023-04-15"
     ]
   },

@@ -33,7 +33,7 @@ import { loadStormSeason } from '../features/tracks/data/storm-season-source.js'
 import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
-import { seasonSpan, seasonTimeAt } from '../features/tracks/domain/storm-season.js';
+import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
@@ -306,7 +306,7 @@ async function loadSeasons(target) {
     if (!tracks) return null;
     const { season, durationSec } = target.tracks[i];
     const composer = new StormSeasonComposer(season.lead, season.hemisphere);
-    return seasonSong(composer, tracks, seasonSpan(season.from, season.to), durationSec, season.focus);
+    return seasonSong(composer, tracks, season.span, durationSec, season.focus);
   });
   render();
   globe.glide();
@@ -315,7 +315,7 @@ async function loadSeasons(target) {
 // Shows `song`'s season on the globe, the glow in `color`; null takes the storms off.
 function showSeason(song, color) {
   shownSeason = song;
-  globe.storms.reset();
+  globe.storms.reset(color);
   if (!song) return;
   focus = song.focus;
   halo.setColor(color);

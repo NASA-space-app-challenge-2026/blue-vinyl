@@ -27,10 +27,10 @@ export const AlbumCategory = Object.freeze({
  *
  * @typedef {Object} StormSeasonSource
  * @property {string} url the season's storms
- * @property {string} from first day the track plays, `YYYY-MM-DD`
- * @property {string} to last day the track plays, `YYYY-MM-DD`
+ * @property {{ startMs: number, endMs: number }} span the data time the track plays, its file's first record to its
+ *   last (see seasonSpan in tracks/domain/storm-season.js)
  * @property {string} hemisphere one of Hemisphere (see tracks/domain/storm-season.js): where the storms sing
- * @property {Object} lead the Instrument the storms sing on (see music/domain/instruments.js)
+ * @property {Object} lead the Lead the storms sing on (see music/domain/patches.js)
  * @property {{ lat: number, lon: number, arcDeg: number }} focus the ocean's centre, held in the middle of the globe,
  *   and how many degrees of arc from it the label's edge is
  */

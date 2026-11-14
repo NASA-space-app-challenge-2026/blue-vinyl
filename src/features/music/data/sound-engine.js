@@ -8,9 +8,14 @@
 //
 // Space: the whole mix sits where the sample is, as seen from where the song starts (north ahead, east to the
 // right), further away the further it has gone.
+//
+// Besides the sound font, a composer may play the analog synth (see analog-synth.js) and turn effects on the whole mix
+// (see mix-space.js); both start over with the music.
 
 import { CC, SOUND_FONT } from '../domain/instruments.js';
 import { bearing, distanceKm } from '../../tracks/domain/geo.js';
+import { createAnalogSynth } from './analog-synth.js';
+import { createMixSpace } from './mix-space.js';
 
 const SYNTH_LIB_URL = 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4.3.14/+esm';
 const SYNTH_PROCESSOR_URL = 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4.3.14/dist/spessasynth_processor.min.js';
@@ -22,8 +27,6 @@ const LOOKAHEAD_SEC = 0.15;
 const RESYNC_SEC = 0.15;
 // Notes stop this much before their full length, so repeated notes re-strike cleanly.
 const NOTE_GAP_SEC = 0.02;
-// The sound font plays quietly; this brings the mix up to a normal level.
-const MIX_GAIN = 3;
 // Volume changes ease in with this time constant, so dragging the slider does not click.
 const VOLUME_RAMP_SEC = 0.02;
 // The analyser the visuals read; it sits before the volume, so they show the music even when it is turned down.
@@ -36,6 +39,8 @@ const PANNER = Object.freeze({ panningModel: 'HRTF', distanceModel: 'inverse', r
 const MIDI_CHANNELS = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15]);
 // The pitch wheel's centre and its range in semitones each way, unless the composer sets its own (bendRangeSemitones).
 const PITCH_WHEEL = Object.freeze({ centre: 8192, rangeSemitones: 2 });
+// Analog voices still open when the music starts over or stops fade out over this long.
+const VOICE_STOP_SEC = 0.05;
 
 /**
  * What a track plays. Composer-specific data (a flock's lead, a storm's kit) rides along for the composer's setSong.
@@ -58,6 +63,10 @@ export function createSoundEngine() {
   let panner = null;
   let analyser = null;
   let synth = null;
+  let space = null;
+  let analog = null;
+  // The analog voices open now (see music.voice).
+  const voices = new Set();
   let loading = null;
   let volume = 1;
   /** @type {Map<Object, number>} */
@@ -66,7 +75,7 @@ export function createSoundEngine() {
   let composer = null;
   // The song the composer is fitted to, with where it starts and how far (km) from there it ever gets.
   let song = null;
-  let space = null;
+  let reach = null;
   // Where the audio clock and the track's clock last lined up, the next step's audio time, its place in the bar, and
   // the bar's step length.
   let anchor = null;
@@ -85,6 +94,9 @@ export function createSoundEngine() {
       panner.connect(output);
       analyser = new AnalyserNode(context, ANALYSER);
       analyser.connect(panner);
+      space = createMixSpace(context);
+      space.output.connect(analyser);
+      analog = createAnalogSynth(context, space.input);
     }
     loading ??= load();
     return Promise.all([loading, context.resume()]);
@@ -94,7 +106,7 @@ export function createSoundEngine() {
     const [{ WorkletSynthesizer }, font] = await Promise.all([import(SYNTH_LIB_URL), fetchSoundFont()]);
     await context.audioWorklet.addModule(SYNTH_PROCESSOR_URL);
     const instance = new WorkletSynthesizer(context);
-    instance.connect(analyser);
+    instance.connect(space.input);
     await instance.soundBankManager.addSoundBank(font, SOUND_FONT);
     await instance.isReady;
     synth = instance;
@@ -125,7 +137,7 @@ export function createSoundEngine() {
 
   // Squared, so the slider feels even to the ear.
   function level() {
-    return MIX_GAIN * volume ** 2;
+    return volume ** 2;
   }
 
   /** @param {number} value 0 (silent) to 1 (full) */
@@ -138,13 +150,13 @@ export function createSoundEngine() {
   function setSong(next) {
     if (song === next) return;
     if (composer !== next.composer) {
-      synth.stopAll();
+      silence();
       assignChannels(next.composer);
     }
     song = next;
     anchor = null;
     const origin = next.path[0];
-    space = { origin, maxDistance: Math.max(...next.path.map((s) => distanceKm(origin.lat, origin.lon, s.lat, s.lon))) };
+    reach = { origin, maxDistance: Math.max(...next.path.map((s) => distanceKm(origin.lat, origin.lon, s.lat, s.lon))) };
     composer.setSong(next);
   }
 
@@ -160,7 +172,8 @@ export function createSoundEngine() {
     const now = context.currentTime;
     const expected = anchor ? anchor.elapsedSec + (now - anchor.audioSec) : null;
     if (expected === null || Math.abs(expected - elapsedSec) > RESYNC_SEC) {
-      synth.stopAll();
+      silence();
+      space.reset(now);
       anchor = { audioSec: now, elapsedSec };
       nextStepAt = now;
       step = 0;
@@ -186,7 +199,7 @@ export function createSoundEngine() {
   // Moves the mix to the sample's bearing from where the song starts (the listener faces north, -z; east is +x), at a
   // distance that grows with how far it has gone.
   function place(sample, at) {
-    const { origin, maxDistance } = space;
+    const { origin, maxDistance } = reach;
     const angle = bearing(origin.lat, origin.lon, sample.lat, sample.lon);
     const gone = maxDistance > 0 ? distanceKm(origin.lat, origin.lon, sample.lat, sample.lon) / maxDistance : 0;
     const radius = SPACE.near + gone * (SPACE.far - SPACE.near);
@@ -219,6 +232,23 @@ export function createSoundEngine() {
       synth.programChange(channel, sound.program, { time: at });
       synth.controllerChange(channel, CC.VOLUME, sound.volume, { time: at });
     },
+    synthNote(patch, midi, velocity, at, steps, shape) {
+      analog.play(patch, midi, velocity, at, steps * stepSec, shape);
+    },
+    voice(lead, sound, at) {
+      const voice = analog.voice(lead, sound, at);
+      voices.add(voice);
+      return {
+        move: voice.move,
+        close(when, releaseSec) {
+          voice.close(when, releaseSec);
+          voices.delete(voice);
+        },
+      };
+    },
+    effect(effect, value, at) {
+      space.set(effect, value, at);
+    },
   };
 
   function channelOf(instrument) {
@@ -227,10 +257,17 @@ export function createSoundEngine() {
     return channel;
   }
 
+  // Stops every note and fades out every analog voice still open.
+  function silence() {
+    synth?.stopAll();
+    for (const voice of voices) voice.close(context.currentTime, VOICE_STOP_SEC);
+    voices.clear();
+  }
+
   /** Silences everything; the next follow() starts over. */
   function stop() {
     anchor = null;
-    synth?.stopAll();
+    silence();
   }
 
   return {

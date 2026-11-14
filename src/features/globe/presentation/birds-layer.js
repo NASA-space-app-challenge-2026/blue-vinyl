@@ -98,33 +98,44 @@ export function createBirdsLayer(view) {
     view.setElements(elements);
   }
 
-  // Screen heading in degrees clockwise from up of the way the bird goes around `time`, or null while it is still.
-  function headingAt(track, time) {
-    const [from, to] = [time - HEADING_SPAN_MS / 2, time + HEADING_SPAN_MS / 2].map((t) => {
-      const clamped = Math.min(Math.max(t, track.t[0]), track.t[track.t.length - 1]);
-      return positionAt(track, lastIndexAtOrBefore(track.t, clamped), clamped);
-    });
-    const p = view.globe.getScreenCoords(from[0], from[1]);
-    const q = view.globe.getScreenCoords(to[0], to[1]);
-    const dx = q.x - p.x;
-    const dy = q.y - p.y;
-    if (Math.hypot(dx, dy) < MIN_HEADING_PX) return null;
-    return (Math.atan2(dx, -dy) * 180) / Math.PI;
-  }
-
   function place(layer, track, time, [lat, lng]) {
-    layer.targetHeading = headingAt(track, time) ?? layer.targetHeading;
-    const now = performance.now();
-    const k = layer.turnedAt === null ? 1 : 1 - Math.exp(-(now - layer.turnedAt) / TURN_TAU_MS);
-    layer.turnedAt = now;
-    const turn = ((((layer.targetHeading - layer.heading) % 360) + 540) % 360) - 180;
-    layer.heading += k * turn;
+    turn(view, layer, track, time);
     layer.bird.lat = lat;
     layer.bird.lng = lng;
     layer.bird.el.firstElementChild.style.transform = `rotate(${layer.heading}deg)`;
   }
 
   return { reset, render };
+}
+
+// Screen heading in degrees clockwise from up of the way `track` goes around `time`, or null while it is still.
+function headingAt(view, track, time) {
+  const [from, to] = [time - HEADING_SPAN_MS / 2, time + HEADING_SPAN_MS / 2].map((t) => {
+    const clamped = Math.min(Math.max(t, track.t[0]), track.t[track.t.length - 1]);
+    return positionAt(track, lastIndexAtOrBefore(track.t, clamped), clamped);
+  });
+  const p = view.globe.getScreenCoords(from[0], from[1]);
+  const q = view.globe.getScreenCoords(to[0], to[1]);
+  const dx = q.x - p.x;
+  const dy = q.y - p.y;
+  if (Math.hypot(dx, dy) < MIN_HEADING_PX) return null;
+  return (Math.atan2(dx, -dy) * 180) / Math.PI;
+}
+
+/**
+ * Turns `layer.heading` (degrees clockwise from up on screen) toward the way `track` goes at `time`, the short way
+ * round; `layer` also keeps `targetHeading` and `turnedAt` (null: it takes the heading at once).
+ *
+ * @param {{ globe: Object }} view
+ * @param {{ heading: number, targetHeading: number, turnedAt: number | null }} layer
+ */
+export function turn(view, layer, track, time) {
+  layer.targetHeading = headingAt(view, track, time) ?? layer.targetHeading;
+  const now = performance.now();
+  const k = layer.turnedAt === null ? 1 : 1 - Math.exp(-(now - layer.turnedAt) / TURN_TAU_MS);
+  layer.turnedAt = now;
+  const by = ((((layer.targetHeading - layer.heading) % 360) + 540) % 360) - 180;
+  layer.heading += k * by;
 }
 
 // Fades from the opacity it has now, so a bird that turns back mid-fade does not flash.

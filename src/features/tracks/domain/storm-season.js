@@ -8,16 +8,17 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const Hemisphere = Object.freeze({ NORTH: 'north', SOUTH: 'south' });
 
-// Each hemisphere's storm calendar, as [month, day]: the northern one from May 1 to Nov 30, the southern one six months
-// on. A storm's path is coloured by where its birth falls in it (see calendarShare).
-const CALENDAR = Object.freeze({
-  [Hemisphere.NORTH]: { from: [5, 1], to: [11, 30] },
-  [Hemisphere.SOUTH]: { from: [11, 1], to: [5, 31] },
-});
+// A season track plays three days a second, held to `minSec`..`maxSec`: a basin's season of about five months in a
+// minute or less.
+const PACE = Object.freeze({ msPerSec: 3 * DAY_MS, minSec: 45, maxSec: 60 });
 
-// Saffir-Simpson thresholds in knots: below the first a tropical depression, then a tropical storm, then categories 1
-// to 5.
-const CATEGORY_KT = Object.freeze([34, 64, 83, 96, 113, 137]);
+// Each hemisphere's storm season, as months (0 = January): `months` long from `first`, the north's from May, the
+// south's six months later, from November. A storm up to EARLY_MONTHS before its season counts as early in it.
+const SEASON = Object.freeze({
+  [Hemisphere.NORTH]: Object.freeze({ first: 4, months: 7 }),
+  [Hemisphere.SOUTH]: Object.freeze({ first: 10, months: 7 }),
+});
+const EARLY_MONTHS = 2;
 
 // CSV column of each field; the unit is part of the column name.
 const Column = Object.freeze({ time: 'time', storm: 'storm', name: 'name', lat: 'lat_deg', lon: 'lon_deg', wind: 'wind_kt' });
@@ -76,14 +77,23 @@ function buildTrack(id, rows, index) {
 }
 
 /**
- * The span of data time a season track plays, from the start of its first day to the end of its last.
+ * The span of data time a season track plays, from its first record to its last.
  *
- * @param {string} from first day, `YYYY-MM-DD`
- * @param {string} to last day, `YYYY-MM-DD`
+ * @param {string} from the first record's time, ISO 8601
+ * @param {string} to the last record's time, ISO 8601
  * @returns {{ startMs: number, endMs: number }}
  */
 export function seasonSpan(from, to) {
-  return { startMs: Date.parse(`${from}T00:00Z`), endMs: Date.parse(`${to}T00:00Z`) + DAY_MS };
+  return { startMs: Date.parse(from), endMs: Date.parse(to) };
+}
+
+/**
+ * How long a season track that plays `span` lasts, at PACE.
+ *
+ * @param {{ startMs: number, endMs: number }} span
+ */
+export function seasonDurationSec({ startMs, endMs }) {
+  return Math.min(PACE.maxSec, Math.max(PACE.minSec, (endMs - startMs) / PACE.msPerSec));
 }
 
 /**
@@ -154,31 +164,17 @@ export function hemisphereOf(track) {
 }
 
 /**
- * Where the day `time` falls in `hemisphere`'s storm calendar: 0 on its first day, 1 on its last. A day between two
- * calendars is held at the end of the nearer one: an early storm at 0, a late one at 1.
+ * When in its hemisphere's storm season `track`'s storm formed: 0 on the season's first day, 1 at its end. An early
+ * storm, up to EARLY_MONTHS before the season, is held at 0; any other out of season at 1.
  *
- * @param {number} time ms since the epoch
- * @param {string} hemisphere one of Hemisphere
+ * @param {StormTrack} track
  */
-export function calendarShare(time, hemisphere) {
-  const { from, to } = CALENDAR[hemisphere];
-  const day = (y, [month, d]) => Date.UTC(y, month - 1, d);
-  const year = new Date(time).getUTCFullYear();
-  // The calendars begun the year before, this year and the next; the southern one runs over the new year.
-  for (const y of [year - 1, year, year + 1]) {
-    const start = day(y, from);
-    const end = day(day(y, to) < start ? y + 1 : y, to);
-    const halfGap = (day(y + 1, from) - end) / 2;
-    if (time >= start - halfGap && time < end + halfGap) return Math.min(1, Math.max(0, (time - start) / (end - start)));
-  }
-  throw new Error(`no ${hemisphere} storm calendar holds ${new Date(time).toISOString()}`);
-}
-
-/**
- * Saffir-Simpson category of a wind: -1 for a tropical depression, 0 for a tropical storm, then 1 to 5.
- *
- * @param {number} windKt
- */
-export function categoryOf(windKt) {
-  return CATEGORY_KT.filter((kt) => windKt >= kt).length - 1;
+export function seasonShare(track) {
+  const { first, months } = SEASON[hemisphereOf(track)];
+  const time = track.t[0];
+  const date = new Date(time);
+  const year = date.getUTCFullYear() - (date.getUTCMonth() < first - EARLY_MONTHS ? 1 : 0);
+  const from = Date.UTC(year, first, 1);
+  const to = Date.UTC(year, first + months, 1);
+  return Math.min(1, Math.max(0, (time - from) / (to - from)));
 }

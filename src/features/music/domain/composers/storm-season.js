@@ -1,89 +1,73 @@
-// Composer for the hemispheres album: one ocean's storm season. Every storm on the globe sings while it lives.
+// Composer for the hemispheres album: one ocean's whole storm season as ambient music, each storm a voice that glides
+// like a bird's call while it lives.
 //
-//   the sea: a pad that swings between Dmaj7 and Gmaj7 every two bars over a drone on D, from start to end, storms or
-//     none
-//   each storm: a voice of the track's lead that opens as the storm forms and fades as it ends, gliding between the
-//     notes of D major as the storm moves:
-//       latitude -> pitch, north higher (the southern oceans sing an octave and more below the northern ones)
-//       degrees east of where it formed -> pan, west to the left
-//       distance from the globe's centre -> loudness, silent at the label's edge
-//       wind -> loudness and how hard the note is struck
+//   the sea: a quiet pad and a low drone, I and IV in D, two bars each, playing on through the weeks with no storm
+//   each storm: one held voice on the track's lead (see Lead in ../patches.js), gliding between the notes of D major:
+//     latitude -> pitch, north higher, on its hemisphere's range (the south's lower, so a southern storm sinks as it
+//       heads for the pole)
+//     degrees east of where it formed -> place around the listener: every storm starts straight ahead, left as it
+//       heads west, back toward the middle as it turns east
+//     distance from the globe's centre -> loudness: full over the middle of the view, nothing at the label's edge
+//     wind -> loudness and brightness
 //
-// The track plays the season's days evenly over its length; each step's sample is the season at the data time it
-// sounds at, sampled whether a storm is alive or not, so the sea plays on through the quiet (see seasonSong).
+// The whole mix rings in a large room and echoes three steps behind. Each step's sample is the season at the data time
+// it sounds at, storms or none, so the sea plays on through the quiet (see seasonSong).
 
+import { Effect } from '../effects.js';
 import { CC, Instrument } from '../instruments.js';
+import { Patch } from '../patches.js';
 import { Hemisphere, stormsAt } from '../../../tracks/domain/storm-season.js';
+import { intensityOf } from '../../../tracks/domain/storm-track.js';
 import { arcDeg } from '../../../tracks/domain/geo.js';
 
 const BPM = 72;
 const STEPS_PER_BEAT = 4;
 const STEPS_PER_BAR = 16;
 
-// D major, as semitones above D.
-const KEY_ROOT = 2;
-const MAJOR = Object.freeze([0, 2, 4, 5, 7, 9, 11]);
-
-// The sea's chords, a voicing each, held CHORD_BARS bars in turn; the drone under them, renewed every DRONE_BARS.
-const CHORDS = Object.freeze([
-  Object.freeze([50, 54, 57, 61]), // Dmaj7
-  Object.freeze([55, 59, 62, 66]), // Gmaj7
-]);
-const CHORD_BARS = 2;
-const CHORD_VELOCITY = 48;
-const DRONE = Object.freeze([38, 45]); // D2 and A2
-const DRONE_BARS = 4;
-const DRONE_VELOCITY = 52;
-
-// Where each hemisphere's storms sing: the latitudes from `fromLat` (lowest note) to `toLat` (highest) spread over
-// `octaves` of D major from `lowMidi`, about a note every 2 degrees. North is higher in both.
+// The storms' scale, D major, as semitones above D.
+const SCALE = Object.freeze([0, 2, 4, 5, 7, 9, 11]);
+// Where each hemisphere's storms sing: latitude `lat[0]` at the foot (`baseMidi`, a D), `lat[1]` at the top of
+// `octaves` of the scale, about a note every two degrees, so a storm heading poleward moves a note every day or two.
 const PITCH_RANGE = Object.freeze({
-  [Hemisphere.NORTH]: Object.freeze({ fromLat: 5, toLat: 47, lowMidi: 50, octaves: 3 }), // D3 to D6
-  [Hemisphere.SOUTH]: Object.freeze({ fromLat: -35, toLat: -5, lowMidi: 38, octaves: 2 }), // D2 to D4
+  // Three octaves up from D3, rising as a storm heads north.
+  [Hemisphere.NORTH]: Object.freeze({ lat: [5, 47], baseMidi: 50, octaves: 3 }),
+  // Two octaves up from D2, below nearly every northern storm, sinking as a storm heads south.
+  [Hemisphere.SOUTH]: Object.freeze({ lat: [-35, -5], baseMidi: 38, octaves: 2 }),
 });
+// A voice slides to its next note over this long; it swells in over ONSET_SEC as its storm forms and fades over
+// RELEASE_SEC as it dies away.
+const GLIDE_SEC = 0.15;
+const ONSET_SEC = 0.12;
+const RELEASE_SEC = 0.8;
 
-// Storm voices: as many channels as storms can sound at once, fading ones included. Each glides with the pitch wheel
-// over BEND_RANGE semitones either way; a jump farther than that strikes the new note.
-const VOICES = 8;
-const BEND_RANGE = 12;
-const GLIDE = Object.freeze({ sec: 0.15, steps: 4 });
-// A voice opens over `attackSec` and fades over `releaseSec` once its storm has ended, in `steps` expression changes.
-const ATTACK = Object.freeze({ sec: 0.12, steps: 3 });
-const RELEASE = Object.freeze({ sec: 0.8, steps: 8 });
-// Loudness by wind: a depression at `weakest`, rising to 1 at category 5.
-const WIND = Object.freeze({ fromKt: 34, toKt: 137, weakest: 0.35 });
-const VELOCITY = Object.freeze({ weak: 60, strong: 110 });
-// Degrees of longitude east (or west) of where a storm formed that pan it fully right (or left).
-const PAN_FULL_DEG = 20;
+// How a storm sounds by intensity (see intensityOf), calm to full scale: its `gain`, and the filter's `cutoff` in
+// octaves above the note.
+const STRENGTH = Object.freeze({ gain: [0.35, 1], cutoff: [1, 4] });
+// Loudness by where a storm is: full within FULL_SHARE of the way from the globe's centre to the label's edge, fading
+// to nothing at the edge.
+const FULL_SHARE = 0.5;
+// A storm sounds fully to one side once it has gone this many degrees of longitude east or west of where it formed.
+const PAN_SPAN_DEG = 20;
 
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
+// The sea under the storms: the pad's chord and the drone's root (MIDI), SEA_BARS bars each, in turn.
+const SEA = Object.freeze([
+  Object.freeze({ chord: Object.freeze([50, 54, 57, 61]), root: 38 }), // Dmaj7 over D2
+  Object.freeze({ chord: Object.freeze([55, 59, 62, 66]), root: 43 }), // Gmaj7 over G2
+]);
+const SEA_BARS = 2;
+const SEA_VELOCITY = Object.freeze({ pad: 52, drone: 70 });
+/** @type {import('../../data/analog-synth.js').NoteShape} */
+const DRONE_SHAPE = Object.freeze({ cutoff: 0.8, resonance: 1, env: 1, decay: 1.5, gate: 0.9, release: 2.5 });
+const SPACE = Object.freeze({ reverb: 0.4, echo: 0.18, echoSteps: 3, feedback: 0.4 });
+// The pad's own reverb in the sound font (CC 91).
+const PAD_REVERB = 90;
 
-/** MIDI note of a scale degree of D major above `lowMidi` (a D). */
-function degreeToMidi(lowMidi, degree) {
-  const octave = Math.floor(degree / MAJOR.length);
-  return lowMidi + 12 * octave + MAJOR[degree - octave * MAJOR.length];
-}
-
-/**
- * Loudness (0..1) of a storm `arc` degrees from the globe's centre, when the label's edge is `edgeDeg` from it: full
- * within half way to the edge, then down to silence at the edge along a squared cosine.
- */
-function distanceGain(arc, edgeDeg) {
-  const inner = edgeDeg / 2;
-  if (arc <= inner) return 1;
-  if (arc >= edgeDeg) return 0;
-  return Math.cos(((arc - inner) / (edgeDeg - inner)) * (Math.PI / 2)) ** 2;
-}
-
-function windShare(windKt) {
-  return clamp((windKt - WIND.fromKt) / (WIND.toKt - WIND.fromKt), 0, 1);
-}
+const lerp = ([from, to], amount) => from + (to - from) * amount;
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 /**
  * The song (see music/data/sound-engine.js) of a storm season track that plays `span` over `durationSec`, held over
- * `focus`. The mix stays straight ahead (its path is the focus alone); each storm has its own pan instead.
+ * `focus`. The mix stays straight ahead (its path is the focus alone); the composer places each storm's voice instead.
  *
  * @param {StormSeasonComposer} composer
  * @param {import('../../../tracks/domain/storm-season.js').StormTrack[]} tracks
@@ -106,30 +90,28 @@ export function seasonSong(composer, tracks, span, durationSec, focus) {
 }
 
 export class StormSeasonComposer {
+  instruments = Object.freeze([Instrument.HALO_PAD]);
   stepSec = 60 / BPM / STEPS_PER_BEAT;
   stepsPerBar = STEPS_PER_BAR;
-  bendRangeSemitones = BEND_RANGE;
 
   /**
-   * @param {Object} lead the Instrument the storms sing on
+   * @param {import('../patches.js').Lead} lead what the storms sing on
    * @param {string} hemisphere one of Hemisphere: where the track's storms sing
    */
   constructor(lead, hemisphere) {
+    this.lead = lead;
     this.range = PITCH_RANGE[hemisphere];
-    this.voices = Array.from({ length: VOICES }, () => Object.freeze({ ...lead }));
-    this.instruments = Object.freeze([Instrument.HALO_PAD, Instrument.PAD, ...this.voices]);
   }
 
   /** @param {ReturnType<typeof seasonSong>} song */
   setSong(song) {
-    this.song = song;
+    this.focus = song.focus;
   }
 
   reset() {
-    // The voice singing each storm, by its track: { voice, held (the struck note), pitch (where it glides to) }.
-    this.singing = new Map();
-    // When each voice has faded out and can take another storm.
-    this.freeAt = new Map(this.voices.map((voice) => [voice, 0]));
+    this.started = false;
+    // Each storm's open voice, by its track.
+    this.voices = new Map();
   }
 
   /**
@@ -137,92 +119,73 @@ export class StormSeasonComposer {
    * @param {{ sample: { storms: import('../../../tracks/domain/storm-season.js').Storm[] }, step: number, bar: number, at: number }} now
    */
   playStep(music, { sample, step, bar, at }) {
-    if (step === 0) this.playSea(music, bar, at);
-    const alive = new Set();
+    if (!this.started) this.start(music, at);
+    if (step === 0 && bar % SEA_BARS === 0) this.playSea(music, bar, at);
+    const singing = new Set();
     for (const storm of sample.storms) {
-      alive.add(storm.track);
-      const sound = this.soundOf(storm);
-      const singer = this.singing.get(storm.track);
-      if (singer) this.move(music, singer, sound, at);
-      else this.open(music, storm.track, sound, at);
+      singing.add(storm.track);
+      this.sing(music, storm, at);
     }
-    for (const [track, singer] of this.singing) {
-      if (alive.has(track)) continue;
-      this.close(music, singer, at);
-      this.singing.delete(track);
+    for (const [track, voice] of this.voices) {
+      if (singing.has(track)) continue;
+      voice.close(at, RELEASE_SEC);
+      this.voices.delete(track);
     }
   }
 
-  // The sea, held under everything.
+  start(music, at) {
+    this.started = true;
+    music.effect(Effect.REVERB, SPACE.reverb, at);
+    music.effect(Effect.ECHO, SPACE.echo, at);
+    music.effect(Effect.ECHO_TIME, SPACE.echoSteps * this.stepSec, at);
+    music.effect(Effect.FEEDBACK, SPACE.feedback, at);
+    music.control(Instrument.HALO_PAD, CC.REVERB, PAD_REVERB, at);
+  }
+
   playSea(music, bar, at) {
-    if (bar % CHORD_BARS === 0) {
-      const chord = CHORDS[(bar / CHORD_BARS) % CHORDS.length];
-      for (const midi of chord) music.note(Instrument.HALO_PAD, midi, CHORD_VELOCITY, at, CHORD_BARS * STEPS_PER_BAR);
-    }
-    if (bar % DRONE_BARS === 0) {
-      for (const midi of DRONE) music.note(Instrument.PAD, midi, DRONE_VELOCITY, at, DRONE_BARS * STEPS_PER_BAR);
-    }
+    const { chord, root } = SEA[(bar / SEA_BARS) % SEA.length];
+    const steps = SEA_BARS * STEPS_PER_BAR;
+    for (const midi of chord) music.note(Instrument.HALO_PAD, midi, SEA_VELOCITY.pad, at, steps);
+    music.synthNote(Patch.CAVE, root, SEA_VELOCITY.drone, at, steps, DRONE_SHAPE);
   }
 
-  // What a storm sounds like now: its note, loudness (0..1), pan (0..127) and how hard a new note is struck.
+  // Moves the storm's voice (opening it as the storm forms) to where and how strong the storm is.
+  sing(music, storm, at) {
+    const sound = this.soundOf(storm);
+    const voice = this.voices.get(storm.track);
+    if (voice) {
+      voice.move(sound, at, GLIDE_SEC);
+      return;
+    }
+    const opened = music.voice(this.lead, { ...sound, gain: 0 }, at);
+    opened.move(sound, at, ONSET_SEC);
+    this.voices.set(storm.track, opened);
+  }
+
+  /** @returns {import('../../data/analog-synth.js').VoiceSound} */
   soundOf(storm) {
-    const { fromLat, toLat, lowMidi, octaves } = this.range;
-    const top = octaves * MAJOR.length;
-    const degree = clamp(Math.round(((storm.lat - fromLat) / (toLat - fromLat)) * top), 0, top);
-    const { focus } = this.song;
-    const wind = windShare(storm.wind);
-    const level = distanceGain(arcDeg(focus.lat, focus.lon, storm.lat, storm.lon), focus.arcDeg) * (WIND.weakest + (1 - WIND.weakest) * wind);
+    const intensity = intensityOf(storm.wind);
     return {
-      pitch: degreeToMidi(lowMidi, degree),
-      expression: Math.round(127 * level),
-      pan: Math.round(64 + 63 * clamp(storm.east / PAN_FULL_DEG, -1, 1)),
-      velocity: VELOCITY.weak + (VELOCITY.strong - VELOCITY.weak) * wind,
+      midi: this.noteOf(storm.lat),
+      gain: this.loudnessAt(storm.lat, storm.lon) * lerp(STRENGTH.gain, intensity),
+      levels: this.lead.waves.map((wave) => wave.level),
+      cutoff: lerp(STRENGTH.cutoff, intensity),
+      pan: clamp(storm.east / PAN_SPAN_DEG, -1, 1),
     };
   }
 
-  // A storm has formed: a free voice strikes its note and opens.
-  open(music, track, sound, at) {
-    const voice = this.voices.find((v) => this.freeAt.get(v) <= at && ![...this.singing.values()].some((s) => s.voice === v));
-    if (!voice) return;
-    music.control(voice, CC.EXPRESSION, 0, at);
-    music.control(voice, CC.PAN, sound.pan, at);
-    music.bend(voice, 0, at);
-    music.hold(voice, sound.pitch, sound.velocity, at);
-    for (let k = 1; k <= ATTACK.steps; k++) {
-      music.control(voice, CC.EXPRESSION, Math.round((sound.expression * k) / ATTACK.steps), at + (ATTACK.sec * k) / ATTACK.steps);
-    }
-    this.singing.set(track, { voice, held: sound.pitch, pitch: sound.pitch, expression: sound.expression });
+  // The note (MIDI) nearest latitude `lat` on the hemisphere's range.
+  noteOf(lat) {
+    const { lat: [from, to], baseMidi, octaves } = this.range;
+    const degree = Math.round(clamp((lat - from) / (to - from), 0, 1) * (octaves * SCALE.length - 1));
+    const octave = Math.floor(degree / SCALE.length);
+    return baseMidi + 12 * octave + SCALE[degree - octave * SCALE.length];
   }
 
-  // A storm goes on: its voice glides to its note, and follows its loudness and pan.
-  move(music, singer, sound, at) {
-    const { voice } = singer;
-    if (sound.pitch !== singer.pitch) {
-      if (Math.abs(sound.pitch - singer.held) > BEND_RANGE) {
-        music.release(voice, singer.held, at);
-        music.bend(voice, 0, at);
-        music.hold(voice, sound.pitch, sound.velocity, at);
-        singer.held = sound.pitch;
-      } else {
-        for (let k = 1; k <= GLIDE.steps; k++) {
-          const pitch = singer.pitch + ((sound.pitch - singer.pitch) * k) / GLIDE.steps;
-          music.bend(voice, pitch - singer.held, at + (GLIDE.sec * (k - 1)) / GLIDE.steps);
-        }
-      }
-      singer.pitch = sound.pitch;
-    }
-    music.control(voice, CC.EXPRESSION, sound.expression, at);
-    music.control(voice, CC.PAN, sound.pan, at);
-    singer.expression = sound.expression;
-  }
-
-  // A storm has ended: its voice fades out, then lets go of its note.
-  close(music, singer, at) {
-    const { voice } = singer;
-    for (let k = 1; k <= RELEASE.steps; k++) {
-      music.control(voice, CC.EXPRESSION, Math.round(singer.expression * (1 - k / RELEASE.steps)), at + (RELEASE.sec * k) / RELEASE.steps);
-    }
-    music.release(voice, singer.held, at + RELEASE.sec);
-    this.freeAt.set(voice, at + RELEASE.sec);
+  // How loud (0 to 1) a storm at `lat`, `lon` sounds, by how far it is from the globe's centre.
+  loudnessAt(lat, lon) {
+    const out = arcDeg(this.focus.lat, this.focus.lon, lat, lon) / this.focus.arcDeg;
+    const fade = clamp((out - FULL_SHARE) / (1 - FULL_SHARE), 0, 1);
+    return Math.cos((fade * Math.PI) / 2) ** 2;
   }
 }
