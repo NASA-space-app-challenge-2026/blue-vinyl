@@ -29,7 +29,7 @@ export function createSettingsMenu(parent, { globeThemes, globeTheme, onGlobeThe
 
   const toggle = document.createElement('button');
   toggle.type = 'button';
-  toggle.className = 'glass glass-button settings-toggle';
+  toggle.className = 'glass-segment settings-toggle';
   toggle.setAttribute('aria-label', 'Settings');
   toggle.setAttribute('aria-expanded', 'false');
   toggle.setAttribute('aria-controls', 'settings-panel');

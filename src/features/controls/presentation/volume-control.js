@@ -23,11 +23,11 @@ export function createVolumeControl(parent) {
   let collapseTimer = null;
 
   const root = document.createElement('div');
-  root.className = 'glass volume';
+  root.className = 'volume';
 
   const toggle = document.createElement('button');
   toggle.type = 'button';
-  toggle.className = 'volume-toggle';
+  toggle.className = 'glass-segment';
 
   const slider = document.createElement('input');
   slider.type = 'range';

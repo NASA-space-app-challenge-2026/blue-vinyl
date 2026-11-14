@@ -38,7 +38,7 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 - Full-viewport stage; nothing scrolls on desktop.
 - The sleeve is tilted by -3deg and tucked **behind** the record. The record overlaps the sleeve's right edge.
 - The sleeve has a dark gradient at the bottom so the title and track list stay readable over any cover photo.
-- Top right, left to right: play/pause, volume, fullscreen and settings buttons. Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
+- Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume. Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
 - At 760px wide and below, the sleeve and the record stack vertically and the page scrolls.
 
 ## Record
@@ -82,8 +82,8 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | Drag the tonearm | Scrub; drop on the record to play from there, off it to stop |
 | Drag on the globe | Rotate the globe |
 | Scroll on the globe | Zoom in / out (out to the fitted size) |
-| Play button (top right) | Play / pause, same as Space |
-| Volume button (top right) | First click expands it into a slider; while expanded, the speaker toggles mute. It folds back into one button after a short idle time without the mouse or keyboard focus on it |
+| Play button (bottom left) | Play / pause, same as Space |
+| Volume button (bottom left) | First click expands it into a slider; while expanded, the speaker toggles mute. It folds back into one button after a short idle time without the mouse or keyboard focus on it |
 | Fullscreen button (top right) | Enter / exit fullscreen; hidden where the browser has no fullscreen support |
 | Settings button (top right) | Open the settings menu; Escape or a click outside closes it |
 
@@ -93,4 +93,4 @@ Volume is held by the control only; nothing plays sound yet. Language, view opti
 
 ## Controls
 
-The top-right buttons share a liquid-glass surface (`src/features/controls/presentation/glass.css`): a translucent white gradient over a blurred, saturated backdrop, with a bright inner top edge. Icons are defined once in `ControlIcon` (`control-icons.js`).
+The on-screen buttons are segments of liquid-glass capsules (`src/features/controls/presentation/glass.css`), split by faint hairlines: a translucent white gradient over a blurred, saturated backdrop, with a bright inner top edge. The bottom-left capsule grows to the right when the volume slider opens. The glass is static; it does not react to the pointer. Icons are defined once in `ControlIcon` (`control-icons.js`).

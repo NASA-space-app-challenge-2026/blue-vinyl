@@ -22,7 +22,7 @@
 
 .settings-panel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 13px);
   right: 0;
   min-width: 180px;
   padding: 12px;

@@ -8,6 +8,7 @@ import { createAlbumCover } from '../features/album/presentation/album-cover.js'
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
 import { createFullscreenButton } from '../features/controls/presentation/fullscreen-button.js';
+import { createGlassCapsule } from '../features/controls/presentation/glass-capsule.js';
 import { createPlayButton } from '../features/controls/presentation/play-button.js';
 import { createPlayHint } from '../features/controls/presentation/play-hint.js';
 import { createSettingsMenu } from '../features/controls/presentation/settings-menu.js';
@@ -55,10 +56,12 @@ const turntable = createTurntableView(slot('stage'), {
 const globe = createGlobeView(turntable.labelSlot);
 const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
 
-const playButton = createPlayButton(slot('corner-top-right'), { onToggle: togglePlayback });
-createVolumeControl(slot('corner-top-right'));
-createFullscreenButton(slot('corner-top-right'));
-createSettingsMenu(slot('corner-top-right'), {
+const transportControls = createGlassCapsule(slot('corner-bottom-left'));
+const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
+createVolumeControl(transportControls);
+const viewControls = createGlassCapsule(slot('corner-top-right'));
+createFullscreenButton(viewControls);
+createSettingsMenu(viewControls, {
   globeThemes: Object.values(GlobeTheme).map((theme) => ({ value: theme, label: GLOBE_THEMES[theme].label })),
   globeTheme: DEFAULT_GLOBE_THEME,
   onGlobeThemeChange: applyGlobeTheme,

@@ -8,7 +8,7 @@ import { ControlIcon, createControlIcon } from './control-icons.js';
 export function createPlayButton(parent, { onToggle }) {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'glass glass-button';
+  button.className = 'glass-segment';
   button.addEventListener('click', onToggle);
   parent.append(button);
 

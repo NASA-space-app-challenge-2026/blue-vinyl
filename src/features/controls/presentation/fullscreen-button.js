@@ -4,7 +4,7 @@ import { ControlIcon, createControlIcon } from './control-icons.js';
 export function createFullscreenButton(parent) {
   const button = document.createElement('button');
   button.type = 'button';
-  button.className = 'glass glass-button';
+  button.className = 'glass-segment';
   button.hidden = !document.fullscreenEnabled;
   button.addEventListener('click', () => {
     if (document.fullscreenElement) document.exitFullscreen();
