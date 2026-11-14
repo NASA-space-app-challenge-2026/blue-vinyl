@@ -97,7 +97,7 @@ What belongs here:
 
 Each track file:
 
-- is CSV with a header row; the first column is the time axis (ISO dates, `YYYY-MM-DD`)
+- is CSV with a header row; the first column is the time axis (ISO dates, `YYYY-MM-DD`, or ISO times in UTC, `YYYY-MM-DDTHH:MMZ`, for a series finer than a day)
 - keeps the original units of the source data; the unit is part of the column name (`extent_million_km2`)
 - stays small: a few hundred KB at most. Downsample or crop to what the music needs instead of committing the full dataset.
 
