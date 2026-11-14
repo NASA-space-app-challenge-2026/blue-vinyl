@@ -217,6 +217,22 @@ function layer(className, markup) {
 // wide a band round it takes a click.
 const RING = Object.freeze({ radius: 0.975, width: 0.014, dotRadius: 0.024, hitWidth: 0.09 });
 
+/** The point on the rail `share` (0..1) of a turn clockwise from 12 o'clock. */
+function ringPoint(share) {
+  const angle = share * 2 * Math.PI;
+  return [RING.radius * Math.sin(angle), -RING.radius * Math.cos(angle)];
+}
+
+/** Path of the rail from 12 o'clock clockwise for `share` (0..1) of a turn; a full turn is drawn as two halves. */
+function arcFromTop(share) {
+  const r = RING.radius;
+  const top = `M 0 ${-r}`;
+  if (share <= 0) return '';
+  if (share >= 1) return `${top} A ${r} ${r} 0 1 1 0 ${r} A ${r} ${r} 0 1 1 0 ${-r}`;
+  const [x, y] = ringPoint(share);
+  return `${top} A ${r} ${r} 0 ${share > 0.5 ? 1 : 0} 1 ${x} ${y}`;
+}
+
 /**
  * The current track's progress round the label's rim: a faint rail, filled clockwise from 12 o'clock as far as the
  * track has played, with a dot at the head. Clicking the rail calls `onSeek` with the point of the track there.
@@ -227,13 +243,10 @@ function createProgressRing(onSeek) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'record-progress');
   svg.setAttribute('viewBox', '-1 -1 2 2');
-  // rotate(-90): the rail starts at 12 o'clock; pathLength 1 makes the dash length the share played.
   svg.innerHTML = `
-    <g transform="rotate(-90)">
-      <circle class="record-progress-rail" r="${RING.radius}" fill="none" stroke-width="${RING.width}"/>
-      <circle class="record-progress-fill" r="${RING.radius}" fill="none" stroke-width="${RING.width}" pathLength="1"/>
-      <circle class="record-progress-hit" r="${RING.radius}" fill="none" stroke="transparent" stroke-width="${RING.hitWidth}"/>
-    </g>
+    <circle class="record-progress-rail" r="${RING.radius}" fill="none" stroke-width="${RING.width}"/>
+    <path class="record-progress-fill" fill="none" stroke-width="${RING.width}"/>
+    <circle class="record-progress-hit" r="${RING.radius}" fill="none" stroke="transparent" stroke-width="${RING.hitWidth}"/>
     <circle class="record-progress-dot" r="${RING.dotRadius}"/>`;
   const fill = svg.querySelector('.record-progress-fill');
   const dot = svg.querySelector('.record-progress-dot');
@@ -250,10 +263,10 @@ function createProgressRing(onSeek) {
   /** @param {number} trackProgress 0..1 */
   function render(trackProgress) {
     const share = Math.min(1, Math.max(0, trackProgress));
-    fill.setAttribute('stroke-dasharray', `${share} 1`);
-    const angle = share * 2 * Math.PI;
-    dot.setAttribute('cx', String(RING.radius * Math.sin(angle)));
-    dot.setAttribute('cy', String(-RING.radius * Math.cos(angle)));
+    const [x, y] = ringPoint(share);
+    fill.setAttribute('d', arcFromTop(share));
+    dot.setAttribute('cx', String(x));
+    dot.setAttribute('cy', String(y));
   }
 
   return { el: svg, render };
