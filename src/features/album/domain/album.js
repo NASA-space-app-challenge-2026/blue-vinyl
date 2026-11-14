@@ -6,6 +6,9 @@ export const AlbumCategory = Object.freeze({
  * @typedef {Object} Track
  * @property {string} title
  * @property {number} durationSec
+ * @property {string} [flockUrl] the flock year the track plays (see tracks/domain/flock-year.js)
+ * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
+ * @property {string} [color] CSS color the track's data is drawn in
  */
 
 /**
@@ -62,4 +65,14 @@ export function trackIndexAt(album, progress) {
   const boundaries = trackBoundaries(album);
   const index = boundaries.findIndex((edge, i) => i > 0 && progress < edge);
   return index === -1 ? album.tracks.length - 1 : index - 1;
+}
+
+/**
+ * Seconds from the album start to the start of the track at `index`.
+ *
+ * @param {Album} album
+ * @param {number} index
+ */
+export function trackStartSec(album, index) {
+  return album.tracks.slice(0, index).reduce((sum, track) => sum + track.durationSec, 0);
 }

@@ -3,7 +3,7 @@
 // Composition root: wires the features together.
 
 import { albums } from '../features/album/data/albums.js';
-import { albumDurationSec, trackBoundaries, trackIndexAt, wrapIndex } from '../features/album/domain/album.js';
+import { albumDurationSec, trackBoundaries, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
@@ -18,6 +18,9 @@ import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_THEME, GlobeTheme } from '../features/globe/domain/globe-theme.js';
 import { createGlobeAttribution } from '../features/globe/presentation/globe-attribution.js';
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
+import { createSoundEngine } from '../features/music/data/sound-engine.js';
+import { DAY_SEC, MigrationComposer } from '../features/music/domain/composers/migration.js';
+import { loadFlockYear } from '../features/tracks/data/flock-source.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 
@@ -25,6 +28,11 @@ import { createTurntableView } from '../features/turntable/presentation/turntabl
 let albumIndex = 0;
 let album;
 let totalMs;
+// What each track of the album plays, by track index, once its flock year has loaded: { year, lead }, or null for a
+// track without one. Empty until then.
+let flockTracks = [];
+// The track whose flock the globe shows.
+let shownFlockTrack = null;
 
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
@@ -45,7 +53,10 @@ const turntable = createTurntableView(slot('stage'), {
   onCued: () => {
     if (state === PlaybackState.CUEING) startPlaying();
   },
-  onGrab: () => setState(PlaybackState.SCRUBBING),
+  onGrab: () => {
+    unlockSound();
+    setState(PlaybackState.SCRUBBING);
+  },
   onScrub: (progress) => {
     if (progress === null) return;
     elapsedMs = progress * totalMs;
@@ -60,10 +71,12 @@ const turntable = createTurntableView(slot('stage'), {
 const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
 const globe = createGlobeView(turntable.labelSlot);
 const globeAttribution = createGlobeAttribution(slot('corner-bottom-right'));
+const composer = new MigrationComposer();
+const soundEngine = createSoundEngine({ composer, stepSec: DAY_SEC, onPulse: globe.flock.pulse });
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
-createVolumeControl(transportControls);
+createVolumeControl(transportControls, { onChange: soundEngine.setVolume });
 const albumControls = createGlassCapsule(slot('corner-bottom-left'));
 createAlbumSwitcher(albumControls, {
   onPrevious: () => switchAlbum(-1),
@@ -97,6 +110,25 @@ function showAlbum(index) {
   albumColumn.setAlbum(albumIndex);
   turntable.setTrackStarts(trackBoundaries(album).slice(1, -1));
   albumCredit.render(album);
+  flockTracks = [];
+  shownFlockTrack = null;
+  globe.flock.hide();
+  loadFlocks(album);
+}
+
+// Loads the flock years of `target`'s tracks and fits the composer to them, unless another album is shown by then.
+async function loadFlocks(target) {
+  if (!target.tracks.some((track) => track.flockUrl)) return;
+  const years = await Promise.all(target.tracks.map((track) => (track.flockUrl ? loadFlockYear(track.flockUrl) : null)));
+  if (album !== target) return;
+  composer.setAlbum(years.filter(Boolean));
+  flockTracks = years.map((year, i) => year && { year, lead: target.tracks[i].lead });
+  render();
+}
+
+// Audio may only start from a user gesture, so every gesture that can start playback unlocks it.
+function unlockSound() {
+  soundEngine.unlock().catch((error) => console.error('sound engine failed to load', error));
 }
 
 // Takes one of the steps asked for meanwhile, if any; 0 when none.
@@ -135,6 +167,7 @@ async function switchAlbum(step) {
 
 function togglePlayback() {
   if (swapping) return;
+  unlockSound();
   setState(state === PlaybackState.STOPPED ? PlaybackState.CUEING : PlaybackState.STOPPED);
 }
 
@@ -147,12 +180,28 @@ function startPlaying() {
 
 function render() {
   const progress = elapsedMs / totalMs;
+  const trackIndex = trackIndexAt(album, progress);
   turntable.render(state, progress);
-  albumColumn.render(trackIndexAt(album, progress));
+  albumColumn.render(trackIndex);
+  renderFlock(trackIndex);
+}
+
+// Moves the globe's flock to the clock and, while playing, lets the music follow it.
+function renderFlock(trackIndex) {
+  const flockTrack = flockTracks[trackIndex];
+  if (!flockTrack) return;
+  const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  if (shownFlockTrack !== flockTrack) {
+    shownFlockTrack = flockTrack;
+    globe.flock.show(flockTrack.year, album.tracks[trackIndex].color);
+  }
+  globe.flock.setDay(elapsedSec / DAY_SEC);
+  if (state === PlaybackState.PLAYING) soundEngine.follow(flockTrack, elapsedSec);
 }
 
 function setState(next) {
   state = next;
+  if (state !== PlaybackState.PLAYING) soundEngine.stop();
   playHint.render(state);
   playButton.render(state);
   render();

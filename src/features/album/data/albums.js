@@ -1,7 +1,28 @@
 import { AlbumCategory } from '../domain/album.js';
+import { DAY_SEC } from '../../music/domain/composers/migration.js';
+import { Instrument } from '../../music/domain/instruments.js';
+import { FOLDED_YEAR_DAYS } from '../../tracks/domain/flock-year.js';
+
+const ARCTIC_BIRD_TRACKS = 'data/arctic_bird/tracks';
+// One day of the folded year per step of the music.
+const FLOCK_YEAR_SEC = FOLDED_YEAR_DAYS * DAY_SEC;
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
+  {
+    id: 'arctic-bird',
+    category: AlbumCategory.BIODIVERSITY,
+    title: 'A Year on the Wing',
+    coverUrl: 'assets/albums/arctic-bird/cover.jpg',
+    coverCredit: 'Data: Arctic Animal Movement Archive, Movebank · NASA SVS 4877',
+    // The four species of the archive's public bird studies that fly the farthest in a year, farthest first.
+    tracks: [
+      { title: 'Lesser Yellowlegs', durationSec: FLOCK_YEAR_SEC, flockUrl: `${ARCTIC_BIRD_TRACKS}/lesser_yellowlegs.csv`, lead: Instrument.FLUTE, color: '#f0a040' },
+      { title: 'Whimbrel', durationSec: FLOCK_YEAR_SEC, flockUrl: `${ARCTIC_BIRD_TRACKS}/whimbrel.csv`, lead: Instrument.OBOE, color: '#e8785a' },
+      { title: 'Yellow-billed Loon', durationSec: FLOCK_YEAR_SEC, flockUrl: `${ARCTIC_BIRD_TRACKS}/yellow_billed_loon.csv`, lead: Instrument.FRENCH_HORN, color: '#68b4dc' },
+      { title: 'Red-throated Loon', durationSec: FLOCK_YEAR_SEC, flockUrl: `${ARCTIC_BIRD_TRACKS}/red_throated_loon.csv`, lead: Instrument.CLARINET, color: '#9ccc64' },
+    ],
+  },
   {
     id: 'curlew',
     category: AlbumCategory.BIODIVERSITY,
