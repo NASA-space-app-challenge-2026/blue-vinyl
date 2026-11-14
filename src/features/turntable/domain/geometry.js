@@ -3,15 +3,15 @@
  * The tonearm points straight down from its pivot at 0deg; positive angles swing it onto the record.
  */
 export const TURNTABLE = Object.freeze({
-  width: 520,
-  height: 440,
-  center: Object.freeze({ x: 220, y: 220 }),
-  recordRadius: 210,
-  labelRadius: 85,
-  groove: Object.freeze({ outerRadius: 200, innerRadius: 95 }),
+  width: 720,
+  height: 640,
+  center: Object.freeze({ x: 320, y: 320 }),
+  recordRadius: 300,
+  labelRadius: 192,
+  groove: Object.freeze({ outerRadius: 292, innerRadius: 204 }),
   tonearm: Object.freeze({
-    pivot: Object.freeze({ x: 470, y: 50 }),
-    length: 290,
+    pivot: Object.freeze({ x: 655, y: 90 }),
+    length: 460,
     restAngleDeg: 0,
   }),
 });

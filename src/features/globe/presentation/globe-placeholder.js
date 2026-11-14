@@ -1,12 +1,7 @@
-const SVG_NS = 'http://www.w3.org/2000/svg';
-const MERIDIAN_RATIOS = [0.35, 0.75];
-const PARALLEL_RATIOS = [-0.5, 0, 0.5];
+import { svg } from '../../../shared/svg.js';
 
-function svg(tag, attrs) {
-  const el = document.createElementNS(SVG_NS, tag);
-  for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, String(value));
-  return el;
-}
+const MERIDIAN_RATIOS = [0.35, 0.7];
+const PARALLEL_RATIOS = [-0.66, -0.33, 0, 0.33, 0.66];
 
 /**
  * Static wireframe globe, centered at (0, 0). Stands in until the real globe view lands.
@@ -15,7 +10,7 @@ function svg(tag, attrs) {
  * @returns {SVGGElement}
  */
 export function createGlobePlaceholder(radius) {
-  const r = radius * 0.92;
+  const r = radius * 0.94;
   const group = svg('g', { class: 'globe-placeholder' });
   group.append(svg('circle', { r, class: 'globe-sphere' }));
   for (const ratio of MERIDIAN_RATIOS) {

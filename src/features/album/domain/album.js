@@ -1,3 +1,7 @@
+export const AlbumCategory = Object.freeze({
+  BIODIVERSITY: 'biodiversity',
+});
+
 /**
  * @typedef {Object} Track
  * @property {string} title
@@ -9,8 +13,10 @@
  *
  * @typedef {Object} Album
  * @property {string} id
+ * @property {string} category one of AlbumCategory
  * @property {string} title
  * @property {string} coverUrl
+ * @property {string} coverCredit
  * @property {Track[]} tracks
  */
 
@@ -34,4 +40,16 @@ export function trackBoundaries(album) {
     boundaries.push(elapsed / total);
   }
   return boundaries;
+}
+
+/**
+ * Index of the track playing at the given progress (0..1).
+ *
+ * @param {Album} album
+ * @param {number} progress
+ */
+export function trackIndexAt(album, progress) {
+  const boundaries = trackBoundaries(album);
+  const index = boundaries.findIndex((edge, i) => i > 0 && progress < edge);
+  return index === -1 ? album.tracks.length - 1 : index - 1;
 }

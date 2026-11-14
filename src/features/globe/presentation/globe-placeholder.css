@@ -1,11 +1,9 @@
 .globe-sphere {
-  fill: #f2c522;
-  stroke: #1a1a1a;
-  stroke-width: 3;
+  fill: #2a2c33;
 }
 
 .globe-line {
   fill: none;
-  stroke: #1a1a1a;
-  stroke-width: 2;
+  stroke: rgb(255 255 255 / 0.1);
+  stroke-width: 1;
 }

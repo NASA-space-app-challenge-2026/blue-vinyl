@@ -3,28 +3,37 @@
 // Composition root: wires the features together.
 
 import { albums } from '../features/album/data/albums.js';
-import { albumDurationSec, trackBoundaries } from '../features/album/domain/album.js';
+import { albumDurationSec, trackBoundaries, trackIndexAt } from '../features/album/domain/album.js';
 import { createAlbumCover } from '../features/album/presentation/album-cover.js';
+import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
+import { Language } from '../features/controls/domain/language.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
-import { createPlayButton } from '../features/controls/presentation/play-button.js';
+import { createAlbumNav, createLanguageToggle, createPlayHint, createViewOptions } from '../features/controls/presentation/chrome.js';
 import { createGlobePlaceholder } from '../features/globe/presentation/globe-placeholder.js';
 import { TURNTABLE } from '../features/turntable/domain/geometry.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 
 // Album switching comes later; show the first album for now.
-const album = albums[0];
+const albumIndex = 0;
+const album = albums[albumIndex];
 const totalMs = albumDurationSec(album) * 1000;
 
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
 let lastFrameTs = null;
 
-const deck = document.getElementById('deck');
-const controls = document.getElementById('controls');
+const slot = (id) => document.getElementById(id);
 
-createAlbumCover(deck, album);
-const turntable = createTurntableView(deck, {
+createLanguageToggle(slot('corner-top-left'), Language.EN);
+createViewOptions(slot('corner-top-right'));
+createAlbumNav(slot('corner-bottom-left'));
+createAlbumCredit(slot('corner-bottom-right'), album);
+const playHint = createPlayHint(slot('bottom-center'));
+
+const cover = createAlbumCover(slot('stage'), { album, index: albumIndex, count: albums.length });
+const turntable = createTurntableView(slot('stage'), {
   boundaries: trackBoundaries(album),
+  onToggle: togglePlayback,
   onCued: () => {
     if (state !== PlaybackState.CUEING) return;
     setState(PlaybackState.PLAYING);
@@ -34,14 +43,27 @@ const turntable = createTurntableView(deck, {
 });
 turntable.labelSlot.append(createGlobePlaceholder(TURNTABLE.labelRadius));
 
-const playButton = createPlayButton(controls, () => {
-  setState(state === PlaybackState.STOPPED ? PlaybackState.CUEING : PlaybackState.STOPPED);
+document.addEventListener('keydown', (event) => {
+  // A focused button already reacts to Space on its own.
+  if (event.code !== 'Space' || event.target instanceof HTMLButtonElement) return;
+  event.preventDefault();
+  togglePlayback();
 });
+
+function togglePlayback() {
+  setState(state === PlaybackState.STOPPED ? PlaybackState.CUEING : PlaybackState.STOPPED);
+}
+
+function render() {
+  const progress = elapsedMs / totalMs;
+  turntable.render(state, progress);
+  cover.render(trackIndexAt(album, progress));
+}
 
 function setState(next) {
   state = next;
-  turntable.render(state, elapsedMs / totalMs);
-  playButton.render(state);
+  playHint.render(state);
+  render();
 }
 
 function tick(ts) {
@@ -53,7 +75,7 @@ function tick(ts) {
     setState(PlaybackState.STOPPED);
     return;
   }
-  turntable.render(state, elapsedMs / totalMs);
+  render();
   requestAnimationFrame(tick);
 }
 

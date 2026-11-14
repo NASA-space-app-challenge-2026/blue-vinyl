@@ -1,3 +1,12 @@
+:root {
+  --bg: #4b3a24;
+  --bg-deep: #3a2c1a;
+  --ink: #f3ece1;
+  --ink-muted: rgb(243 236 225 / 0.65);
+  --line: rgb(243 236 225 / 0.28);
+  --gutter: clamp(16px, 2vw, 32px);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -5,37 +14,69 @@
 body {
   margin: 0;
   min-height: 100vh;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 60% 45%, var(--bg) 0%, var(--bg-deep) 100%);
+  color: var(--ink);
+  font-family: 'Gowun Batang', serif;
+}
+
+.stage {
+  position: fixed;
+  inset: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  padding: 16px;
-  background: #2a2d33;
-  font-family: system-ui, sans-serif;
+  padding: 6vh var(--gutter);
 }
 
-/* Turntable plinth holding the sleeve and the record. */
-.deck {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  width: min(880px, 100%);
-  padding: 32px;
-  border-radius: 20px;
-  background: #ecebe8;
-  box-shadow: 0 20px 50px rgb(0 0 0 / 0.4);
+.corner {
+  position: fixed;
+  z-index: 3;
 }
 
-.deck .turntable {
-  flex: 1 1 320px;
-  margin-left: -40px;
+#corner-top-left {
+  top: var(--gutter);
+  left: var(--gutter);
 }
 
-@media (max-width: 640px) {
-  .deck .turntable {
-    margin-left: 0;
+#corner-top-right {
+  top: var(--gutter);
+  right: var(--gutter);
+}
+
+#corner-bottom-left {
+  bottom: var(--gutter);
+  left: var(--gutter);
+}
+
+#corner-bottom-right {
+  bottom: var(--gutter);
+  right: var(--gutter);
+}
+
+#bottom-center {
+  bottom: var(--gutter);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 760px) {
+  body {
+    overflow: auto;
+  }
+
+  .stage {
+    position: static;
+    flex-direction: column;
+    padding: 80px var(--gutter) 120px;
+  }
+
+  .stage .album-cover {
+    width: 100%;
+    margin: 0 0 -12vw;
+  }
+
+  .stage .turntable {
+    width: 100%;
   }
 }

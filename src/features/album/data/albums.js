@@ -1,14 +1,18 @@
+import { AlbumCategory } from '../domain/album.js';
+
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
   {
     id: 'curlew',
-    title: 'Curlew',
+    category: AlbumCategory.BIODIVERSITY,
+    title: 'Along the Flyway',
     coverUrl: 'assets/albums/curlew/cover.jpg',
+    coverCredit: 'Photo: TBD',
     tracks: [
-      { title: 'Track 1', durationSec: 40 },
-      { title: 'Track 2', durationSec: 25 },
-      { title: 'Track 3', durationSec: 35 },
-      { title: 'Track 4', durationSec: 20 },
+      { title: 'Far Eastern Curlew', durationSec: 52 },
+      { title: 'Bar-tailed Godwit', durationSec: 52 },
+      { title: 'Red Knot', durationSec: 47 },
+      { title: 'Great Knot', durationSec: 52 },
     ],
   },
 ];

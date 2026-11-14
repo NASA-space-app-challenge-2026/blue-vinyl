@@ -4,15 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Blue Vinyl</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap">
   <link rel="stylesheet" href="src/app/app.css">
   <link rel="stylesheet" href="src/features/album/presentation/album-cover.css">
   <link rel="stylesheet" href="src/features/turntable/presentation/turntable.css">
   <link rel="stylesheet" href="src/features/globe/presentation/globe-placeholder.css">
-  <link rel="stylesheet" href="src/features/controls/presentation/play-button.css">
+  <link rel="stylesheet" href="src/features/controls/presentation/controls.css">
 </head>
 <body>
-  <main id="deck" class="deck"></main>
-  <div id="controls"></div>
+  <main id="stage" class="stage"></main>
+  <div id="corner-top-left" class="corner"></div>
+  <div id="corner-top-right" class="corner"></div>
+  <div id="corner-bottom-left" class="corner"></div>
+  <div id="corner-bottom-right" class="corner"></div>
+  <div id="bottom-center" class="corner"></div>
   <script type="module" src="src/app/main.js"></script>
 </body>
 </html>

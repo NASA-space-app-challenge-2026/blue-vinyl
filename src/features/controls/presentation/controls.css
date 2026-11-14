@@ -1,0 +1,64 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.12);
+}
+
+.pill-divider {
+  width: 1px;
+  height: 18px;
+  margin: 0 4px;
+  background: var(--line);
+}
+
+.icon-button,
+.lang-option {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  height: 36px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.icon-button:hover,
+.lang-option:hover {
+  color: var(--ink);
+}
+
+.lang-option[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.icon-button:focus-visible,
+.lang-option:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.play-hint {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
