@@ -82,5 +82,5 @@ The submission is ready when:
 - At least one album plays end to end: frames on the globe, sound generated from those frames, and docent description.
 - The page is usable with a keyboard and a screen reader alone.
 - Each shipped album documents its data source, its data-to-sound mapping, and the story behind it.
-- The app runs as a static site (`npm start`) with no backend.
+- The app runs as a static site (`npm start`, or `npm run serve` without live reload) with no backend.
 - NASA data is credited to SVS and the EIC on the page.
