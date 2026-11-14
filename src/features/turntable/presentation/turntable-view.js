@@ -132,34 +132,42 @@ function creditPath() {
   return `M 0 ${r} A ${r} ${r} 0 1 1 0 ${-r} A ${r} ${r} 0 1 1 0 ${r}`;
 }
 
-function vinylSvg() {
+// The vinyl is drawn in three layers so the turning part never makes the rest redraw: the disc and its grooves (base),
+// the glints and credits that turn with the record (spin, turned by a CSS transform on its own compositor layer), and
+// the fixed sheen and label backdrop over them (top). Turning the spin group inside one big filtered SVG had the
+// browser re-rasterize all of it every frame, and the record blinked out whenever a frame missed that.
+function vinylBaseSvg() {
   const grooves = [];
+  for (let g = GROOVE.innerRadius; g <= GROOVE.outerRadius; g += GROOVE_PITCH) grooves.push(circle(g, 'none', COLOR.groove));
+  return `${circle(1, COLOR.vinyl, COLOR.vinylEdge)}
+    ${grooves.join('')}
+    <g class="vinyl-track-gaps"></g>`;
+}
+
+function vinylSpinSvg() {
   const glints = [];
   for (let g = GROOVE.innerRadius, i = 0; g <= GROOVE.outerRadius; g += GROOVE_PITCH, i++) {
-    grooves.push(circle(g, 'none', COLOR.groove));
     // Golden-angle starts and a cycling length scatter the glints without randomness, so redraws match.
     const start = (i * 137.5) % 360;
     const length = GROOVE_GLINT.minDeg + ((i * 53) % GROOVE_GLINT.spreadDeg);
     glints.push(arc(g, start, start + length, COLOR.grooveGlint));
   }
+  return `<defs><path id="vinyl-credit-path" d="${creditPath()}"/></defs>
+    ${glints.join('')}
+    <text class="vinyl-credit" fill="${COLOR.credit}" dominant-baseline="middle">
+      <textPath href="#vinyl-credit-path" startOffset="50%" text-anchor="middle"></textPath>
+    </text>`;
+}
+
+// `vinyl-hit` is the disc the record is clicked through; the rest lets pointers by.
+function vinylTopSvg() {
   return `<defs>
       <clipPath id="vinyl-disc"><circle r="1"/></clipPath>
       <filter id="vinyl-sheen-blur"><feGaussianBlur stdDeviation="${SHEEN.blur}"/></filter>
-      <path id="vinyl-credit-path" d="${creditPath()}"/>
     </defs>
-    <g class="vinyl">
-      ${circle(1, COLOR.vinyl, COLOR.vinylEdge)}
-      ${grooves.join('')}
-      <g class="vinyl-track-gaps"></g>
-      <g class="vinyl-spin">
-        ${glints.join('')}
-        <text class="vinyl-credit" fill="${COLOR.credit}" dominant-baseline="middle">
-          <textPath href="#vinyl-credit-path" startOffset="50%" text-anchor="middle"></textPath>
-        </text>
-      </g>
-      <g clip-path="url(#vinyl-disc)"><g filter="url(#vinyl-sheen-blur)">${sheenSvg()}</g></g>
-      ${circle(LABEL_RADIUS, COLOR.labelBackdrop, 'none')}
-    </g>`;
+    <g clip-path="url(#vinyl-disc)"><g filter="url(#vinyl-sheen-blur)">${sheenSvg()}</g></g>
+    ${circle(LABEL_RADIUS, COLOR.labelBackdrop, 'none')}
+    <circle class="vinyl-hit" r="1" fill="transparent"/>`;
 }
 
 // Arm geometry in the arm's own frame: pivot at the origin, needle at (0, -armLength).
@@ -371,10 +379,13 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
   root.className = 'turntable';
   root.style.aspectRatio = `${BOUNDS.width} / ${BOUNDS.height}`;
 
-  const vinylLayer = layer('turntable-vinyl-layer', vinylSvg());
-  const spinner = vinylLayer.querySelector('.vinyl-spin');
+  const vinylLayer = layer('turntable-vinyl-layer', vinylBaseSvg());
+  const spinner = layer('turntable-vinyl-spin', vinylSpinSvg());
+  // Turns round the record centre, as the record itself is lifted (see `record` below).
+  spinner.style.transformOrigin = `${(-BOUNDS.left / BOUNDS.width) * 100}% ${(-BOUNDS.top / BOUNDS.height) * 100}%`;
+  const vinylTop = layer('turntable-vinyl-top', vinylTopSvg());
   const trackGaps = vinylLayer.querySelector('.vinyl-track-gaps');
-  const credit = vinylLayer.querySelector('.vinyl-credit');
+  const credit = spinner.querySelector('.vinyl-credit');
   const creditText = credit.querySelector('textPath');
 
   // Label area, positioned over the label circle in percentages of the layers' view box.
@@ -403,10 +414,10 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
   // A canvas over the whole record, between the vinyl and the label, for a glow around the globe.
   const haloCanvas = document.createElement('canvas');
   haloCanvas.className = 'record-halo';
-  record.append(vinylLayer, haloCanvas, label);
+  record.append(vinylLayer, spinner, vinylTop, haloCanvas, label);
 
   root.append(record, armLayer);
-  vinylLayer.addEventListener('click', (event) => {
+  vinylTop.addEventListener('click', (event) => {
     const progress = grooveProgress(pointerRadius(event));
     if (progress >= 0 && progress <= 1) onSelectGroove(progress);
     else onToggle();
@@ -439,7 +450,7 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
       const change = motorOn ? dt / PLATTER.spinUpSec : -dt / PLATTER.spinDownSec;
       speed = Math.min(1, Math.max(0, speed + change));
       angle = (angle + ((360 * PLATTER.rpm) / 60) * speed * dt) % 360;
-      spinner.setAttribute('transform', `rotate(${angle})`);
+      spinner.style.transform = `rotate(${angle}deg)`;
       spinFrame = motorOn || speed > 0 ? requestAnimationFrame(step) : null;
     };
     spinFrame = requestAnimationFrame(step);
