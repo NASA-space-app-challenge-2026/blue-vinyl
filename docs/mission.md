@@ -43,26 +43,42 @@ Blue Vinyl is an interactive web jukebox. Each EIC dataset is an **album** place
 - Covering every EIC visualization. A few well-crafted albums beat many shallow ones.
 - Native desktop or mobile apps. The deliverable is a static web page.
 
-## Candidate Data
+## Data & Resources
 
-All sources come from the challenge's Resources tab and are produced by NASA's Scientific Visualization Studio (SVS). The hint column is the challenge's own suggestion for how each set suits sonification.
+Source: the challenge's [Resources tab](https://www.spaceappschallenge.org/2026/challenges/the-earth-information-jukebox/?tab=resources). The challenge notes that more resources may be added before the hackathon, so check the tab again before picking new albums.
 
-| Dataset | Sonification hint |
-| ------- | ----------------- |
-| [EIC Content Database](https://svs.gsfc.nasa.gov/gallery/earth-information-center/) | Full catalog of EIC visuals |
-| [Change in Night Lights 2012–2023](https://svs.gsfc.nasa.gov/5313/) | High contrast; intensity to tempo or volume |
-| [Global Sea Surface Currents and Temperature](https://svs.gsfc.nasa.gov/3912/) | Continuous flow and thermal gradients; evolving soundscapes |
-| [GEOS Aerosols](https://svs.gsfc.nasa.gov/5669/) | Particle types as separate layers; multi-track instruments |
-| [Air Quality Model Runs](https://svs.gsfc.nasa.gov/5533/) | High-resolution frames; color palette and density to sound |
-| [Perpetual Ocean 2: Western Boundary Currents](https://svs.gsfc.nasa.gov/5425/) | High contrast; visual shifts to rhythm or scale |
-| [DYAMOND Global Carbon Dioxide](https://svs.gsfc.nasa.gov/5196/) | Changing patterns over time; driver for interactive synthesis |
-| [Lightning Events from the ISS 2017–2023](https://svs.gsfc.nasa.gov/5011/) | Rapid flashes; percussive triggers |
-| [3D Atmospheric River](https://svs.gsfc.nasa.gov/4960/) | Moisture density and spread; immersive landscapes |
-| [GEDI Forest Height](https://svs.gsfc.nasa.gov/4950/) | Color-coded canopy height to pitch or rhythm |
+### Data Policy
 
-Reference for the concept: [Data Sonification: Caldwell 73](https://svs.gsfc.nasa.gov/13786/), which maps luminosity to volume and position to pitch.
+1. **EIC first.** The challenge is built around EIC visual frames, and every recommended resource is an EIC or SVS visualization. Our main albums use EIC data.
+2. **Other NASA data is allowed.** The challenge does not limit us to the list below. Any NASA data, such as other SVS visualizations, Earthdata, or NASA Worldview imagery, may be used when it makes an album stronger. Prefer it as a supplement to an EIC album, for example to add a data layer or context, rather than as a replacement.
+3. **Non-NASA sources follow their own terms.** NASA does not endorse non-U.S. Government sources and is not responsible for them. If we use one, we must follow its data use terms and record them.
+4. **Credit everything.** Every album records its sources (title, link, credit line) and the page shows them.
 
-Data prep (frame extraction, color and density analysis) lives in `notebooks/` and exports static datasets into `src/features/*/data`.
+### Recommended Resources
+
+All resources below are visualizations by NASA's Scientific Visualization Studio (SVS). The descriptions summarize what the challenge says each one is good for.
+
+**[Earth Information Center (EIC) Content Database](https://svs.gsfc.nasa.gov/gallery/earth-information-center/)**
+The SVS visuals used in the EIC dashboards. The videos and images can be used directly as input for generating audio. This is our main catalog.
+
+**[Data Sonification: Caldwell 73](https://svs.gsfc.nasa.gov/13786/)**
+Not Earth data, but a reference for how NASA turns imagery into sound. It shows how luminosity and spatial position can map to volume and pitch. Use it as a model for our mapping design.
+
+| Dataset | What it shows | Suggested sonification |
+| ------- | ------------- | ---------------------- |
+| [Change in Night Lights 2012–2023 (EIC Version)](https://svs.gsfc.nasa.gov/5313/) | How urban lighting changes across the globe | Strong contrast between dark land and bright light suits computer vision that maps intensity to tempo or volume |
+| [Global Sea Surface Currents and Temperature](https://svs.gsfc.nasa.gov/3912/#media_group_349716) | Ocean currents moving alongside temperature gradients | Continuous flowing motion and shifting temperature become complex, evolving soundscapes |
+| [GEOS Aerosols](https://svs.gsfc.nasa.gov/5669/) | Paths of smoke, dust and other particles, split by type | Multi-track: each particle type gets its own texture or instrument |
+| [Air Quality Model Runs](https://svs.gsfc.nasa.gov/5533/) | Downloadable high-resolution frames of atmospheric model output | Convert color palette and pixel density per frame into sound profiles |
+| [Perpetual Ocean 2: Western Boundary Currents](https://svs.gsfc.nasa.gov/5425/) | Maps of the major ocean boundary currents | High-contrast imagery; align visual shifts with rhythms or scales |
+| [DYAMOND Global Carbon Dioxide](https://svs.gsfc.nasa.gov/5196/) | Global CO2 concentration changing over time | A primary input for driving interactive synthesis |
+| [Lightning Events Detected from the ISS 2017–2023](https://svs.gsfc.nasa.gov/5011/) | Layered lightning detections from space | Punctuated sonification: percussion or sudden triggers on each flash |
+| [A 3D View of an Atmospheric River](https://svs.gsfc.nasa.gov/4960/) | The path of an atmospheric river in an Earth system model | Extract frames; map moisture density and spread to immersive, shifting sound |
+| [GEDI Forest Height](https://svs.gsfc.nasa.gov/4950/) | Global canopy height maps | Map the color scale (height and density) to rhythm, frequency or pitch |
+
+### Data Pipeline
+
+Data prep (frame extraction, color and density analysis) lives in `notebooks/` and exports static datasets into `src/features/*/data`. Keep the original source link and credit next to every exported dataset.
 
 ## Definition of Done
 
@@ -72,4 +88,4 @@ The submission is ready when:
 - The page is usable with a keyboard and a screen reader alone.
 - Each shipped album documents its data source, its data-to-sound mapping, and the story behind it.
 - The app runs as a static site (`npm start`) with no backend.
-- NASA data is credited to SVS and the EIC on the page.
+- Every data source is credited on the page (SVS and the EIC for EIC albums), following the Data Policy above.
