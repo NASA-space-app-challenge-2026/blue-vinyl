@@ -196,9 +196,17 @@ async function loadSongs(target) {
     return;
   }
   if (album !== target) return;
-  songs = perTrack;
+  songs = withWindRange(perTrack);
   render();
   globe.glide();
+}
+
+// Gives each storm song the album's weakest and strongest wind, the ends of the line its tempo follows (tempoOf).
+function withWindRange(perTrack) {
+  const winds = perTrack.filter((song) => song?.storm).flatMap((song) => song.track.windKt);
+  if (!winds.length) return perTrack;
+  const windRange = { minKt: Math.min(...winds), maxKt: Math.max(...winds) };
+  return perTrack.map((song) => (song?.storm ? { ...song, windRange } : song));
 }
 
 /**

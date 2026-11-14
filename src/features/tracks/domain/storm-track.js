@@ -1,6 +1,6 @@
-// One hurricane's life, from the best track the album notebook exports (see docs/data-guide.md): where its centre was,
-// how hard its wind blew and when it came ashore, record by record. Read the same way by the music and the
-// globe, so what is heard and what is seen come from one place.
+// One hurricane's life, from the best track the album notebook exports (see docs/data-guide.md): where its centre was
+// and how hard its wind blew, record by record. Read the same way by the music and the globe, so what is heard and
+// what is seen come from one place.
 
 import { lastIndexAtOrBefore } from './bird-track.js';
 
@@ -61,8 +61,6 @@ export function easeSpin(rate, target, dt) {
  * @property {number[]} lat
  * @property {number[]} lon
  * @property {number[]} windKt maximum sustained wind
- * @property {number[]} landfallKt the wind at each landfall, as `landfalls`
- * @property {number[]} landfalls times of the storm's landfalls
  */
 
 /**
@@ -79,20 +77,14 @@ export function parseStormTrack(csv) {
     if (index < 0) throw new Error(`storm track: no ${name} column`);
     return index;
   };
-  const col = { time: at('time_utc'), lat: at('lat'), lon: at('lon'), wind: at('wind_kt'), landfall: at('landfall') };
-  const track = { t: [], lat: [], lon: [], windKt: [], landfalls: [], landfallKt: [] };
+  const col = { time: at('time_utc'), lat: at('lat'), lon: at('lon'), wind: at('wind_kt') };
+  const track = { t: [], lat: [], lon: [], windKt: [] };
   for (const line of lines) {
     const cells = line.split(',');
-    const t = Date.parse(cells[col.time]);
-    track.t.push(t);
+    track.t.push(Date.parse(cells[col.time]));
     track.lat.push(Number(cells[col.lat]));
     track.lon.push(Number(cells[col.lon]));
-    const windKt = Number(cells[col.wind]);
-    track.windKt.push(windKt);
-    if (cells[col.landfall] === '1') {
-      track.landfalls.push(t);
-      track.landfallKt.push(windKt);
-    }
+    track.windKt.push(Number(cells[col.wind]));
   }
   return track;
 }

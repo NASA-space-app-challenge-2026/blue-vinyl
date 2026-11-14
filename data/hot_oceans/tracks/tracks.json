@@ -1,20 +1,15 @@
 [
   {
-    "file": "felix_2007.csv",
-    "title": "Felix 2007",
+    "file": "katrina_2005.csv",
+    "title": "Katrina 2005",
     "pages": [
-      {
-        "svsId": 5097,
-        "svsUrl": "https://svs.gsfc.nasa.gov/5097/",
-        "message": "Hurricanes tend to form over the warm tropical oceans where the SST is warmer than ~26.5 C (~80 F)"
-      },
       {
         "svsId": 5072,
         "svsUrl": "https://svs.gsfc.nasa.gov/5072/",
         "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
       }
     ],
-    "note": "Ours: Grows across the Caribbean to category 5, comes ashore in Nicaragua at 140 kt and dies over land 18 hours later. The whole life of the storm (section 12). Chosen because every record of it over the sea is at or above 26.5 °C (MUR monthly SST; the coolest is 28.3 °C) and it dies on land after its last landfall (section 9.2).",
+    "note": "Ours: Grows over the Gulf of Mexico to category 5, comes ashore in Louisiana and Mississippi at 110 and 105 kt and dies over land, its remnants fading over the Ohio Valley. From its birth to its last record, where it dissipates (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
     "sources": [
       {
         "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
@@ -24,17 +19,39 @@
         "downloaded": "2026-11-14",
         "license": "US government work, public domain",
         "credit": "Landsea, C. W. and J. L. Franklin, 2013: Atlantic Hurricane Database Uncertainty and Presentation of a New Database Format. Mon. Wea. Rev., 141, 3576-3592."
-      },
+      }
+    ],
+    "units": {
+      "wind_kt": "kt (1-minute sustained)",
+      "pressure_hpa": "hPa",
+      "lat": "°",
+      "lon": "°"
+    },
+    "timeRange": [
+      "2005-08-23T18:00Z",
+      "2005-08-31T06:00Z"
+    ]
+  },
+  {
+    "file": "felix_2007.csv",
+    "title": "Felix 2007",
+    "pages": [
       {
-        "source": "GHRSST Level 4 MUR Global Foundation SST Analysis v4.1, monthly mean (jplMURSST41mday)",
-        "sourceUrl": "https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1",
-        "downloadUrl": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.nc?sst%5B(<year>-<month>-16T00:00:00Z)%5D%5B(-50):25:(55)%5D%5B(-179.99):25:(180)%5D",
-        "version": "4.1",
-        "doi": "https://doi.org/10.5067/GHGMR-4FJ04",
+        "svsId": 5072,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5072/",
+        "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
+      }
+    ],
+    "note": "Ours: Grows across the Caribbean to category 5, comes ashore in Nicaragua at 140 kt and dies over land, its remnant low crossing Central America (briefly over the Gulf of Honduras) into southern Mexico. From its birth to its last record, where it dissipates (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
+    "sources": [
+      {
+        "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
+        "sourceUrl": "https://www.nhc.noaa.gov/data/#hurdat",
+        "downloadUrl": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-092326.txt",
+        "version": "hurdat2-1851-2025-092326 (revised 2026-09-23)",
         "downloaded": "2026-11-14",
-        "license": "Free to use and redistribute, not for legal use (ERDDAP license attribute)",
-        "credit": "JPL MUR MEaSUREs Project. 2015. GHRSST Level 4 MUR Global Foundation Sea Surface Temperature Analysis (v4.1). PO.DAAC. Monthly mean served by NOAA CoastWatch ERDDAP.",
-        "substitute": "The dataset 5097 cites, from another distributor: PO.DAAC's copy needs an Earthdata login and is about 400 MB a day; NOAA CoastWatch ERDDAP serves its monthly mean without one."
+        "license": "US government work, public domain",
+        "credit": "Landsea, C. W. and J. L. Franklin, 2013: Atlantic Hurricane Database Uncertainty and Presentation of a New Database Format. Mon. Wea. Rev., 141, 3576-3592."
       }
     ],
     "units": {
@@ -45,56 +62,7 @@
     },
     "timeRange": [
       "2007-08-31T12:00Z",
-      "2007-09-05T06:00Z"
-    ]
-  },
-  {
-    "file": "michael_2018.csv",
-    "title": "Michael 2018",
-    "pages": [
-      {
-        "svsId": 5097,
-        "svsUrl": "https://svs.gsfc.nasa.gov/5097/",
-        "message": "Hurricanes tend to form over the warm tropical oceans where the SST is warmer than ~26.5 C (~80 F)"
-      },
-      {
-        "svsId": 5072,
-        "svsUrl": "https://svs.gsfc.nasa.gov/5072/",
-        "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
-      }
-    ],
-    "note": "Ours: Grows over the Gulf of Mexico to its 140 kt peak, comes ashore on the Florida Panhandle at it and loses its tropical character over land 30 hours later. The whole life of the storm (section 12). Chosen because every record of it over the sea is at or above 26.5 °C (MUR monthly SST; the coolest is 28.2 °C) and it dies on land after its last landfall (section 9.2).",
-    "sources": [
-      {
-        "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
-        "sourceUrl": "https://www.nhc.noaa.gov/data/#hurdat",
-        "downloadUrl": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-092326.txt",
-        "version": "hurdat2-1851-2025-092326 (revised 2026-09-23)",
-        "downloaded": "2026-11-14",
-        "license": "US government work, public domain",
-        "credit": "Landsea, C. W. and J. L. Franklin, 2013: Atlantic Hurricane Database Uncertainty and Presentation of a New Database Format. Mon. Wea. Rev., 141, 3576-3592."
-      },
-      {
-        "source": "GHRSST Level 4 MUR Global Foundation SST Analysis v4.1, monthly mean (jplMURSST41mday)",
-        "sourceUrl": "https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1",
-        "downloadUrl": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.nc?sst%5B(<year>-<month>-16T00:00:00Z)%5D%5B(-50):25:(55)%5D%5B(-179.99):25:(180)%5D",
-        "version": "4.1",
-        "doi": "https://doi.org/10.5067/GHGMR-4FJ04",
-        "downloaded": "2026-11-14",
-        "license": "Free to use and redistribute, not for legal use (ERDDAP license attribute)",
-        "credit": "JPL MUR MEaSUREs Project. 2015. GHRSST Level 4 MUR Global Foundation Sea Surface Temperature Analysis (v4.1). PO.DAAC. Monthly mean served by NOAA CoastWatch ERDDAP.",
-        "substitute": "The dataset 5097 cites, from another distributor: PO.DAAC's copy needs an Earthdata login and is about 400 MB a day; NOAA CoastWatch ERDDAP serves its monthly mean without one."
-      }
-    ],
-    "units": {
-      "wind_kt": "kt (1-minute sustained)",
-      "pressure_hpa": "hPa",
-      "lat": "°",
-      "lon": "°"
-    },
-    "timeRange": [
-      "2018-10-07T06:00Z",
-      "2018-10-12T00:00Z"
+      "2007-09-06T18:00Z"
     ]
   },
   {
@@ -102,17 +70,12 @@
     "title": "Laura 2020",
     "pages": [
       {
-        "svsId": 5097,
-        "svsUrl": "https://svs.gsfc.nasa.gov/5097/",
-        "message": "Hurricanes tend to form over the warm tropical oceans where the SST is warmer than ~26.5 C (~80 F)"
-      },
-      {
         "svsId": 5072,
         "svsUrl": "https://svs.gsfc.nasa.gov/5072/",
         "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
       }
     ],
-    "note": "Ours: Crosses the Caribbean as a tropical storm, five landfalls on the way, grows over the Gulf of Mexico to 130 kt, comes ashore in Louisiana at its peak and dies over land a day later. The whole life of the storm (section 12). Chosen because every record of it over the sea is at or above 26.5 °C (MUR monthly SST; the coolest is 27.7 °C) and it dies on land after its last landfall (section 9.2).",
+    "note": "Ours: Crosses the Caribbean as a tropical storm, five landfalls on the way, grows over the Gulf of Mexico to 130 kt, comes ashore in Louisiana at its peak and dies over land, fading over Kentucky. From its birth to its last record, where it dissipates (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
     "sources": [
       {
         "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
@@ -122,17 +85,6 @@
         "downloaded": "2026-11-14",
         "license": "US government work, public domain",
         "credit": "Landsea, C. W. and J. L. Franklin, 2013: Atlantic Hurricane Database Uncertainty and Presentation of a New Database Format. Mon. Wea. Rev., 141, 3576-3592."
-      },
-      {
-        "source": "GHRSST Level 4 MUR Global Foundation SST Analysis v4.1, monthly mean (jplMURSST41mday)",
-        "sourceUrl": "https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1",
-        "downloadUrl": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.nc?sst%5B(<year>-<month>-16T00:00:00Z)%5D%5B(-50):25:(55)%5D%5B(-179.99):25:(180)%5D",
-        "version": "4.1",
-        "doi": "https://doi.org/10.5067/GHGMR-4FJ04",
-        "downloaded": "2026-11-14",
-        "license": "Free to use and redistribute, not for legal use (ERDDAP license attribute)",
-        "credit": "JPL MUR MEaSUREs Project. 2015. GHRSST Level 4 MUR Global Foundation Sea Surface Temperature Analysis (v4.1). PO.DAAC. Monthly mean served by NOAA CoastWatch ERDDAP.",
-        "substitute": "The dataset 5097 cites, from another distributor: PO.DAAC's copy needs an Earthdata login and is about 400 MB a day; NOAA CoastWatch ERDDAP serves its monthly mean without one."
       }
     ],
     "units": {
@@ -143,7 +95,7 @@
     },
     "timeRange": [
       "2020-08-20T00:00Z",
-      "2020-08-28T06:00Z"
+      "2020-08-29T06:00Z"
     ]
   },
   {
@@ -151,17 +103,12 @@
     "title": "Helene 2024",
     "pages": [
       {
-        "svsId": 5097,
-        "svsUrl": "https://svs.gsfc.nasa.gov/5097/",
-        "message": "Hurricanes tend to form over the warm tropical oceans where the SST is warmer than ~26.5 C (~80 F)"
-      },
-      {
         "svsId": 5072,
         "svsUrl": "https://svs.gsfc.nasa.gov/5072/",
         "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
       }
     ],
-    "note": "Ours: Grows over the Gulf of Mexico to 120 kt, comes ashore in Florida's Big Bend at its peak and becomes a remnant low over land 15 hours later. The whole life of the storm (section 12). Chosen because every record of it over the sea is at or above 26.5 °C (MUR monthly SST; the coolest is 30.0 °C) and it dies on land after its last landfall (section 9.2).",
+    "note": "Ours: Grows over the Gulf of Mexico to 120 kt, comes ashore in Florida's Big Bend at its peak and dies over land, its remnant low turning over Kentucky. From its birth to its last record, where it dissipates (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
     "sources": [
       {
         "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
@@ -171,17 +118,6 @@
         "downloaded": "2026-11-14",
         "license": "US government work, public domain",
         "credit": "Landsea, C. W. and J. L. Franklin, 2013: Atlantic Hurricane Database Uncertainty and Presentation of a New Database Format. Mon. Wea. Rev., 141, 3576-3592."
-      },
-      {
-        "source": "GHRSST Level 4 MUR Global Foundation SST Analysis v4.1, monthly mean (jplMURSST41mday)",
-        "sourceUrl": "https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1",
-        "downloadUrl": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.nc?sst%5B(<year>-<month>-16T00:00:00Z)%5D%5B(-50):25:(55)%5D%5B(-179.99):25:(180)%5D",
-        "version": "4.1",
-        "doi": "https://doi.org/10.5067/GHGMR-4FJ04",
-        "downloaded": "2026-11-14",
-        "license": "Free to use and redistribute, not for legal use (ERDDAP license attribute)",
-        "credit": "JPL MUR MEaSUREs Project. 2015. GHRSST Level 4 MUR Global Foundation Sea Surface Temperature Analysis (v4.1). PO.DAAC. Monthly mean served by NOAA CoastWatch ERDDAP.",
-        "substitute": "The dataset 5097 cites, from another distributor: PO.DAAC's copy needs an Earthdata login and is about 400 MB a day; NOAA CoastWatch ERDDAP serves its monthly mean without one."
       }
     ],
     "units": {
@@ -192,7 +128,7 @@
     },
     "timeRange": [
       "2024-09-24T12:00Z",
-      "2024-09-27T18:00Z"
+      "2024-09-28T18:00Z"
     ]
   }
 ]

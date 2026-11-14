@@ -1,6 +1,5 @@
 // The instruments the music plays, as General MIDI programs of one sound font (built by scripts/build-soundfont.mjs
-// from GeneralUser GS and a gong from VSCO 2 CE; see src/features/music/data/soundfonts/CREDITS.md), and the MIDI
-// controllers they answer to.
+// from GeneralUser GS; see src/features/music/data/soundfonts/CREDITS.md), and the MIDI controllers they answer to.
 
 export const SOUND_FONT = 'orchestra.sf2';
 
@@ -25,8 +24,6 @@ export const Instrument = Object.freeze({
   VIOLIN: { program: 40, volume: 75 },
   DOUBLE_BASS: { program: 43, volume: 80 },
   VOICE_OOHS: { program: 53, volume: 76 },
-  // Not in GeneralUser GS: added on its own program by scripts/build-soundfont.mjs, in place of the Reverse Cymbal there.
-  GONG: { program: 119, volume: 127 },
   STANDARD_KIT: { program: 0, volume: 100, drums: true },
   POWER_KIT: { program: 16, volume: 100, drums: true },
   ORCHESTRAL_KIT: { program: 48, volume: 100, drums: true },

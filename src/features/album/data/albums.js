@@ -19,8 +19,6 @@ const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
 
 const HOT_OCEANS_DATA = 'data/hot_oceans/tracks';
 const HOT_OCEANS_COVERS = 'assets/albums/hot-oceans';
-// Every storm's whole life plays in this long, whatever it lasted (3.25 to 8.25 days).
-const STORM_TRACK_SEC = 30;
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -95,39 +93,39 @@ export const albums = [
   {
     id: 'hot-oceans',
     category: AlbumCategory.CLIMATE,
-    title: 'Hurricanes over Warm Water',
-    coverUrl: `${HOT_OCEANS_COVERS}/michael_2018.jpg`,
-    coverCredit: 'NASA Earth Observatory, public domain, via Wikimedia Commons',
-    dataCredit: 'Data: NASA SVS 5097, 5072 · HURDAT2 (NOAA/NHC) · GHRSST MUR SST v4.1 (NASA JPL, via NOAA CoastWatch)',
-    // Four Atlantic hurricanes that live their whole life over water at or above 26.5 °C and die on land, each coming
-    // ashore at or near its peak (see docs/albums/hot-oceans.md). Each plays its wind on its own percussion family and
-    // its landfall on a gong. Each track takes STORM_TRACK_SEC, so the storms' lives play at their own pace. Covers:
-    // each storm near its peak, from NASA.
+    title: "The Hurricane's Heartbeat",
+    coverUrl: `${HOT_OCEANS_COVERS}/katrina_2005.jpg`,
+    coverCredit: 'NASA/GSFC MODIS Rapid Response, public domain, via Wikimedia Commons',
+    dataCredit: 'Data: NASA SVS 5072 · HURDAT2 (NOAA/NHC)',
+    // Four Atlantic hurricanes that come ashore and die on land (see docs/albums/hot-oceans.md). Each plays its wind as
+    // the tempo of one beat on its own percussion family, from its birth to its last record. Each track's length
+    // (notebooks/hot_oceans_album.ipynb, section 12) plays the storm's life in 30 s and its dying on land on at the same
+    // pace. Covers: each storm near its peak, from NASA.
     tracks: [
       {
+        title: 'Katrina 2005',
+        durationSec: 33.3,
+        coverUrl: `${HOT_OCEANS_COVERS}/katrina_2005.jpg`,
+        coverCredit: 'Cover: MODIS, Aug 28 2005 (NASA/GSFC)',
+        storm: { csvUrl: `${HOT_OCEANS_DATA}/katrina_2005.csv`, kit: Kit.DRUM_SET },
+      },
+      {
         title: 'Felix 2007',
-        durationSec: STORM_TRACK_SEC,
+        durationSec: 39.5,
         coverUrl: `${HOT_OCEANS_COVERS}/felix_2007.jpg`,
         coverCredit: 'Cover: International Space Station, Sep 3 2007 (NASA)',
         storm: { csvUrl: `${HOT_OCEANS_DATA}/felix_2007.csv`, kit: Kit.DRUMLINE },
       },
       {
-        title: 'Michael 2018',
-        durationSec: STORM_TRACK_SEC,
-        coverUrl: `${HOT_OCEANS_COVERS}/michael_2018.jpg`,
-        coverCredit: 'Cover: GOES-16 at landfall, Oct 10 2018 (NASA Earth Observatory)',
-        storm: { csvUrl: `${HOT_OCEANS_DATA}/michael_2018.csv`, kit: Kit.DRUM_SET },
-      },
-      {
         title: 'Laura 2020',
-        durationSec: STORM_TRACK_SEC,
+        durationSec: 33.6,
         coverUrl: `${HOT_OCEANS_COVERS}/laura_2020.jpg`,
         coverCredit: 'Cover: VIIRS, Aug 26 2020 (NASA LANCE)',
         storm: { csvUrl: `${HOT_OCEANS_DATA}/laura_2020.csv`, kit: Kit.LATIN },
       },
       {
         title: 'Helene 2024',
-        durationSec: STORM_TRACK_SEC,
+        durationSec: 39.2,
         coverUrl: `${HOT_OCEANS_COVERS}/helene_2024.jpg`,
         coverCredit: 'Cover: MODIS on Aqua, Sep 26 2024 (NASA Worldview)',
         storm: { csvUrl: `${HOT_OCEANS_DATA}/helene_2024.csv`, kit: Kit.ORCHESTRA },
