@@ -42,6 +42,12 @@ const HEADSHELL = Object.freeze({ width: 0.06, length: 0.15, overhang: 0.025, of
 const CARTRIDGE = Object.freeze({ width: 0.04, length: 0.07 });
 const FINGER_LIFT = Object.freeze({ reach: 0.05, width: 0.008 });
 const NEEDLE_RADIUS = 0.008;
+// A hand pressed on the record holds it; it turns the record once the pointer has moved `slopPx` from where it went
+// down. Let go within `clickMs` without turning it, the press was a click. On release the record keeps the hand's
+// speed over its last `sampleMs`, at most `maxSpeed` times full speed.
+const HAND = Object.freeze({ slopPx: 4, clickMs: 300, sampleMs: 80, maxSpeed: 4 });
+// Degrees the platter turns in a second at full speed.
+const FULL_DEG_PER_SEC = (360 * PLATTER.rpm) / 60;
 // Time constant (s) of the arm's ease toward its target, and how close (deg) counts as arrived.
 const GLIDE_TAU_SEC = 0.15;
 const GLIDE_SETTLE_DEG = 0.05;
@@ -360,6 +366,11 @@ function createProgressRing(onSeek) {
  * Clicking the grooves calls `onSelectGroove(progress)` with the album progress of the groove clicked; clicking the
  * record off the grooves calls `onToggle()`.
  *
+ * The listener can also hold the record by hand, like a real one on its platter. Pressing on it stops it under the
+ * hand and calls `onHandHold()`. Moving the pointer then turns it round its centre, and each move calls
+ * `onHandTurn(sec)` with how many seconds of music at full speed it was turned (negative backwards). Let go, it calls `onHandRelease()` and picks up from the hand's speed, easing back to the motor's
+ * speed (or to a stop with the motor off). Only a short press that didn't turn the record still counts as a click.
+ *
  * @param {HTMLElement} parent
  * @param {{
  *   onToggle: () => void,
@@ -370,11 +381,17 @@ function createProgressRing(onSeek) {
  *   onLift: () => void,
  *   onSeek: (trackProgress: number) => void,
  *   onSelectGroove: (progress: number) => void,
+ *   onHandHold: () => void,
+ *   onHandTurn: (sec: number) => void,
+ *   onHandRelease: () => void,
  * }} options
  *   onToggle: called when the record is clicked off the grooves.
  *   onCued: called when the arm, swung on by render(CUEING), has reached its groove.
  */
-export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek, onSelectGroove }) {
+export function createTurntableView(
+  parent,
+  { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek, onSelectGroove, onHandHold, onHandTurn, onHandRelease },
+) {
   const root = document.createElement('div');
   root.className = 'turntable';
   root.style.aspectRatio = `${BOUNDS.width} / ${BOUNDS.height}`;
@@ -418,6 +435,8 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
 
   root.append(record, armLayer);
   vinylTop.addEventListener('click', (event) => {
+    // A press that held or turned the record is not a click on it.
+    if (!clicked) return;
     const progress = grooveProgress(pointerRadius(event));
     if (progress >= 0 && progress <= 1) onSelectGroove(progress);
     else onToggle();
@@ -431,27 +450,45 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
   let dragging = false;
   let motorOn = false;
   let spinFrame = null;
-  // Platter speed (0..1 of full speed) and turn (degrees clockwise).
+  // Platter speed (share of full speed; a hand can leave it faster or backwards) and turn (degrees clockwise).
   let speed = 0;
   let angle = 0;
+  // Whether a hand holds the record, and whether the last press on it was a click (short, and didn't turn it).
+  let held = false;
+  let clicked = true;
 
   function placeArm() {
     arm.setAttribute('transform', `translate(${PIVOT.x} ${PIVOT.y}) rotate(${bearing})`);
   }
 
-  // Spins the platter up while the motor runs and lets it coast down otherwise; stops once it stands still.
+  function turnTo(deg) {
+    angle = deg % 360;
+    spinner.style.transform = `rotate(${angle}deg)`;
+  }
+
   function setMotor(on) {
     motorOn = on;
-    if (spinFrame !== null) return;
+    spin();
+  }
+
+  // Brings the platter up to full speed while the motor runs and lets it coast to a stop otherwise, from whatever
+  // speed it has (a hand may have left it faster, or turning backwards); stops once it stands still. A held record
+  // turns with the hand instead, and the platter picks up again when it is let go.
+  function spin() {
+    if (spinFrame !== null || held) return;
     let last = null;
     const step = (now) => {
+      if (held) {
+        spinFrame = null;
+        return;
+      }
       const dt = last === null ? 0 : (now - last) / 1000;
       last = now;
-      const change = motorOn ? dt / PLATTER.spinUpSec : -dt / PLATTER.spinDownSec;
-      speed = Math.min(1, Math.max(0, speed + change));
-      angle = (angle + ((360 * PLATTER.rpm) / 60) * speed * dt) % 360;
-      spinner.style.transform = `rotate(${angle}deg)`;
-      spinFrame = motorOn || speed > 0 ? requestAnimationFrame(step) : null;
+      const target = motorOn ? 1 : 0;
+      const rate = dt / (motorOn && speed < target ? PLATTER.spinUpSec : PLATTER.spinDownSec);
+      speed = speed < target ? Math.min(target, speed + rate) : Math.max(target, speed - rate);
+      turnTo(angle + FULL_DEG_PER_SEC * speed * dt);
+      spinFrame = motorOn || speed !== 0 ? requestAnimationFrame(step) : null;
     };
     spinFrame = requestAnimationFrame(step);
   }
@@ -516,6 +553,12 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     return Math.hypot(event.clientX - x, event.clientY - y) / r;
   }
 
+  // Angle (degrees clockwise from up) of a pointer event round the record centre.
+  function pointerAngle(event) {
+    const { x, y } = recordGeometry();
+    return Math.atan2(event.clientX - x, -(event.clientY - y)) / RAD;
+  }
+
   // Bearing (degrees clockwise from up, 0..360) from the pivot to a pointer event.
   function pointerBearing(event) {
     const rect = armLayer.getBoundingClientRect();
@@ -561,6 +604,57 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     window.addEventListener('pointercancel', release);
   });
 
+  // A hand on the record: it stops it, and turns it as the pointer goes round the centre, keeping the grip it took so
+  // the record doesn't jump.
+  vinylTop.addEventListener('pointerdown', (event) => {
+    clicked = true;
+    if (event.button !== 0 || pointerRadius(event) > 1) return;
+    event.preventDefault();
+    held = true;
+    speed = 0;
+    vinylTop.classList.add('held');
+    onHandHold();
+    const start = { x: event.clientX, y: event.clientY, t: event.timeStamp };
+    let pointer = pointerAngle(event);
+    let turning = false;
+    // How far (deg) the hand has turned the record, and when, for its speed on release.
+    let turned = 0;
+    let samples = [{ t: event.timeStamp, turned }];
+    const move = (moveEvent) => {
+      if (!turning) {
+        if (Math.hypot(moveEvent.clientX - start.x, moveEvent.clientY - start.y) < HAND.slopPx) return;
+        turning = true;
+      }
+      const next = pointerAngle(moveEvent);
+      // The shortest way round from the last angle, so crossing 12 o'clock is not a whole turn.
+      const delta = ((next - pointer + 540) % 360) - 180;
+      pointer = next;
+      turned += delta;
+      turnTo(angle + delta);
+      samples = samples.filter((sample) => moveEvent.timeStamp - sample.t <= HAND.sampleMs);
+      samples.push({ t: moveEvent.timeStamp, turned });
+      onHandTurn(delta / FULL_DEG_PER_SEC);
+    };
+    const release = (upEvent) => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', release);
+      window.removeEventListener('pointercancel', release);
+      held = false;
+      vinylTop.classList.remove('held');
+      clicked = !turning && upEvent.timeStamp - start.t <= HAND.clickMs;
+      // The hand's speed over its last moments; a hand that stopped before letting go leaves the record still.
+      const [first] = samples.filter((sample) => upEvent.timeStamp - sample.t <= HAND.sampleMs);
+      const sec = first ? (upEvent.timeStamp - first.t) / 1000 : 0;
+      const handSpeed = turning && sec > 0 ? (turned - first.turned) / sec / FULL_DEG_PER_SEC : 0;
+      speed = Math.min(HAND.maxSpeed, Math.max(-HAND.maxSpeed, handSpeed));
+      spin();
+      onHandRelease();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+  });
+
   placeArm();
 
   /** Record centre and radius in client pixels, at rest on the platter. */
@@ -600,7 +694,8 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     } else if (state === PlaybackState.CUEING) {
       if (!onRecord) drop();
       setProgress(progress);
-    } else if (state === PlaybackState.PLAYING) {
+    } else if (state === PlaybackState.PLAYING || state === PlaybackState.HELD) {
+      // A record held by hand keeps the needle on it, following where the hand turns it.
       setProgress(progress);
     }
   }
