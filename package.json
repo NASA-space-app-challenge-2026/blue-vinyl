@@ -3,6 +3,6 @@
   "private": true,
   "scripts": {
     "start": "npx --yes serve@14.2.6 .",
-    "notebook": "uvx --with pandas --with matplotlib jupyter lab notebooks"
+    "notebook": "uvx --with pandas --with matplotlib --with av jupyter lab notebooks"
   }
 }
