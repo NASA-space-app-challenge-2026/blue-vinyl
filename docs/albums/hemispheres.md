@@ -1,4 +1,4 @@
-# Hemispheres Album: The Year the Oceans Ran Hot
+# Hemispheres Album: Mirror Storms
 
 The album's story, data and mappings. It follows [album-guide.md](../album-guide.md); the data comes from `notebooks/hemispheres_album.ipynb` (issue #26).
 

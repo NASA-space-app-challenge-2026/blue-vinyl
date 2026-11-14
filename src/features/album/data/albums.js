@@ -151,7 +151,7 @@ export const albums = [
   {
     id: 'hemispheres',
     category: AlbumCategory.CLIMATE,
-    title: 'The Year the Oceans Ran Hot',
+    title: 'Mirror Storms',
     coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
     coverCredit: 'Public domain, via Wikimedia Commons',
     dataCredit: STORMS_CREDIT,
