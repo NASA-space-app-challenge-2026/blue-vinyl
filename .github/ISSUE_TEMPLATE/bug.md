@@ -1,6 +1,6 @@
 ---
 name: Bug
-about: 버그 제보
-title: "Fix: "
+about: Report a bug
+title: "fix: "
 labels: bug
 ---

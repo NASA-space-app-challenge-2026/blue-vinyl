@@ -1,26 +1,26 @@
 # Commit Convention
 
-이 저장소의 모든 커밋 메시지는 아래 형식을 따른다. 로컬 `commit-msg` hook(`.githooks/commit-msg`)이 커밋 시점에 검사한다.
+Every commit message in this repository follows the format below. The local `commit-msg` hook (`.githooks/commit-msg`) checks it at commit time.
 
-## 형식
+## Format
 
 ```
 <prefix>: <description>.
 ```
 
-- `prefix`는 아래 4개 중 하나만 허용되며, 반드시 소문자로 쓴다.
-  - `feat` — 새 기능 추가
-  - `fix` — 버그 수정
-  - `chore` — 빌드/설정/스크립트/의존성 등 잡무
-  - `docs` — 문서 변경
-- 콜론(`:`) 바로 뒤에 공백 한 칸을 둔다.
-- 설명은 공백으로 시작하지 않는다.
-- 제목은 마침표(`.`)로 끝난다.
-- 검사는 첫 줄(제목)에만 적용된다.
+- `prefix` must be one of the four values below, always lowercase.
+  - `feat` — add a new feature
+  - `fix` — fix a bug
+  - `chore` — build, config, scripts, dependencies and other maintenance
+  - `docs` — documentation changes
+- Put exactly one space right after the colon (`:`).
+- The description must not start with a space.
+- The subject ends with a period (`.`).
+- Only the first line (the subject) is checked.
 
-## 예시
+## Examples
 
-허용:
+Allowed:
 
 ```
 feat: add new feature.
@@ -29,18 +29,18 @@ fix: fix the bug.
 docs: update commit convention.
 ```
 
-거부:
+Rejected:
 
 ```
-Feat: add new feature.     # 대문자 prefix
-feat:add new feature.      # 콜론 뒤 공백 없음
-feat: add new feature      # 마침표 없음
-refactor: clean up code.   # 허용되지 않은 prefix
+Feat: add new feature.     # uppercase prefix
+feat:add new feature.      # no space after the colon
+feat: add new feature      # no trailing period
+refactor: clean up code.   # prefix not allowed
 ```
 
-## Hook 설정
+## Hook Setup
 
-저장소를 clone한 뒤 한 번 실행한다.
+Run this once after cloning the repository.
 
 ```sh
 git config core.hooksPath .githooks

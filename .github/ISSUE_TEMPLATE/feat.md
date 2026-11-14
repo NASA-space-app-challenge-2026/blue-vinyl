@@ -1,6 +1,6 @@
 ---
 name: Feat
-about: 새 기능 제안
-title: "Feat: "
+about: Propose a new feature
+title: "feat: "
 labels: feat
 ---
