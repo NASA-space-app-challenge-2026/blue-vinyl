@@ -32,7 +32,7 @@ import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
 import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
-import { isGrowingSea, sampleStorm, sstMapAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
+import { sampleStorm, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
@@ -220,13 +220,11 @@ async function loadSong(track, target) {
     };
   }
   if (track.storm) {
-    const storm = await loadStormTrack(track.storm);
-    const { track: stormTrack } = storm;
+    const stormTrack = await loadStormTrack(track.storm);
     return {
-      storm,
+      storm: true,
       track: stormTrack,
       kit: track.storm.kit,
-      neutralSstC: track.storm.neutralSstC,
       composer: hurricaneComposer,
       startMs: stormTrack.t[0],
       msPerSec: stormMsPerSec(stormTrack, track.durationSec),
@@ -244,7 +242,6 @@ function showSong(song, color) {
   focus = null;
   globe.birds.reset(color);
   globe.storm.show(null);
-  globe.sstField.show(null);
   dateLabel.show(null);
   if (color) halo.setColor(color);
 }
@@ -426,8 +423,8 @@ function renderSong(trackIndex) {
 const STORM_FADE_SEC = 2.5;
 
 /**
- * Draws the storm at the clock over the sea surface temperature of its month, its wind and the sea under it, and the
- * date; the globe keeps it in the middle and the glow takes its colour. While playing, the music follows it.
+ * Draws the storm at the clock, its wind and the date; the globe keeps it in the middle and the glow takes its colour.
+ * While playing, the music follows it.
  */
 function renderStorm(trackIndex, song) {
   const { durationSec } = album.tracks[trackIndex];
@@ -439,8 +436,7 @@ function renderStorm(trackIndex, song) {
   const time = stormTimeAt(song.track, sec, durationSec);
   const sample = sampleStorm(song.track, time);
   const fade = Math.max(0, Math.min(1, sec / STORM_FADE_SEC, (durationSec - sec) / STORM_FADE_SEC));
-  globe.sstField.show(sstMapAt(song.storm.field, time));
-  globe.storm.show({ sample, fade, growing: sample.sstC !== null && isGrowingSea(sample.sstC, song.neutralSstC) });
+  globe.storm.show({ sample, fade });
   const color = globe.storm.color;
   if (color) halo.setColor(color);
   dateLabel.show(time);

@@ -240,7 +240,7 @@
   text-align: center;
 }
 
-/* A hurricane's wind and the sea under it, just below the storm (storm-view.js), sized with the globe. */
+/* A hurricane's wind, just below the storm (storm-view.js), sized with the globe. */
 .storm-label {
   position: absolute;
   left: 0;
@@ -265,11 +265,6 @@
   display: none;
 }
 
-.storm-wind,
-.storm-sst {
-  transition: color 0.6s ease, opacity 0.6s ease;
-}
-
-.storm-sst.is-over-land {
-  opacity: 0;
+.storm-wind {
+  transition: color 0.6s ease;
 }

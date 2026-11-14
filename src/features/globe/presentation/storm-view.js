@@ -1,16 +1,13 @@
 // A hurricane drawn on the globe as it looks from orbit: cloud bands winding anticlockwise into a dense core, an eye
 // that clears as the storm strengthens, the whole turning anticlockwise as Atlantic storms do. Its wind (intensityOf)
 // grows it, spins it faster (spinOf, the rate the music swirls its ringing drums at), organises its bands and tints its
-// thin cloud from sea blue through yellow to magenta. Below it its wind (km/h, in its category's colour) and the sea
-// under it (°C) are printed; the sea's number is warm-coloured while the water lets the storm grow and cool-coloured
-// while it weakens it, and fades out over land.
+// thin cloud from sea blue through yellow to magenta. Below it its wind is printed (km/h, in its category's colour).
 
 // The same three.js revision globe.gl@2.46.2 bundles, so the mesh fits its scene.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
 import { KMH_PER_KT, categoryOf, easeSpin, intensityOf, spinOf } from '../../tracks/domain/storm-track.js';
-import { SstColor } from './sst-color.js';
 
-// Above the SST field and the ice, so the clouds cover them.
+// Above the ice, so the clouds cover it.
 const ALTITUDE = 0.008;
 // The storm's radius in radians of arc, calm to full scale: far larger than a real storm's cloud shield, so it reads
 // on a globe the size of a record label.
@@ -124,11 +121,9 @@ void main() {
 }`;
 
 /**
- * @typedef {Object} StormView what to draw: the storm's sample, how far it has faded in (0..1), and whether the sea
- *   under it lets it grow
+ * @typedef {Object} StormView what to draw: the storm's sample and how far it has faded in (0..1)
  * @property {import('../../tracks/domain/storm-track.js').StormSample} sample
  * @property {number} fade
- * @property {boolean} growing
  */
 
 /**
@@ -140,9 +135,7 @@ export function createStormLayer({ globe, container }) {
   label.setAttribute('aria-hidden', 'true');
   const wind = document.createElement('span');
   wind.className = 'storm-wind';
-  const sea = document.createElement('span');
-  sea.className = 'storm-sst';
-  label.append(wind, sea);
+  label.append(wind);
   label.hidden = true;
   container.append(label);
 
@@ -180,7 +173,6 @@ export function createStormLayer({ globe, container }) {
   let lastNow = null;
   let centre = null;
   let category = null;
-  let growing = null;
 
   /** @param {StormView | null} view null takes the storm off the globe */
   function show(view) {
@@ -212,7 +204,7 @@ export function createStormLayer({ globe, container }) {
     uniforms.uTint.value.set(stormColor(intensity));
     mesh.visible = true;
     centre = { lat: sample.lat, lon: sample.lon };
-    showReadings(sample, view.growing, intensity);
+    showReadings(sample, intensity);
     label.style.opacity = view.fade;
   }
 
@@ -221,24 +213,16 @@ export function createStormLayer({ globe, container }) {
     label.hidden = true;
     lastNow = null;
     category = null;
-    growing = null;
   }
 
   // The wind appears in the storm's own colour and, as its category changes, turns to the colour the storm has as that
-  // category begins. The sea's number keeps its colour while the water stays on one side of the neutral SST.
-  function showReadings(sample, nowGrowing, intensity) {
+  // category begins.
+  function showReadings(sample, intensity) {
     wind.textContent = `${Math.round(sample.windKt * KMH_PER_KT)} km/h`;
     const nowCategory = categoryOf(sample.windKt);
     if (label.hidden) wind.style.color = stormColor(intensity);
     else if (nowCategory !== category) wind.style.color = stormColor(intensityOf(nowCategory.fromKt));
     category = nowCategory;
-    const overSea = sample.sstC !== null;
-    sea.classList.toggle('is-over-land', !overSea);
-    if (overSea) {
-      sea.textContent = `${sample.sstC.toFixed(1)} °C`;
-      if (nowGrowing !== growing) sea.style.color = nowGrowing ? SstColor.GROWING : SstColor.WEAKENING;
-      growing = nowGrowing;
-    }
     label.hidden = false;
   }
 

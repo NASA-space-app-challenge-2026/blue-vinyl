@@ -15,14 +15,11 @@ export const AlbumCategory = Object.freeze({
  */
 
 /**
- * A track that plays one hurricane's whole life over the sea under it, from the files the album notebook exports (see
- * docs/data-guide.md).
+ * A track that plays one hurricane's whole life, from the file the album notebook exports (see docs/data-guide.md).
  *
  * @typedef {Object} StormSource
  * @property {string} csvUrl the storm's records
- * @property {string} fieldUrl GeoJSON of the sea surface temperature under it, by month
  * @property {Object} kit the percussion family its wind is played on (Kit in music/domain/composers/hurricane.js)
- * @property {number} neutralSstC the basin's neutral SST (°C): warmer water lets the storm grow
  */
 
 /**

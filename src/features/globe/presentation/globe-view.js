@@ -2,7 +2,6 @@ import { createIceFall } from './ice-fall.js';
 import { createIceMorph } from './ice-morph.js';
 
 import { createBirdsLayer } from './birds-layer.js';
-import { createSstFieldLayer } from './sst-field-layer.js';
 import { createStormLayer } from './storm-view.js';
 
 // globe.gl is loaded as a UMD bundle in index.html: it ships one copy of three.js,
@@ -36,8 +35,7 @@ function fittedAltitude(camera) {
  * It turns to keep a focus point (the flock, or the pole of a track's ice) at its centre; turned or zoomed by hand, it glides back a moment after release.
  *
  * It can draw a track's sea ice, morphing from year to year. When a year loses ice, pieces of it fall from where it
- * was into the water at the bottom of the label. It can draw a hurricane (storm) over the sea surface temperature under
- * it (sstField).
+ * was into the water at the bottom of the label. It can draw a hurricane (storm).
  *
  * @param {HTMLElement} container
  */
@@ -182,7 +180,6 @@ export function createGlobeView(container) {
   });
   globe.htmlElement('el').htmlTransitionDuration(0);
   const storm = createStormLayer({ globe, container });
-  const sstField = createSstFieldLayer(globe);
 
   return {
     setTheme,
@@ -190,7 +187,6 @@ export function createGlobeView(container) {
     setWaterLine,
     birds,
     storm,
-    sstField,
     /** @param {() => ({ lat: number, lon: number } | null)} next */
     setFocus(next) {
       getFocus = next;

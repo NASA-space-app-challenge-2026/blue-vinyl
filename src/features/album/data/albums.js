@@ -19,10 +19,7 @@ const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
 
 const HOT_OCEANS_DATA = 'data/hot_oceans/tracks';
 const HOT_OCEANS_COVERS = 'assets/albums/hot-oceans';
-// The Atlantic's neutral SST (°C), where storms on average neither strengthen nor weaken over the next 24 hours
-// (notebooks/hot_oceans_album.ipynb, section 5.1): the sea above it lets a storm grow.
-const ATLANTIC_NEUTRAL_SST_C = 26.9;
-// Every storm's whole life plays in this long, whatever it lasted (5.25 to 15.5 days).
+// Every storm's whole life plays in this long, whatever it lasted (3.25 to 8.25 days).
 const STORM_TRACK_SEC = 30;
 
 /** @type {import('../domain/album.js').Album[]} */
@@ -99,49 +96,41 @@ export const albums = [
     id: 'hot-oceans',
     category: AlbumCategory.CLIMATE,
     title: 'Hurricanes over Warm Water',
-    coverUrl: `${HOT_OCEANS_COVERS}/lee_2017.jpg`,
-    coverCredit: 'NASA, public domain, via Wikimedia Commons',
+    coverUrl: `${HOT_OCEANS_COVERS}/michael_2018.jpg`,
+    coverCredit: 'NASA Earth Observatory, public domain, via Wikimedia Commons',
     dataCredit: 'Data: NASA SVS 5097, 5072 · HURDAT2 (NOAA/NHC) · GHRSST MUR SST v4.1 (NASA JPL, via NOAA CoastWatch)',
-    // Three Atlantic hurricanes that grow over warm water and weaken over cool water, never near land, with the
-    // sharpest turn from one to the other (see docs/albums/hot-oceans.md). Each plays its wind on its own percussion
-    // family. Each track takes STORM_TRACK_SEC, so the storms' lives play at their own pace. Covers: each storm near
-    // its peak, from NASA.
+    // Four Atlantic hurricanes that live their whole life over water at or above 26.5 °C and die on land, each coming
+    // ashore at or near its peak (see docs/albums/hot-oceans.md). Each plays its wind on its own percussion family and
+    // its landfall on a gong. Each track takes STORM_TRACK_SEC, so the storms' lives play at their own pace. Covers:
+    // each storm near its peak, from NASA.
     tracks: [
       {
-        title: 'Kirk 2012',
+        title: 'Felix 2007',
         durationSec: STORM_TRACK_SEC,
-        coverUrl: `${HOT_OCEANS_COVERS}/kirk_2012.jpg`,
-        coverCredit: 'Cover: MODIS, Aug 30 2012 (NASA MODIS/LANCE)',
-        storm: {
-          csvUrl: `${HOT_OCEANS_DATA}/kirk_2012.csv`,
-          fieldUrl: `${HOT_OCEANS_DATA}/kirk_2012_sst.geojson`,
-          kit: Kit.LATIN,
-          neutralSstC: ATLANTIC_NEUTRAL_SST_C,
-        },
+        coverUrl: `${HOT_OCEANS_COVERS}/felix_2007.jpg`,
+        coverCredit: 'Cover: International Space Station, Sep 3 2007 (NASA)',
+        storm: { csvUrl: `${HOT_OCEANS_DATA}/felix_2007.csv`, kit: Kit.DRUMLINE },
       },
       {
-        title: 'Lee 2017',
+        title: 'Michael 2018',
         durationSec: STORM_TRACK_SEC,
-        coverUrl: `${HOT_OCEANS_COVERS}/lee_2017.jpg`,
-        coverCredit: 'Cover: MODIS on Terra, Sep 27 2017 (NASA)',
-        storm: {
-          csvUrl: `${HOT_OCEANS_DATA}/lee_2017.csv`,
-          fieldUrl: `${HOT_OCEANS_DATA}/lee_2017_sst.geojson`,
-          kit: Kit.DRUMLINE,
-          neutralSstC: ATLANTIC_NEUTRAL_SST_C,
-        },
+        coverUrl: `${HOT_OCEANS_COVERS}/michael_2018.jpg`,
+        coverCredit: 'Cover: GOES-16 at landfall, Oct 10 2018 (NASA Earth Observatory)',
+        storm: { csvUrl: `${HOT_OCEANS_DATA}/michael_2018.csv`, kit: Kit.DRUM_SET },
       },
       {
-        title: 'Sam 2021',
+        title: 'Laura 2020',
         durationSec: STORM_TRACK_SEC,
-        coverUrl: `${HOT_OCEANS_COVERS}/sam_2021.jpg`,
-        coverCredit: 'Cover: NASA Worldview, Sep 26 2021',
-        storm: {
-          csvUrl: `${HOT_OCEANS_DATA}/sam_2021.csv`,
-          fieldUrl: `${HOT_OCEANS_DATA}/sam_2021_sst.geojson`,
-          kit: Kit.ORCHESTRA,
-          neutralSstC: ATLANTIC_NEUTRAL_SST_C,
-        },
+        coverUrl: `${HOT_OCEANS_COVERS}/laura_2020.jpg`,
+        coverCredit: 'Cover: VIIRS, Aug 26 2020 (NASA LANCE)',
+        storm: { csvUrl: `${HOT_OCEANS_DATA}/laura_2020.csv`, kit: Kit.LATIN },
+      },
+      {
+        title: 'Helene 2024',
+        durationSec: STORM_TRACK_SEC,
+        coverUrl: `${HOT_OCEANS_COVERS}/helene_2024.jpg`,
+        coverCredit: 'Cover: MODIS on Aqua, Sep 26 2024 (NASA Worldview)',
+        storm: { csvUrl: `${HOT_OCEANS_DATA}/helene_2024.csv`, kit: Kit.ORCHESTRA },
       },
     ],
   },
