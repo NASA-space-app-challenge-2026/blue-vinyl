@@ -374,13 +374,13 @@ function takePendingStep() {
 }
 
 /**
- * Changes records, once for `step` (-1 or 1) and once more for each step asked for meanwhile: the arm lifts, the
- * record goes into its sleeve and the column of sleeves moves along to the new album, whose record comes out stopped
- * at its start. The catalog wraps around.
+ * Changes records, once for `step` (-1 or 1) and once more for each step asked for meanwhile, even while the new
+ * record is being drawn out (see createRecordSwap): the arm lifts, the record goes into its sleeve and the column of
+ * sleeves moves along to the new album, whose record comes out stopped at its start. The catalog wraps around.
  */
 async function switchAlbum(step) {
   if (swapping) {
-    pendingSteps += step;
+    if (recordSwap.skip()) pendingSteps += step;
     return;
   }
   swapping = true;

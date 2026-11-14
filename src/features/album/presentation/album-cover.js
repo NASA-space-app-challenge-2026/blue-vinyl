@@ -8,7 +8,7 @@ const CATEGORY_LABEL = Object.freeze({
 
 // Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always
 // leans the same way and never stands straight.
-const TILT = Object.freeze({ minDeg: -6, maxDeg: -2 });
+const TILT = Object.freeze({ minDeg: -3, maxDeg: -1 });
 const GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
 // Most the face leans (deg) toward or away from the pointer at the sleeve's edges.
 const HOVER_TILT_DEG = 1.5;
