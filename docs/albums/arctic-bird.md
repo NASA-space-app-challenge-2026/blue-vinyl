@@ -17,7 +17,7 @@ The shorebirds cross the equator to South America; the loons stay in the North P
 
 ## Data
 
-Each track file (`data/arctic_bird/tracks/<species>.csv`) holds the daily positions of up to 30 bird-years of one species: one bird in one calendar year each. The app lays every year over one, so the birds of all years fly together through Jan 1 to Dec 31, a week a second (about 52 s a track). See section 9 of the notebook.
+Each track file (`data/arctic_bird/tracks/<species>.csv`) holds the daily positions of chosen bird-years of one species: one bird in one calendar year each. They are chosen so the music has rhythm and the flock stays together on the globe: birds that rest and then fly in bursts (the upper half by burstiness of daily distance), whose tags never fall silent for more than 7 days, and that stay within 2,500 km of the flock's centre. Where that would leave a day with no bird, the bird-years that cover it are taken back, so every species stays on the map all year (6, 12, 19 and 16 bird-years). The app lays every year over one, so the birds of all years fly together through Jan 1 to Dec 31, a week a second (about 52 s a track). See section 9 of the notebook.
 
 The **flock** is the birds on the map at a moment, averaged together: their mean position, mean speed, mean change of latitude and how many of them are flying (faster than 5 km/h). Code: [`bird-track.js`](../../src/features/tracks/domain/bird-track.js).
 
