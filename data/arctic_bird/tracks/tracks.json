@@ -1,14 +1,14 @@
 [
   {
-    "file": "lesser_yellowlegs.csv",
-    "title": "Lesser yellowlegs, one year",
-    "species": "Lesser yellowlegs",
+    "file": "buff_breasted_sandpiper.csv",
+    "title": "Buff-breasted sandpiper, one year",
+    "species": "Buff-breasted sandpiper",
     "message": "",
     "svsId": 4877,
     "svsUrl": "https://svs.gsfc.nasa.gov/4877/",
-    "source": "Arctic Animal Movement Archive (AAMA), Movebank study 543061768: USFWS Lesser Yellowlegs (Tringa flavipes) migratory movements",
+    "source": "Arctic Animal Movement Archive (AAMA), Movebank study 1128676353: buffBreastedSandpiper_USGS_ASC_argosGPS",
     "sourceUrl": "https://www.movebank.org/cms/movebank-content/arctic-animal-movement-archive",
-    "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=543061768",
+    "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=1128676353",
     "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
     "units": {
       "track": "bird / calendar year",
@@ -16,10 +16,9 @@
       "lon_deg": "degrees east"
     },
     "timeRange": [
-      "2018-06-06",
-      "2021-09-03"
-    ],
-    "annualKmMedian": 24670
+      "2016-04-25",
+      "2019-04-03"
+    ]
   },
   {
     "file": "whimbrel.csv",

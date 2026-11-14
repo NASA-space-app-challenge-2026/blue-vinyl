@@ -4,16 +4,16 @@ Issue #18. One year of bird movement from the Arctic Animal Movement Archive, th
 
 ## Message
 
-EIC shows that Arctic animals move with the seasons, with all years folded into one. The album plays the four species of the public bird studies that fly the farthest in a year, farthest first:
+EIC shows that Arctic animals move with the seasons, with all years folded into one. The album plays four species of the public bird studies through one year:
 
 | Track | Species | km in a year (median bird) | Lead |
 | --- | --- | --- | --- |
-| 1 | Lesser Yellowlegs | 24,670 | Flute |
+| 1 | Buff-breasted Sandpiper | not ranked (no bird tracked a full year) | Flute |
 | 2 | Whimbrel | 20,306 | Oboe |
 | 3 | Yellow-billed Loon | 10,289 | French horn |
 | 4 | Red-throated Loon | 9,699 | Ocarina |
 
-The shorebirds cross the equator to South America; the loons stay in the North Pacific.
+The Buff-breasted sandpiper (our choice, in place of the Lesser yellowlegs) flies from Alaska's Arctic coast to the Pampas of Argentina and Uruguay; it plays a fixed list of 93 birds we picked. The Whimbrel and the two loons are three of the four species that fly the farthest in a year. The shorebirds cross the equator to South America; the loons stay in the North Pacific.
 
 ## Data
 
