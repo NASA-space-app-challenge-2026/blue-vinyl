@@ -11,7 +11,7 @@ jobs:
   label-by-branch:
     runs-on: ubuntu-latest
     steps:
-      # The branch type (see docs/ai/branch-strategy.md) matches the label name.
+      # The branch type (see docs/conventions/branch-strategy.md) matches the label name.
       - name: Add the label for the branch type
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

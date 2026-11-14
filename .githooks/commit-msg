@@ -1,5 +1,5 @@
 #!/bin/sh
-# Validates the commit subject line. See docs/ai/commit-convention.md.
+# Validates the commit subject line. See docs/conventions/commit-convention.md.
 
 subject=$(head -n 1 "$1")
 pattern='^(feat|chore|fix|docs): [^ ].*\.$'
@@ -8,6 +8,6 @@ if ! printf '%s\n' "$subject" | grep -Eq "$pattern"; then
   echo "ERROR: invalid commit message: \"$subject\"" >&2
   echo "Expected: <feat|chore|fix|docs>: <description>." >&2
   echo "Example:  feat: add new feature." >&2
-  echo "See docs/ai/commit-convention.md" >&2
+  echo "See docs/conventions/commit-convention.md" >&2
   exit 1
 fi
