@@ -37,7 +37,7 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 
 - Full-viewport stage; nothing scrolls on desktop.
 - The sleeve is tilted a little and tucked **behind** the record. The record overlaps the sleeve's right edge; the title and track list wrap before it so no text hides behind the record.
-- Each album's sleeve has its own slight angle around -3deg, picked from its place in the catalog, so the sleeves differ but each always looks the same.
+- Each album's sleeve has its own angle between -6deg and -2deg, picked from its place in the catalog, so the sleeves differ but each always looks the same. A sleeve never stands straight.
 - Hovering the mouse over the sleeve leans it a few degrees in 3D toward the pointer, like a card in the hand; it eases back when the mouse leaves.
 - The sleeve has a dark gradient at the bottom so the title and track list stay readable over any cover photo.
 - Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
@@ -99,7 +99,7 @@ Volume is held by the control only; nothing plays sound yet. Language, view opti
 The sleeves stand in a vertical column in catalog order, like pages: the previous album above the current one and the next below, each a viewport height away. Changing records plays in order (`record-swap.js`):
 
 1. The record (vinyl and globe label, not the tonearm) shrinks and lifts off the platter clear of the sleeve, then slides into it.
-2. The column moves one place, carrying the record off with its sleeve: up for the next album, down for the previous one. The new sleeve comes into the middle.
+2. The column moves one place, carrying the record off with its sleeve: up for the next album, down for the previous one. It moves like a toss, fast off the mark and slowing to land: the leaving sleeve spins away, and the new sleeve spins in, swings a little past its own album's angle and settles on it.
 3. The albums shift back by one at once, so the record is now in the new sleeve, and it is drawn back out onto the platter.
 
 Only CSS `translate` and `scale` animate, so the layout and the sleeve's tilt stay put. The stage cannot be touched while it plays.

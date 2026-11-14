@@ -22,7 +22,8 @@ const Leg = Object.freeze({
     { record: Place.CLEAR, stage: Stage.ON, tucked: false, ms: 260 },
     { record: Place.IN_SLEEVE, stage: Stage.ON, tucked: true, ms: 340 },
   ],
-  MOVE_ALONG: [{ record: Place.IN_SLEEVE, stage: Stage.ALONG, tucked: true, ms: 500 }],
+  // Tossed: fast off the mark and slowing as the new sleeve lands.
+  MOVE_ALONG: [{ record: Place.IN_SLEEVE, stage: Stage.ALONG, tucked: true, ms: 650, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }],
   // The column stands as before round the new album, at once.
   SHIFT_BACK: [{ record: Place.IN_SLEEVE, stage: Stage.ON, tucked: true, ms: 0 }],
   DRAW_OUT: [
@@ -30,6 +31,7 @@ const Leg = Object.freeze({
     { record: Place.AT_PLATTER, stage: Stage.ON, tucked: false, ms: 260 },
   ],
 });
+// Easing of poses that name none.
 const EASING = 'ease-in-out';
 
 /**
@@ -78,7 +80,7 @@ export function createRecordSwap({ recordEl, recordGeometry, column }) {
 
   async function step(pose, direction) {
     column.setTucked(from.tucked || pose.tucked);
-    const options = { duration: pose.ms, easing: EASING, fill: 'both' };
+    const options = { duration: pose.ms, easing: pose.easing ?? EASING, fill: 'both' };
     const moves = [
       recordEl.animate([recordStyle(from, direction), recordStyle(pose, direction)], options),
       ...column.moves(shift(from, direction), shift(pose, direction), options),

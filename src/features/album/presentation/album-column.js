@@ -3,6 +3,12 @@ import { createAlbumCover } from './album-cover.js';
 
 // Neighbouring sleeves drawn, in places from the current one (negative above it).
 const NEIGHBOUR_PLACES = Object.freeze([-1, 1]);
+// Extra turn (deg) a sleeve has per place off the stage, so it spins in as it is tossed onto the stage and spins
+// away as it leaves; each sleeve settles at its own album's tilt.
+const TOSS_SPIN_DEG = 10;
+// A sleeve landing in the middle swings past its tilt by `share` of the spin, `at` that point of the move, then
+// settles back.
+const TOSS_OVERSHOOT = Object.freeze({ share: 0.15, at: 0.7 });
 // The sleeve stacks over the record (the turntable is z-index 1) while it holds it.
 const TUCKED_Z_INDEX = '2';
 
@@ -25,6 +31,8 @@ export function createAlbumColumn(parent, albums) {
     return { place, cover };
   });
   const sleeves = [sleeve.el, ...neighbours.map(({ cover }) => cover.el)];
+  // Each sleeve's place in the column, as `sleeves`.
+  const places = [0, ...neighbours.map(({ place: at }) => at)];
   let spacing = 0;
 
   /** @param {number} index */
@@ -71,7 +79,17 @@ export function createAlbumColumn(parent, albums) {
    */
   function moves(from, to, options) {
     const keyframes = [from, to].map((shift) => ({ translate: `0 ${shift * spacing}px` }));
-    return sleeves.map((el) => el.animate(keyframes, options));
+    return sleeves.flatMap((el, i) => [
+      el.animate(keyframes, options),
+      el.animate(spinKeyframes((places[i] + from) * TOSS_SPIN_DEG, (places[i] + to) * TOSS_SPIN_DEG), options),
+    ]);
+  }
+
+  // A sleeve spinning onto the stage swings past its tilt and settles back; any other spin is straight.
+  function spinKeyframes(fromDeg, toDeg) {
+    if (toDeg !== 0 || fromDeg === 0) return [{ rotate: `${fromDeg}deg` }, { rotate: `${toDeg}deg` }];
+    const { share, at } = TOSS_OVERSHOOT;
+    return [{ rotate: `${fromDeg}deg` }, { rotate: `${-fromDeg * share}deg`, offset: at }, { rotate: '0deg' }];
   }
 
   /** Back at rest in place, the neighbours hidden. */

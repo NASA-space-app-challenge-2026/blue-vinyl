@@ -4,8 +4,9 @@ const CATEGORY_LABEL = Object.freeze({
   [AlbumCategory.BIODIVERSITY]: 'Biodiversity',
 });
 
-// Each sleeve lies at its own slight angle, picked from its place in the catalog so it is the same every time.
-const TILT = Object.freeze({ centerDeg: -3, spreadDeg: 6 });
+// Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always
+// leans the same way and never stands straight.
+const TILT = Object.freeze({ minDeg: -6, maxDeg: -2 });
 const GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
 // Most the face leans (deg) toward or away from the pointer at the sleeve's edges.
 const HOVER_TILT_DEG = 3;
@@ -13,7 +14,7 @@ const HOVER_TILT_DEG = 3;
 /** @param {number} index place in the catalog; neighbouring places get well spread angles */
 function tiltDeg(index) {
   const spread = (index * GOLDEN_RATIO) % 1;
-  return TILT.centerDeg + spread * TILT.spreadDeg - TILT.spreadDeg / 2;
+  return TILT.minDeg + spread * (TILT.maxDeg - TILT.minDeg);
 }
 
 function el(tag, className, text) {
