@@ -1,0 +1,67 @@
+.turntable {
+  width: min(520px, 100%);
+  height: auto;
+  overflow: visible;
+}
+
+.record {
+  animation: record-spin 1.8s linear infinite paused;
+}
+
+.turntable[data-state='playing'] .record {
+  animation-play-state: running;
+}
+
+@keyframes record-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.record-disc {
+  fill: #141414;
+  stroke: #2b2b2b;
+  stroke-width: 2;
+}
+
+.record-groove {
+  fill: none;
+  stroke: #262626;
+  stroke-width: 1;
+}
+
+.record-track-boundary {
+  fill: none;
+  stroke: #707070;
+  stroke-width: 1.5;
+}
+
+.record-label-bg {
+  fill: #1d1d1d;
+}
+
+/* The arm swings smoothly when lifted or cued; while playing it follows the clock frame by frame. */
+.tonearm {
+  transition: transform 0.9s ease-in-out;
+}
+
+.turntable[data-state='playing'] .tonearm {
+  transition: none;
+}
+
+.tonearm-arm {
+  stroke: #d8d8d8;
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+
+.tonearm-head {
+  fill: #ececec;
+  stroke: #9a9a9a;
+}
+
+.tonearm-base {
+  fill: #e6e6e6;
+  stroke: #a8a8a8;
+  stroke-width: 2;
+}

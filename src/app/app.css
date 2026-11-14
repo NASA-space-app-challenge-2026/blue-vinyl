@@ -1,0 +1,41 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 16px;
+  background: #2a2d33;
+  font-family: system-ui, sans-serif;
+}
+
+/* Turntable plinth holding the sleeve and the record. */
+.deck {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: min(880px, 100%);
+  padding: 32px;
+  border-radius: 20px;
+  background: #ecebe8;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 0.4);
+}
+
+.deck .turntable {
+  flex: 1 1 320px;
+  margin-left: -40px;
+}
+
+@media (max-width: 640px) {
+  .deck .turntable {
+    margin-left: 0;
+  }
+}
