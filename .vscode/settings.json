@@ -1,0 +1,12 @@
+{
+  "liveServer.settings.ignoreFiles": [
+    ".vscode/**",
+    "**/*.scss",
+    "**/*.sass",
+    "**/*.ts",
+    "**/.claude/**",
+    "**/data/*/raw/**",
+    "**/.cache/**",
+    "**/.ipynb_checkpoints/**"
+  ]
+}

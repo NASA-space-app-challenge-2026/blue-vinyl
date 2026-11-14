@@ -15,10 +15,19 @@ export const AlbumCategory = Object.freeze({
  */
 
 /**
+ * A track that plays one hurricane's whole life, from the file the album notebook exports (see docs/data-guide.md).
+ *
+ * @typedef {Object} StormSource
+ * @property {string} csvUrl the storm's records
+ * @property {Object} kit the percussion family its wind is played on (Kit in music/domain/composers/hurricane.js)
+ */
+
+/**
  * @typedef {Object} Track
  * @property {string} title
  * @property {number} durationSec
  * @property {IceSeaSource} [iceSea] data, sound and view of a polar track
+ * @property {StormSource} [storm] data, sound and view of a hurricane track
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
  * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
  * @property {string} [color] CSS color the track's data is drawn in

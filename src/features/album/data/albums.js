@@ -1,4 +1,5 @@
 import { IceVoice } from '../../music/domain/ice-sea-score.js';
+import { Kit } from '../../music/domain/composers/hurricane.js';
 import { YEAR_TIMELINE, trackDurationSec } from '../../tracks/domain/year-timeline.js';
 import { AlbumCategory } from '../domain/album.js';
 import { Instrument } from '../../music/domain/instruments.js';
@@ -15,6 +16,9 @@ const GLACIER_COVERS = 'assets/albums/glacier';
 // 32 years (1993–2024), one a bar (1.2 s) with no intro, then the last note's tail: 39.7 s.
 const POLAR_YEARS = 32;
 const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
+
+const HOT_OCEANS_DATA = 'data/hot_oceans/tracks';
+const HOT_OCEANS_COVERS = 'assets/albums/hot-oceans';
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -87,54 +91,45 @@ export const albums = [
     ],
   },
   {
-    id: 'curlew',
-    category: AlbumCategory.BIODIVERSITY,
-    title: 'Along the Flyway',
-    coverUrl: 'assets/albums/curlew/cover.jpg',
-    coverCredit: 'Photo: TBD',
+    id: 'hot-oceans',
+    category: AlbumCategory.CLIMATE,
+    title: "The Hurricane's Heartbeat",
+    coverUrl: `${HOT_OCEANS_COVERS}/katrina_2005.jpg`,
+    coverCredit: 'NASA/GSFC MODIS Rapid Response, public domain, via Wikimedia Commons',
+    dataCredit: 'Data: NASA SVS 5072 · HURDAT2 (NOAA/NHC)',
+    // Four Atlantic hurricanes that come ashore and die on land (see docs/albums/hot-oceans.md). Each plays its wind as
+    // the tempo of one beat on its own percussion family, from its birth until its wind falls below 50 km/h. Each
+    // track's length (notebooks/hot_oceans_album.ipynb, section 12) plays the storm's life in 30 s and its dying on land
+    // on at the same pace. Covers: each storm near its peak, from NASA.
     tracks: [
-      { title: 'Far Eastern Curlew', durationSec: 52 },
-      { title: 'Bar-tailed Godwit', durationSec: 52 },
-      { title: 'Red Knot', durationSec: 47 },
-      { title: 'Great Knot', durationSec: 52 },
-    ],
-  },
-  // Placeholder albums for album switching; replace with real data.
-  {
-    id: 'dummy-coral',
-    category: AlbumCategory.BIODIVERSITY,
-    title: 'Dummy Album Two',
-    coverUrl: 'assets/albums/dummy-coral/cover.jpg',
-    coverCredit: 'Photo: TBD',
-    tracks: [
-      { title: 'Dummy Track A', durationSec: 40 },
-      { title: 'Dummy Track B', durationSec: 75 },
-      { title: 'Dummy Track C', durationSec: 30 },
-    ],
-  },
-  {
-    id: 'dummy-forest',
-    category: AlbumCategory.BIODIVERSITY,
-    title: 'Dummy Album Three',
-    coverUrl: 'assets/albums/dummy-forest/cover.jpg',
-    coverCredit: 'Photo: TBD',
-    tracks: [
-      { title: 'Dummy Track A', durationSec: 60 },
-      { title: 'Dummy Track B', durationSec: 60 },
-    ],
-  },
-  {
-    id: 'dummy-tundra',
-    category: AlbumCategory.BIODIVERSITY,
-    title: 'Dummy Album Four',
-    coverUrl: 'assets/albums/dummy-tundra/cover.jpg',
-    coverCredit: 'Photo: TBD',
-    tracks: [
-      { title: 'Dummy Track A', durationSec: 25 },
-      { title: 'Dummy Track B', durationSec: 35 },
-      { title: 'Dummy Track C', durationSec: 45 },
-      { title: 'Dummy Track D', durationSec: 30 },
-      { title: 'Dummy Track E', durationSec: 50 },
+      {
+        title: 'Katrina 2005',
+        durationSec: 33.3,
+        coverUrl: `${HOT_OCEANS_COVERS}/katrina_2005.jpg`,
+        coverCredit: 'Cover: MODIS, Aug 28 2005 (NASA/GSFC)',
+        storm: { csvUrl: `${HOT_OCEANS_DATA}/katrina_2005.csv`, kit: Kit.DRUM_SET },
+      },
+      {
+        title: 'Felix 2007',
+        durationSec: 30,
+        coverUrl: `${HOT_OCEANS_COVERS}/felix_2007.jpg`,
+        coverCredit: 'Cover: International Space Station, Sep 3 2007 (NASA)',
+        storm: { csvUrl: `${HOT_OCEANS_DATA}/felix_2007.csv`, kit: Kit.DRUMLINE },
+      },
+      {
+        title: 'Laura 2020',
+        durationSec: 30,
+        coverUrl: `${HOT_OCEANS_COVERS}/laura_2020.jpg`,
+        coverCredit: 'Cover: VIIRS, Aug 26 2020 (NASA LANCE)',
+        storm: { csvUrl: `${HOT_OCEANS_DATA}/laura_2020.csv`, kit: Kit.LATIN },
+      },
+      {
+        title: 'Helene 2024',
+        durationSec: 36.9,
+        coverUrl: `${HOT_OCEANS_COVERS}/helene_2024.jpg`,
+        coverCredit: 'Cover: MODIS on Aqua, Sep 26 2024 (NASA Worldview)',
+        storm: { csvUrl: `${HOT_OCEANS_DATA}/helene_2024.csv`, kit: Kit.ORCHESTRA },
+      },
     ],
   },
 ];
