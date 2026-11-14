@@ -44,7 +44,7 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 - The sleeve has a dark gradient at the bottom so the title and track list stay readable over any cover photo.
 - The sleeve shows the current track's cover when the track has one, else the album's; it fades from one to the next as the tracks change.
 - Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. The credits of the cover shown, the album's data, the instruments and the globe's map/imagery run round the record's rim, outside the grooves, turning with the record (centred at 12 o'clock at rest) and shrunk to fit if long.
-- At 760px wide and below, the sleeve and the record stack vertically and the page scrolls.
+- Always landscape: the screen maintains the horizontal sleeve-and-turntable layout on all viewports without vertical stacking. In portrait orientation (e.g. mobile phones held vertically), the screen is rotated 90 degrees via CSS transform so it completely fills the viewport in a forced landscape layout.
 
 ## Record
 

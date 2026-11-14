@@ -403,6 +403,7 @@ function unlockSound() {
   music.unlock();
   soundEngine.unlock().catch((error) => console.error('sound engine failed to load', error));
 }
+document.addEventListener('pointerdown', unlockSound, { once: true });
 
 // Takes one of the steps asked for meanwhile, if any; 0 when none.
 function takePendingStep() {

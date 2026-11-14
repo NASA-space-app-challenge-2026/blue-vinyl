@@ -100,11 +100,23 @@ export function createSoundEngine() {
       fx.output.connect(analyser);
       analog = createAnalogSynth(context, fx.input);
     }
+    try {
+      const buffer = context.createBuffer(1, 1, 22050);
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(context.destination);
+      source.start(0);
+    } catch {
+      // AudioContext may not be ready
+    }
     loading ??= load();
     return Promise.all([loading, context.resume()]);
   }
 
   async function load() {
+    if (!context.audioWorklet) {
+      throw new Error('AudioWorklet is disabled on insecure HTTP. Please access via HTTPS or localhost.');
+    }
     const [{ WorkletSynthesizer }, font] = await Promise.all([import(SYNTH_LIB_URL), fetchSoundFont()]);
     await context.audioWorklet.addModule(SYNTH_PROCESSOR_URL);
     const instance = new WorkletSynthesizer(context);
