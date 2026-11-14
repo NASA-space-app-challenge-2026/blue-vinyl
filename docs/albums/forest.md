@@ -6,59 +6,57 @@ The album's story, data and mappings. It follows [album-guide.md](../album-guide
 
 > "Every year, about half of human caused carbon dioxide emissions are absorbed by oceans and the world's vegetation, including crops... and trees. ... Trees consume this carbon dioxide. They eat it as food and they store it as wood." ([SVS 14696](https://svs.gsfc.nasa.gov/14696/), NASA + Smithsonian and Greenhouse Gases, made for the Earth Information Center)
 
-Each track reads the forest under one ISS orbit, as GEDI does, while the CO₂ in the air rises through the same 125 months of 2015–2025. The forests sound different from place to place; the air goes the same way every time. EIC does not turn forest height into carbon on these pages, and the CO₂ data does not separate what forests take up, so the two are played side by side, as the video shows them, not as cause and effect.
+The album is fitted to the forest map. GEDI drew its map of the world's canopy from April 2019 to March 2023 (one composite; it does not show the forest changing), so the album has one track: the Earth turns once under the noon line (the meridian where the Sun stands highest) over that map, while the CO₂ of the same 48 months goes by in the air. No year outside the window is played. EIC does not turn forest height into carbon on these pages, and the CO₂ data does not separate what forests take up, so the two are played side by side, as the video shows them, not as cause and effect.
 
 Pages and datasets (album guide Q4): 14696 is in the EIC gallery and its sources are [4950](https://svs.gsfc.nasa.gov/4950/) and [5095](https://svs.gsfc.nasa.gov/5095/) (Relative Height, GEDI RH100) and [5115](https://svs.gsfc.nasa.gov/5115/) and [5110](https://svs.gsfc.nasa.gov/5110/) (GEOS Carbon Dioxide).
 
 ## Tracks
 
-| # | Track | Region the orbit is chosen for | Lead | Colour |
+| # | Track | Window | Lead (tropics) | Colour |
 | --- | --- | --- | --- | --- |
-| 1 | Amazon | 15° S–5° N, 75°–50° W | Marimba | `#9ad66a` |
-| 2 | Congo Basin | 5° S–5° N, 12°–30° E | Harp | `#e0c060` |
-| 3 | Borneo | 4° S–7° N, 108°–119° E | Koto | `#5ac8a8` |
-| 4 | Pacific Northwest | 42°–49° N, 124.5°–120° W (old growth of 5095) | Pizzicato strings | `#c8e8a0` |
+| 1 | Under the Noon Sun · 2019–2023 | April 2019 to March 2023 (opens with the legend) | Harp | `#8ecf7a` |
 
-Each orbit is a circular one of 51.64° and 92.9 min; its ascending node (to 0.5°) is the one crossing the most canopy of 10 m or taller inside the region (ours). Each track is 55 s.
+The line runs from 52° S to 52° N and moves west a degree a step. Three bands: **north** (flute), **tropics** (harp), **south** (pizzicato). Over the turn the air rises from 409.7 ppm (April 2019) to 418.4 ppm (March 2023), dipping each northern summer.
 
-Data files: `data/forest/tracks/` (see `tracks.json` for every source, version and credit): per track `<track>_orbit.csv` (a row per step: where the ISS is, the mean canopy height and its spread under it, and the forest density around it) and `<track>_forest.csv` (the cells drawn on the globe, with the step the ISS passes each), and `global_xco2_monthly.csv`, which every track shares.
+Data files: `data/forest/tracks/` (see `tracks.json` for every source, version and credit): `forest_noon_line.csv` (a row per degree: land share, mean height and density in each band), `canopy_height_quarter_degree.png` (the forest on the globe), `xco2_201904-202303_degree.png` (the CO₂ field on the globe, the window's mean), and `global_xco2_monthly_201904-202303.csv` (the window's months: the pad, the halo and the label).
 
 ### Sources without a login
 
-- **Canopy height**: GEDI L3 Gridded Land Surface Metrics v2 (ORNL DAAC 1952), mean RH100 and its standard deviation on a 1 km grid, read from the public NASA GIBS WMS and turned back into metres through the GIBS colour tables (0.5 m classes; 45 m and above is one class). The footprint files and GeoTIFFs need an Earthdata login.
-- **CO₂**: NASA GMAO GEOS daily assimilated CO₂ (version PRE), column average XCO2, from the public GMAO datashare; the 15th of each month, averaged over the globe by area.
+- **Canopy height**: GEDI L3 Gridded Land Surface Metrics v2 (ORNL DAAC 1952), mean RH100 on a 1 km grid, read from the public NASA GIBS WMS and turned back into metres through the GIBS colour tables (0.5 m classes; 45 m and above is one class). The footprint files and GeoTIFFs need an Earthdata login.
+- **CO₂**: NASA GMAO GEOS daily assimilated CO₂ (version PRE), column average XCO2, from the public GMAO datashare; the 15th of each month of the window, averaged over the globe by area.
 
 ## Time
 
-A step is a sixteenth note of 0.22 s, a bar of slow 6/8 is 12 steps, a year two bars. Two steps are a month of CO₂, so the 125 months take 250 steps, 55 s. The orbit is laid over the same steps: it starts in the middle of its longest stretch without data (over the sea), and the sea goes by four times as fast as the land, so most of the track is forest. The globe and the music read the same step.
+A step is a sixteenth note of 0.125 s at 120 bpm in 3/4 (12 steps a bar). One step is one degree of longitude. 360 steps take the line once round the Earth (45 s); the listening legend plays over its first 120 steps (10 bars) while the line already moves. The 48 months of air are laid evenly over the turn, 7.5 steps a month. The globe and the music read the same step.
 
 ## Sound
 
-D dorian, from the album's sound font (`orchestra.sf2`, GeneralUser GS). Code: [`forest.js`](../../src/features/music/domain/composers/forest.js).
+D dorian, from the album's sound font (`orchestra.sf2`, GeneralUser GS). Code: [`noon.js`](../../src/features/music/domain/composers/noon.js).
 
-The lead reads the colours of GEDI's map (SVS 4950) under the ISS, as the mission puts it: the colour (canopy height) sets the pitch and how bright the note is, and how thickly the colours crowd together (forest density) sets the rhythm.
+Three voices play the forest under the noon line, made to be followed by ear alone: how tall sets pitch and loudness together; how dense sets the rhythm.
 
 | Part | Data | Mapping |
 | --- | --- | --- |
-| Lead (each track its own wooden instrument) | Canopy height under the ISS (brown to white) | Pitch: 0–45 m over two and a half octaves of D dorian from D3, louder the taller, accented on each bar's downbeat. Brightness (CC 74, the filter): dark over short forest, open over the tallest. Land under 5 m (grass, scrub, desert) is silent |
-| Lead rhythm | Forest density: the share of the cells around the ISS (the band drawn on the globe) with canopy of 10 m or taller | A note each dotted quarter where the forest is thin, eighths, sixteenths where it is dense, by the track's tertiles of density, so every track has all three. GEDI's canopy cover (L2B) needs a login, so density comes from the same height grid |
-| Notes under the lead | How uneven the canopy is (standard deviation of RH100) | On each dotted-quarter beat, none, one or two notes below the lead (a third, then a fifth), by the track's tertiles of the spread |
-| Celesta | Tall forest | An octave above the lead wherever the step's canopy is 25 m or more, as the tall columns flash |
-| Choir | CO₂ | Held each bar: an open D (D3, A3), adding F3 past a quarter of the song's CO₂ range, C4 past half and E4 past three quarters; as loud as the month's CO₂, so it swells over the years and dips each northern summer |
-| Cello | CO₂ | D2 each bar, harder as the CO₂ rises |
-| Seashore | The sea | A wave each bar the ISS is over the sea or a gap |
+| North (flute) | Canopy height and density, 23°–52° N | Pitch and loudness from 4–24 m; rhythm by density. Quiet where land is sparse or under 4 m |
+| Tropics (harp) | Same, 23° S–23° N | As the north, from D4 |
+| South (pizzicato) | Same, 52°–23° S | As the north, from D3 |
+| Tubular bells | Land regions | A bell as the line reaches each continent |
+| Woodblock | Longitude | A tick every 30° |
+| Seashore | Sea / no forest | A wave each bar where no band is sounding |
+| Pad | The month's CO₂ | Each bar: an open D (D3, A3), adding F3, C4 and E4 past a quarter, half and three quarters of the window's range; louder the thicker |
+| Cello | The month's CO₂ | D2 each bar in the thicker half of the range, harder as it rises |
 
 ## Globe
 
-See [design.md](../design.md#data-on-the-globe): the camera follows the ISS, closer than the fitted view; the forest it passes grows into columns coloured like 4950; the halo around the globe thickens with the CO₂; the month and its ppm are printed at 6 o'clock.
+See [design.md](../design.md#data-on-the-globe): 0.25° canopy columns (height exaggerated) stand on the globe; a CO₂ haze floats above them, warmer and higher where the air is thicker; the canopy is lit by the noon sun over the line; a noon meridian ribbon moves west, and each forest note lights where it is played, in its voice's colour; the camera follows the meridian; the halo and the month label follow the air.
 
 ## Credits
 
-- Cover: NASA Scientific Visualization Studio, [SVS 4950](https://svs.gsfc.nasa.gov/4950/) (GEDI forest height); Pacific Northwest: [SVS 5095](https://svs.gsfc.nasa.gov/5095/) (old growth in the Northwest US)
+- Cover: NASA Scientific Visualization Studio, [SVS 4950](https://svs.gsfc.nasa.gov/4950/) (GEDI forest height)
 - Data: GEDI L3 v2, Dubayah et al., ORNL DAAC, served by NASA GIBS; NASA GMAO GEOS carbon
 - Instruments: GeneralUser GS (see `src/features/music/data/soundfonts/CREDITS.md`)
 
 ## Not Done Yet
 
-- Docent narration and text for screen readers.
+- Docent narration wired to the player (domain text is in `src/features/docent/domain/noon-narration.js`).
 - Tuning the mix by ear (the levels are set from the sound font's defaults, not measured).

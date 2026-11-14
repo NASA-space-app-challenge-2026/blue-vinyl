@@ -26,13 +26,13 @@ import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
-import { ForestComposer } from '../features/music/domain/composers/forest.js';
+import { NoonComposer } from '../features/music/domain/composers/noon.js';
 import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
 import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
-import { loadForestSong } from '../features/tracks/data/forest-track-source.js';
+import { loadNoonSong } from '../features/tracks/data/noon-line-source.js';
 import { loadIceSeaTrack } from '../features/tracks/data/track-repository.js';
 import { sampleFlock } from '../features/tracks/domain/bird-track.js';
-import { STEP_SEC, airAt, issAt } from '../features/tracks/domain/forest-track.js';
+import { STEP_SEC, airAt, lineLonAt } from '../features/tracks/domain/noon-line.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
@@ -47,10 +47,10 @@ let trackData = [];
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
 // What each track of the album plays on the sound engine, by track index, once its data has loaded, or null for a
-// track without such data: birds ({ kind: 'birds', tracks, ... }) or a forest orbit ({ kind: 'forest', orbit, cells,
+// track without such data: birds ({ kind: 'birds', tracks, ... }) or a forest noon line ({ kind: 'forest', line, map,
 // air, ... }). Empty until then.
 let songs = [];
-// The song the globe shows, and where its flock or ISS is now (the globe keeps it in the middle).
+// The song the globe shows, and where its flock or noon line is now (the globe keeps it in the middle).
 let shownSong = null;
 let focus = null;
 // The pole the globe looks down on for an ice track, to glide there when it changes; null for other tracks.
@@ -105,11 +105,12 @@ const halo = createHalo(turntable.haloCanvas, () => soundEngine.analyser);
 new ResizeObserver(() => halo.place(turntable.labelDisc())).observe(turntable.haloCanvas);
 const soundEngine = createSoundEngine();
 const flockComposer = new FlockComposer();
-const forestComposer = new ForestComposer();
-// The ISS moves fast; the globe keeps up with it more tightly than with a flock, and comes closer, so the forest it
-// reads stands out (as a share of the fitted camera altitude).
+const noonComposer = new NoonComposer();
+// The globe turns to keep the noon meridian in front, easing with this time constant; while playing, it aims this far
+// ahead of the line, so the eased camera settles on the line itself rather than trailing it.
 const FOREST_FOLLOW_TAU_SEC = 0.5;
-const FOREST_ZOOM = 0.45;
+// The fitted view: the whole band of forest the line reads (52° S to 52° N) stays in frame.
+const FOREST_ZOOM = 1;
 const MONTH_FORMAT = Object.freeze({ month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
@@ -194,26 +195,33 @@ async function loadAlbumData(loading) {
 // Loads the birds or forests of `target`'s tracks, unless another album is shown by then.
 async function loadSongs(target) {
   if (!target.tracks.some((track) => track.birdsUrl || track.forest)) return;
-  const perTrack = await Promise.all(target.tracks.map((track) => loadSong(target, track)));
+  const perTrack = await Promise.all(target.tracks.map((track, i) => loadSong(target, track, i)));
   if (album !== target) return;
   songs = perTrack;
   render();
   globe.glide();
 }
 
-async function loadSong(target, track) {
+async function loadSong(target, track, trackIndex) {
   if (track.birdsUrl) {
     const tracks = await loadBirdTracks(track.birdsUrl);
     return { kind: 'birds', composer: flockComposer, tracks, lead: track.lead, msPerSec: target.msPerSec };
   }
   if (track.forest) {
-    const forest = await loadForestSong(track.forest);
-    return { kind: 'forest', composer: forestComposer, ...forest, lead: track.lead, followTauSec: FOREST_FOLLOW_TAU_SEC };
+    const forest = await loadNoonSong(track.forest);
+    return {
+      kind: 'forest',
+      composer: noonComposer,
+      ...forest,
+      lead: track.lead,
+      legend: trackIndex === 0,
+      followTauSec: FOREST_FOLLOW_TAU_SEC,
+    };
   }
   return null;
 }
 
-// Puts `song` on the globe in `color` (its birds, or its forest and ISS), and the glow in it; null takes it off.
+// Puts `song` on the globe in `color` (its birds, or its forest and noon line), and the glow in it; null takes it off.
 function showSong(song, color) {
   shownSong = song;
   focus = null;
@@ -395,15 +403,18 @@ function renderBirds(song, elapsedSec) {
   focus = sampleFlock(song.tracks, time) ?? focus;
 }
 
-// The forest the ISS has read so far, the month with its CO₂ printed and thickening the air, and the ISS in focus.
+// The canopy on the globe, the noon meridian facing the listener, and the month with its CO₂ thickening the air.
 function renderForest(song, elapsedSec) {
-  const step = elapsedSec / STEP_SEC;
-  globe.forest.render(song, step);
+  const step = Math.max(0, elapsedSec / STEP_SEC);
+  globe.forest.render(song, step, state === PlaybackState.PLAYING);
   const air = airAt(song.air, step);
-  const month = new Date(`${air.month}T00:00:00Z`).toLocaleDateString('en', MONTH_FORMAT);
+  const month = new Date(`${air.month}-01T00:00:00Z`).toLocaleDateString('en', MONTH_FORMAT);
   dateLabel.showText(`${month} · ${air.ppm.toFixed(1)} ppm`);
   halo.setAir(air.thickness);
-  focus = { ...issAt(song.orbit, step), zoom: FOREST_ZOOM };
+  // The equator under the noon line. Playing, the line moves west at a steady pace, and a camera easing after it with
+  // time constant τ trails it by τ of travel, so it aims τ ahead.
+  const lead = state === PlaybackState.PLAYING ? FOREST_FOLLOW_TAU_SEC / STEP_SEC : 0;
+  focus = { lat: 0, lon: lineLonAt(step + lead), zoom: FOREST_ZOOM };
 }
 
 function setState(next) {

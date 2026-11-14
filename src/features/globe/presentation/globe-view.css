@@ -240,19 +240,3 @@
   text-align: center;
 }
 
-/* The ISS over a forest track (forest-layer.js): a bright core in the track's colour with a soft glow. */
-.iss svg {
-  display: block;
-  overflow: visible;
-}
-
-.iss-glow {
-  fill: currentColor;
-  opacity: 0.35;
-}
-
-.iss-core {
-  fill: #fff;
-  stroke: currentColor;
-  stroke-width: 1.6;
-}

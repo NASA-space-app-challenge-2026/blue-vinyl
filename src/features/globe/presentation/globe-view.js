@@ -2,7 +2,7 @@ import { createIceFall } from './ice-fall.js';
 import { createIceMorph } from './ice-morph.js';
 
 import { createBirdsLayer } from './birds-layer.js';
-import { createForestLayer } from './forest-layer.js';
+import { createNoonLayer } from './noon-layer.js';
 
 // globe.gl is loaded as a UMD bundle in index.html: it ships one copy of three.js,
 // while the ESM build pulls several three.js versions from the CDN.
@@ -32,7 +32,7 @@ function fittedAltitude(camera) {
 /**
  * Interactive WebGL globe that fills its container. Drag to rotate, scroll to zoom in.
  * Zooming out stops at the fitted size, so the globe never shrinks away from the label edge.
- * It turns to keep a focus point (the flock, the ISS, or the pole of a track's ice) at its centre; turned or zoomed by hand, it glides back a moment after release.
+ * It turns to keep a focus point (the flock, the noon line, or the pole of a track's ice) at its centre; turned or zoomed by hand, it glides back a moment after release.
  *
  * It can draw a track's sea ice, morphing from year to year. When a year loses ice, pieces of it fall from where it
  * was into the water at the bottom of the label.
@@ -178,7 +178,7 @@ export function createGlobeView(container) {
 
   const layerView = { globe, unitsPerPx, setElements: (elements) => globe.htmlElementsData(elements) };
   const birds = createBirdsLayer(layerView);
-  const forest = createForestLayer(layerView);
+  const forest = createNoonLayer(layerView);
   globe.htmlElement('el').htmlTransitionDuration(0);
 
   return {

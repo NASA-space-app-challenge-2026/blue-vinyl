@@ -22,12 +22,11 @@ export const Instrument = Object.freeze({
   CELLO: { program: 42, volume: 90 },
   VIOLA: { program: 41, volume: 75 },
   VIOLIN: { program: 40, volume: 75 },
-  // The forest album: wooden leads, and the air around them.
-  MARIMBA: { program: 12, volume: 120 },
-  HARP: { program: 46, volume: 115 },
-  KOTO: { program: 107, volume: 110 },
-  PIZZICATO: { program: 45, volume: 120 },
-  CELESTA: { program: 8, volume: 85 },
-  CHOIR: { program: 52, volume: 80 },
+  // The forest album: harp for canopy height in the tropics (clear pitch steps, not percussion toys), flute for the
+  // north, pizzicato for the south, seashore, a land bell, a longitude tick, and a warm pad for the air (CO₂).
+  HARP: { program: 46, volume: 105 },
+  PIZZICATO: { program: 45, volume: 100 },
   SEASHORE: { program: 122, volume: 70 },
+  TUBULAR_BELLS: { program: 14, volume: 85 },
+  WOODBLOCK: { program: 115, volume: 70 },
 });

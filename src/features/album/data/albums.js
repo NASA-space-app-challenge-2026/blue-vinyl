@@ -3,7 +3,7 @@ import { YEAR_TIMELINE, trackDurationSec } from '../../tracks/domain/year-timeli
 import { AlbumCategory } from '../domain/album.js';
 import { Instrument } from '../../music/domain/instruments.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
-import { STEP_SEC } from '../../tracks/domain/forest-track.js';
+import { LINE_STEPS, STEP_SEC } from '../../tracks/domain/noon-line.js';
 
 const ARCTIC_BIRD_TRACKS = 'data/arctic_bird/tracks';
 const ARCTIC_BIRD_COVERS = 'assets/albums/arctic-bird';
@@ -19,13 +19,10 @@ const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
 
 const FOREST_TRACKS = 'data/forest/tracks';
 const FOREST_COVERS = 'assets/albums/forest';
-// Every forest track plays the 125 CO₂ months of 2015-01 to 2025-05, two steps a month (see forest-track.js).
-const FOREST_TRACK_SEC = 250 * STEP_SEC;
-const forestFiles = (name) => ({
-  orbitUrl: `${FOREST_TRACKS}/${name}_orbit.csv`,
-  cellsUrl: `${FOREST_TRACKS}/${name}_forest.csv`,
-  airUrl: `${FOREST_TRACKS}/global_xco2_monthly.csv`,
-});
+// The Earth turns once under the noon line from the first step, with the listening legend riding along.
+const FOREST_LINE_SEC = LINE_STEPS * STEP_SEC;
+// GEDI's canopy map is one composite of April 2019 to March 2023; the air is read over the same window.
+const GEDI_WINDOW = '201904-202303';
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -130,15 +127,20 @@ export const albums = [
     coverUrl: `${FOREST_COVERS}/cover.jpg`,
     coverCredit: 'Cover: SVS 4950, GEDI forest height · NASA Scientific Visualization Studio',
     dataCredit: 'Data: GEDI L3 (UMD, ORNL DAAC) via NASA GIBS · NASA GMAO GEOS CO₂ · EIC 14696',
-    // One ISS orbit over each of the three great tropical forests and over the old growth of SVS 5095, all under the
-    // same CO₂ of 2015–2025 (see notebooks/forest_album.ipynb, section 8).
+    // One turn of the Earth under the noon line over GEDI's map, while the air of the four years it was drawn in goes
+    // by (see notebooks/forest_album.ipynb, section 8).
     tracks: [
-      { title: 'Amazon', durationSec: FOREST_TRACK_SEC, forest: forestFiles('amazon'), lead: Instrument.MARIMBA, color: '#9ad66a' },
-      { title: 'Congo Basin', durationSec: FOREST_TRACK_SEC, forest: forestFiles('congo_basin'), lead: Instrument.HARP, color: '#e0c060' },
-      { title: 'Borneo', durationSec: FOREST_TRACK_SEC, forest: forestFiles('borneo'), lead: Instrument.KOTO, color: '#5ac8a8' },
       {
-        title: 'Pacific Northwest', durationSec: FOREST_TRACK_SEC, forest: forestFiles('pacific_northwest'), lead: Instrument.PIZZICATO, color: '#c8e8a0',
-        coverUrl: `${FOREST_COVERS}/pacific_northwest.jpg`, coverCredit: 'Cover: SVS 5095, old growth in the Northwest US',
+        title: 'Under the Noon Sun · 2019–2023',
+        durationSec: FOREST_LINE_SEC,
+        forest: {
+          lineUrl: `${FOREST_TRACKS}/forest_noon_line.csv`,
+          mapUrl: `${FOREST_TRACKS}/canopy_height_quarter_degree.png`,
+          airMapUrl: `${FOREST_TRACKS}/xco2_${GEDI_WINDOW}_degree.png`,
+          airUrl: `${FOREST_TRACKS}/global_xco2_monthly_${GEDI_WINDOW}.csv`,
+        },
+        lead: Instrument.HARP,
+        color: '#8ecf7a',
       },
     ],
   },
