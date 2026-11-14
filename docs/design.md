@@ -63,13 +63,14 @@ An album whose tracks have data draws each year of the playing track on the glob
 | Element | Look | Changes |
 | --- | --- | --- |
 | Camera | Looks down on the track's pole | Turns there in 1.2 s when the track changes; back to the start view for an album without data |
-| Ice | Pale cap (`232, 244, 255` at 85%) just above the surface | Cross-fades to the new year's shape in 0.3 s |
+| Ice | Pale, soft-edged layer (`232, 244, 255` at 85%) just above the surface, on a 256 × 256 grid over the pole (about 31 km a cell) | Morphs from last year's shape into this year's over the beat: it starts on the note and settles into the shape. The edge slides (blended signed distance fields); pieces too thin to slide fade in |
+| Ice trail | Earlier years stay behind in blue (`95, 165, 240`), blurred, at up to 60% | Each year fades with age (time constant 2.5 years, the last 6 years drawn), so the lost ice builds up around the ice that is left |
 | Normal | Gold line, the 1981–2010 ice edge, as on SVS 5382 | Fixed for the track |
 | Record low | Dashed coral line, the edge of the latest record low | Moves only in a record-low year |
 | Year and ice | Year in bold at the top, extent and change from the normal below it | Each year |
-| Sea level | Translucent water rising from the bottom of the label, up to 32% of its height at the top of a mm ruler | Each year, eased over 0.3 s |
+| Sea level | The porthole of SVS 5235: water whose top edge is cut to a sliding wave, a paler swell behind it and light rays; a centimetre ruler in the middle and a blue mark from the first year's sea level to this year's, all with a dark halo so they show on ice and map alike | The water rises smoothly between years; the mark moves a year at a time |
 
-The intro of a track shows only the normal line. The text and water never take pointer events, so the globe stays draggable.
+Before a track plays and during its intro, the globe shows its first year. The text and water never take pointer events, so the globe stays draggable.
 
 ## Globe Themes
 

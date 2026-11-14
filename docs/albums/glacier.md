@@ -39,7 +39,7 @@ Mix (RMS while the years play, measured in a browser render): the main instrumen
 
 ## Globe
 
-See [design.md](../design.md#data-on-the-globe): the year's ice, the gold normal line, the dashed record-low line, the year and extent, and water rising from the bottom of the label with a mm ruler, after the porthole of SVS 5235.
+See [design.md](../design.md#data-on-the-globe): the ice morphing from one year's shape into the next over a fading blue trail of the years before, the gold normal line, the dashed record-low line, the year and extent, and the label as the porthole of SVS 5235: water rising past a centimetre ruler, with a blue mark from the 1993 sea level to the year's measured level. The 1993 sea level sits 14% up the label and each 10 cm of rise takes 30% of its height.
 
 ## Credits
 
