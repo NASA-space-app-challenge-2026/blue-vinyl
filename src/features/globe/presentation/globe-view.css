@@ -9,12 +9,32 @@
   color: var(--ink-muted);
 }
 
-/* Where the flock is now; it pulses with the lead (see flock-layer.js). */
-.globe-flock {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--flock-color);
-  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.85), 0 0 12px 2px var(--flock-color);
-  pointer-events: none;
+/* A bird seen from above (birds-layer.js), outlined in near-black and filled in its track's colour. */
+.bird svg {
+  display: block;
+  overflow: visible;
 }
+
+.bird-outline {
+  fill: #111;
+  stroke: #111;
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+
+.bird-fill {
+  fill: currentColor;
+}
+
+/* Each wing folds toward its root and sweeps its tip back on the upstroke. */
+.bird-wing {
+  transform-origin: 1.4px -1px;
+  animation: bird-flap 0.4s ease-in-out infinite alternate;
+  animation-delay: var(--flap-delay, 0s);
+}
+
+@keyframes bird-flap {
+  from { transform: none; }
+  to { transform: scale(0.35, 0.9) rotate(22deg); }
+}
+
