@@ -1,4 +1,7 @@
+/* Sits above the album sleeve, which tucks in behind the record. */
 .turntable {
+  position: relative;
+  z-index: 1;
   flex: none;
   width: min(54vw, 104vh);
   height: auto;

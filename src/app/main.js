@@ -6,9 +6,8 @@ import { albums } from '../features/album/data/albums.js';
 import { albumDurationSec, trackBoundaries, trackIndexAt } from '../features/album/domain/album.js';
 import { createAlbumCover } from '../features/album/presentation/album-cover.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
-import { Language } from '../features/controls/domain/language.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
-import { createAlbumNav, createLanguageToggle, createPlayHint, createViewOptions } from '../features/controls/presentation/chrome.js';
+import { createPlayHint } from '../features/controls/presentation/play-hint.js';
 import { createGlobePlaceholder } from '../features/globe/presentation/globe-placeholder.js';
 import { TURNTABLE } from '../features/turntable/domain/geometry.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
@@ -24,9 +23,6 @@ let lastFrameTs = null;
 
 const slot = (id) => document.getElementById(id);
 
-createLanguageToggle(slot('corner-top-left'), Language.EN);
-createViewOptions(slot('corner-top-right'));
-createAlbumNav(slot('corner-bottom-left'));
 createAlbumCredit(slot('corner-bottom-right'), album);
 const playHint = createPlayHint(slot('bottom-center'));
 

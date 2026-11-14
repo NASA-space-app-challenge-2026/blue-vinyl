@@ -32,8 +32,6 @@ export function createAlbumCover(parent, { album, index, count }) {
   img.addEventListener('error', () => img.remove());
 
   const counter = el('p', 'album-cover-counter', `${index + 1} / ${count}`);
-  const notes = el('button', 'album-cover-notes', 'Notes');
-  notes.type = 'button';
 
   const body = el('div', 'album-cover-body');
   const list = el('ol', 'album-cover-tracks');
@@ -45,7 +43,7 @@ export function createAlbumCover(parent, { album, index, count }) {
   list.append(...items);
   body.append(el('p', 'album-cover-category', CATEGORY_LABEL[album.category]), el('h1', 'album-cover-title', album.title), list);
 
-  cover.append(img, el('div', 'album-cover-shade'), counter, notes, body);
+  cover.append(img, el('div', 'album-cover-shade'), counter, body);
   parent.append(cover);
 
   /** @param {number} activeTrackIndex */

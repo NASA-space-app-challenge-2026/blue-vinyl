@@ -9,7 +9,6 @@
   box-shadow: 0 30px 60px rgb(0 0 0 / 0.45);
   color: var(--ink);
   overflow: hidden;
-  z-index: 2;
 }
 
 .album-cover-image {
@@ -33,22 +32,6 @@
   margin: 0;
   font-size: clamp(16px, 1.8vw, 28px);
   letter-spacing: 0.3em;
-}
-
-.album-cover-notes {
-  position: absolute;
-  top: 6%;
-  right: 7%;
-  padding: 0 0 6px;
-  border: none;
-  border-bottom: 1px solid var(--ink-muted);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: clamp(14px, 1.6vw, 24px);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  cursor: pointer;
 }
 
 .album-cover-body {

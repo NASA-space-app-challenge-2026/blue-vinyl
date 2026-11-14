@@ -3,7 +3,6 @@
   --bg-deep: #3a2c1a;
   --ink: #f3ece1;
   --ink-muted: rgb(243 236 225 / 0.65);
-  --line: rgb(243 236 225 / 0.28);
   --gutter: clamp(16px, 2vw, 32px);
 }
 
@@ -32,21 +31,6 @@ body {
 .corner {
   position: fixed;
   z-index: 3;
-}
-
-#corner-top-left {
-  top: var(--gutter);
-  left: var(--gutter);
-}
-
-#corner-top-right {
-  top: var(--gutter);
-  right: var(--gutter);
-}
-
-#corner-bottom-left {
-  bottom: var(--gutter);
-  left: var(--gutter);
 }
 
 #corner-bottom-right {
