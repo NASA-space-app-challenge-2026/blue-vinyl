@@ -198,6 +198,15 @@ export function createMusicPlayer() {
   /** Browsers start audio only after a user gesture; call this from one. */
   function unlock() {
     if (context.state !== 'running') context.resume();
+    try {
+      const buffer = context.createBuffer(1, 1, 22050);
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(context.destination);
+      source.start(0);
+    } catch {
+      // AudioContext may not be ready
+    }
   }
 
   return { load, play, stop, positionSec, setVolume, unlock };

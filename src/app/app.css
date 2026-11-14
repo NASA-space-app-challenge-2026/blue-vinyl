@@ -27,15 +27,25 @@
 
 body {
   margin: 0;
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: radial-gradient(ellipse at 60% 45%, var(--bg) 0%, var(--bg-deep) 100%);
   color: var(--ink);
   font-family: var(--font);
 }
 
+.screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 .stage {
-  position: fixed;
+  position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
@@ -44,7 +54,7 @@ body {
 }
 
 .corner {
-  position: fixed;
+  position: absolute;
   z-index: 3;
 }
 
@@ -67,30 +77,74 @@ body {
   transform: translateX(-50%);
 }
 
-@media (max-width: 760px) {
-  body {
-    overflow: auto;
+/* In portrait orientation, force a rotated landscape layout that completely fills the screen */
+@media screen and (orientation: portrait) {
+  :root {
+    --gutter: clamp(8px, 1.5vh, 16px);
   }
 
+  .screen {
+    position: fixed;
+    top: 0;
+    left: 100vw;
+    left: 100dvw;
+    width: 100vh;
+    width: 100dvh;
+    height: 100vw;
+    height: 100dvw;
+    transform: rotate(90deg);
+    transform-origin: top left;
+    overflow: hidden;
+  }
+
+  /* Along the rotated axes: width corresponds to vh, height corresponds to vw */
   .stage {
-    position: static;
-    flex-direction: column;
-    padding: 80px var(--gutter) 120px;
+    padding: 0 var(--gutter);
   }
 
-  /* Stacked, the record lies over the sleeve's bottom instead of its right side. */
   .stage .album-cover {
-    --record-overlap: 12vw;
-    width: 100%;
-    margin: 0 0 calc(-1 * var(--record-overlap));
+    width: min(44vh, 76vw);
+    --record-overlap: min(8vh, 12vw);
   }
 
-  .stage .album-cover-body {
-    right: 9%;
-    bottom: calc(6% + var(--record-overlap));
+  .stage .album-cover-counter {
+    font-size: clamp(12px, 1.8vh, 22px);
+  }
+
+  .stage .album-cover-category {
+    font-size: clamp(9px, 1.3vh, 16px);
+  }
+
+  .stage .album-cover-title {
+    font-size: clamp(18px, 3.8vh, 40px);
+  }
+
+  .stage .album-cover-tracks {
+    font-size: clamp(10px, 1.6vh, 20px);
   }
 
   .stage .turntable {
-    width: 100%;
+    width: min(52vh, 90vw);
+  }
+
+  #bottom-center {
+    display: none;
   }
 }
+
+
+/* Compact landscape adjustments for small viewports already in landscape */
+@media screen and (orientation: landscape) and (max-height: 540px) {
+  :root {
+    --gutter: clamp(8px, 1.5vw, 16px);
+  }
+
+  .stage {
+    padding: 3vh var(--gutter);
+  }
+
+  #bottom-center {
+    display: none;
+  }
+}
+
