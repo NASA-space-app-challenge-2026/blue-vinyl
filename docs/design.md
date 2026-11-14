@@ -27,9 +27,11 @@ Tokens are defined on `:root` in `src/app/app.css`.
 
 | Token | Use |
 | --- | --- |
-| `--bg`, `--bg-deep` | Warm brown backdrop, drawn as a radial gradient from the center outward |
+| `--bg`, `--bg-deep` | Backdrop, drawn as a radial gradient from the center outward. Warm brown by default; while a cover is shown, its main color darkened (see below) |
 | `--ink` | Primary text |
 | `--ink-muted` | Secondary text: inactive tracks, hint, credit |
+
+The backdrop takes the main color of the cover the sleeve shows (`src/features/album/presentation/backdrop.js`): the cover is shrunk, its pixels grouped by like color, and the largest group averaged. That color is mixed with black until it is no lighter than the default backdrop, so the light text stays readable, and the rim darker still. It fades over about a second when the cover changes.
 
 The record, label and tonearm use fixed dark and silver tones in `src/features/turntable/presentation/turntable.css`; they depict physical materials and do not follow the page tokens.
 
@@ -40,7 +42,8 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 - Each album's sleeve has its own angle between -6deg and -2deg, picked from its place in the catalog, so the sleeves differ but each always looks the same. A sleeve never stands straight.
 - Hovering the mouse over the sleeve leans it a few degrees in 3D toward the pointer, like a card in the hand; it eases back when the mouse leaves.
 - The sleeve has a dark gradient at the bottom so the title and track list stay readable over any cover photo.
-- Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. Bottom right: the cover photo credit and the globe's map/imagery attribution.
+- The sleeve shows the current track's cover when the track has one, else the album's; it fades from one to the next as the tracks change.
+- Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. Bottom right: the credit of the cover shown and the globe's map/imagery attribution.
 - At 760px wide and below, the sleeve and the record stack vertically and the page scrolls.
 
 ## Record
@@ -53,7 +56,7 @@ Geometry is defined once in `src/features/turntable/domain/geometry.js`, in viny
 - **Sheen**: two opposite reflections of a light at the upper left (a wide soft wedge and a narrow bright one each). They stay still while the record spins under them.
 - **Platter** runs at 33⅓ rpm. It spins up when the needle sets down and coasts to a stop when it lifts.
 - **Label** is a large center area that hosts the globe. It starts exactly at the innermost groove, with no gap. It is an HTML layer between the vinyl (SVG) and the tonearm (SVG), clipped to a circle, so features can mount canvases into the label slot.
-- **Progress dot** is a white dot on the label rim that travels one full turn over the album.
+- **Progress ring** runs round the label rim: one full turn per track, from 12 o'clock clockwise. A faint rail is filled in white as far as the track has played, with a white handle (with a soft shadow) at the head. Clicking the ring plays the current track from that point; the fill and handle glide there rather than jump. A new track starts the ring at once.
 - **Globe** is rendered with [globe.gl](https://github.com/vasturiano/globe.gl) (MIT, no API key), loaded as the pinned UMD bundle in `index.html`. It is lit flat (ambient light only) like a printed map, has no atmosphere and does not spin with the record. Its fitted size fills the label edge to edge. Drag rotates it; scrolling zooms in, and zooming out stops at the fitted size so no gap opens between the globe and the grooves.
 
 ## Globe Themes
@@ -81,6 +84,7 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | --- | --- |
 | Space | Play / pause |
 | Click on the record grooves | Play / pause |
+| Click on the progress ring | Play the current track from that point; sets the arm down first when stopped |
 | Drag the tonearm | Scrub; drop on the record to play from there, off it to stop |
 | Drag on the globe | Rotate the globe |
 | Scroll on the globe | Zoom in / out (out to the fitted size) |
@@ -92,7 +96,7 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 
 Playback states (`PlaybackState`): `stopped` → `cueing` (arm eases on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position. Grabbing the arm enters `scrubbing` from any state.
 
-Volume is held by the control only; nothing plays sound yet. Language, view options and notes will be added in later issues. Albums other than the first are placeholders.
+Volume sets the level of the music (see the album docs in [albums/](albums/) for what plays). Language, view options and notes will be added in later issues. Albums other than the first are placeholders.
 
 ## Changing Albums
 

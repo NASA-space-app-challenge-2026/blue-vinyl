@@ -6,6 +6,11 @@ export const AlbumCategory = Object.freeze({
  * @typedef {Object} Track
  * @property {string} title
  * @property {number} durationSec
+ * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
+ * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
+ * @property {string} [color] CSS color the track's data is drawn in
+ * @property {string} [coverUrl] the track's own cover image, shown on the sleeve while it is the current track
+ * @property {string} [coverCredit] credit and license of the track's cover image
  */
 
 /**
@@ -18,6 +23,7 @@ export const AlbumCategory = Object.freeze({
  * @property {string} coverUrl
  * @property {string} coverCredit
  * @property {Track[]} tracks
+ * @property {number} [msPerSec] ms of data time a second of a track plays, for an album whose tracks play data
  */
 
 /**
@@ -62,4 +68,27 @@ export function trackIndexAt(album, progress) {
   const boundaries = trackBoundaries(album);
   const index = boundaries.findIndex((edge, i) => i > 0 && progress < edge);
   return index === -1 ? album.tracks.length - 1 : index - 1;
+}
+
+/**
+ * Seconds from the album start to the start of the track at `index`.
+ *
+ * @param {Album} album
+ * @param {number} index
+ */
+export function trackStartSec(album, index) {
+  return album.tracks.slice(0, index).reduce((sum, track) => sum + track.durationSec, 0);
+}
+
+/**
+ * The cover the sleeve shows while the track at `trackIndex` is current: the track's own, or else the album's.
+ *
+ * @param {Album} album
+ * @param {number} trackIndex
+ * @returns {{ url: string, credit: string }}
+ */
+export function trackCover(album, trackIndex) {
+  const track = album.tracks[trackIndex];
+  if (!track?.coverUrl) return { url: album.coverUrl, credit: album.coverCredit };
+  return { url: track.coverUrl, credit: [track.coverCredit, album.coverCredit].filter(Boolean).join(' · ') };
 }

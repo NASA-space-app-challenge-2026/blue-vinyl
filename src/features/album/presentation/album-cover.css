@@ -29,6 +29,12 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.album-cover-image.is-shown {
+  opacity: 1;
 }
 
 .album-cover-shade {
@@ -82,7 +88,17 @@
   color: var(--ink-muted);
 }
 
-.album-cover-track::before {
+.album-cover-track-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.album-cover-track-button::before {
   content: counter(track) '. ';
 }
 

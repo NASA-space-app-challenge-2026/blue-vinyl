@@ -1,0 +1,89 @@
+[
+  {
+    "file": "buff_breasted_sandpiper.csv",
+    "title": "Buff-breasted sandpiper, one year",
+    "species": "Buff-breasted sandpiper",
+    "message": "",
+    "svsId": 4877,
+    "svsUrl": "https://svs.gsfc.nasa.gov/4877/",
+    "source": "Arctic Animal Movement Archive (AAMA), Movebank study 1128676353: buffBreastedSandpiper_USGS_ASC_argosGPS",
+    "sourceUrl": "https://www.movebank.org/cms/movebank-content/arctic-animal-movement-archive",
+    "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=1128676353",
+    "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
+    "units": {
+      "track": "bird / calendar year",
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east"
+    },
+    "timeRange": [
+      "2016-04-25",
+      "2019-04-03"
+    ]
+  },
+  {
+    "file": "whimbrel.csv",
+    "title": "Whimbrel, one year",
+    "species": "Whimbrel",
+    "message": "",
+    "svsId": 4877,
+    "svsUrl": "https://svs.gsfc.nasa.gov/4877/",
+    "source": "Arctic Animal Movement Archive (AAMA), Movebank study 854852176: whimbrel_USGS_ASC_argos",
+    "sourceUrl": "https://www.movebank.org/cms/movebank-content/arctic-animal-movement-archive",
+    "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=854852176",
+    "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
+    "units": {
+      "track": "bird / calendar year",
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east"
+    },
+    "timeRange": [
+      "2009-06-08",
+      "2013-12-31"
+    ],
+    "annualKmMedian": 20306
+  },
+  {
+    "file": "yellow_billed_loon.csv",
+    "title": "Yellow-billed loon, one year",
+    "species": "Yellow-billed loon",
+    "message": "",
+    "svsId": 4877,
+    "svsUrl": "https://svs.gsfc.nasa.gov/4877/",
+    "source": "Arctic Animal Movement Archive (AAMA), Movebank study 506737915: yellowBilledLoon_USGS_ASC_argos",
+    "sourceUrl": "https://www.movebank.org/cms/movebank-content/arctic-animal-movement-archive",
+    "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=506737915",
+    "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
+    "units": {
+      "track": "bird / calendar year",
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east"
+    },
+    "timeRange": [
+      "2003-01-02",
+      "2019-05-13"
+    ],
+    "annualKmMedian": 10289
+  },
+  {
+    "file": "northern_pintail.csv",
+    "title": "Northern pintail, one year",
+    "species": "Northern pintail",
+    "message": "",
+    "svsId": 4877,
+    "svsUrl": "https://svs.gsfc.nasa.gov/4877/",
+    "source": "Arctic Animal Movement Archive (AAMA), Movebank study 927024278: northernPintail_USGS_ASC_argos",
+    "sourceUrl": "https://www.movebank.org/cms/movebank-content/arctic-animal-movement-archive",
+    "downloadUrl": "https://www.movebank.org/movebank/service/public/json?entity_type=event&study_id=927024278",
+    "credit": "Movebank / Arctic Animal Movement Archive (Davidson et al. 2020)",
+    "units": {
+      "track": "bird / calendar year",
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east"
+    },
+    "timeRange": [
+      "2007-02-13",
+      "2010-07-19"
+    ],
+    "annualKmMedian": 3819
+  }
+]
