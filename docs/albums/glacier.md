@@ -14,33 +14,36 @@ The ice data is sea ice, the only ice data in the EIC gallery. It stands for pol
 
 | # | Track | Ice | Sea | Years | Length |
 | --- | --- | --- | --- | --- | --- |
-| 1 | North | Arctic September extent vs. its 1981–2010 normal | Global mean sea level, change since 1993 | 1993–2024 | 0:58 |
-| 2 | South | Antarctic February extent vs. its 1981–2010 normal | The same series | 1993–2024 | 0:58 |
+| 1 | North | Arctic September extent vs. its 1981–2010 normal | Global mean sea level, change since 1993 | 1993–2024 | 0:59 |
+| 2 | South | Antarctic February extent vs. its 1981–2010 normal | The same series | 1993–2024 | 0:59 |
 
 Data files: `data/glacier/tracks/` (see `tracks.json` for every source, version and credit).
 
 ## Time
 
-A 4 s intro, then one year every 1.5 s (40 BPM), then the last year held. The sound and the globe read the same timeline (`YEAR_TIMELINE`), so a year's notes and its picture change together.
+The tempo of the opening of Rachmaninoff's Piano Concerto No. 2 (Moderato, half note = 66, cut time): one year a bar, 1.82 s, so each chord rings as long as its whole note in the score. There is no intro, as the concerto opens on the piano's first chord; after the last bar the last chord rings out for 1.3 s. 32 years make 59.5 s. The tempo comes first: every year gets its bar, and a longer series makes a longer track. The sound and the globe read the same timeline (`YEAR_TIMELINE`), so a year's notes and its picture change together.
 
 ## Sound
 
-All parts are in D minor and played from the FluidR3_GM SoundFont (CC BY 3.0).
+All parts are in C minor, the concerto's key, and played from the FluidR3_GM SoundFont (CC BY 3.0).
 
 | Part | Data | Mapping |
 | --- | --- | --- |
-| Main instrument: piano (North), cello (South) | Ice extent | The 1981–2010 normal is home, D5 (North) or D4 (South); each 0.25 (North) or 0.15 (South) million km² is one scale step. Less ice is lower, so a pole that never returns to its normal never returns home. The more the ice changed from the year before, the louder the note. |
-| Harp | Sea level | Each year a wave washes in and recedes: it climbs the chord of the year to the water line, a note from D3 (1993) to A4 (+100 mm), and falls back two notes. The higher the sea, the more notes (4 to 8) and the louder. |
-| Harmony | (time) | One chord a year, cycling Dm, B♭, F, C, so the waves move instead of repeating. Small fixed variations in timing and velocity keep them from sounding machine-made. |
-| Wave | Sea level | A Seashore stroke each year under the harp, higher as the water rises, like the note of a filling vessel. |
-| Held strings, D2 and A2 | The normal | The whole track, like the gold line on the globe. |
+| Ice, North: piano, both hands | Ice extent | After the opening of Rachmaninoff's Piano Concerto No. 2: on the downbeat both hands strike a chord and hold it the whole bar, over F as in the score: F minor, then with D♭, then with D♮ added in the middle, over and over. The left hand plays F2 C3 A♭3 (with D♭3 or D3 between), the right hand three tones of the chord under the ice note on top. The ice note is the right hand's top: the 1981–2010 normal is F5, the top of the score's first chord, and each 0.4 million km² is one step of C minor (B♭5 down to F4). In 1993 the chord is F2 C3 A♭3 · F4 A♭4 C5 F5, the score's first chord. Less ice is lower; a bigger change from the year before is louder. |
+| Ice, South: cello | Ice extent | One note a year. The normal is C4; each 0.15 million km² is one step of C minor. Less ice is lower; a bigger change from the year before is louder. |
+| Sea, North: piano left hand | Sea level | The score's low F1, as written: half a bar after the chord, on the third beat, a half note to the end of the bar. It sounds when the water rises: in the first year and in every year the sea rose (all but 1998 and 2011), harder the higher the sea: from pp in 1993, as the score opens, to ff at +100 mm. |
+| Sea, South: French horn | Sea level | Low, on the root of each year's chord (C3, A♭2, E♭3, B♭2), legato with the ice. Heard as strength, not pitch: from very soft in 1993 to strong at +100 mm. |
+| Harp | Sea level | Each year, with the sea line, a wave washes in and recedes: the same shape every year, low on the harp, up through the chord and back two notes, harder as the sea rises. |
+| Harmony | (time) | One chord a year: on North the score's chords over F (above); on South cycling Cm, A♭, E♭, B♭, so the waves move instead of repeating. Small fixed variations in timing and velocity keep them from sounding machine-made. |
+| Wave | Sea level | A Seashore stroke each year under the harp, stronger as the water rises. |
+| Held strings, F2 and C3 (North) or C2 and G2 (South) | The normal | The whole track: the home the ice melody leaves. |
 | Timpani | Record low | A stroke in every year lower than all years since 1979; the track's lowest year is the loudest. |
 
-Mix (RMS while the years play, measured in a browser render): piano and cello at the same level on top; the sea reaches 5 dB under them in the last third; the wave sits 8 dB under the harp; the strings 14 dB and the timpani 12 dB under the main instrument.
+Mix (RMS while the years play, measured in a browser render with the earlier D minor score; not measured again since): the piano's chords and the cello at the same level on top; the sea (left hand or horn) rises to 3 dB under them in the last third; harp and wave reach 8 dB under them, the wave 8 dB under the harp; the strings sit 14 dB and the timpani 12 dB under the main instrument.
 
 ## Globe
 
-See [design.md](../design.md#data-on-the-globe): the ice morphing from one year's shape into the next over a fading blue trail of the years before, the gold normal line, the dashed record-low line, the year and extent, and the label as the porthole of SVS 5235: water rising past a centimetre ruler, with the 1993 sea level at its foot and the year's measured rise at its height. The 1993 sea level sits 14% up the label and each 10 cm of rise takes 30% of its height.
+See [design.md](../design.md#data-on-the-globe): the ice morphing from one year's shape into the next over a fading blue trail of the years before, pieces of the lost ice falling into the water, the year with its extent and its change since 1993 in percent, and the label as the porthole of SVS 5235: water rising past a centimetre ruler, with the 1993 sea level at its foot and the year's measured rise at its height. The 1993 sea level sits 14% up the label and each 10 cm of rise takes 30% of its height.
 
 ## Credits
 
