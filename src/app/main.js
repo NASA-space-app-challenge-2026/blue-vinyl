@@ -16,6 +16,7 @@ import { createPlayHint } from '../features/controls/presentation/play-hint.js';
 import { createSettingsMenu } from '../features/controls/presentation/settings-menu.js';
 import { createVolumeControl } from '../features/controls/presentation/volume-control.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
+import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
 import { DEFAULT_GLOBE_THEME, GlobeTheme } from '../features/globe/domain/globe-theme.js';
 import { createDateLabel } from '../features/globe/presentation/date-label.js';
 import { createGlobeAttribution } from '../features/globe/presentation/globe-attribution.js';
@@ -26,8 +27,10 @@ import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
+import { LightningComposer } from '../features/music/domain/composers/lightning.js';
 import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
 import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
+import { loadLightningTrack } from '../features/tracks/data/lightning-season-source.js';
 import { loadIceSeaTrack } from '../features/tracks/data/track-repository.js';
 import { sampleFlock } from '../features/tracks/domain/bird-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
@@ -43,9 +46,12 @@ let totalMs;
 let trackData = [];
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
-// What each track of the album plays, by track index, once its birds have loaded: { tracks, lead }, or null for a
-// track without birds. Empty until then.
+// What each track of the album plays, by track index, once its birds have loaded: a Song of the flock composer with
+// its { tracks, lead }, or null for a track without birds. Empty until then.
 let songs = [];
+// The same for lightning tracks, once their seasons have loaded: a Song of the lightning composer with its { season,
+// view, north, south }.
+let lightningSongs = [];
 // The song whose birds the globe shows, and where its flock is now (the globe keeps it in the middle).
 let shownSong = null;
 let focus = null;
@@ -99,7 +105,9 @@ globe.setFocus(() => focus);
 const dateLabel = createDateLabel(turntable.labelSlot);
 const halo = createHalo(turntable.haloCanvas, () => soundEngine.analyser);
 new ResizeObserver(() => halo.place(turntable.labelDisc())).observe(turntable.haloCanvas);
-const soundEngine = createSoundEngine({ composer: new FlockComposer() });
+const soundEngine = createSoundEngine();
+const flockComposer = new FlockComposer();
+const lightningComposer = new LightningComposer();
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
@@ -180,10 +188,13 @@ function showAlbum(index) {
   album = albums[albumIndex];
   totalMs = albumDurationSec(album) * 1000;
   albumColumn.setAlbum(albumIndex);
+  globe.setLens(album.globeLens ?? DEFAULT_GLOBE_LENS);
   turntable.setTrackStarts(trackBoundaries(album).slice(1, -1));
   songs = [];
+  lightningSongs = [];
   showSong(null, null);
   loadSongs(album);
+  loadLightningSongs(album);
   trackData = album.tracks.map(() => null);
   musicCredits = [];
   music.load([]);
@@ -225,7 +236,29 @@ async function loadSongs(target) {
   if (!target.tracks.some((track) => track.birdsUrl)) return;
   const perTrack = await Promise.all(target.tracks.map((track) => (track.birdsUrl ? loadBirdTracks(track.birdsUrl) : null)));
   if (album !== target) return;
-  songs = perTrack.map((tracks, i) => tracks && { tracks, lead: target.tracks[i].lead, msPerSec: target.msPerSec });
+  songs = perTrack.map(
+    (tracks, i) => tracks && { composer: flockComposer, msPerSec: target.msPerSec, originMs: 0, tracks, lead: target.tracks[i].lead },
+  );
+  render();
+  globe.glide();
+}
+
+// Loads the seasons of `target`'s lightning tracks, unless another album is shown by then.
+async function loadLightningSongs(target) {
+  if (!target.tracks.some((track) => track.lightning)) return;
+  let perTrack;
+  try {
+    perTrack = await Promise.all(target.tracks.map((track) => (track.lightning ? loadLightningTrack(track.lightning) : null)));
+  } catch (error) {
+    console.warn('Lightning data unavailable:', error);
+    return;
+  }
+  if (album !== target) return;
+  lightningSongs = perTrack.map((data, i) => {
+    if (!data) return null;
+    const { north, south } = target.tracks[i].lightning;
+    return { composer: lightningComposer, msPerSec: target.msPerSec, originMs: data.season.t[0], ...data, north, south };
+  });
   render();
   globe.glide();
 }
@@ -332,6 +365,7 @@ function render() {
   albumCredit.render(album, trackIndex, musicCredits);
   backdrop.show(trackCover(album, trackIndex).url);
   renderSong(trackIndex);
+  renderLightning(trackIndex);
   renderData(trackIndex);
 }
 
@@ -400,6 +434,30 @@ function renderSong(trackIndex) {
   globe.birds.render(song.tracks, time);
   dateLabel.show(time);
   focus = sampleFlock(song.tracks, time) ?? focus;
+  if (state !== PlaybackState.PLAYING) return;
+  soundEngine.follow(song, elapsedSec);
+  halo.wake();
+}
+
+/**
+ * Draws the year of lightning that plays at the clock on the globe, which looks at the equator from the track's side
+ * of the Earth, with the date; while playing, lets the music follow it.
+ */
+function renderLightning(trackIndex) {
+  const song = lightningSongs[trackIndex];
+  if (!song) {
+    globe.lightning.render(null, 0, 1);
+    return;
+  }
+  if (shownSong !== song) {
+    showSong(song, album.tracks[trackIndex].color);
+    globe.glide();
+  }
+  focus = { lat: song.view.lat, lon: song.view.lon };
+  const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  const time = song.originMs + elapsedSec * song.msPerSec;
+  globe.lightning.render(song.season, time, song.msPerSec);
+  dateLabel.show(time);
   if (state !== PlaybackState.PLAYING) return;
   soundEngine.follow(song, elapsedSec);
   halo.wake();

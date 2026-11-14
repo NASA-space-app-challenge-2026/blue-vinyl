@@ -6,6 +6,7 @@ export const SOUND_FONT = 'orchestra.sf2';
 export const CC = Object.freeze({
   VOLUME: 7,
   EXPRESSION: 11,
+  REVERB: 91,
   RESET_ALL: 121,
 });
 
@@ -20,4 +21,10 @@ export const Instrument = Object.freeze({
   CELLO: { program: 42, volume: 90 },
   VIOLA: { program: 41, volume: 75 },
   VIOLIN: { program: 40, volume: 75 },
+  // The lightning album (see composers/lightning.js): its pad, and what each hemisphere's flashes are struck on.
+  HALO_PAD: { program: 94, volume: 58 },
+  CELESTA: { program: 8, volume: 100 },
+  DULCIMER: { program: 15, volume: 127 },
+  TAIKO: { program: 116, volume: 66 },
+  KOTO: { program: 107, volume: 112 },
 });
