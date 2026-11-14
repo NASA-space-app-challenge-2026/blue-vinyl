@@ -1,4 +1,4 @@
-// Plays a song on a SoundFont synthesizer, in time with the app's playback clock.
+// Plays a song on a SoundFont synthesizer and an analog synth, in time with the app's playback clock.
 //
 // The app owns the clock: while a track plays it calls follow() every frame with how far into the track it is. The
 // engine lines the audio clock up with it, then steps the song's composer a little ahead on the audio clock, each step
@@ -7,10 +7,14 @@
 // or every `stepsPerTempo` steps; the data clock runs on regardless.
 //
 // Space: the whole mix sits where the sample is, as seen from where the song starts (north ahead, east to the
-// right), further away the further it has gone.
+// right), further away the further it has gone; a song without a path stays straight ahead.
+//
+// Mix: synths -> effects (see master-fx.js) -> analyser -> panner -> volume.
 
 import { CC, SOUND_FONT } from '../domain/instruments.js';
 import { bearing, distanceKm } from '../../tracks/domain/geo.js';
+import { createAnalogSynth } from './analog-synth.js';
+import { createMasterFx } from './master-fx.js';
 
 const SYNTH_LIB_URL = 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4.3.14/+esm';
 const SYNTH_PROCESSOR_URL = 'https://cdn.jsdelivr.net/npm/spessasynth_lib@4.3.14/dist/spessasynth_processor.min.js';
@@ -47,9 +51,10 @@ const PITCH_WHEEL = Object.freeze({ centre: 8192, rangeSemitones: 2 });
  *   playStep(music, { sample, time, step, bar, at, stepSec, stepMs })
  * @property {number} startMs  data time at the start of the track
  * @property {number} msPerSec  ms of data time that pass in a second of the track
- * @property {(time: number) => ({ lat: number, lon: number } | null)} sampleAt  the data at a data time, null where
- *   there is none (nothing plays there)
- * @property {{ lat: number, lon: number }[]} path  where the song goes, for its place in space
+ * @property {(time: number) => (Object | null)} sampleAt  the data at a data time, null where there is none (nothing
+ *   plays there); with a `path`, it has the `lat` and `lon` the mix is placed at
+ * @property {{ lat: number, lon: number }[]} [path]  where the song goes, for its place in space; without it the mix
+ *   stays straight ahead
  */
 
 export function createSoundEngine() {
@@ -57,6 +62,8 @@ export function createSoundEngine() {
   let output = null;
   let panner = null;
   let analyser = null;
+  let fx = null;
+  let analog = null;
   let synth = null;
   let loading = null;
   let volume = 1;
@@ -64,7 +71,8 @@ export function createSoundEngine() {
   let channels = new Map();
   // The composer the channels are set up for.
   let composer = null;
-  // The song the composer is fitted to, with where it starts and how far (km) from there it ever gets.
+  // The song the composer is fitted to, with where it starts and how far (km) from there it ever gets (null without a
+  // path).
   let song = null;
   let space = null;
   // Where the audio clock and the track's clock last lined up, the next step's audio time, its place in the bar, and
@@ -85,6 +93,9 @@ export function createSoundEngine() {
       panner.connect(output);
       analyser = new AnalyserNode(context, ANALYSER);
       analyser.connect(panner);
+      fx = createMasterFx(context);
+      fx.output.connect(analyser);
+      analog = createAnalogSynth(context, fx.input);
     }
     loading ??= load();
     return Promise.all([loading, context.resume()]);
@@ -94,7 +105,7 @@ export function createSoundEngine() {
     const [{ WorkletSynthesizer }, font] = await Promise.all([import(SYNTH_LIB_URL), fetchSoundFont()]);
     await context.audioWorklet.addModule(SYNTH_PROCESSOR_URL);
     const instance = new WorkletSynthesizer(context);
-    instance.connect(analyser);
+    instance.connect(fx.input);
     await instance.soundBankManager.addSoundBank(font, SOUND_FONT);
     await instance.isReady;
     synth = instance;
@@ -143,8 +154,13 @@ export function createSoundEngine() {
     }
     song = next;
     anchor = null;
-    const origin = next.path[0];
-    space = { origin, maxDistance: Math.max(...next.path.map((s) => distanceKm(origin.lat, origin.lon, s.lat, s.lon))) };
+    if (next.path) {
+      const origin = next.path[0];
+      space = { origin, maxDistance: Math.max(...next.path.map((s) => distanceKm(origin.lat, origin.lon, s.lat, s.lon))) };
+    } else {
+      space = null;
+      moveTo(0, 0, context.currentTime);
+    }
     composer.setSong(next);
   }
 
@@ -161,6 +177,7 @@ export function createSoundEngine() {
     const expected = anchor ? anchor.elapsedSec + (now - anchor.audioSec) : null;
     if (expected === null || Math.abs(expected - elapsedSec) > RESYNC_SEC) {
       synth.stopAll();
+      fx.reset(now);
       anchor = { audioSec: now, elapsedSec };
       nextStepAt = now;
       step = 0;
@@ -174,7 +191,7 @@ export function createSoundEngine() {
         stepSec = (sample && composer.stepSecAt?.(sample)) ?? composer.stepSec;
       }
       if (sample) {
-        if (step === 0) place(sample, nextStepAt);
+        if (step === 0 && space) place(sample, nextStepAt);
         composer.playStep(music, { sample, time, step, bar, at: nextStepAt, stepSec, stepMs: stepSec * song.msPerSec });
       }
       nextStepAt += stepSec;
@@ -189,6 +206,11 @@ export function createSoundEngine() {
     const { origin, maxDistance } = space;
     const angle = bearing(origin.lat, origin.lon, sample.lat, sample.lon);
     const gone = maxDistance > 0 ? distanceKm(origin.lat, origin.lon, sample.lat, sample.lon) / maxDistance : 0;
+    moveTo(angle, gone, at);
+  }
+
+  // Moves the mix `angle` from straight ahead, further away as it is `gone` (0 near to 1 far).
+  function moveTo(angle, gone, at) {
     const radius = SPACE.near + gone * (SPACE.far - SPACE.near);
     panner.positionX.setTargetAtTime(radius * Math.sin(angle), at, SPACE.glideSec);
     panner.positionZ.setTargetAtTime(-radius * Math.cos(angle), at, SPACE.glideSec);
@@ -218,6 +240,15 @@ export function createSoundEngine() {
       const channel = channelOf(instrument);
       synth.programChange(channel, sound.program, { time: at });
       synth.controllerChange(channel, CC.VOLUME, sound.volume, { time: at });
+    },
+    synthNote(patch, midi, velocity, at, steps, shape) {
+      analog.play(patch, midi, velocity, at, steps * stepSec, shape);
+    },
+    noise(velocity, at, steps, fromHz, toHz) {
+      analog.noise(velocity, at, steps * stepSec, fromHz, toHz);
+    },
+    effect(effect, value, at) {
+      fx.set(effect, value, at);
     },
   };
 

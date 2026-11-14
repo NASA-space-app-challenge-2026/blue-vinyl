@@ -7,6 +7,7 @@ export const CC = Object.freeze({
   VOLUME: 7,
   PAN: 10,
   EXPRESSION: 11,
+  REVERB: 91,
   RESET_ALL: 121,
 });
 
@@ -27,4 +28,12 @@ export const Instrument = Object.freeze({
   STANDARD_KIT: { program: 0, volume: 100, drums: true },
   POWER_KIT: { program: 16, volume: 100, drums: true },
   ORCHESTRAL_KIT: { program: 48, volume: 100, drums: true },
+  // The lightning album (see composers/lightning.js): its pad, and what each hemisphere's flashes are struck on, the
+  // south's on drums. Volumes from nell-v2, the melodic tom's set so the south sits against the north as on the taiko
+  // track (rendered offline, mean RMS over each part's range).
+  HALO_PAD: { program: 94, volume: 58 },
+  CELESTA: { program: 8, volume: 100 },
+  DULCIMER: { program: 15, volume: 127 },
+  TAIKO: { program: 116, volume: 66 },
+  MELODIC_TOM: { program: 117, volume: 85 },
 });

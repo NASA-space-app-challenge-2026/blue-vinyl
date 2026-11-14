@@ -1,6 +1,7 @@
 export const AlbumCategory = Object.freeze({
   BIODIVERSITY: 'biodiversity',
   CLIMATE: 'climate',
+  EXTREME_WEATHER: 'extreme-weather',
 });
 
 /**
@@ -23,11 +24,23 @@ export const AlbumCategory = Object.freeze({
  */
 
 /**
+ * A track that plays a year of lightning over one side of the Earth, from the files the album notebook exports (see
+ * docs/data-guide.md).
+ *
+ * @typedef {Object} LightningSource
+ * @property {string} tracksDir the album's tracks folder, holding the track's CSV and tracks.json
+ * @property {string} file the track's CSV
+ * @property {Object} north the Instrument the northern hemisphere's flashes are struck on (see composers/lightning.js)
+ * @property {Object} south the Instrument the southern hemisphere's flashes are struck on
+ */
+
+/**
  * @typedef {Object} Track
  * @property {string} title
  * @property {number} durationSec
  * @property {IceSeaSource} [iceSea] data, sound and view of a polar track
  * @property {StormSource} [storm] data, sound and view of a hurricane track
+ * @property {LightningSource} [lightning] data and sound of a lightning track
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
  * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
  * @property {string} [color] CSS color the track's data is drawn in
@@ -47,6 +60,8 @@ export const AlbumCategory = Object.freeze({
  * @property {string} [dataCredit] sources of the album's data, shown with the cover credit
  * @property {Track[]} tracks
  * @property {number} [msPerSec] ms of data time a second of a track plays, for an album whose tracks play data
+ * @property {Object} [globeLens] the GlobeLens the globe is seen through (see globe/domain/globe-lens.js), when not
+ *   the default
  */
 
 /**

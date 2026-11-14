@@ -2,7 +2,9 @@ import { IceVoice } from '../../music/domain/ice-sea-score.js';
 import { Kit } from '../../music/domain/composers/hurricane.js';
 import { YEAR_TIMELINE, trackDurationSec } from '../../tracks/domain/year-timeline.js';
 import { AlbumCategory } from '../domain/album.js';
+import { GlobeLens } from '../../globe/domain/globe-lens.js';
 import { Instrument } from '../../music/domain/instruments.js';
+import { NorthInstrument, SouthInstrument } from '../../music/domain/composers/lightning.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
 
 const ARCTIC_BIRD_TRACKS = 'data/arctic_bird/tracks';
@@ -17,6 +19,10 @@ const GLACIER_COVERS = 'assets/albums/glacier';
 const POLAR_YEARS = 32;
 const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
 
+const EXTREME_WEATHER_TRACKS = 'data/extreme_weather/tracks';
+const LIGHTNING_COVERS = 'assets/albums/lightning';
+// A year of lightning (2021) in a minute, about six days a second.
+const LIGHTNING_YEAR_SEC = 60;
 const HOT_OCEANS_DATA = 'data/hot_oceans/tracks';
 const HOT_OCEANS_COVERS = 'assets/albums/hot-oceans';
 
@@ -60,6 +66,8 @@ export const albums = [
     coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
     coverCredit: 'NASA Scientific Visualization Studio',
     dataCredit: 'Data: NSIDC Sea Ice Index v4 · NOAA Laboratory for Satellite Altimetry',
+    // Close in on the pole, the ice large in the middle.
+    globeLens: GlobeLens.WIDE,
     tracks: [
       {
         title: 'Arctic',
@@ -87,6 +95,31 @@ export const albums = [
           // The ice on a piano, so the two tracks are told apart.
           iceVoice: IceVoice.PIANO,
         },
+      },
+    ],
+  },
+  {
+    id: 'lightning',
+    category: AlbumCategory.EXTREME_WEATHER,
+    title: 'Lightning Crosses the Equator',
+    coverUrl: `${LIGHTNING_COVERS}/americas_africa.jpg`,
+    coverCredit: 'NASA, International Space Station, public domain, via Wikimedia Commons',
+    dataCredit: 'Data: ISS LIS V3.0 (NASA GHRC/MSFC) · NASA SVS 5011',
+    msPerSec: YEAR_MS / LIGHTNING_YEAR_SEC,
+    // 2021 seen from two sides of the Earth, the globe held on the equator over each so both hemispheres are in
+    // sight: the Americas and Africa, then South and East Asia with Australia (see docs/albums/lightning.md). Each
+    // track strikes its northern and southern lightning on its own pair of instruments. Covers: thunderstorms of that
+    // side as astronauts saw them from the space station.
+    tracks: [
+      {
+        title: 'The Americas and Africa', durationSec: LIGHTNING_YEAR_SEC, color: '#9ec3e6',
+        coverUrl: `${LIGHTNING_COVERS}/americas_africa.jpg`, coverCredit: 'Photo: ISS Expedition 20 crew, thunderstorms on the Brazilian horizon',
+        lightning: { tracksDir: EXTREME_WEATHER_TRACKS, file: 'americas_africa_2021.csv', north: NorthInstrument.CELESTA, south: SouthInstrument.TAIKO },
+      },
+      {
+        title: 'Asia and Australia', durationSec: LIGHTNING_YEAR_SEC, color: '#d9a35a',
+        coverUrl: `${LIGHTNING_COVERS}/asia_australia.jpg`, coverCredit: 'Photo: ISS Expedition 49 crew, thunderstorms over South East Asia, cropped',
+        lightning: { tracksDir: EXTREME_WEATHER_TRACKS, file: 'asia_australia_2021.csv', north: NorthInstrument.DULCIMER, south: SouthInstrument.MELODIC_TOM },
       },
     ],
   },
