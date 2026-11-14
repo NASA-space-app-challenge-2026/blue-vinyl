@@ -58,7 +58,7 @@ The SST in the analysis is a monthly mean, which hides the cooling a storm leave
 
 ## Time
 
-Each track plays its storm's whole life at an even pace, from its first record as a tropical depression to its first record after the peak below 34 kt or no longer tropical (notebook section 12): Emily 10.25 days in 60 s (4.1 hours a second), Felix 4.75 days in 48 s (2.4 hours a second), Sam 12.5 days in 60 s (5.0 hours a second). The storm fades in over the track's first 2.5 s and out over its last.
+Each track plays its storm's whole life at an even pace, from its first record as a tropical depression to its first record after the peak below 34 kt or no longer tropical (notebook section 12): each in 30 s ([album-guide.md](../album-guide.md)): Emily 10.25 days (8.2 hours a second), Felix 4.75 days (3.8 hours a second), Sam 12.5 days (10 hours a second). The storm fades in over the track's first 2.5 s and out over its last.
 
 ## Sound
 

@@ -22,6 +22,8 @@ const HOT_OCEANS_COVERS = 'assets/albums/hot-oceans';
 // The Atlantic's neutral SST (°C), where storms on average neither strengthen nor weaken over the next 24 hours
 // (notebooks/hot_oceans_album.ipynb, section 5.1): the sea above it lets a storm grow.
 const ATLANTIC_NEUTRAL_SST_C = 26.9;
+// Every storm's whole life plays in this long, whatever it lasted (4.75 to 12.5 days).
+const STORM_TRACK_SEC = 30;
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -101,12 +103,12 @@ export const albums = [
     coverCredit: 'NASA, public domain, via Wikimedia Commons',
     dataCredit: 'Data: NASA SVS 5097, 5072 · HURDAT2 (NOAA/NHC) · GHRSST MUR SST v4.1 (NASA JPL, via NOAA CoastWatch)',
     // Three Atlantic hurricanes, each its whole life: two that weaken on land and one that weakens over cool water
-    // (see docs/albums/hot-oceans.md). Each plays its wind on its own percussion family. Each track takes 40–60 s, so
-    // the storms' lives (4.75 to 12.5 days) play at their own pace. Covers: each storm near its peak, from NASA.
+    // (see docs/albums/hot-oceans.md). Each plays its wind on its own percussion family. Each track takes
+    // STORM_TRACK_SEC, so the storms' lives play at their own pace. Covers: each storm near its peak, from NASA.
     tracks: [
       {
         title: 'Emily 2005',
-        durationSec: 60,
+        durationSec: STORM_TRACK_SEC,
         coverUrl: `${HOT_OCEANS_COVERS}/emily_2005.jpg`,
         coverCredit: 'Cover: MODIS, Jul 16 2005 (Jeff Schmaltz, NASA MODIS Rapid Response Team)',
         storm: {
@@ -118,7 +120,7 @@ export const albums = [
       },
       {
         title: 'Felix 2007',
-        durationSec: 48,
+        durationSec: STORM_TRACK_SEC,
         coverUrl: `${HOT_OCEANS_COVERS}/felix_2007.jpg`,
         coverCredit: 'Cover: International Space Station, Sep 3 2007 (NASA)',
         storm: {
@@ -130,7 +132,7 @@ export const albums = [
       },
       {
         title: 'Sam 2021',
-        durationSec: 60,
+        durationSec: STORM_TRACK_SEC,
         coverUrl: `${HOT_OCEANS_COVERS}/sam_2021.jpg`,
         coverCredit: 'Cover: NASA Worldview, Sep 26 2021',
         storm: {
