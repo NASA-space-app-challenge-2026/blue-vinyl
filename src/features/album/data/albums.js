@@ -73,20 +73,6 @@ export const albums = [
         },
       },
       {
-        title: 'Kilauea',
-        durationSec: AEROSOL_TRACK_SEC,
-        color: '#50d060',
-        coverUrl: `${AEROSOL_COVERS}/kilauea.jpg`,
-        coverCredit: 'NASA Earth Observatory / EO-1 ALI, Kilauea Plume',
-        aerosol: {
-          csvUrl: `${AEROSOL_DATA}/kilauea.csv`,
-          framesDir: AEROSOL_FRAMES,
-          lead: 'sulfate',
-          viewLat: 19.0,
-          viewLon: -165.0,
-        },
-      },
-      {
         title: 'Spain and Etna',
         durationSec: AEROSOL_TRACK_SEC,
         color: '#e0a030',
