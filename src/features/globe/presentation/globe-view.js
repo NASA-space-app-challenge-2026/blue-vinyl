@@ -15,8 +15,8 @@ const { Globe } = globalThis;
 
 // Zooming in by hand stops at this many times the fitted size.
 const MAX_ZOOM = 9;
-// A locked globe may be brought this close (camera altitude, in globe radii), closer than a hand may zoom.
-const LOCKED_MIN_ALTITUDE = 0.01;
+// A globe allowed close up may be brought this close (camera altitude, in globe radii), closer than MAX_ZOOM.
+const CLOSE_UP_MIN_ALTITUDE = 0.01;
 // Edge of a map tile in texels.
 const TILE_PX = 256;
 // Pieces of ice that fall when a year loses ice: one per PIECE_CELLS cells of net loss (a cell is about 1,000 km²),
@@ -45,7 +45,7 @@ function altitudeForArc(camera, arcDeg) {
 }
 
 /**
- * Interactive WebGL globe that fills its container. Drag to rotate, scroll to zoom in, unless it is locked (setLocked).
+ * Interactive WebGL globe that fills its container. Drag to rotate, scroll to zoom in.
  * Zooming out stops at the fitted size, so the globe never shrinks away from the label edge.
  * It turns to keep a focus point (the flock, or the pole of a track's ice) at its centre; turned or zoomed by hand, it glides back a moment after release.
  *
@@ -66,8 +66,8 @@ export function createGlobeView(container) {
   const controls = globe.controls();
   // Camera altitude at which the globe fits the label, set with the lens.
   let fitAltitude = 0;
-  // While locked, the globe cannot be turned or zoomed by hand (see setLocked).
-  let locked = false;
+  // Whether the globe may come closer than MAX_ZOOM (see setCloseUp).
+  let closeUp = false;
 
   /**
    * Looks at the globe through `lens` (one of GlobeLens), at its fitted size.
@@ -83,23 +83,21 @@ export function createGlobeView(container) {
     keepGrabSpeed();
   }
 
-  // How close and far the camera may be: a hand zooms in at most MAX_ZOOM times the fitted size; a locked globe is
-  // brought as close as its focus asks.
+  // How close and far the camera may be: at most MAX_ZOOM times the fitted size, unless the globe is allowed close up.
   function setDistanceLimits() {
-    controls.minDistance = radius * (1 + (locked ? LOCKED_MIN_ALTITUDE : fitAltitude / MAX_ZOOM));
+    controls.minDistance = radius * (1 + (closeUp ? CLOSE_UP_MIN_ALTITUDE : fitAltitude / MAX_ZOOM));
     controls.maxDistance = radius * (1 + fitAltitude);
   }
 
   /**
-   * Locks the globe against the hand, or frees it: a locked globe cannot be turned or zoomed, and only its focus moves
-   * it, however close the focus asks it to come.
+   * Lets the globe come closer than MAX_ZOOM, as close as its focus asks, or holds it to MAX_ZOOM again. Either way it
+   * can still be turned and zoomed by hand.
    *
    * @param {boolean} next
    */
-  function setLocked(next) {
-    if (next === locked) return;
-    locked = next;
-    controls.enabled = !locked;
+  function setCloseUp(next) {
+    if (next === closeUp) return;
+    closeUp = next;
     setDistanceLimits();
   }
 
@@ -330,7 +328,7 @@ export function createGlobeView(container) {
     setFocus(next) {
       getFocus = next;
     },
-    setLocked,
+    setCloseUp,
     follow,
     glide,
     get gliding() {

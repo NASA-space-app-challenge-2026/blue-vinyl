@@ -1,12 +1,15 @@
-// The smog over a plain, drawn on the globe (see tracks/domain/smog.js and docs/albums/smog.md), as nell-v2 draws it.
+// The smog over a box around a city, drawn on the globe (see tracks/domain/smog.js and docs/albums/smog.md), as nell-v2
+// draws it, its edge faded out.
 //   - Fog: one patch of the globe over the song's box whose shader reads each hour's pollution levels as a texture,
 //     smoothly between cells (bicubic) and between hours, and draws a billowing fog that drifts, thin and pale where
 //     the air is moderate and thick and brown where it is worst, the map clear underneath where the air is clean (fogOf,
-//     the fog the music hears). It fades in over the song's first moments and out over its last.
+//     the fog the music hears). It fades in over the song's first moments and out over its last, and out toward the
+//     box's edge, round on the ground and ragged with the billows, so it has no edge where the data ends and the rest
+//     of the globe is clear (user, 2026-11-15).
 //   - Where the fog is thinning, a cold sheen runs through it, the front sweeping it out.
-//   - The turns, on the downbeat they sound on: as the plain clears the clear air flashes; as the smog rolls in, the
+//   - The turns, on the downbeat they sound on: as the box clears the clear air flashes; as the smog rolls in, the
 //     map darkens for a moment. Both fade over TURN_FADE_MS of the song.
-//   - The cities: a dot and a name at each, so the fog has places to cover and uncover.
+//   - The city: a dot and its name, so the fog has a place to cover and uncover.
 // Only the hour's textures are uploaded, once an hour.
 
 // The same three.js revision globe.gl@2.46.2 bundles, so the meshes fit its scene.
@@ -25,6 +28,12 @@ const TURN_FADE_MS = 1200;
 const FADE_MS = 1500;
 // A city's dot radius and where its name sits above it (px).
 const CITY = Object.freeze({ r: 2.5, nameDy: -7 });
+// The fade toward the box's edge, by distance from its middle on the ground, 1 where the box's nearer sides are: the
+// fog is whole up to `from` and gone by `to`, that distance pushed in and out by up to ±`ragged`/2 with the billows.
+// `to` + `ragged`/2 stays below 1, so nothing is left at the box's sides.
+const EDGE = Object.freeze({ from: 0.45, to: 0.85, ragged: 0.25 });
+
+const glsl = (v) => v.toFixed(4);
 
 const vertexShader = `
 varying vec2 vUv;
@@ -41,6 +50,7 @@ uniform sampler2D uClearB;
 uniform float uMix;
 uniform vec2 uSize;
 uniform vec2 uSpan;
+uniform vec2 uGround;
 uniform float uTime;
 uniform vec2 uFog;
 uniform float uFlash;
@@ -101,7 +111,7 @@ float smoothRead(sampler2D tex, vec2 uv) {
 void main() {
   float level = mix(smoothRead(uLevelA, vUv), smoothRead(uLevelB, vUv), uMix);
   float clearing = mix(smoothRead(uClearA, vUv), smoothRead(uClearB, vUv), uMix);
-  // Fog billowing and drifting over the plain, its edges ragged.
+  // Fog billowing and drifting over the box, its edges ragged.
   vec2 p = vUv * uSpan;
   vec2 drift = vec2(0.05, -0.02) * uTime;
   vec2 warp = vec2(fbm(vec3(p * 0.6 + drift, uTime * 0.03)), fbm(vec3(p * 0.6 + drift + 7.3, uTime * 0.03))) - 0.5;
@@ -119,13 +129,15 @@ void main() {
   float sheen = smoothstep(0.03, 0.15, clearing) * billow;
   color = mix(color, sky, 0.5 * sheen);
   alpha = max(alpha, 0.35 * sheen);
-  // The clear air flashing as the plain clears, the map darkening as the smog rolls in.
+  // The clear air flashing as the box clears, the map darkening as the smog rolls in.
   color = mix(color, sky, uFlash * (1.0 - fog));
   alpha = max(alpha, 0.5 * uFlash * (1.0 - fog));
   color = mix(color, vec3(0.22, 0.16, 0.11), uDark);
   alpha = max(alpha, 0.55 * uDark);
-  vec2 edge = smoothstep(0.0, 0.04, vUv) * smoothstep(1.0, 0.96, vUv);
-  gl_FragColor = vec4(color, alpha * edge.x * edge.y * uFade);
+  // Faded out toward the box's edge, round on the ground and ragged with the billows.
+  float reach = length((vUv - 0.5) * uGround) / (0.5 * min(uGround.x, uGround.y)) + (billow - 0.5) * ${glsl(EDGE.ragged)};
+  float edge = 1.0 - smoothstep(${glsl(EDGE.from)}, ${glsl(EDGE.to)}, reach);
+  gl_FragColor = vec4(color, alpha * edge * uFade);
   #include <colorspace_fragment>
 }`;
 
@@ -147,6 +159,8 @@ export function createSmogLayer({ globe, setElements }) {
     uMix: { value: 0 },
     uSize: { value: new THREE.Vector2() },
     uSpan: { value: new THREE.Vector2() },
+    // The box's width and height on the ground (degrees of arc at its middle).
+    uGround: { value: new THREE.Vector2() },
     uTime: { value: 0 },
     uFog: { value: new THREE.Vector2(FOG.from, FOG.full) },
     uFlash: { value: 0 },
@@ -170,13 +184,12 @@ export function createSmogLayer({ globe, setElements }) {
   mesh.visible = false;
   globe.scene().add(mesh);
 
-  // The track drawn, the hour its textures hold, and its cities' elements on the globe.
+  // The track drawn, and the hour its textures hold.
   let track = null;
   let hour = null;
-  let cityElements = [];
 
-  // Builds the patch over `next`'s box, its textures and its cities.
-  function setTrack(next, cities) {
+  // Builds the patch over `next`'s box, its textures and its city.
+  function setTrack(next, city) {
     track = next;
     hour = null;
     const { rows, cols, south, west, stepDeg } = next.field;
@@ -212,8 +225,8 @@ export function createSmogLayer({ globe, setElements }) {
     }
     uniforms.uSize.value.set(cols, rows);
     uniforms.uSpan.value.set(lonSpan, latSpan);
-    cityElements = cities.map(cityElement);
-    setElements(cityElements);
+    uniforms.uGround.value.set(lonSpan * Math.cos(((s + latSpan / 2) * Math.PI) / 180), latSpan);
+    setElements([cityElement(city)]);
   }
 
   // Loads hour `i` and the next into the textures.
@@ -232,13 +245,13 @@ export function createSmogLayer({ globe, setElements }) {
   }
 
   /**
-   * Draws `next`'s smog at playback `time` (ms into the song), with its cities, or nothing when it is null.
+   * Draws `next`'s smog at playback `time` (ms into the song), with its city, or nothing when it is null.
    *
    * @param {import('../../tracks/domain/smog.js').SmogTrack | null} next
    * @param {number} time
-   * @param {{ name: string, lat: number, lon: number }[]} cities
+   * @param {{ name: string, lat: number, lon: number } | null} city
    */
-  function render(next, time, cities) {
+  function render(next, time, city) {
     if (!next) {
       if (!track) return;
       track = null;
@@ -246,7 +259,7 @@ export function createSmogLayer({ globe, setElements }) {
       setElements([]);
       return;
     }
-    if (next !== track) setTrack(next, cities);
+    if (next !== track) setTrack(next, city);
     const { t } = next;
     const i = Math.min(Math.max(0, lastIndexAtOrBefore(t, time)), t.length - 2);
     if (i !== hour) upload(i);

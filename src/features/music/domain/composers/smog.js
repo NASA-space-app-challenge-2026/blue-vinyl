@@ -3,9 +3,9 @@
 //
 // Each song plays its own four-bar loop (its `loop`, a SmogLoop) at 120 BPM, unchanged from start to end; the air only
 // changes how it comes through, the same way in every song:
-//   - The fog: the thicker the haze over the plain (the fog the map draws, averaged), the more the whole mix is
+//   - The fog: the thicker the haze over the box (the fog the map draws, averaged), the more the whole mix is
 //     muffled, as if heard through a wall, and the more it smears into reverb and grit. Clear air plays it crisp.
-//   - The clearing: while the fog on the map is thinning, a gust of wind blows on every beat, as loud as the plain is
+//   - The clearing: while the fog on the map is thinning, a gust of wind blows on every beat, as loud as the box is
 //     losing fog.
 //   - The turns (see tracks/domain/smog.js): as the smog rolls in, a deep boom as the map darkens; as the front sweeps
 //     it out, a riser over the two bars before, the beat before it silent, and a crash as the map flashes clear.
@@ -91,15 +91,15 @@ const SOUND_FONT_REVERB = 40;
 // The standard kit's keys.
 const Drum = Object.freeze({ KICK: 36, SNARE: 38, CLOSED_HAT: 42, CRASH: 49 });
 
-// The fog over the music, from the plain's haze: none below FOG_HAZE[0], all of it from FOG_HAZE[1]. At none the mix
+// The fog over the music, from the haze: none below FOG_HAZE[0], all of it from FOG_HAZE[1]. At none the mix
 // is as it is; at all of it the low-pass is down to MUFFLED_HZ and the reverb and grit are at their most.
 const FOG_HAZE = Object.freeze([0.05, 0.8]);
 const OPEN_HZ = 18000;
 const MUFFLED_HZ = 220;
 const REVERB = Object.freeze([0.12, 0.6]);
 const DRIVE = Object.freeze([0, 0.3]);
-// A gust on each beat while the plain is losing fog: a burst of noise falling from 6 kHz, as loud as the share of a
-// whole fog the plain loses an hour, none from `from` and full at `full`.
+// A gust on each beat while the box is losing fog: a burst of noise falling from 6 kHz, as loud as the share of a
+// whole fog the box loses an hour, none from `from` and full at `full`.
 const GUST = Object.freeze({ from: 0.008, full: 0.06, velocity: 120, steps: STEPS_PER_BEAT, hz: [6000, 700] });
 // The turns: the riser, silent beat, crash and impact of a clearing; the boom of the smog rolling in.
 const RISER = Object.freeze({ velocity: 110, steps: 2 * STEPS_PER_BAR, hz: [300, 9000] });
@@ -119,7 +119,7 @@ export class SmogComposer {
   stepsPerBar = STEPS_PER_BAR;
 
   /**
-   * @param {{ track: import('../../../tracks/domain/smog.js').SmogTrack, loop: Object }} song the plain's hours and
+   * @param {{ track: import('../../../tracks/domain/smog.js').SmogTrack, loop: Object }} song the box's hours and
    *   the loop the song plays (one of SmogLoop)
    */
   setSong({ track, loop }) {

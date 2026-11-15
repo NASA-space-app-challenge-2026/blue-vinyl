@@ -1,7 +1,7 @@
-// The smog over a plain, read the same way by the map and the music (see docs/albums/smog.md). Each cell's PM2.5
-// becomes its pollution level (pollutionOf) and the fog it draws (fogOf); the plain's haze is the mean fog over its
-// cells. The plain clears when its haze falls below CLEAR_BELOW and is smothered when it rises above SMOTHERED_ABOVE; in
-// between it stays as it was.
+// The smog over a box of cells around a city, read the same way by the map and the music (see docs/albums/smog.md).
+// Each cell's PM2.5 becomes its pollution level (pollutionOf) and the fog it draws (fogOf); the haze is the mean fog
+// over the box's cells. The air clears when the haze falls below CLEAR_BELOW and is smothered when it rises above
+// SMOTHERED_ABOVE; in between it stays as it was.
 //
 // A song's hours play at an uneven pace (paceOf): the hours in which the air turns are drawn out and the days it sits
 // still pass quickly, and each turn lands on a downbeat. Times on a song are playback ms from its start; `clock` gives
@@ -54,8 +54,8 @@ export function gridAt(time) {
 
 /**
  * From an hourly frame per row (each cell's PM2.5): each frame's pollution levels (0..255, for the map's textures),
- * how much fog each cell loses by the next hour (0..255 of a whole fog), the plain's haze each hour, and how much fog
- * the plain loses each hour on average over its cells (0 to 1).
+ * how much fog each cell loses by the next hour (0..255 of a whole fog), the haze each hour, and how much fog
+ * the box loses each hour on average over its cells (0 to 1).
  *
  * @param {ArrayLike<number>[]} pm25
  */
@@ -71,7 +71,7 @@ export function smogOf(pm25) {
   return { levels, clearing, haze, cleared };
 }
 
-/** When the plain turns, each { hour (fractional, as the haze crosses), clear }, from its haze each hour. */
+/** When the box turns, each { hour (fractional, as the haze crosses), clear }, from its haze each hour. */
 export function turnsOf(haze) {
   let clear = haze[0] < (CLEAR_BELOW + SMOTHERED_ABOVE) / 2;
   const turns = [];
@@ -140,13 +140,13 @@ export function hourlyAt(times, values, time) {
 }
 
 /**
- * A song of the smog over a plain.
+ * A song of the smog over a box around a city.
  *
  * @typedef {Object} SmogTrack
  * @property {Float64Array} t each hour's playback time (ms from the song's start)
- * @property {Float32Array} haze the plain's haze each hour (0 clear to 1 all fog)
- * @property {Float32Array} cleared how much fog the plain loses each hour, on average over its cells (0 to 1)
- * @property {{ at: number, clear: boolean }[]} turns when the plain clears or is smothered (playback ms, on a downbeat)
+ * @property {Float32Array} haze the haze each hour (0 clear to 1 all fog)
+ * @property {Float32Array} cleared how much fog the box loses each hour, on average over its cells (0 to 1)
+ * @property {{ at: number, clear: boolean }[]} turns when the box clears or is smothered (playback ms, on a downbeat)
  * @property {{ levels: Uint8Array[], clearing: Uint8Array[], rows: number, cols: number, south: number, west: number,
  *   stepDeg: number }} field each hour's cells (row 0 the box's south edge, column 0 its west; see smogOf), and the
  *   box: its south-west cell's centre and the cells' spacing (°)
@@ -175,11 +175,11 @@ export function buildSmogTrack(pm25, startMs, box) {
 
 // The globe looks at the box's middle from close enough that the label's edge is this many degrees of arc from it:
 // nell-v2's globe drawn eleven times the label's size, its edge asin(1/11) of arc from the middle.
-const PLAIN_ARC_DEG = (Math.asin(1 / 11) * 180) / Math.PI;
+const BOX_ARC_DEG = (Math.asin(1 / 11) * 180) / Math.PI;
 
-/** Where the globe looks for `track`: the middle of its box, the label's edge PLAIN_ARC_DEG of arc from it. */
-export function plainFocus({ field: { rows, cols, south, west, stepDeg } }) {
-  return { lat: south + ((rows - 1) * stepDeg) / 2, lon: west + ((cols - 1) * stepDeg) / 2, arcDeg: PLAIN_ARC_DEG };
+/** Where the globe looks for `track`: the middle of its box (the city's cell), the label's edge BOX_ARC_DEG from it. */
+export function boxFocus({ field: { rows, cols, south, west, stepDeg } }) {
+  return { lat: south + ((rows - 1) * stepDeg) / 2, lon: west + ((cols - 1) * stepDeg) / 2, arcDeg: BOX_ARC_DEG };
 }
 
 /** How long `track` plays (s): to its last hour. */

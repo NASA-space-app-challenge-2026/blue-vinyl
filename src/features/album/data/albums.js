@@ -57,30 +57,17 @@ const WILDFIRE_DAYS = 214;
 const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAYS);
 
 const SMOG_TRACKS = 'data/smog/tracks';
-const SMOG_COVER = 'assets/albums/smog/beijing.jpg';
-const SMOG_COVER_CREDIT = 'Cover: Jade Peak Pagoda in smog from Longevity Hill, Beijing (Photo: Daniel Case, CC BY-SA 3.0)';
-// The cities named on the map, north to south.
-const NORTH_CHINA_PLAIN_CITIES = Object.freeze([
-  { name: 'Beijing', lat: 39.9, lon: 116.4 },
-  { name: 'Tangshan', lat: 39.63, lon: 118.18 },
-  { name: 'Tianjin', lat: 39.13, lon: 117.2 },
-  { name: 'Baoding', lat: 38.87, lon: 115.46 },
-  { name: 'Cangzhou', lat: 38.3, lon: 116.84 },
-  { name: 'Shijiazhuang', lat: 38.04, lon: 114.51 },
-  { name: 'Hengshui', lat: 37.74, lon: 115.67 },
-  { name: 'Jinan', lat: 36.65, lon: 117.12 },
-  { name: 'Handan', lat: 36.61, lon: 114.49 },
-]);
+const SMOG_COVERS = 'assets/albums/smog';
 
-/** A smog song: its hours over the plain, played on `loop` (one of SmogLoop), 54 s (see tracks/domain/smog.js). */
-function smogTrack(title, file, loop) {
+/** A smog song: the hours around its city, played on `loop` (one of SmogLoop), 54 s (see tracks/domain/smog.js). */
+function smogTrack(title, file, loop, cover, coverCredit) {
   return {
     title,
     durationSec: SONG_MS / 1000,
     color: '#bab8b6',
-    coverUrl: SMOG_COVER,
-    coverCredit: SMOG_COVER_CREDIT,
-    smog: { tracksDir: SMOG_TRACKS, file, loop, cities: NORTH_CHINA_PLAIN_CITIES },
+    coverUrl: `${SMOG_COVERS}/${cover}`,
+    coverCredit,
+    smog: { tracksDir: SMOG_TRACKS, file, loop },
   };
 }
 
@@ -303,18 +290,21 @@ export const albums = [
     id: 'smog',
     category: AlbumCategory.AIR_QUALITY,
     title: 'The Wind That Sweeps the Smog',
-    coverUrl: SMOG_COVER,
-    coverCredit: SMOG_COVER_CREDIT,
+    coverUrl: `${SMOG_COVERS}/beijing.jpg`,
+    coverCredit: 'Cover: Jade Peak Pagoda in smog from Longevity Hill, Beijing (Photo: Daniel Case, CC BY-SA 3.0)',
     dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
     // Songs are timed in playback ms; each sets the pace of its own hours (see tracks/domain/smog.js).
     msPerSec: 1000,
-    // Three stretches of the winter of 2018-19 over the North China Plain, each named for the hour the front swept the
-    // smog away (see notebooks/smog_album.ipynb and docs/albums/smog.md): clear air, the smog rolling in and building
-    // for days, and the sweep. Each plays its own loop, heard through the smog. nell-v2's album, as it is.
+    // Three cities of three regions whose air filled with smog and cleared again once (see notebooks/smog_album.ipynb
+    // and docs/albums/smog.md), in time order: wildfire smoke, winter smog and Saharan dust. Each plays nell-v2's loops
+    // in turn, heard through the smog.
     tracks: [
-      smogTrack('Morning, December 23', 'smog_2018_12_23.csv', SmogLoop.SYNTH_POP),
-      smogTrack('Dawn, January 15', 'smog_2019_01_15.csv', SmogLoop.HOUSE),
-      smogTrack('Midday, January 20', 'smog_2019_01_20.csv', SmogLoop.BREAKS),
+      smogTrack('Portland', 'portland_2020.csv', SmogLoop.SYNTH_POP, 'portland.jpg',
+        'Cover: Downtown Portland from SE Portland during the 2020 wildfires, Sep 10 2020 (Photo: Tedder, CC BY-SA 4.0)'),
+      smogTrack('Beijing', 'beijing_2025.csv', SmogLoop.HOUSE, 'beijing.jpg',
+        'Cover: Jade Peak Pagoda in smog from Longevity Hill, Beijing (Photo: Daniel Case, CC BY-SA 3.0)'),
+      smogTrack('Dakar', 'dakar_2025.csv', SmogLoop.BREAKS, 'dakar.jpg',
+        'Cover: Harmattan dust over Dakar, Jan 2015 (Photo: EquipeTKNal, CC BY-SA 4.0)'),
     ],
   },
 ];
