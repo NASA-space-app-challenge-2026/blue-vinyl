@@ -201,7 +201,15 @@ createSettingsMenu(viewControls, {
 applyGlobeTheme(DEFAULT_GLOBE_THEME);
 createCatView(slot('screen'));
 // A drag is no gesture audio may start from on a phone, so the title screen's tap unlocks the sound first.
-const startScreen = createStartScreen(slot('screen'), { stage: slot('stage'), onStart: unlockSound });
+// The bars and the safe areas take the title screen's color while it is up.
+backdrop.overlay(getComputedStyle(document.documentElement).getPropertyValue('--title-bg').trim());
+const startScreen = createStartScreen(slot('screen'), {
+  stage: slot('stage'),
+  onStart: () => {
+    backdrop.overlay(null);
+    unlockSound();
+  },
+});
 
 // Album switch keys, as the previous and next chevrons.
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
