@@ -115,6 +115,7 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  * @property {string} [color] CSS color the track's data is drawn in
  * @property {string} [coverUrl] the track's own cover image, shown on the sleeve while it is the current track
  * @property {string} [coverCredit] credit and license of the track's cover image
+ * @property {string} [coverAlt] what the track's cover image shows, for a screen reader; given with `coverUrl`
  * @property {string} [dataCredit] sources of the track's data, shown instead of the album's while it is current
  */
 
@@ -127,6 +128,9 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  * @property {string} title
  * @property {string} coverUrl
  * @property {string} coverCredit
+ * @property {string} [coverAlt] what the album's cover image shows, for a screen reader; needed when a track has no
+ *   cover of its own, as the sleeve then shows the album's
+ * @property {string} globeAlt what the globe shows through the album, for a screen reader, completing "Globe showing …"
  * @property {string} [dataCredit] sources of the album's data, shown with the cover credit
  * @property {Track[]} tracks
  * @property {number} [msPerSec] ms of data time a second of a track plays, for an album whose tracks play data
@@ -220,10 +224,14 @@ export function trackFadeAt(album, index, sec) {
  *
  * @param {Album} album
  * @param {number} trackIndex
- * @returns {{ url: string, credit: string }}
+ * @returns {{ url: string, credit: string, alt: string }} `alt` is empty when the data gives none
  */
 export function trackCover(album, trackIndex) {
   const track = album.tracks[trackIndex];
-  if (!track?.coverUrl) return { url: album.coverUrl, credit: album.coverCredit };
-  return { url: track.coverUrl, credit: [track.coverCredit, album.coverCredit].filter(Boolean).join(' · ') };
+  if (!track?.coverUrl) return { url: album.coverUrl, credit: album.coverCredit, alt: album.coverAlt ?? '' };
+  return {
+    url: track.coverUrl,
+    credit: [track.coverCredit, album.coverCredit].filter(Boolean).join(' · '),
+    alt: track.coverAlt ?? '',
+  };
 }

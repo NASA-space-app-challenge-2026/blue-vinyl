@@ -6,6 +6,8 @@
 // into the sleeve, which the column carries off in turn. Only CSS `translate` and `scale` move, so the layout (and the
 // sleeves' tilt, set through `transform`) stays as it is.
 
+import { prefersReducedMotion } from '../../../shared/motion.js';
+
 // Where the record sits: on the platter, off it just clear of the sleeve, or tucked inside the sleeve.
 const Place = Object.freeze({ AT_PLATTER: 'atPlatter', CLEAR: 'clear', IN_SLEEVE: 'inSleeve' });
 // Where the column is: as it stands, or one place along the way the album is left.
@@ -92,7 +94,8 @@ export function createRecordSwap({ recordEl, recordGeometry, rectOf, column }) {
   function step(pose, direction) {
     const start = from;
     column.setTucked(start.tucked || pose.tucked);
-    const options = { duration: pose.ms, easing: pose.easing ?? EASING, fill: 'both' };
+    // With less motion asked for, the records change at once.
+    const options = { duration: prefersReducedMotion() ? 0 : pose.ms, easing: pose.easing ?? EASING, fill: 'both' };
     const moves = [
       recordEl.animate([recordStyle(start, direction), recordStyle(pose, direction)], options),
       ...column.moves(shift(start, direction), shift(pose, direction), options),

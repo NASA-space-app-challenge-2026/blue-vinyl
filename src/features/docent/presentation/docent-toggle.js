@@ -12,12 +12,14 @@ export function createDocentToggle(parent, { onChange }) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'glass-segment';
+  // A toggle button: its name stays, its pressed state says whether the docent is on.
+  button.setAttribute('aria-label', 'Docent');
+  button.setAttribute('aria-keyshortcuts', 'D');
   let on = false;
 
   function render() {
     button.replaceChildren(createControlIcon(on ? ControlIcon.DOCENT : ControlIcon.DOCENT_OFF));
     button.setAttribute('aria-pressed', String(on));
-    button.setAttribute('aria-label', on ? 'Turn the docent off' : 'Turn the docent on');
     button.title = on ? 'Docent on' : 'Docent off';
   }
 

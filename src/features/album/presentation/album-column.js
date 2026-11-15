@@ -134,5 +134,5 @@ export function createAlbumColumn(parent, albums, { onSelectTrack, onSelectDocen
     for (const cover of [sleeve, ...neighbours.map((n) => n.cover)]) cover.setDocent(on);
   }
 
-  return { setAlbum, setNeighbour, render: sleeve.render, setDocent, place, setTucked, moves, settle };
+  return { setAlbum, setNeighbour, render: sleeve.render, focusTracks: sleeve.focusTracks, setDocent, place, setTucked, moves, settle };
 }

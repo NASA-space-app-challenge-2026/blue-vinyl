@@ -55,6 +55,9 @@ export function createCatView(screen) {
     // live2d-widget sets pointer-events: none inline on the widget container.
     // We override it to allow clicking/tapping the cat.
     widget.style.setProperty('pointer-events', 'auto', 'important');
+    // Only a picture to a screen reader, its meow a pointer's easter egg; it has nothing to focus. Not inert: it still
+    // fades under the mouse and meows when tapped.
+    widget.setAttribute('aria-hidden', 'true');
     screen.append(widget);
 
     const onMeow = (event) => {

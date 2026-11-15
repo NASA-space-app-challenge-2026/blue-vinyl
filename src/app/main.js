@@ -69,6 +69,8 @@ import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.j
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 import { pointInScreen, rectInScreen } from '../shared/screen-space.js';
+import { createAnnouncer } from '../shared/announcer.js';
+import { isRovingKey } from '../shared/roving-focus.js';
 import { createTicker } from '../shared/ticker.js';
 
 // The contiguous United States, zoomed until the label's edge is 30 degrees of arc from its middle, so the West's fires
@@ -127,10 +129,14 @@ let swapping = false;
 let pendingSteps = 0;
 // True while a hand holds the record that was playing.
 let handHeld = false;
+// The album and track a screen reader was last told of (see tellScreenReader), null before the first render.
+let announcedAlbum = null;
+let announcedTrack = null;
 
 const slot = (id) => document.getElementById(id);
 
 const backdrop = createBackdrop(document.documentElement);
+const announcer = createAnnouncer(slot('screen'));
 const playHint = createPlayHint(slot('bottom-center'));
 const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack, onSelectDocent: playDocent });
 // Boxes and pointers in the layout's own pixels, which a portrait screen turned to show it landscape does not share
@@ -227,7 +233,7 @@ const noonComposer = new NoonComposer();
 // ahead of the line, so the eased camera settles on the line itself rather than trailing it.
 const FOREST_FOLLOW_TAU_SEC = 0.5;
 
-const transportControls = createGlassCapsule(slot('corner-bottom-left'));
+const transportControls = createGlassCapsule(slot('corner-bottom-left'), { label: 'Playback' });
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
 const volumeControl = createVolumeControl(transportControls, {
   onChange: (level) => {
@@ -236,8 +242,8 @@ const volumeControl = createVolumeControl(transportControls, {
     docentVoice.setVolume(level);
   },
 });
-const albumControls = createGlassCapsule(slot('corner-bottom-left'));
-createAlbumSwitcher(albumControls, {
+const albumControls = createGlassCapsule(slot('corner-bottom-left'), { label: 'Album' });
+const albumSwitcher = createAlbumSwitcher(albumControls, {
   onPrevious: () => switchAlbum(-1),
   onNext: () => switchAlbum(1),
 });
@@ -251,8 +257,8 @@ const docentBubble = createDocentBubble(slot('screen'), {
   speaker: () => catCheek(screenSpace.rectOf),
 });
 const docentNarrator = createDocentNarrator(docentVoice, docentBubble);
-const docentToggle = createDocentToggle(createGlassCapsule(slot('corner-bottom-left')), { onChange: setDocent });
-const viewControls = createGlassCapsule(slot('corner-top-right'));
+const docentToggle = createDocentToggle(createGlassCapsule(slot('corner-bottom-left'), { label: 'Docent' }), { onChange: setDocent });
+const viewControls = createGlassCapsule(slot('corner-top-right'), { label: 'View' });
 createFullscreenButton(viewControls);
 const aboutDialog = createInfoDialog(slot('screen'), {
   id: 'about',
@@ -339,8 +345,11 @@ document.addEventListener(
     const albumStep = ALBUM_KEYS[event.key];
     const volumeStep = VOLUME_KEYS[event.key];
     if (!albumStep && !volumeStep) return;
-    // The volume slider keeps its arrows while used from the keyboard.
-    if (event.target instanceof HTMLInputElement && event.target !== clickFocused) return;
+    // A toolbar or the track list reached from the keyboard keeps the arrows that move between its items.
+    if (event.target !== clickFocused && isRovingKey(event.target, event.key)) return;
+    // The volume slider and the progress ring keep their arrows while used from the keyboard.
+    const slider = event.target instanceof HTMLInputElement || (event.target instanceof Element && event.target.closest('[role="slider"]'));
+    if (slider && event.target !== clickFocused) return;
     event.preventDefault();
     releaseClickFocus();
     // Holding an up or down key keeps turning the volume; holding left or right switches albums once.
@@ -362,8 +371,11 @@ function releaseClickFocus() {
   clickFocused = null;
 }
 
-// Safari ignores user-scalable=no (index.html) and touch-action for pinches, so its pinch gesture is cancelled here.
-document.addEventListener('gesturestart', (event) => event.preventDefault());
+// Safari ignores touch-action for pinches, so a pinch on the turntable (the record, the arm, the globe), which takes its
+// own touches, would zoom the page too; there it is cancelled. Anywhere else a pinch zooms the page.
+document.addEventListener('gesturestart', (event) => {
+  if (event.target instanceof Element && event.target.closest('.turntable')) event.preventDefault();
+});
 
 // A focused button is pressed on Space's keyup, so that is held back too.
 document.addEventListener(
@@ -385,6 +397,7 @@ function showAlbum(index) {
   album = albums[albumIndex];
   totalMs = albumDurationSec(album) * 1000;
   albumColumn.setAlbum(albumIndex);
+  albumSwitcher.render(albums[wrapIndex(index - 1, albums.length)].title, albums[wrapIndex(index + 1, albums.length)].title);
   // A new album opens with the docent's introduction while the docent is on.
   if (docentOn) enterIntro();
   else leaveIntro();
@@ -656,6 +669,8 @@ async function switchAlbum(step, target = null, resume = isPlaying()) {
     return;
   }
   swapping = true;
+  // A track list reached from the keyboard gets the focus back on the new sleeve, as the inert stage drops it.
+  const focusedTracks = document.activeElement !== clickFocused && document.activeElement?.closest('.album-cover-tracks');
   // Nothing on the stage can be touched while the records change.
   slot('stage').inert = true;
   elapsedMs = 0;
@@ -672,6 +687,7 @@ async function switchAlbum(step, target = null, resume = isPlaying()) {
     slot('stage').inert = false;
     swapping = false;
   }
+  if (focusedTracks) albumColumn.focusTracks();
   if (resume) cue();
 }
 
@@ -881,6 +897,8 @@ function render() {
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex, introMs !== null);
   announceTrack(trackIndex);
+  tellScreenReader(trackIndex);
+  globe.describe(`Globe showing ${album.globeAlt}. Track: ${album.tracks[trackIndex].title}.`);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
   backdrop.show(trackCover(album, trackIndex).url);
   mediaCenter.setTrack({
@@ -1218,6 +1236,27 @@ function renderForest(trackIndex, song) {
   if (!sounding()) return;
   soundEngine.follow(song, elapsedSec);
   halo.wake();
+}
+
+/**
+ * Tells a screen reader of a new album or track, which the eye sees on the sleeve: the album's place and title when
+ * the album changes, the track and its album otherwise. The page's first album is left to the page itself, and a
+ * track the docent is introducing aloud (see announceTrack) is left to the docent, so the two do not talk over each
+ * other.
+ *
+ * @param {number} trackIndex
+ */
+function tellScreenReader(trackIndex) {
+  const track = album.tracks[trackIndex];
+  if (album === announcedAlbum && track === announcedTrack) return;
+  const first = announcedAlbum === null;
+  const newAlbum = album !== announcedAlbum;
+  announcedAlbum = album;
+  announcedTrack = track;
+  if (first) return;
+  if (docentOn && isPlaying()) return;
+  if (newAlbum) announcer.say(`Album ${albumIndex + 1} of ${albums.length}: ${album.title}. Track: ${track.title}.`);
+  else announcer.say(`${isPlaying() ? 'Now playing: ' : ''}${track.title}, from ${album.title}.`);
 }
 
 function setState(next) {
