@@ -117,6 +117,11 @@ export function lineLonAt(lineStep) {
   return START_LON - Math.max(0, Math.min(LINE_STEPS, lineStep));
 }
 
+/** The step of the line at which it crosses longitude `lon` (degrees east). */
+export function lineStepAt(lon) {
+  return (((START_LON - lon) % LINE_STEPS) + LINE_STEPS) % LINE_STEPS;
+}
+
 /** The region the line is in at a whole step of the line. */
 export function regionAt(lineStep) {
   const lon = lineLonAt(lineStep) - 0.5;

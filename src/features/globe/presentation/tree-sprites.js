@@ -1,120 +1,114 @@
-// Trees that grow in real time on a 2D canvas, the forest's sprites read from it as a texture.
+// A tree that grows in real time on its own 2D canvas, for a sprite on the globe to show as a texture.
 //
-// Each tree starts as a trunk that grows up from the ground; when a branch reaches its length it splits into two or
-// three thinner, shorter ones, until the tree is as many generations deep as its kind. Every frame draws only what grew
-// since the last one, with globalCompositeOperation 'lighter', so where branches cross the light adds up and the
-// trunk and forks burn brightest, like neon.
-//
-// The canvas is a grid: a column for each kind, a row for each variant (so trees of one kind are not all the same).
-// It is drawn white on black, as brightness only: the shader tints it with the kind's colour.
+// The trunk grows up from the ground, bending a little as it goes. A growing branch puts out side shoots along the
+// way and, at its end, forks: one child carries on near its line, the other leans off; now and then a shoot does not
+// grow at all, so the crown stays open. Every frame draws only what grew since the last one, in the tree's colour,
+// with globalCompositeOperation 'lighter', so where branches cross the light adds up and the trunk glows brightest,
+// like neon. The canvas is opaque black, which adds nothing to the globe.
 
-// The trunk's base and first length in the cell (cell units, y down), and how each generation shrinks.
-const ROOT = Object.freeze({ x: 0.5, y: 0.98, length: 0.24, width: 0.035 });
-const SHRINK = Object.freeze({ length: [0.68, 0.82], width: 0.68 });
-// The angle between a branch and its children (radians), and the share of forks that split three ways.
-const SPREAD = Object.freeze({ angle: [0.35, 0.65], threeWay: 0.35 });
-// Brightness each stroke adds (0..1) and the glow round it (share of the cell).
-const STROKE_ALPHA = 0.5;
-const GLOW = 0.018;
+// The trunk's base, first length and width in the canvas (canvas units, y down).
+const ROOT = Object.freeze({ x: 0.5, y: 0.985, length: 0.22, width: 0.03 });
+// A child's length and width as a share of its parent's; a side shoot's length as a share of its parent's.
+const SHRINK = Object.freeze({ leader: [0.7, 0.85], fork: [0.5, 0.72], shoot: [0.25, 0.45], width: 0.62 });
+// Angles (radians): the leader keeps near its parent's line, the fork and the shoots lean off it; every piece turns
+// by up to `wander`, and is drawn up toward the sky by `rise`.
+const ANGLE = Object.freeze({ leader: 0.25, fork: [0.45, 0.85], shoot: [0.7, 1.1], wander: 0.12, rise: 0.04 });
+// Chances: a fork's second child grows; a shoot along a branch grows (per branch, from the second generation).
+const CHANCE = Object.freeze({ fork: 0.8, shoot: 0.55 });
+// Length of the pieces a branch is drawn in, so it can bend (canvas units).
+const PIECE = 0.02;
+// Brightness: the trunk's stroke alpha, falling by `fade` each generation; the glow round the strokes (canvas share).
+const STROKE = Object.freeze({ alpha: 0.85, fade: 0.82, glow: 0.012 });
 
 /**
- * @param {{ depth: number, growSec: number }[]} kinds  how many generations a kind's tree has, and how long it takes to
- *   reach its tips
- * @param {number} variants
- * @param {number} cellPx
+ * @param {{ color: string, depth: number, growSec: number, sizePx: number, seed: number }} tree  its colour (CSS), how
+ *   many generations it branches, how long it takes to reach its tips (s), its canvas size and its random seed
  */
-export function createTreeGrower(kinds, variants, cellPx) {
+export function createGrowingTree({ color, depth, growSec, sizePx, seed }) {
   const canvas = document.createElement('canvas');
-  canvas.width = cellPx * kinds.length;
-  canvas.height = cellPx * variants;
+  canvas.width = canvas.height = sizePx;
   const ctx = canvas.getContext('2d');
-  let cells = [];
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, sizePx, sizePx);
+  const random = seeded(seed);
+  const between = ([low, high]) => low + random() * (high - low);
+  // Grown at a pace that brings the tips out at `growSec`: the path from the root along the leaders to the top.
+  const leader = (SHRINK.leader[0] + SHRINK.leader[1]) / 2;
+  const speed = (ROOT.length * (1 - leader ** (depth + 1))) / (1 - leader) / growSec;
+  let growing = [branch(ROOT.x, ROOT.y, -Math.PI / 2, ROOT.length, ROOT.width, 0)];
+  let lastAt = null;
 
-  /** Clears the canvas and plants every cell's tree again, variant v starting `startSec[v]` (seconds) from now. */
-  function restart(now, startSec) {
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    cells = [];
-    kinds.forEach((kind, k) => {
-      for (let v = 0; v < variants; v++) {
-        const random = seeded(k * variants + v + 1);
-        // Grown at a pace that brings the tips out at `growSec`: the path from the root to a tip is the trunk plus
-        // each generation's mean share of the one before.
-        const meanShrink = (SHRINK.length[0] + SHRINK.length[1]) / 2;
-        const path = (ROOT.length * (1 - meanShrink ** (kind.depth + 1))) / (1 - meanShrink);
-        cells.push({
-          col: k, row: v, random, depth: kind.depth, speed: path / kind.growSec,
-          startAt: now + startSec[v], lastAt: null,
-          growing: [{ x: ROOT.x, y: ROOT.y, angle: -Math.PI / 2, length: ROOT.length, grown: 0, width: ROOT.width, generation: 0 }],
-        });
-      }
-    });
+  function branch(x, y, angle, length, width, generation) {
+    // Where along it a side shoot comes out, if one does.
+    const shootAt = generation >= 1 && generation < depth && random() < CHANCE.shoot ? 0.3 + 0.5 * random() : null;
+    return { x, y, angle, length, width, generation, grown: 0, toPiece: PIECE, shootAt };
   }
 
-  /** Draws what grew up to `now` (seconds). Returns whether any tree is still growing. */
+  /** Draws what grew up to `now` (seconds). Returns whether the tree is still growing. */
   function step(now) {
-    let busy = false;
+    if (!growing.length) return false;
+    const dt = Math.min(0.1, lastAt === null ? 0 : now - lastAt);
+    lastAt = now;
+    ctx.save();
+    ctx.scale(sizePx, sizePx);
     ctx.globalCompositeOperation = 'lighter';
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = `rgba(255, 255, 255, ${STROKE_ALPHA})`;
-    ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
-    ctx.shadowBlur = GLOW * cellPx;
-    for (const cell of cells) {
-      if (!cell.growing.length) continue;
-      busy = true;
-      if (now < cell.startAt) continue;
-      const dt = Math.min(0.1, now - (cell.lastAt ?? cell.startAt));
-      cell.lastAt = now;
-      ctx.save();
+    ctx.lineCap = 'butt';
+    ctx.strokeStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = STROKE.glow * sizePx;
+    growing = growing.flatMap((b) => grow(b, speed * dt));
+    ctx.restore();
+    return growing.length > 0;
+  }
+
+  /** Grows branch `b` by `by`, drawing it piece by piece; returns what grows on. */
+  function grow(b, by) {
+    const out = [];
+    let left = by;
+    while (left > 0 && b.grown < b.length) {
+      const piece = Math.min(left, b.toPiece, b.length - b.grown);
+      const x1 = b.x + Math.cos(b.angle) * piece;
+      const y1 = b.y + Math.sin(b.angle) * piece;
+      const taper = 1 - 0.35 * (b.grown / b.length);
+      ctx.globalAlpha = STROKE.alpha * STROKE.fade ** b.generation;
+      ctx.lineWidth = Math.max(b.width * taper, 1.2 / sizePx);
       ctx.beginPath();
-      ctx.rect(cell.col * cellPx, cell.row * cellPx, cellPx, cellPx);
-      ctx.clip();
-      ctx.translate(cell.col * cellPx, cell.row * cellPx);
-      ctx.scale(cellPx, cellPx);
-      ctx.shadowBlur = GLOW * cellPx;
-      cell.growing = cell.growing.flatMap((b) => grow(cell, b, cell.speed * dt));
-      ctx.restore();
+      ctx.moveTo(b.x, b.y);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+      const before = b.grown / b.length;
+      b.x = x1;
+      b.y = y1;
+      b.grown += piece;
+      left -= piece;
+      b.toPiece -= piece;
+      if (b.toPiece <= 0) {
+        // A new piece: turn a little at random, and a little up toward the sky.
+        b.toPiece = PIECE;
+        b.angle += (random() - 0.5) * 2 * ANGLE.wander;
+        b.angle += Math.sin(-Math.PI / 2 - b.angle) * ANGLE.rise;
+      }
+      if (b.shootAt !== null && before < b.shootAt && b.grown / b.length >= b.shootAt) {
+        const side = random() < 0.5 ? -1 : 1;
+        out.push(branch(b.x, b.y, b.angle + side * between(ANGLE.shoot), b.length * between(SHRINK.shoot), b.width * SHRINK.width * 0.8, b.generation + 1));
+      }
     }
-    return busy;
+    if (b.grown < b.length) return [b, ...out];
+    if (b.generation >= depth) return out;
+    // The fork: a leader near the line, and maybe a second child leaning off to one side.
+    const side = random() < 0.5 ? -1 : 1;
+    const width = b.width * SHRINK.width;
+    out.push(branch(b.x, b.y, b.angle + (random() - 0.5) * 2 * ANGLE.leader, b.length * between(SHRINK.leader), width, b.generation + 1));
+    if (random() < CHANCE.fork) {
+      out.push(branch(b.x, b.y, b.angle + side * between(ANGLE.fork), b.length * between(SHRINK.fork), width * 0.85, b.generation + 1));
+    }
+    return out;
   }
 
-  /** Grows branch `b` by `by` and draws the new piece; returns what grows on: itself, or its children once it is done. */
-  function grow(cell, b, by) {
-    const from = Math.min(b.grown, b.length);
-    b.grown = Math.min(b.length, b.grown + by);
-    const dx = Math.cos(b.angle);
-    const dy = Math.sin(b.angle);
-    ctx.lineWidth = Math.max(b.width, 1 / cellPx);
-    ctx.beginPath();
-    ctx.moveTo(b.x + dx * from, b.y + dy * from);
-    ctx.lineTo(b.x + dx * b.grown, b.y + dy * b.grown);
-    ctx.stroke();
-    if (b.grown < b.length) return [b];
-    if (b.generation >= cell.depth) return [];
-    const { random } = cell;
-    const n = random() < SPREAD.threeWay ? 3 : 2;
-    const x = b.x + dx * b.length;
-    const y = b.y + dy * b.length;
-    const children = [];
-    for (let i = 0; i < n; i++) {
-      const spread = SPREAD.angle[0] + random() * (SPREAD.angle[1] - SPREAD.angle[0]);
-      children.push({
-        x, y,
-        angle: b.angle + (i - (n - 1) / 2) * spread + (random() - 0.5) * 0.2,
-        length: b.length * (SHRINK.length[0] + random() * (SHRINK.length[1] - SHRINK.length[0])),
-        grown: 0,
-        width: b.width * SHRINK.width,
-        generation: b.generation + 1,
-      });
-    }
-    return children;
-  }
-
-  return { canvas, restart, step };
+  return { canvas, step };
 }
 
-/** A repeatable random sequence, so each variant grows the same every time. */
+/** A repeatable random sequence. */
 function seeded(seed) {
   let s = (seed * 2654435761) >>> 0;
   return () => {
