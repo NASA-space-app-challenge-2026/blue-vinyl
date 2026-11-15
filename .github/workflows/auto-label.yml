@@ -1,0 +1,21 @@
+name: Auto Label
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  label-by-branch:
+    runs-on: ubuntu-latest
+    steps:
+      # The branch type (see docs/conventions/branch-strategy.md) matches the label name.
+      - name: Add the label for the branch type
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: gh pr edit "$PR_NUMBER" --add-label "${HEAD_REF%%/*}"

@@ -1,0 +1,124 @@
+/* Sits above the album sleeve, which tucks in behind the record. */
+.turntable {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  width: min(54vw, 100vh);
+}
+
+.turntable-record {
+  position: absolute;
+  inset: 0;
+}
+
+.turntable-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* The disc and grooves, drawn once; only the top layer (vinyl-top) takes the record's clicks. */
+.turntable-vinyl-layer {
+  filter: drop-shadow(0 18px 24px rgb(0 0 0 / 0.45));
+  pointer-events: none;
+}
+
+/* The glints and credits turning with the record, on a layer of their own so turning them redraws nothing. */
+.turntable-vinyl-spin {
+  pointer-events: none;
+  will-change: transform;
+}
+
+.turntable-vinyl-spin .vinyl-credit {
+  font-family: var(--font);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+/* The record can be clicked, or held and turned by hand (see turntable-view.js). */
+.turntable-vinyl-top .vinyl-hit {
+  cursor: grab;
+  touch-action: none;
+}
+
+.turntable-vinyl-top.held .vinyl-hit {
+  cursor: grabbing;
+}
+
+/* Only the arm itself catches pointers, so the globe under the layer stays draggable. */
+.turntable-arm-layer {
+  /* The arm stands above the record, so its shadow falls a little away from it, down and right of the light. */
+  filter: drop-shadow(6px 12px 8px rgb(0 0 0 / 0.45));
+  pointer-events: none;
+}
+
+.turntable-arm-layer .arm {
+  pointer-events: visiblePainted;
+  cursor: grab;
+  touch-action: none;
+}
+
+.turntable-arm-layer .arm.dragging {
+  cursor: grabbing;
+}
+
+/* Over the grooves, under the label; the clicks go through to the record. */
+.record-halo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Round, so clicks on the grooves just outside the circle still reach the record. */
+.record-label {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.record-label-slot,
+.record-label-rim,
+.record-progress {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.record-label-slot {
+  overflow: hidden;
+}
+
+.record-label-rim {
+  border: 1px solid rgb(255 255 255 / 0.15);
+  pointer-events: none;
+}
+
+.record-progress {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* The current track's progress round the rim; only the band round the rail takes a click. */
+.record-progress-rail {
+  stroke: rgb(255 255 255 / 0.18);
+}
+
+.record-progress-fill {
+  stroke: #fff;
+  stroke-linecap: round;
+}
+
+.record-progress-hit {
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.record-progress-dot {
+  fill: #fff;
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.6));
+}

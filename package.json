@@ -1,0 +1,17 @@
+{
+  "name": "blue-vinyl",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes browser-sync@3.0.4 start --server --files \"index.html\" \"src/**/*\" \"data/**/*\" --no-notify --no-ui --port $(node scripts/port.mjs)",
+    "https": "npx --yes browser-sync@3.0.4 start --server --https --open external --files \"index.html\" \"src/**/*\" \"data/**/*\" --no-notify --no-ui --port $(node scripts/port.mjs)",
+    "dev": "npm start",
+    "watch": "npm start",
+    "serve": "npx --yes serve@14.2.6 . -l $(node scripts/port.mjs)",
+    "notebook": "uvx --with pandas --with matplotlib --with requests --with geopandas --with h5py --with fsspec --with aiohttp --with pillow --with scipy --with lxml jupyter lab notebooks",
+    "soundfont": "node scripts/build-soundfont.mjs"
+  },
+  "devDependencies": {
+    "spessasynth_core": "4.3.20"
+  }
+}

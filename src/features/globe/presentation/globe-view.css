@@ -1,0 +1,339 @@
+/* globe.gl's scene (its canvas and the markers it lays over it) is one layer of its own. The markers' renderer stacks
+   them by depth with z-indexes, which would otherwise rise over the date and the other text drawn on the globe. */
+.globe-view .scene-container {
+  isolation: isolate;
+}
+
+/* Turns the Blue Marble texture into a muted dark map: lighter land on a deep sea. */
+.globe-view[data-theme='satellite'] canvas {
+  filter: grayscale(0.85) brightness(0.85) contrast(1.15);
+}
+
+/* The year and the porthole of SVS 5235 over the globe (sea-level-overlay.js). The round label clips it. The year is
+   white with a thin black outline, so it shows on white ice, the map and the water alike; the stroke is painted
+   under the fill, so half of it shows as the outline. */
+.sea-overlay {
+  --outline: 1px;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  text-align: center;
+  color: #fff;
+  -webkit-text-stroke: calc(2 * var(--outline)) #000;
+  paint-order: stroke fill;
+}
+
+.sea-overlay[hidden] {
+  display: none;
+}
+
+.sea-overlay-year {
+  position: absolute;
+  top: 9%;
+  left: 0;
+  right: 0;
+  margin: 0;
+  font-size: clamp(18px, 3.2vw, 44px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* The sea seen through the porthole: as tall as the label, moved down (sea-level-overlay.js) so its top is half a
+   wave above the water level. Everything in it moves by transforms only, so the compositor moves it without
+   repainting. */
+.sea-overlay-sea {
+  --drift-sec: 6s;
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* Carries the water's wave along, one wave in each drift; a wave wider than the label, so the shape always covers it. */
+.sea-overlay-drift {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% + var(--wave-w));
+  height: 100%;
+  animation: sea-overlay-drift var(--drift-sec) linear infinite;
+}
+
+/* Moves back exactly as far as the drift, so what it holds stays where it is. */
+.sea-overlay-hold {
+  position: absolute;
+  inset: 0;
+  animation: sea-overlay-hold var(--drift-sec) linear infinite;
+}
+
+/* Water: one shape, the wave along its top and solid below (waterMask), so the wave and the water under it are one
+   body of one colour. */
+.sea-overlay-water {
+  position: absolute;
+  inset: 0;
+  mask-image: var(--water-mask);
+  mask-size: var(--wave-w) 100%;
+  mask-repeat: repeat-x;
+}
+
+/* Bright under the surface, deep blue below, stretched over the depth seen from the top of the wave to the bottom of
+   the label. */
+.sea-overlay-depth {
+  position: absolute;
+  inset: 0;
+  transform-origin: top;
+  background: linear-gradient(to bottom, rgb(40 205 255 / 0.5) 0%, rgb(25 125 220 / 0.55) 35%, rgb(12 45 105 / 0.75) 100%);
+}
+
+/* Only the sky above the water's wave, so the swell shows behind the surface and never through the water. */
+.sea-overlay-swell-clip {
+  position: absolute;
+  top: calc(-1 * var(--swell-top));
+  left: 0;
+  right: 0;
+  height: calc(var(--swell-top) + var(--wave-h));
+  mask-image: var(--above-mask);
+  mask-size: var(--above-mask-w) 100%;
+  mask-repeat: no-repeat;
+}
+
+/* A paler swell behind the surface, moving the other way; it fades out downwards, so it leaves no edge. */
+.sea-overlay-swell {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% + var(--swell-w));
+  height: calc(var(--swell-h) * 2.5);
+  background: rgb(150 225 255 / 0.4);
+  mask-image: var(--swell-mask), linear-gradient(#000, transparent);
+  mask-size: var(--swell-mask-w) var(--swell-h), 100% 100%;
+  mask-position: 0 0, 0 0;
+  mask-repeat: no-repeat, no-repeat;
+  mask-composite: intersect;
+  animation: sea-overlay-swell 9s linear infinite;
+}
+
+@keyframes sea-overlay-drift {
+  to {
+    transform: translateX(calc(-1 * var(--wave-w)));
+  }
+}
+
+@keyframes sea-overlay-hold {
+  to {
+    transform: translateX(var(--wave-w));
+  }
+}
+
+@keyframes sea-overlay-swell {
+  from {
+    transform: translateX(calc(-1 * var(--swell-w)));
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+/* Faint light rays, fading out over the depth seen; the fade is stretched with the water (sea-level-overlay.js) and
+   the rays are stretched back, so they keep their slant. */
+.sea-overlay-rays-fade {
+  position: absolute;
+  inset: 0;
+  transform-origin: top;
+  mask-image: linear-gradient(to bottom, #000, transparent 80%);
+}
+
+.sea-overlay-rays {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% - var(--wave-w));
+  height: 100%;
+  transform-origin: top;
+  background: repeating-linear-gradient(105deg, rgb(255 255 255 / 0) 0 7%, rgb(255 255 255 / 0.07) 9%, rgb(255 255 255 / 0) 12%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sea-overlay-drift,
+  .sea-overlay-hold,
+  .sea-overlay-swell {
+    animation: none;
+  }
+}
+
+/* Falling pieces of lost ice (ice-fall.js), between the globe and the porthole water. */
+.ice-fall {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* A bird seen from above (birds-layer.js), outlined in near-black and filled in its track's colour. */
+.bird svg {
+  display: block;
+  overflow: visible;
+}
+
+.bird-outline {
+  fill: #111;
+  stroke: #111;
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+
+.bird-fill {
+  fill: currentColor;
+}
+
+/* Each wing folds toward its root and sweeps its tip back on the upstroke. */
+.bird-wing {
+  transform-origin: 1.4px -1px;
+  animation: bird-flap 0.4s ease-in-out infinite alternate;
+  animation-delay: var(--flap-delay, 0s);
+}
+
+@keyframes bird-flap {
+  from { transform: none; }
+  to { transform: scale(0.35, 0.9) rotate(22deg); }
+}
+
+/* A storm of a season (storms-layer.js): its sign turns counterclockwise (mirrored south of the equator), its name
+   stays upright. */
+.season-storm svg {
+  display: block;
+  overflow: visible;
+}
+
+.season-storm-sign {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  animation: season-storm-turn 1.6s linear infinite;
+}
+
+.season-storm-sign circle {
+  fill: #111;
+}
+
+@keyframes season-storm-turn {
+  to { transform: rotate(-360deg); }
+}
+
+.season-storm-name {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #fff;
+  stroke: #111;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+/* A city under the smog (smog-layer.js): a dot and its name above it. */
+.smog-city svg {
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 0 3px var(--air, #000)) drop-shadow(0 1px 5px var(--air, #000));
+}
+
+.smog-city-dot {
+  fill: #fff;
+  stroke: #111;
+  stroke-width: 1;
+}
+
+.smog-city-name {
+  text-anchor: middle;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  fill: #fff;
+}
+
+/* The date at 6 o'clock on the globe (date-label.js), sized with the globe. */
+.globe-view {
+  container-type: size;
+}
+
+.globe-date {
+  position: absolute;
+  left: 50%;
+  top: 90%;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  font-size: 4.5cqw;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--ink);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
+  pointer-events: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.globe-date-digit {
+  display: inline-block;
+  width: 0.62em;
+  text-align: center;
+}
+
+/* A hurricane's wind, just below the storm (storm-view.js), sized with the globe. */
+.storm-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.15em 0.5em;
+  border-radius: 0.5em;
+  background: rgb(0 0 0 / 0.45);
+  font-size: 3.2cqw;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.storm-label[hidden] {
+  display: none;
+}
+
+.storm-wind {
+  transition: color 0.6s ease;
+}
+
+.wildfire-overlay {
+  position: absolute;
+  left: 50%;
+  top: 12%;
+  z-index: 1;
+  transform: translateX(-50%);
+  text-align: center;
+  color: var(--ink);
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
+  pointer-events: none;
+  max-width: 80%;
+}
+
+.wildfire-overlay-title {
+  font-size: 4.2cqw;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.wildfire-overlay-detail {
+  margin-top: 0.35em;
+  font-size: 2.8cqw;
+  opacity: 0.9;
+  -webkit-user-select: text;
+  user-select: text;
+}

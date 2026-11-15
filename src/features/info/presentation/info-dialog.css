@@ -1,0 +1,339 @@
+/* About and License dialogs: a dark glass card over a dimmed, blurred player. */
+.info-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(80vh, 760px);
+  max-height: min(80dvh, 760px);
+  padding: 0;
+  border: 1px solid rgb(243 236 225 / 0.18);
+  border-radius: 18px;
+  background: rgb(30 23 14 / 0.94);
+  box-shadow: 0 24px 60px rgb(0 0 0 / 0.5);
+  color: var(--ink);
+  font-family: var(--font);
+  overflow: hidden;
+}
+
+.info-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  animation: info-in 0.22s ease-out;
+}
+
+.info-dialog::backdrop {
+  background: rgb(10 8 5 / 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: info-backdrop-in 0.22s ease-out;
+}
+
+.info-dialog.is-closing {
+  animation: info-out 0.18s ease-in forwards;
+}
+
+.info-dialog.is-closing::backdrop {
+  animation: info-backdrop-out 0.18s ease-in forwards;
+}
+
+@keyframes info-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes info-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes info-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes info-backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .info-dialog[open],
+  .info-dialog::backdrop {
+    animation: none;
+  }
+}
+
+.info-header {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 22px 14px 28px;
+  border-bottom: 1px solid rgb(243 236 225 / 0.1);
+}
+
+.info-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.info-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.info-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.info-close:hover {
+  color: var(--ink);
+  background: rgb(255 255 255 / 0.08);
+}
+
+.info-close:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.info-close-icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.info-body {
+  padding: 18px 28px 26px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.info-body p {
+  margin: 0 0 12px;
+}
+
+.info-lead {
+  font-size: 16px;
+}
+
+.info-challenge,
+.info-note {
+  color: var(--ink-muted);
+}
+
+.info-link {
+  color: var(--ink);
+  text-decoration-color: rgb(243 236 225 / 0.35);
+  text-underline-offset: 3px;
+}
+
+.info-link:hover {
+  text-decoration-color: currentColor;
+}
+
+.info-link:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.info-section {
+  margin-top: 24px;
+}
+
+.info-section:first-child {
+  margin-top: 0;
+}
+
+.info-section-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.info-grid,
+.info-keys {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 18px;
+  margin: 0;
+}
+
+.info-grid dt {
+  font-weight: 700;
+}
+
+.info-grid dd,
+.info-keys dd {
+  margin: 0;
+}
+
+.info-keys dt {
+  text-align: right;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 2.2em;
+  padding: 1px 8px;
+  border: 1px solid rgb(243 236 225 / 0.25);
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.06);
+  font: inherit;
+  font-size: 13px;
+  text-align: center;
+}
+
+.info-rows,
+.info-works {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.info-albums {
+  counter-reset: album;
+}
+
+.info-albums li {
+  counter-increment: album;
+}
+
+.info-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  box-sizing: border-box;
+  width: calc(100% + 16px);
+  margin: 0 -8px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+button.info-row,
+a.info-row {
+  cursor: pointer;
+}
+
+button.info-row:hover,
+a.info-row:hover {
+  background: rgb(255 255 255 / 0.07);
+}
+
+button.info-row:focus-visible,
+a.info-row:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.info-albums .info-row::before {
+  content: counter(album);
+  width: 1.4em;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.info-row-title {
+  flex: 1;
+}
+
+.info-row-duration {
+  min-width: 3.2em;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.info-row-note {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.info-work {
+  padding: 10px 0;
+  border-top: 1px solid rgb(243 236 225 / 0.08);
+}
+
+.info-work:first-child {
+  border-top: none;
+}
+
+.info-work-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.info-work-name {
+  font-weight: 700;
+}
+
+.info-license {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.info-license .info-link {
+  color: inherit;
+}
+
+.info-work-by {
+  margin: 2px 0 0 !important;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+/* In portrait the whole screen is turned into landscape (see app.css); the dialog sits outside it, in the top layer,
+   so it turns the same way, its width along the viewport's height. */
+@media screen and (orientation: portrait) {
+  .info-dialog {
+    inset: 50% auto auto 50%;
+    margin: 0;
+    translate: -50% -50%;
+    rotate: 90deg;
+    max-width: none;
+    width: min(640px, calc(100vh - 32px));
+    width: min(640px, calc(100dvh - 32px));
+    max-height: calc(100vw - 32px);
+    max-height: calc(100dvw - 32px);
+  }
+}

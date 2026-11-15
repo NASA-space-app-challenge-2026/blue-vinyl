@@ -1,0 +1,78 @@
+[
+  {
+    "file": "americas_africa_2021.csv",
+    "title": "The Americas and Africa",
+    "pages": [
+      {
+        "svsId": 5011,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5011/",
+        "message": "A roving window of 10 days was used to visualize the seasonal patterns of lightning."
+      }
+    ],
+    "note": "Ours: the flashes within 70° of where the globe looks on the equator, weighed by how long the station watches each latitude, split between the hemispheres; each hemisphere's daily amount as a 7-day mean, a share of the side's busiest hemisphere-day, square-rooted; the noon sun's latitude; a weighed sample of the flashes.",
+    "sources": [
+      {
+        "source": "Quality Controlled Lightning Imaging Sensor (LIS) on International Space Station (ISS) Science Data, through the ISS LIS browser of NASA MSFC",
+        "sourceUrl": "https://lightning.nsstc.nasa.gov/isslisib/",
+        "downloadUrl": "https://lightning.nsstc.nasa.gov/isslisib/lis1orbit.exe?which=qc&year=2021&day=<day>&orbit=<hhmmss>",
+        "version": "3.0 (quality controlled)",
+        "doi": "https://doi.org/10.5067/LIS/ISSLIS/DATA114",
+        "downloaded": "2026-11-14",
+        "license": "NASA data, no restrictions on use",
+        "credit": "Blakeslee, R. J., et al. Lightning Imaging Sensor (LIS) on the International Space Station (ISS). NASA GHRC DAAC / NASA MSFC.",
+        "substitute": "EIC cites V1 of the same dataset; its link no longer answers, and V3.0 on GHRC needs an Earthdata login. The browser prints the same quality-controlled flashes publicly, one table per orbit."
+      }
+    ],
+    "view": {
+      "lat": 0,
+      "lon": -25
+    },
+    "units": {
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east",
+      "level": "share of the track's busiest hemisphere-day, square-rooted (0 to 1)"
+    },
+    "timeRange": [
+      "2021-01-01",
+      "2022-01-01"
+    ]
+  },
+  {
+    "file": "asia_australia_2021.csv",
+    "title": "Asia and Australia",
+    "pages": [
+      {
+        "svsId": 5011,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5011/",
+        "message": "A roving window of 10 days was used to visualize the seasonal patterns of lightning."
+      }
+    ],
+    "note": "Ours: the flashes within 70° of where the globe looks on the equator, east of 52° E, weighed by how long the station watches each latitude, split between the hemispheres; each hemisphere's daily amount as a 7-day mean, a share of the side's busiest hemisphere-day, square-rooted; the noon sun's latitude; a weighed sample of the flashes.",
+    "sources": [
+      {
+        "source": "Quality Controlled Lightning Imaging Sensor (LIS) on International Space Station (ISS) Science Data, through the ISS LIS browser of NASA MSFC",
+        "sourceUrl": "https://lightning.nsstc.nasa.gov/isslisib/",
+        "downloadUrl": "https://lightning.nsstc.nasa.gov/isslisib/lis1orbit.exe?which=qc&year=2021&day=<day>&orbit=<hhmmss>",
+        "version": "3.0 (quality controlled)",
+        "doi": "https://doi.org/10.5067/LIS/ISSLIS/DATA114",
+        "downloaded": "2026-11-14",
+        "license": "NASA data, no restrictions on use",
+        "credit": "Blakeslee, R. J., et al. Lightning Imaging Sensor (LIS) on the International Space Station (ISS). NASA GHRC DAAC / NASA MSFC.",
+        "substitute": "EIC cites V1 of the same dataset; its link no longer answers, and V3.0 on GHRC needs an Earthdata login. The browser prints the same quality-controlled flashes publicly, one table per orbit."
+      }
+    ],
+    "view": {
+      "lat": 0,
+      "lon": 110
+    },
+    "units": {
+      "lat_deg": "degrees north",
+      "lon_deg": "degrees east",
+      "level": "share of the track's busiest hemisphere-day, square-rooted (0 to 1)"
+    },
+    "timeRange": [
+      "2021-01-01",
+      "2022-01-01"
+    ]
+  }
+]
