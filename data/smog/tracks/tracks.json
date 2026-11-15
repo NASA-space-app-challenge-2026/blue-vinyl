@@ -1,7 +1,7 @@
 [
   {
-    "file": "seoul_2025.csv",
-    "title": "Seoul",
+    "file": "smog_2018_12_23.csv",
+    "title": "Morning, December 23",
     "pages": [
       {
         "svsId": 5151,
@@ -9,49 +9,39 @@
         "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
       }
     ],
-    "note": "Ours: the city picked by how often its PM2.5 swings between its own cleanest-10 % and dirtiest-10 % days in 2025 (Seoul by choice); one hour a day (00:30 UTC); each swing marked smog (into the high band) or clear (into the low band).",
+    "note": "Ours (from nell-v2): the North China Plain in the winter of 2018-19, a stretch from clear air through smog building for days to a cold front sweeping it out, every hour of it.",
     "sources": [
       {
         "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[<hour>][0][494:526][1212:1244]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[8404:8554][0][496:528][1168:1204]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
         "license": "NASA data, no restrictions on use",
         "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04 and holds no whole calendar year; v1 holds all of 2025 (user, 2026-11-15)."
+        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; the winter of 2018-19 is only in v1."
       }
     ],
-    "visuals": [
-      "seoul_2025_grid.csv"
-    ],
-    "city": {
-      "name": "Seoul",
-      "country": "South Korea",
-      "lat": 37.568295,
-      "lon": 126.997785
-    },
     "grid": {
-      "south": 33.5,
-      "west": 123.0,
+      "south": 34.0,
+      "west": 112.0,
       "stepDeg": 0.25,
       "rows": 33,
-      "cols": 33,
-      "sampleUtc": "00:30"
+      "cols": 37
     },
+    "timeZone": "Asia/Shanghai",
     "units": {
-      "pm25_ugm3": "µg/m³ (surface PM2.5 at 35 % relative humidity)",
-      "swing": "smog: the day the air crosses into the city's high band (p90); clear: into its low band (p10)"
+      "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2025-01-01",
-      "2025-12-31"
+      "2018-12-17T04:30Z",
+      "2018-12-23T10:30Z"
     ]
   },
   {
-    "file": "pretoria_2025.csv",
-    "title": "Pretoria",
+    "file": "smog_2019_01_15.csv",
+    "title": "Dawn, January 15",
     "pages": [
       {
         "svsId": 5151,
@@ -59,49 +49,39 @@
         "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
       }
     ],
-    "note": "Ours: the city picked by how often its PM2.5 swings between its own cleanest-10 % and dirtiest-10 % days in 2025 (Seoul by choice); one hour a day (00:30 UTC); each swing marked smog (into the high band) or clear (into the low band).",
+    "note": "Ours (from nell-v2): the North China Plain in the winter of 2018-19, a stretch from clear air through smog building for days to a cold front sweeping it out, every hour of it.",
     "sources": [
       {
         "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[<hour>][0][241:273][817:849]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[8932:9104][0][496:528][1168:1204]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
         "license": "NASA data, no restrictions on use",
         "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04 and holds no whole calendar year; v1 holds all of 2025 (user, 2026-11-15)."
+        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; the winter of 2018-19 is only in v1."
       }
     ],
-    "visuals": [
-      "pretoria_2025_grid.csv"
-    ],
-    "city": {
-      "name": "Pretoria",
-      "country": "South Africa",
-      "lat": -25.704975,
-      "lon": 28.227483
-    },
     "grid": {
-      "south": -29.75,
-      "west": 24.25,
+      "south": 34.0,
+      "west": 112.0,
       "stepDeg": 0.25,
       "rows": 33,
-      "cols": 33,
-      "sampleUtc": "00:30"
+      "cols": 37
     },
+    "timeZone": "Asia/Shanghai",
     "units": {
-      "pm25_ugm3": "µg/m³ (surface PM2.5 at 35 % relative humidity)",
-      "swing": "smog: the day the air crosses into the city's high band (p90); clear: into its low band (p10)"
+      "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2025-01-01",
-      "2025-12-31"
+      "2019-01-08T04:30Z",
+      "2019-01-15T08:30Z"
     ]
   },
   {
-    "file": "new_york_2025.csv",
-    "title": "New York",
+    "file": "smog_2019_01_20.csv",
+    "title": "Midday, January 20",
     "pages": [
       {
         "svsId": 5151,
@@ -109,94 +89,34 @@
         "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
       }
     ],
-    "note": "Ours: the city picked by how often its PM2.5 swings between its own cleanest-10 % and dirtiest-10 % days in 2025 (Seoul by choice); one hour a day (00:30 UTC); each swing marked smog (into the high band) or clear (into the low band).",
+    "note": "Ours (from nell-v2): the North China Plain in the winter of 2018-19, a stretch from clear air through smog building for days to a cold front sweeping it out, every hour of it.",
     "sources": [
       {
         "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[<hour>][0][507:539][408:440]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[9124:9226][0][496:528][1168:1204]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
         "license": "NASA data, no restrictions on use",
         "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04 and holds no whole calendar year; v1 holds all of 2025 (user, 2026-11-15)."
+        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; the winter of 2018-19 is only in v1."
       }
     ],
-    "visuals": [
-      "new_york_2025_grid.csv"
-    ],
-    "city": {
-      "name": "New York",
-      "country": "United States of America",
-      "lat": 40.751925,
-      "lon": -73.981963
-    },
     "grid": {
-      "south": 36.75,
-      "west": -78.0,
+      "south": 34.0,
+      "west": 112.0,
       "stepDeg": 0.25,
       "rows": 33,
-      "cols": 33,
-      "sampleUtc": "00:30"
+      "cols": 37
     },
+    "timeZone": "Asia/Shanghai",
     "units": {
-      "pm25_ugm3": "µg/m³ (surface PM2.5 at 35 % relative humidity)",
-      "swing": "smog: the day the air crosses into the city's high band (p90); clear: into its low band (p10)"
+      "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2025-01-01",
-      "2025-12-31"
-    ]
-  },
-  {
-    "file": "lisbon_2025.csv",
-    "title": "Lisbon",
-    "pages": [
-      {
-        "svsId": 5151,
-        "svsUrl": "https://svs.gsfc.nasa.gov/5151/",
-        "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
-      }
-    ],
-    "note": "Ours: the city picked by how often its PM2.5 swings between its own cleanest-10 % and dirtiest-10 % days in 2025 (Seoul by choice); one hour a day (00:30 UTC); each swing marked smog (into the high band) or clear (into the low band).",
-    "sources": [
-      {
-        "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
-        "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[<hour>][0][499:531][667:699]",
-        "version": "v1",
-        "doi": "https://doi.org/10.1029/2020MS002413",
-        "downloaded": "2026-11-15",
-        "license": "NASA data, no restrictions on use",
-        "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04 and holds no whole calendar year; v1 holds all of 2025 (user, 2026-11-15)."
-      }
-    ],
-    "visuals": [
-      "lisbon_2025_grid.csv"
-    ],
-    "city": {
-      "name": "Lisbon",
-      "country": "Portugal",
-      "lat": 38.724669,
-      "lon": -9.146812
-    },
-    "grid": {
-      "south": 34.75,
-      "west": -13.25,
-      "stepDeg": 0.25,
-      "rows": 33,
-      "cols": 33,
-      "sampleUtc": "00:30"
-    },
-    "units": {
-      "pm25_ugm3": "µg/m³ (surface PM2.5 at 35 % relative humidity)",
-      "swing": "smog: the day the air crosses into the city's high band (p90); clear: into its low band (p10)"
-    },
-    "timeRange": [
-      "2025-01-01",
-      "2025-12-31"
+      "2019-01-16T04:30Z",
+      "2019-01-20T10:30Z"
     ]
   }
 ]
