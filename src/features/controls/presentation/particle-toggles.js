@@ -108,8 +108,9 @@ export function createParticleToggles(parent, onChange) {
   const buttons = new Map();
 
   function paint(id) {
-    const { btn, dot, color } = buttons.get(id);
+    const { btn, dot, label, color } = buttons.get(id);
     btn.classList.toggle('active', states[id]);
+    label.style.opacity = states[id] ? '0.9' : '0.4';
     dot.style.opacity = states[id] ? '1.0' : '0.2';
     dot.style.transform = states[id] ? 'scale(1.0)' : 'scale(0.7)';
     dot.style.filter = states[id] ? `drop-shadow(0 0 4px ${color})` : 'none';
@@ -136,7 +137,26 @@ export function createParticleToggles(parent, onChange) {
     outline.setAttribute('points', svgPoints(shape));
     outline.setAttribute('fill', color);
     dot.append(outline);
-    btn.append(dot);
+
+    // The particle type's name under its shape
+    const label = document.createElement('span');
+    label.className = 'particle-name';
+    label.textContent = name;
+    label.style.cssText = `
+      font-size: 10px;
+      line-height: 1;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    `;
+    // Wide and tall enough for the name under the shape
+    btn.style.cssText = `
+      width: auto;
+      height: auto;
+      gap: 5px;
+      padding: 8px 10px 7px;
+      border-radius: 999px;
+    `;
+    btn.append(dot, label);
 
     // Hover caption handlers
     btn.addEventListener('mouseenter', () => {
@@ -158,7 +178,7 @@ export function createParticleToggles(parent, onChange) {
       onChange({ ...states });
     });
 
-    buttons.set(id, { btn, dot, color });
+    buttons.set(id, { btn, dot, label, color });
     container.append(btn);
   }
 
