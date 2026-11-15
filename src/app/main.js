@@ -467,7 +467,7 @@ async function loadAlbumData(loading) {
       }));
     }
     if (track.wildfire?.kind === 'season') {
-      return seasonScore(data[i].days, WILDFIRE_DAY_TIMELINE, track.durationSec).map((note) => ({
+      return seasonScore(data[i].days, data[i].fires, WILDFIRE_DAY_TIMELINE, track.durationSec).map((note) => ({
         ...note,
         timeSec: note.timeSec + offset,
       }));

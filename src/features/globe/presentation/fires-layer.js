@@ -14,6 +14,7 @@
 
 // The same three.js revision globe.gl@2.46.2 bundles, so the meshes fit its scene.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
+import { fireHeat } from '../../tracks/domain/wildfire-series.js';
 
 // Under the storm's clouds (0.008), above the ice.
 const ALTITUDE = 0.006;
@@ -32,8 +33,6 @@ const FIRE_CAP = 0.14;
 // Track 1 draws hundreds of fires a year, most of them small, so each gets the smallest of these caps that holds its
 // scar, flames and smoke, rather than FIRE_CAP for all.
 const CAP_SIZES = Object.freeze([0.03, 0.06, 0.1, FIRE_CAP]);
-// Track 2: newly burning pixels a day at which a fire burns at full heat.
-const FULL_HEAT_PIXELS = 3000;
 // Track 1: a fire of this area (300,000 acres) flares at full heat; heat goes with the square root of area below it.
 const FULL_HEAT_KM2 = 1214;
 // Track 1: once lit, a fire flares up within FLARE_SEC and burns down with this time constant, leaving its scar.
@@ -427,7 +426,7 @@ export function createFiresLayer({ globe }) {
     for (const data of fires) {
       const fire = seasonFireOf(data);
       fire.target.scar = scarOf(data.areaKm2[day]);
-      fire.target.heat = Math.min(1, Math.sqrt(data.newPixels[day] / FULL_HEAT_PIXELS));
+      fire.target.heat = fireHeat(data.newPixels[day]);
       const shown = fire.target.scar > 0;
       if (shown && !fire.shown) {
         fire.scar = fire.target.scar * 0.3;

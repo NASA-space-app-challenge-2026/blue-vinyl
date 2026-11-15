@@ -119,7 +119,7 @@ export const ALBUM_NOTES = Object.freeze({
       'This album lets you hear observations of large wildfires in the United States. Listen as every instrument erupts in a scream when the burned land peaks, and to the silence that follows.',
     tracks: [
       { name: 'Burned Acres', desc: 'Land burned across the US each year from 1983 to 2024, and a history of its large fire ignitions (French horn and timpani).' },
-      { name: '2020 Fire Season', desc: 'The 214-day spread of the 2020 fire season that turned the sky orange, day by day (trombone and tuba).' },
+      { name: '2020 Fire Season', desc: 'The 160-day spread of the 2020 fire season that turned the sky orange, day by day (trombone and taiko drums).' },
     ],
   },
 

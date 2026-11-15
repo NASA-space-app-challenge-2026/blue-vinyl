@@ -1,4 +1,5 @@
 import { yearStartSec } from '../../tracks/domain/year-timeline.js';
+import { seasonDays } from '../../tracks/domain/wildfire-series.js';
 import { minorDegree, velocityGain } from './pitch.js';
 
 // Ear-alone score for the wildfire album (EIC 40531 / 5453 / FEDS). Bad news stays dark: C minor, low brass and
@@ -18,9 +19,10 @@ import { minorDegree, velocityGain } from './pitch.js';
 // globe shows) are plucked as they start, through the bar the way they started through the year: higher and louder
 // the larger, from the left in the West to the right in the East, so a big year crackles and a small one barely does.
 //
-// Track 2 — 2020 season, one beat a day: trombone (+ tuba as weight when heavy) = that day's active large-fire area,
-// held while it stays on one pitch. Roar = active area, centred where the fires burn; quiet cello = fireline length, every four days; timpani when the active area sets a clear season record; the blast
-// lands on the day of the largest active area.
+// Track 2 — 2020 season, played from what its globe shows: a day a sixteenth note over C minor's i – VI – iv – v. The
+// fire burning that day (every fire's heat, as the globe draws it) sets how dense the drums are, how high and loud the
+// trombone (+ tuba when heavy) and how loud the roar; each new fire is plucked as its scar first shows; strings swell
+// with the land burned so far. The blast lands on the hottest day (9 September).
 
 /** FluidR3_GM instrument file names (see soundfont-bank.js). */
 export const Instrument = Object.freeze({
@@ -30,6 +32,8 @@ export const Instrument = Object.freeze({
   CELLO: 'cello',
   CONTRABASS: 'contrabass',
   TIMPANI: 'timpani',
+  TAIKO: 'taiko_drum',
+  TOM: 'melodic_tom',
   REVERSE_CYMBAL: 'reverse_cymbal',
   HARP: 'orchestral_harp',
   PIZZICATO: 'pizzicato_strings',
@@ -40,8 +44,9 @@ export const Instrument = Object.freeze({
 export const Part = Object.freeze({
   ACRES: 'acres',
   TREND: 'trend',
-  AREA: 'area',
-  FRONT: 'front',
+  BURN: 'burn',
+  GROOVE: 'groove',
+  SCAR: 'scar',
   RECORD: 'record',
   ROAR: 'roar',
   BUILD: 'build',
@@ -60,6 +65,8 @@ const MIX = Object.freeze({
   [Instrument.CELLO]: 0.55,
   [Instrument.CONTRABASS]: 0.5,
   [Instrument.TIMPANI]: 1.4,
+  [Instrument.TAIKO]: 1.2,
+  [Instrument.TOM]: 0.8,
   [Instrument.REVERSE_CYMBAL]: 1.6,
   [Instrument.ROAR]: 1.3,
   [Instrument.HARP]: 0.8,
@@ -91,12 +98,65 @@ const BLAST = Object.freeze({
 // `chord` of them at once. Plucks within `crowdSec` of each other share one pluck's loudness.
 const IGNITE = Object.freeze({ minKm2: 202, fullKm2: 4047, gapSec: 0.01, chord: 3, steps: 9, crowdSec: 0.025 });
 
-// Track 2: a season record strikes the timpani only when it beats the last stroke's by this share, and this long after.
-const RECORD = Object.freeze({ rise: 0.15, gapSec: 1.5 });
+// Track 2: sixteen days a bar. The trombone plays from `mainFrom` of the hottest day's fire (see seasonScore's fireOf),
+// on `mainSteps` chord tones from G2; the tuba joins from `tubaFrom`. The cellos join the bass as the land burned so
+// far reaches `scarFifth` and `scarThird` of the season's. New fires are plucked on `igniteSteps` chord tones from C4,
+// from `igniteKm2.min` (FEDS's large-fire floor) to `igniteKm2.full`.
+const SEASON = Object.freeze({
+  daysPerBar: 16,
+  mainFrom: 0.12,
+  mainSteps: 8,
+  tubaFrom: 0.6,
+  scarFifth: 0.15,
+  scarThird: 0.45,
+  igniteSteps: 6,
+  igniteKm2: { min: 50, full: 2000 },
+});
+
+// Track 2's harmony, as pitch classes in C minor, root first: a chord a bar.
+const Chord = Object.freeze({
+  I: Object.freeze([0, 3, 7]),
+  VI: Object.freeze([8, 0, 3]),
+  IV: Object.freeze([5, 8, 0]),
+  V: Object.freeze([7, 10, 2]),
+});
+const PROGRESSION = Object.freeze([Chord.I, Chord.VI, Chord.IV, Chord.V]);
+
+// Track 2's drums, step by step through the bar: a step is struck once the day's fire (0..1) reaches `fire`. Little
+// fire strikes the downbeat; more adds the half bar, then taiko in 3 + 3 + 2, then toms on the eighths, then every
+// sixteenth.
+const GROOVE = Object.freeze(
+  [
+    [0.03, Instrument.TIMPANI, 36, 1],
+    [0.75, Instrument.TOM, 55, 0.5],
+    [0.5, Instrument.TOM, 50, 0.65],
+    [0.3, Instrument.TAIKO, 43, 0.8],
+    [0.5, Instrument.TOM, 50, 0.65],
+    [0.75, Instrument.TOM, 55, 0.5],
+    [0.3, Instrument.TAIKO, 43, 0.8],
+    [0.75, Instrument.TOM, 55, 0.5],
+    [0.15, Instrument.TAIKO, 36, 0.95],
+    [0.75, Instrument.TOM, 55, 0.5],
+    [0.5, Instrument.TOM, 50, 0.65],
+    [0.3, Instrument.TAIKO, 43, 0.8],
+    [0.5, Instrument.TOM, 50, 0.65],
+    [0.75, Instrument.TOM, 55, 0.5],
+    [0.3, Instrument.TAIKO, 43, 0.8],
+    [0.75, Instrument.TOM, 55, 0.5],
+  ].map(([fire, instrument, midi, accent]) => Object.freeze({ fire, instrument, midi, accent })),
+);
 
 const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);
 const dbGain = (db) => 10 ** (db / 20);
 const lerp = (range, t) => range.min + (range.max - range.min) * t;
+// The lowest MIDI note at or above `lo` of pitch class `pc`.
+const above = (pc, lo) => lo + ((((pc - lo) % 12) + 12) % 12);
+// `count` tones of `chord` rising from `lo`.
+function chordLadder(chord, lo, count) {
+  const ladder = [];
+  for (let midi = lo; ladder.length < count; midi++) if (chord.includes(midi % 12)) ladder.push(midi);
+  return ladder;
+}
 // West (left) to east (right) across the CONUS, in tenths, so notes at one place share a panner.
 const panOfLon = (lon) => Math.round(clamp(((lon + 125) / 60) * 2 - 1, -0.8, 0.8) * 10) / 10;
 
@@ -250,9 +310,9 @@ function blast(notes, peakSec) {
 // let ring out instead of stopped, so the struck chord carries the peak, and come back in after it. Held notes come
 // back for whatever is left of them.
 function breathe(notes, fromSec, toSec) {
-  // The fires still starting in a peak year (Track 1's plucks) are not silenced: they are the year's data.
-  const fire = new Set([Part.ROAR]);
-  const held = new Set([Part.ROAR, Part.ACRES, Part.AREA, Part.TREND, Part.FRONT]);
+  // The fires still starting (the plucks) are not silenced: they are the data. Track 2's drums rest with the roar.
+  const fire = new Set([Part.ROAR, Part.GROOVE]);
+  const held = new Set([Part.ROAR, Part.ACRES, Part.TREND, Part.BURN, Part.SCAR]);
   const resumed = [];
   for (let i = notes.length - 1; i >= 0; i--) {
     const note = notes[i];
@@ -404,26 +464,38 @@ export function annualBurnScore(years, firesByYear, timeline, durationSec) {
 }
 
 /**
- * Track 2: one peak year's large fires day by day (FEDS / 5453 peak year).
+ * Track 2: the 2020 season's large fires day by day (FEDS / 5453 peak year), played from what the globe shows: how
+ * much fire burns that day (each fire's heat, summed) and how much land has burned so far (every scar, summed).
+ *
+ * A day is a sixteenth note, sixteen days a bar, over C minor's i – VI – iv – v. The more fire burns, the denser the
+ * drums, the higher and louder the trombone and the louder the roar; each new fire is plucked as its scar first shows;
+ * the strings under them swell as the scars grow, and never fall back. The blast lands on the hottest day.
  *
  * @param {import('../../tracks/domain/wildfire-series.js').WildfireDay[]} days
+ * @param {import('../../tracks/domain/wildfire-series.js').WildfireFire[]} fires
  * @param {import('../../tracks/domain/year-timeline.js').YearTimeline} timeline read one beat a day
  * @param {number} durationSec
  * @returns {import('./ice-sea-score.js').NoteEvent[]}
  */
-export function seasonScore(days, timeline, durationSec) {
+export function seasonScore(days, fires, timeline, durationSec) {
   const end = durationSec - timeline.tailSec;
-  const amax = Math.max(...days.map((d) => d.areaKm2), 1);
-  const lmax = Math.max(...days.map((d) => d.flinelen), 1);
-  const peakDay = days.findIndex((d) => d.areaKm2 === amax);
+  const season = seasonDays(fires, days.length);
+  const bmax = Math.max(...season.map((d) => d.burning), 1e-6);
+  const smax = Math.max(...season.map((d) => d.burnedKm2), 1e-6);
+  const peakDay = season.findIndex((d) => d.burning === bmax);
   const peakSec = yearStartSec(timeline, peakDay);
+  const peakBar = Math.floor(peakDay / SEASON.daysPerBar);
+  const lastBar = Math.floor((days.length - 1) / SEASON.daysPerBar);
+  // The hottest day falls in a bar of i, and the season ends on i.
+  const chordAt = (bar) =>
+    bar === lastBar ? Chord.I : PROGRESSION[(((bar - peakBar) % PROGRESSION.length) + PROGRESSION.length) % PROGRESSION.length];
+  // How much fire burns, 0..1: the square root of the share of the hottest day, so a small fire is still heard.
+  const fireOf = (d) => Math.sqrt(season[d].burning / bmax);
   /** @type {import('./ice-sea-score.js').NoteEvent[]} */
   const notes = [];
-  const fire = createFire();
-  let record = 0;
-  let lastStrokeSec = -Infinity;
-  // The brass note each part holds, carried on while the next day plays the same pitch.
+  const roar = createFire();
   const held = new Map();
+  // A brass note carried on while the next one plays the same pitch.
   const hold = (note) => {
     const last = held.get(note.instrument);
     if (last && last.midi === note.midi && Math.abs(last.timeSec + last.durationSec - note.timeSec) < 1e-6) {
@@ -434,78 +506,108 @@ export function seasonScore(days, timeline, durationSec) {
     held.set(note.instrument, note);
     notes.push(note);
   };
+  const untilOf = (d) => (d >= days.length - 1 ? end : yearStartSec(timeline, d + 1));
 
-  days.forEach((day, i) => {
-    const timeSec = yearStartSec(timeline, i);
-    const last = i === days.length - 1;
-    const until = last ? end : timeSec + timeline.beatSec;
-    const a = day.areaKm2 / amax;
-    const lv = day.flinelen / lmax;
-    // Where the day's fires burn, west (left) to east (right) across the CONUS.
-    const pan = day.lon ? panOfLon(day.lon) : 0;
+  season.forEach((day, d) => {
+    const timeSec = yearStartSec(timeline, d);
+    const step = d % SEASON.daysPerBar;
+    const bar = Math.floor(d / SEASON.daysPerBar);
+    const chord = chordAt(bar);
+    const u = fireOf(d);
+    const pan = day.burning > 0 ? panOfLon(day.lon) : 0;
+    const inBuild = timeSec >= peakSec - BLAST.buildSec && timeSec < peakSec;
 
-    if (a <= 0.02) held.clear();
-    if (a > 0.02) {
-      // Higher and louder as the fires grow, as the horn does in Track 1.
-      hold({
-        timeSec,
-        durationSec: until - timeSec,
-        instrument: Instrument.TROMBONE,
-        part: Part.AREA,
-        midi: minorDegree(43, Math.round(a * 9), KEY_TONIC),
-        gain: velocityGain(45 + 80 * Math.sqrt(a)) * MIX[Instrument.TROMBONE],
-        attackSec: 0.03,
-        releaseSec: 0.22,
-        pan: pan * 0.4,
-      });
-      if (a <= 0.45) held.delete(Instrument.TUBA);
-      if (a > 0.45) {
-        // Weight under the largest days, on the tonic.
-        hold({
+    // The strings under it all: a bar's chord, swelling with the land burned so far.
+    if (step === 0) {
+      const scar = season[d].burnedKm2 / smax;
+      const barEnd = Math.min(end, yearStartSec(timeline, d + SEASON.daysPerBar));
+      const voices = [[Instrument.CONTRABASS, above(chord[0], 33), -0.2]];
+      if (scar >= SEASON.scarFifth) voices.push([Instrument.CELLO, above(chord[2], 48), -0.4]);
+      if (scar >= SEASON.scarThird) voices.push([Instrument.CELLO, above(chord[1], 50), 0.4]);
+      for (const [instrument, midi, voicePan] of voices) {
+        notes.push({
           timeSec,
-          durationSec: until - timeSec,
-          instrument: Instrument.TUBA,
-          part: Part.AREA,
-          midi: 36,
-          gain: velocityGain(40 + 60 * a) * MIX[Instrument.TUBA],
-          attackSec: 0.06,
-          releaseSec: 0.3,
-          pan: pan * 0.3,
+          durationSec: barEnd - timeSec + 0.1,
+          instrument,
+          part: Part.SCAR,
+          midi,
+          gain: velocityGain(45 + 55 * scar) * MIX[instrument],
+          attackSec: 0.3,
+          releaseSec: 0.5,
+          pan: voicePan,
         });
       }
     }
 
-    fire.beat(notes, { timeSec, untilSec: until, size: a, pan });
-
-    if (i % 4 === 0 && lv > 0.05) {
+    // The drums: the more fire, the more of the bar's sixteenths are struck; the downbeat strikes the chord's root on
+    // the timpani. The build into the blast has its own roll.
+    if (!inBuild && u >= GROOVE[step].fire) {
+      const { instrument, midi, accent } = GROOVE[step];
       notes.push({
         timeSec,
-        durationSec: 4 * timeline.beatSec + 0.05,
-        instrument: Instrument.CELLO,
-        part: Part.FRONT,
-        midi: minorDegree(36, Math.round(lv * 8), KEY_TONIC),
-        gain: velocityGain(35 + 40 * lv) * MIX[Instrument.CELLO],
-        attackSec: 0.2,
-        releaseSec: 0.3,
-        pan: -0.35,
+        durationSec: 0.3,
+        instrument,
+        part: Part.GROOVE,
+        midi: instrument === Instrument.TIMPANI ? above(chord[0], 36) : midi,
+        gain: velocityGain((40 + 80 * u) * accent) * MIX[instrument],
+        attackSec: 0.002,
+        releaseSec: 0.4,
+        pan: instrument === Instrument.TOM ? (step % 4 === 1 ? -0.3 : 0.3) : 0,
       });
     }
 
-    // Records strike the timpani, but not during the build into the blast, which has its own roll.
-    const inBuild = timeSec > peakSec - BLAST.buildSec - 0.5 && timeSec <= peakSec + 1;
-    const clearRecord = day.areaKm2 > amax * 0.25 && day.areaKm2 > record * (1 + RECORD.rise);
-    if (clearRecord && !inBuild && timeSec - lastStrokeSec >= RECORD.gapSec) {
-      record = day.areaKm2;
-      lastStrokeSec = timeSec;
+    // The trombone, an eighth note every two days: higher and louder as more fire burns, on the bar's chord; silent
+    // while almost nothing burns. Tuba under the heaviest days.
+    if (step % 2 === 0) {
+      const u2 = Math.max(u, d + 1 < days.length ? fireOf(d + 1) : 0);
+      const until = untilOf(Math.min(d + 1, days.length - 1));
+      if (u2 < SEASON.mainFrom) held.clear();
+      else {
+        const ladder = chordLadder(chord, 43, SEASON.mainSteps);
+        hold({
+          timeSec,
+          durationSec: until - timeSec,
+          instrument: Instrument.TROMBONE,
+          part: Part.BURN,
+          midi: ladder[Math.round(u2 * (ladder.length - 1))],
+          gain: velocityGain(50 + 75 * u2) * MIX[Instrument.TROMBONE],
+          attackSec: 0.03,
+          releaseSec: 0.22,
+          pan: pan * 0.4,
+        });
+        if (u2 < SEASON.tubaFrom) held.delete(Instrument.TUBA);
+        else {
+          hold({
+            timeSec,
+            durationSec: until - timeSec,
+            instrument: Instrument.TUBA,
+            part: Part.BURN,
+            midi: above(chord[0], 31),
+            gain: velocityGain(40 + 60 * u2) * MIX[Instrument.TUBA],
+            attackSec: 0.06,
+            releaseSec: 0.3,
+            pan: pan * 0.3,
+          });
+        }
+      }
+    }
+
+    roar.beat(notes, { timeSec, untilSec: untilOf(d), size: day.burning / bmax, pan });
+
+    // Each new fire plucked as its scar first shows, higher and louder the larger, where it burns.
+    for (const fire of day.ignitions) {
+      const size = clamp(Math.log(fire.areaKm2 / SEASON.igniteKm2.min) / Math.log(SEASON.igniteKm2.full / SEASON.igniteKm2.min), 0, 1);
+      const ladder = chordLadder(chord, 60, SEASON.igniteSteps);
       notes.push({
         timeSec,
-        durationSec: 1.1,
-        instrument: Instrument.TIMPANI,
-        part: Part.RECORD,
-        midi: 36,
-        gain: velocityGain(85 + 35 * a) * MIX[Instrument.TIMPANI],
-        attackSec: 0.002,
-        releaseSec: 0.8,
+        durationSec: 0.1,
+        instrument: Instrument.PIZZICATO,
+        part: Part.IGNITE,
+        midi: ladder[Math.round(size * (ladder.length - 1))],
+        gain: (velocityGain(50 + 60 * size) * MIX[Instrument.PIZZICATO]) / Math.sqrt(day.ignitions.length),
+        attackSec: 0.003,
+        releaseSec: 0.25,
+        pan: panOfLon(fire.lon),
       });
     }
   });

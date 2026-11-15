@@ -30,11 +30,13 @@ NIFC marks 2004 with a footnote (state lands in North Carolina are not included)
 
 C minor, FluidR3_GM (CC BY 3.0). Dark register: bad news must not sound bright ([album-guide](../album-guide.md)).
 
+Track 2 plays in time: a day is a sixteenth note at 115 BPM (0.13 s), sixteen days a bar, one chord a bar of i – VI – iv – v, turned so the hottest day falls in a bar of i; the last bar is i. Its music follows what its globe shows: the fire burning (the fronts, embers and smoke) and the scars left behind, from the same numbers (`fireHeat`, `seasonDays` in [`wildfire-series.js`](../../src/features/tracks/domain/wildfire-series.js)).
+
 The main instrument says how big the fire is the same way in both tracks: higher and louder is bigger. Around it the fire itself is heard, so a listener who cannot see the globe hears its size too:
 
 - **Roar**: FluidR3 `seashore`, low, louder (24 dB) and brighter (an octave) as the fire grows, in two voices a scale step apart that stand wider apart.
-- **Ignition** (Track 1): the year's large MTBS fires plucked as they start, so a big year crackles and a small one barely does. The breath after a blast silences the roar, not these plucks: in 2015 and 2020 the year's fires go on starting through it.
-- **Blast**: into each track's peak, an accelerating timpani roll (gaps 0.16 s down to 0.035 s, soft to loud), a harp run rising three octaves and a reverse cymbal build for 1.8 s. On the peak every section stabs a C minor chord at once, then everything rests for a breath (0.45 s) while it rings, and the fire comes back.
+- **Ignition**: Track 1's large MTBS fires plucked as they start, Track 2's FEDS fires as their scars first show; so a big year crackles and a small one barely does. The breath after a blast silences the roar, not these plucks: in 2015 and 2020 the year's fires go on starting through it.
+- **Blast**: into each track's peak, an accelerating timpani roll (gaps 0.16 s down to 0.035 s, soft to loud), a harp run rising three octaves and a reverse cymbal build for 1.8 s. On the peak every section stabs a C minor chord at once, then everything rests for a breath (0.45 s) while it rings (Track 2's drums too), and the fire comes back.
 
 | Track | Part | Data | Mapping |
 | --- | --- | --- | --- |
@@ -44,13 +46,14 @@ The main instrument says how big the fire is the same way in both tracks: higher
 | 1 | Timpani | Top-10 acre years | Stroke on each of the ten largest years (all since 2004) |
 | 1 | Pizzicato strings | MTBS fires of 50,000 acres or more (1–46 a year) | A pluck as each starts, as far into the bar as it started into its year (when the globe lights it); higher and louder the larger (log of area, up to 1,000,000 acres), panned west left to east right; fires within about five days pluck together, the largest three at once, and crowded plucks share one pluck's loudness |
 | 1 | Blast | Largest years | 2015, and 2020 within 1% of it |
-| 2 | Trombone (main, + tuba as weight when heavy) | Daily active large-fire area | Higher and louder as area grows; held while the pitch stays |
-| 2 | Roar | Daily active large-fire area | Centred toward where the fires burn (west left, east right) |
-| 2 | Cello | Fireline length | Quiet secondary line, every 4 days |
-| 2 | Timpani | Season area records | Stroke when active area beats the last stroke's by 15%, at most every 1.5 s, not during the build |
-| 2 | Blast | Largest active area | 16 September 2020 |
+| 2 | Trombone (main, + tuba as weight when heavy) | Fire burning that day: every fire's heat as the globe draws it (VIIRS pixels newly burning, full at 3,000), summed | An eighth note every two days on the bar's chord, higher and louder the more fire burns; silent below 12% (square root of the hottest day's share); tuba on the root from 60%; held while the pitch stays |
+| 2 | Drums (timpani, taiko, toms) | Fire burning that day | Each day a sixteenth: little fire strikes the downbeat (timpani on the chord's root), more adds the half bar, then taiko in 3 + 3 + 2, then toms on the eighths, then every sixteenth (75%); louder with the fire; not during the build |
+| 2 | Roar | Fire burning that day | Louder, brighter and wider the more burns, centred toward where it burns (west left, east right) |
+| 2 | Contrabass, cellos | Land burned so far: every scar on the globe, summed | The bar's chord, louder as the scars grow; a cello on the fifth joins at 15% of the season's, one on the third at 45%; never falls back |
+| 2 | Pizzicato strings | A new fire, the day its scar first shows | A pluck on the bar's chord, higher and louder the larger (log of area, 50 to 2,000 km²), panned where it burns |
+| 2 | Blast | Most fire burning | 9 September 2020 (the Labor Day fires), the globe's brightest day |
 
-Checked on an offline render of each track (same mix bus and limiter as the player): loudness per beat follows the fire's size (correlation 0.88 in Track 1, 0.81 in Track 2), about 18 dB between the smallest and largest tenth of years and 29 dB across the season. At each blast the hit stands about 7 dB over the build, and the breath after it drops 14 to 18 dB. The build makes the year or days just before a peak louder than their data alone would.
+Checked on an offline render of each track (same mix bus and limiter as the player), before Track 2 was rewritten in time (its numbers are not measured again yet): loudness per beat follows the fire's size (correlation 0.88 in Track 1), about 18 dB between the smallest and largest tenth of years. At each blast the hit stands about 7 dB over the build, and the breath after it drops 14 to 18 dB. The build makes the year or days just before a peak louder than their data alone would.
 
 Track 1's plucks, checked on an offline render in the browser (FluidR3 samples, no reverb): 534 plucks; per year their count follows NIFC acres (correlation 0.91) and so does their loudness (0.78). Over a year they sit 6 to 16 dB under the horn; their loudest 50 ms is just after 2020's blast, in the breath.
 
