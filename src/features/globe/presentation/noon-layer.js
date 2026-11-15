@@ -28,13 +28,15 @@ const TreeKind = Object.freeze({
 const TREE_KINDS = Object.values(TreeKind);
 // Only some trees grow: picked at random, the taller likelier (`tallBias`), and no two closer than `spacing` times
 // the mean of their sizes, so the forest stays open. Each grows `afterSteps` after the noon line has crossed it.
-const TREE_PICK = Object.freeze({ tallBias: 3, spacing: 0.8, afterSteps: [1, 10] });
+const TREE_PICK = Object.freeze({ tallBias: 3, spacing: 0.46, afterSteps: [1, 10] });
 // Every tree shoots up at one pace: the smallest reaches its tips in `smallestSec`, a bigger one in proportion to its size.
-const TREE_GROWTH = Object.freeze({ smallestSec: 0.1 });
+const TREE_GROWTH = Object.freeze({ smallestSec: 0.2 });
 // Trees are drawn over the globe without a depth test (an upright sprite against the surface flickered as the two
 // fought for depth), so a tree behind the globe is hidden by hand: by how much its ground faces the camera (cosine),
 // gone at `hiddenAt` and fully shown from `shownFrom`, so it fades at the rim.
 const TREE_LIMB = Object.freeze({ hiddenAt: 0, shownFrom: 0.12 });
+// A tree the music has gone back past fades out over this long (s) instead of vanishing.
+const TREE_FADE_OUT_SEC = 0.15;
 // Each tree's canvas: the smaller kinds at the first size, the taller at the second (pixels, a power of two).
 const TREE_CANVAS_PX = Object.freeze([256, 512]);
 // The tree's base in its sprite (share of the sprite, from the bottom left), as tree-sprites.js plants it.
@@ -449,11 +451,19 @@ export function createNoonLayer(view) {
     const ground = sprite.position.clone().normalize();
     sprite.onBeforeRender = (renderer, scene, camera) => {
       const facing = toCamera.subVectors(camera.position, sprite.position).normalize().dot(ground);
-      sprite.material.opacity = smoothstep(TREE_LIMB.hiddenAt, TREE_LIMB.shownFrom, facing);
+      sprite.material.opacity = smoothstep(TREE_LIMB.hiddenAt, TREE_LIMB.shownFrom, facing) * tree.fadeOut;
     };
     tree.sprite = sprite;
     tree.growing = true;
+    tree.fadeOut = 1;
+    tree.leavingAt = null;
     view.globe.scene().add(sprite);
+    growTrees();
+  }
+
+  /** Starts `tree` fading out; the frame loop takes it off the globe once it is gone. */
+  function fadeOut(tree) {
+    tree.leavingAt = performance.now() / 1000;
     growTrees();
   }
 
@@ -464,6 +474,7 @@ export function createNoonLayer(view) {
     tree.sprite.material.dispose();
     tree.sprite = tree.grower = null;
     tree.growing = false;
+    tree.leavingAt = null;
   }
 
   /** Draws the growing trees frame by frame until every planted tree is grown. */
@@ -473,6 +484,12 @@ export function createNoonLayer(view) {
       const now = performance.now() / 1000;
       let any = false;
       for (const tree of trees) {
+        if (tree.leavingAt !== null) {
+          tree.fadeOut = 1 - (now - tree.leavingAt) / TREE_FADE_OUT_SEC;
+          if (tree.fadeOut <= 0) unplant(tree);
+          else any = true;
+          continue;
+        }
         if (!tree.growing) continue;
         tree.growing = tree.grower.step(now);
         tree.sprite.material.map.needsUpdate = true;
@@ -605,7 +622,11 @@ export function createNoonLayer(view) {
     // A picked tree grows once the line has crossed it, and is gone again if the music goes back before that.
     for (const tree of trees) {
       if (!tree.sprite && lineStep >= tree.startStep) plant(tree);
-      else if (tree.sprite && lineStep < tree.startStep) unplant(tree);
+      else if (tree.sprite && tree.leavingAt === null && lineStep < tree.startStep) fadeOut(tree);
+      else if (tree.sprite && tree.leavingAt !== null && lineStep >= tree.startStep) {
+        tree.leavingAt = null;
+        tree.fadeOut = 1;
+      }
       if (tree.sprite) tree.sprite.material.color.setScalar(sunAt(tree.lat, tree.lon, headLon));
     }
     if (airMesh) airMesh.material.uniforms.uAirThick.value = airAt(song.air, lineStep).thickness;
