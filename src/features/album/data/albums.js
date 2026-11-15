@@ -304,7 +304,7 @@ export const albums = [
       smogTrack('New York', 'new_york_2023.csv', 46, SmogLoop.SYNTH_POP, 'new_york.jpg',
         'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)'),
       smogTrack('Seoul', 'seoul_2025.csv', 44, SmogLoop.HOUSE, 'seoul.jpg',
-        'Cover: Seoul in fine dust, May 7 2021 (Photo: Hyeonyoung Lee 21, CC BY-SA 4.0)'),
+        'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)'),
       smogTrack('Pyongyang', 'pyongyang_2025.csv', 48, SmogLoop.BREAKS, 'pyongyang.jpg',
         'Cover: The sun setting through haze in Pyongyang, Apr 4 2013 (Photo: Kristoferb, CC BY-SA 4.0)'),
       smogTrack('Shanghai', 'shanghai_2025.csv', 50, SmogLoop.HOUSE, 'shanghai.jpg',
