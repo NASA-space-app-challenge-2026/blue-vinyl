@@ -112,7 +112,7 @@ The globe uses the default theme, Map; there is no theme picker in the UI. Theme
 
 Before the player, a short onboarding covers the whole screen (`src/features/info/presentation/onboarding.js`, its copy in `src/features/info/data/onboarding.js`). It is set in deep space (`--title-bg`), crossed by a slanting band of scattered sunlight, after Voyager 1's Pale Blue Dot photo.
 
-1. **Intro**: the Blue Vinyl text logo (Yellowtail, cream fading to gold, like the app title), a one-line promise and a short introduction, beside the Pale Blue Dot: one glowing blue speck in a ray of light, marked "You are here".
+1. **Intro**: the Blue Vinyl text logo (Yellowtail, cream fading to gold, like the app title), a one-line promise and a short introduction, beside the Pale Blue Dot: one glowing blue speck in a ray of light, marked "You are here", with rings pulsing out of it like a beacon (still under reduced motion). The logo stands level.
 2. **Spatial audio**: recommends earphones and explains that the music is placed around the listener (HRTF panning), beside a head with headphones seen from above and a blue dot circling it. "Hear it move" plays a few bell notes that circle the head in time with the dot (`src/features/music/data/spatial-preview.js`).
 
 Next and Back (or the arrow keys) step through it, with dots for the steps; Skip or Start listening closes it. Browsers let audio start only from a tap, a click or a key, so these taps unlock the sound before anything can be played. While it is up, everything under it is inert and the cat waits out of sight. It is the only place besides the app title that uses Yellowtail.
