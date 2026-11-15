@@ -66,18 +66,25 @@ export function createBackdrop(root) {
   // Color per cover URL, so a cover is counted once.
   const colors = new Map();
   let shownUrl = null;
+  // The browser's own bars take the backdrop's rim color from it; without it they take the page's background.
+  const themeColor = document.createElement('meta');
+  themeColor.name = 'theme-color';
 
   function apply(color) {
     if (!color) {
       root.style.removeProperty('--bg');
       root.style.removeProperty('--bg-deep');
+      themeColor.remove();
       return;
     }
     // Darkened by mixing with black, like the same color in shadow, so a pale tint stays a muted one.
     const l = lightness(color);
     const share = l > BACKDROP_MAX_LIGHTNESS ? BACKDROP_MAX_LIGHTNESS / l : 1;
+    const deep = shade(color, share * BACKDROP_DEEP_SHARE);
     root.style.setProperty('--bg', shade(color, share));
-    root.style.setProperty('--bg-deep', shade(color, share * BACKDROP_DEEP_SHARE));
+    root.style.setProperty('--bg-deep', deep);
+    themeColor.content = deep;
+    document.head.append(themeColor);
   }
 
   /** @param {string} url the cover image */
