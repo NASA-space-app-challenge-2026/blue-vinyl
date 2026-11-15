@@ -247,7 +247,6 @@ kbd {
 button.info-row,
 a.info-row {
   cursor: pointer;
-  transition: background 0.2s;
 }
 
 button.info-row:hover,

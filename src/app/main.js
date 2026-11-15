@@ -580,8 +580,9 @@ function takePendingStep() {
  * Changes records, once for `step` (-1 or 1) and once more for each step asked for meanwhile, even while the new
  * record is being drawn out (see createRecordSwap): the arm lifts, the record goes into its sleeve and the column of
  * sleeves moves along to the new album, whose record comes out stopped at its start. The catalog wraps around.
+ * With `target`, the first change lands on that album instead of the next one, and the sleeve coming in shows it.
  */
-async function switchAlbum(step) {
+async function switchAlbum(step, target = null) {
   if (swapping) {
     if (recordSwap.skip()) pendingSteps += step;
     return;
@@ -591,9 +592,12 @@ async function switchAlbum(step) {
   slot('stage').inert = true;
   elapsedMs = 0;
   setState(PlaybackState.STOPPED);
+  let landOn = target;
+  if (landOn !== null) albumColumn.aimAt(step, landOn);
   try {
     await recordSwap.play(step, (direction) => {
-      showAlbum(wrapIndex(albumIndex + direction, albums.length));
+      showAlbum(landOn ?? wrapIndex(albumIndex + direction, albums.length));
+      landOn = null;
       render();
     }, takePendingStep);
   } finally {
@@ -604,17 +608,15 @@ async function switchAlbum(step) {
 }
 
 /**
- * Changes records to the album at `index`, one record at a time the shorter way round the catalog (forward when both
- * ways are as long), as the chevrons would.
+ * Changes records to the album at `index` in one go, the shorter way round the catalog (forward when both ways are
+ * as long): the same change of records as the chevrons make, but landing on that album.
  */
 function goToAlbum(index) {
   if (swapping) return;
   const count = albums.length;
   const forward = wrapIndex(index - albumIndex, count);
   if (forward === 0) return;
-  const step = forward <= count - forward ? 1 : -1;
-  pendingSteps = step * ((step > 0 ? forward : count - forward) - 1);
-  switchAlbum(step);
+  switchAlbum(forward <= count - forward ? 1 : -1, index);
 }
 
 /**

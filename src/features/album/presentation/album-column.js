@@ -52,6 +52,19 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
   }
 
   /**
+   * Has the neighbour at `place` show the album at `index`, for a change of records that goes straight there: it is
+   * the sleeve that comes in, and setAlbum puts the neighbours back in catalog order once it has.
+   *
+   * @param {number} place
+   * @param {number} index
+   */
+  function aimAt(place, index) {
+    const { cover } = neighbours.find((neighbour) => neighbour.place === place);
+    cover.setAlbum({ album: albums[index], index, count: albums.length }, new Map());
+    cover.render(0);
+  }
+
+  /**
    * Lines the neighbours up above and below the sleeve and shows them; returns the sleeve in client pixels, or in the
    * pixels `rectOf` measures boxes in: its centre, side, right edge (its tilted corners included) and the spacing
    * between sleeves.
@@ -110,5 +123,5 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
   }
 
   settle();
-  return { setAlbum, render: sleeve.render, place, setTucked, moves, settle };
+  return { setAlbum, aimAt, render: sleeve.render, place, setTucked, moves, settle };
 }

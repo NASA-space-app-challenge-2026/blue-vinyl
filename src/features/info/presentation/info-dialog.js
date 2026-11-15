@@ -141,7 +141,7 @@ export function renderAbout(about, albums, onSelectAlbum) {
   }));
 
   const version = el('ul', 'info-rows', [el('li', '', [el('div', 'info-row', [
-    el('span', 'info-row-title', ['Blue Vinyl']),
+    el('span', 'info-row-title', ['Version']),
     el('span', 'info-row-note', [about.version]),
   ])])]);
 
@@ -152,7 +152,7 @@ export function renderAbout(about, albums, onSelectAlbum) {
     section('Albums', [albumList]),
     section('Shortcuts', [shortcuts]),
     section('Made by', [team]),
-    section('Version', [version]),
+    el('section', 'info-section', [version]),
   ];
 }
 
