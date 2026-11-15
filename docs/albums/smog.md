@@ -1,6 +1,6 @@
 # Smog Album: The Wind That Sweeps the Smog
 
-The album's story, data and mappings. It follows [album-guide.md](../album-guide.md). Its sound and fog are nell-v2's album of the same name, written fresh here (user, 2026-11-15); its places are three cities of three regions, picked by `notebooks/smog_album.ipynb` (issue #49).
+The album's story, data and mappings. It follows [album-guide.md](../album-guide.md). Its sound and fog are nell-v2's album of the same name, written fresh here (user, 2026-11-15); its places are three cities of three regions whose smog flows across the map, picked by `notebooks/smog_album.ipynb` (issue #49).
 
 ## Message
 
@@ -15,9 +15,9 @@ Smoke from fires, dust from the desert and winter smog all arrive with the weath
 
 | # | Track | Region | Smog | Stretch (local time) | Rounds of smog (in / clear) | Loop | Length |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Canberra | Australia and New Zealand | Bushfire smoke | 2019-12-26 02:30 to 12-31 14:30 (133 h) | 3 (0:06 / 0:14, 0:18 / 0:28, 0:36 / 0:46) | Synth-pop, D minor | 0:54 |
-| 2 | Seattle | Northern America | Wildfire smoke | 2020-09-06 09:30 to 09-11 01:30 (113 h) | 2 (0:08 / 0:16, 0:28 / 0:46) | House, A minor | 0:54 |
-| 3 | Beijing | Eastern Asia | Autumn smog | 2025-10-21 02:30 to 10-26 22:30 (141 h) | 1 (0:10 / 0:48) | Breakbeat, E minor | 0:54 |
+| 1 | Seattle | Northern America | Wildfire smoke | 2020-09-06 09:30 to 09-11 01:30 (113 h) | 2 (0:08 / 0:16, 0:28 / 0:46) | Synth-pop, D minor | 0:54 |
+| 2 | New Delhi | Southern Asia | Smog | 2025-09-13 08:00 to 09-17 18:00 (107 h) | 3 (0:04 / 0:10, 0:28 / 0:34, 0:40 / 0:46) | House, A minor | 0:54 |
+| 3 | Pyongyang | Eastern Asia | Smog | 2025-11-20 13:30 to 11-27 08:30 (164 h) | 2 (0:06 / 0:14, 0:22 / 0:46) | Breakbeat, E minor | 0:54 |
 
 The air the music hears is the air right over the city: the city's own 0.25° cell, the middle of the label (user, 2026-11-15). nell-v2 heard the mean over its whole plain.
 
@@ -25,7 +25,8 @@ How they were picked (notebook, sections 3–5; ours):
 
 - 25 candidate episodes of heavy PM2.5 in 10 regions, 2019–2025: the 2025 cities whose own cell rose into heavy smog for two days or more, and well-known episodes elsewhere (wildfire smoke, South Asia's winter smog, Saharan dust).
 - The air changing is the point of the album (user, 2026-11-15): a song lasts 100–170 hours, as nell-v2's (103–173), from clear air to clear air (6–36 clear hours before the first smog, 6–24 after the last), with one to three rounds of smog rolling in and clearing (user: up to three), no stretch between two turns under 8 hours, so it does not flicker.
-- The song whose city's pollution level changes most (the sum of its hour-to-hour changes) wins in each candidate, and the three regions that change most are kept.
+- The song whose city's pollution level changes most (the sum of its hour-to-hour changes) wins in each candidate.
+- The smog must flow, blown across the map, not thicken and thin in place (user, 2026-11-15: that is the fun of it). How fast the fog flows: each hour's fog over the middle of the box (±2°, about what the label shows) laid onto the fog three hours later at the shift (up to 2° each way) that fits best; the median of those shifts, in km/h. One song per region, the three regions whose song flows fastest: New Delhi 34 km/h, Seattle 19, Pyongyang 13 (Lahore, also 13, lost to New Delhi in its region; Beijing 9 and Canberra 0, the songs before, sat nearly still).
 
 Data files: `data/smog/tracks/` (see `tracks.json` for the source, version, credit, city, box and time zone).
 
@@ -49,9 +50,9 @@ nell-v2's, with its fog over the music widened (user, 2026-11-15: as muffled as 
 
 | Song | Loop | Chords | Lead and backing | Drums |
 | --- | --- | --- | --- | --- |
-| Canberra | `SYNTH_POP` | D minor: Dm, B♭, F, C | Square-wave arpeggio (`PULSE`), halo pad, syncopated bass | Kick on every beat, snare on 2 and 4, eighth-note hats, sixteenth ghosts |
-| Seattle | `HOUSE` | A minor: Am, F, C, G | Saw chord stabs off the beat (`STAB`), offbeat bass | Kick on every beat, snare on 2 and 4, offbeat hats, sixteenth ghosts |
-| Beijing | `BREAKS` | E minor: Em, C, G, D | Dulcimer hook, warm pad, held bass | Broken kick, snare on 2 and 4, eighth-note hats and ghosts |
+| Seattle | `SYNTH_POP` | D minor: Dm, B♭, F, C | Square-wave arpeggio (`PULSE`), halo pad, syncopated bass | Kick on every beat, snare on 2 and 4, eighth-note hats, sixteenth ghosts |
+| New Delhi | `HOUSE` | A minor: Am, F, C, G | Saw chord stabs off the beat (`STAB`), offbeat bass | Kick on every beat, snare on 2 and 4, offbeat hats, sixteenth ghosts |
+| Pyongyang | `BREAKS` | E minor: Em, C, G, D | Dulcimer hook, warm pad, held bass | Broken kick, snare on 2 and 4, eighth-note hats and ghosts |
 
 Shared: the bass is the analog synth's `CAVE`, the drums the standard kit. Clear air plays dry (reverb 0.12); the thicker the smog, the more reverb (up to 0.6) and overdrive (up to 0.3).
 
@@ -66,7 +67,7 @@ Shared: the bass is the analog synth's `CAVE`, the drums the standard kit. Clear
 
 ## Globe
 
-The globe keeps the city's cell in the middle, close enough that the fog fills the label: the label's edge is where the fog has faded out (0.85 of the way to the box's nearer sides on the ground): 2.9° of arc in Canberra, 2.4° in Seattle, 2.7° in Beijing (user, 2026-11-15). It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
+The globe keeps the city's cell in the middle, close enough that the fog fills the label: the label's edge is where the fog has faded out (0.85 of the way to the box's nearer sides on the ground): 2.4° of arc in Seattle, 3.1° in New Delhi, 2.7° in Pyongyang (user, 2026-11-15). It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
 
 The fog is one patch of the globe over the box, drawn by nell-v2's shader in [`smog-layer.js`](../../src/features/globe/presentation/smog-layer.js); the textures are uploaded only when the hour changes. It fades in over the song's first 1.5 s and out over its last.
 
@@ -76,12 +77,13 @@ The city is marked with a dot and its name.
 
 ## Covers
 
-From Wikimedia Commons (credits in [`albums.js`](../../src/features/album/data/albums.js)): bushfire smoke over Lyneham, Canberra, January 1, 2020 (the day after its song); Seattle's skyline in wildfire smoke, September 11, 2020 (the day its song ends); the Jade Peak Pagoda in Beijing's smog (also the album's cover).
+From Wikimedia Commons (credits in [`albums.js`](../../src/features/album/data/albums.js)): Seattle's skyline in wildfire smoke, September 11, 2020 (the day its song ends); smog over Connaught Place, New Delhi (also the album's cover); haze over Pyongyang from the Juche Tower, May 2005.
 
 ## Checks
 
 | Check | Result |
 | --- | --- |
 | Length | 54 s each |
-| Muffling | Mock run of the composer: the low-pass rises and falls with each round; it reaches 220 Hz in Canberra and Beijing, but only about 2 kHz in Seattle, whose smog is thinner over the city |
+| Muffling | From the city's peak PM2.5: Pyongyang reaches 220 Hz (802 µg/m³), New Delhi about 1.4 kHz (273), Seattle about 2 kHz (234) |
+| Flow | Median shift of the fog in 3 hours: Seattle 19 km/h, New Delhi 34, Pyongyang 13 (notebook, section 5) |
 | Listening, screen | Not yet done: needs the user |
