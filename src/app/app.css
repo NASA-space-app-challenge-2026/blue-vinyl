@@ -39,6 +39,20 @@ html {
   box-sizing: border-box;
 }
 
+/* Only text can be selected: a drag across the page never paints the globe, the record, icons or images. */
+canvas,
+img,
+svg,
+video {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+svg text {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 body {
   margin: 0;
   width: 100vw;
