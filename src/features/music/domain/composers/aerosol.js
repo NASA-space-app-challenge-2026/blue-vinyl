@@ -5,8 +5,9 @@
 //       covers; the voice glides to each new note
 //     degrees east of where it was released -> place around the listener, fully to the side PAN_SPAN_DEG away
 //     speed -> loudness and brightness
-//   the air: one sustained instrument for each particle type, held on a chord tone, as loud as that type's AOD at the
-//     lead's head on the globe's log scale (EIC's); a type whose toggle is off is silent, as it is on the globe
+//   the air: one sustained instrument for each of the other three particle types, held on a chord tone, as loud as that
+//     type's AOD at the lead's head on the globe's log scale (EIC's); a type whose toggle is off is silent, as it is on
+//     the globe
 
 import { Effect } from '../effects.js';
 import { CC, Instrument } from '../instruments.js';
@@ -39,6 +40,8 @@ const AIR = Object.freeze({
   sulfate: Object.freeze({ instrument: Instrument.PAD, above: 15 }),
 });
 const AIR_PARTICLES = Object.freeze(Object.keys(AIR));
+// The SoundFont's expression (CC 11) scales the level by (expression/127)², so the loudness follows the AOD's level
+// when the expression is the level's square root.
 const SPACE = Object.freeze({ reverb: 0.4, echo: 0.18, echoSteps: 3, feedback: 0.4 });
 
 const lerp = ([from, to], amount) => from + (to - from) * amount;
@@ -76,6 +79,8 @@ export class AerosolComposer {
   /** @param {ReturnType<typeof aerosolSong>} song */
   setSong(song) {
     this.song = song;
+    // The lead's own particle type is not in the air: the lead is it.
+    this.air = AIR_PARTICLES.filter((particle) => particle !== song.hero.particle);
   }
 
   reset() {
@@ -91,7 +96,7 @@ export class AerosolComposer {
    */
   playStep(music, { sample, at }) {
     if (!this.started) this.start(music, at);
-    for (const particle of AIR_PARTICLES) this.mixAir(music, particle, sample, at);
+    for (const particle of this.air) this.mixAir(music, particle, sample, at);
     this.voice.move(this.soundOf(sample), at, GLIDE_SEC);
   }
 
@@ -103,7 +108,7 @@ export class AerosolComposer {
     music.effect(Effect.FEEDBACK, SPACE.feedback, at);
     const { lead, baseMidi } = this.song;
     const tonic = baseMidi % 12;
-    for (const particle of AIR_PARTICLES) {
+    for (const particle of this.air) {
       const { instrument, above } = AIR[particle];
       music.control(instrument, CC.EXPRESSION, 0, at);
       music.hold(instrument, AIR_ROOT_MIDI + tonic + above, AIR_VELOCITY, at);
@@ -113,7 +118,7 @@ export class AerosolComposer {
 
   // Sets how loud a particle type sounds: its AOD at the lead's head, none when its toggle is off.
   mixAir(music, particle, { aods, on }, at) {
-    const expression = on[PARTICLE_TOGGLE[particle]] ? Math.round(127 * levelOf(aods[particle])) : 0;
+    const expression = on[PARTICLE_TOGGLE[particle]] ? Math.round(127 * Math.sqrt(levelOf(aods[particle]))) : 0;
     if (this.expression[particle] === expression) return;
     this.expression[particle] = expression;
     music.control(AIR[particle].instrument, CC.EXPRESSION, expression, at);
