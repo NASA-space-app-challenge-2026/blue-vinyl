@@ -9,12 +9,14 @@ import { createAlbumCredit } from '../features/album/presentation/album-credit.j
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
 import { createCatView } from '../features/cat/presentation/cat-view.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
+import { createMediaCenter } from '../features/controls/data/media-center.js';
 import { createAlbumSwitcher } from '../features/controls/presentation/album-switcher.js';
 import { createFullscreenButton } from '../features/controls/presentation/fullscreen-button.js';
 import { createGlassCapsule } from '../features/controls/presentation/glass-capsule.js';
 import { createMoreMenu } from '../features/controls/presentation/more-menu.js';
 import { createPlayButton } from '../features/controls/presentation/play-button.js';
 import { createPlayHint } from '../features/controls/presentation/play-hint.js';
+import { createStartScreen } from '../features/controls/presentation/start-screen.js';
 import { createVolumeControl } from '../features/controls/presentation/volume-control.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
@@ -50,6 +52,8 @@ import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../feature
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
+import { pointInScreen, rectInScreen } from '../shared/screen-space.js';
+import { createTicker } from '../shared/ticker.js';
 
 // The contiguous United States, zoomed until the label's edge is 30 degrees of arc from its middle, so the West's fires
 // read large.
@@ -87,7 +91,6 @@ let shownFireKey = null;
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
 let lastFrameTs = null;
-let tickFrame = null;
 // True while the records change; steps asked for meanwhile add up in pendingSteps.
 let swapping = false;
 let pendingSteps = 0;
@@ -100,7 +103,14 @@ const backdrop = createBackdrop(document.documentElement);
 const playHint = createPlayHint(slot('bottom-center'));
 
 const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack });
+// Boxes and pointers in the layout's own pixels, which a portrait screen turned to show it landscape does not share
+// with the client's.
+const screenSpace = Object.freeze({
+  rectOf: (el) => rectInScreen(slot('screen'), el),
+  pointOf: (event) => pointInScreen(slot('screen'), event.clientX, event.clientY),
+});
 const turntable = createTurntableView(slot('stage'), {
+  space: screenSpace,
   onToggle: togglePlayback,
   onCued: () => {
     if (state === PlaybackState.CUEING) startPlaying();
@@ -144,7 +154,12 @@ const turntable = createTurntableView(slot('stage'), {
 // The album's credits run round the record's rim.
 const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
 
-const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
+const recordSwap = createRecordSwap({
+  recordEl: turntable.recordEl,
+  recordGeometry: turntable.recordGeometry,
+  rectOf: screenSpace.rectOf,
+  column: albumColumn,
+});
 const globe = createGlobeView(turntable.labelSlot);
 const seaOverlay = createSeaLevelOverlay(turntable.labelSlot);
 const wildfireOverlay = createWildfireOverlay(turntable.labelSlot);
@@ -157,6 +172,18 @@ const soundEngine = createSoundEngine();
 const flockComposer = new FlockComposer();
 const hurricaneComposer = new HurricaneComposer();
 const lightningComposer = new LightningComposer();
+const ticker = createTicker(tick);
+// The system's media controls play and pause, and step through the tracks, on into the next or previous album.
+const mediaCenter = createMediaCenter({
+  onPlay: () => {
+    if (state === PlaybackState.STOPPED) togglePlayback();
+  },
+  onPause: () => {
+    if (state === PlaybackState.PLAYING || state === PlaybackState.CUEING) togglePlayback();
+  },
+  onPrevious: () => stepTrack(-1),
+  onNext: () => stepTrack(1),
+});
 const noonComposer = new NoonComposer();
 // The globe turns to keep the noon meridian in front, easing with this time constant; while playing, it aims this far
 // ahead of the line, so the eased camera settles on the line itself rather than trailing it.
@@ -197,7 +224,17 @@ createMoreMenu(viewControls, {
   ],
 });
 applyGlobeTheme(DEFAULT_GLOBE_THEME);
-createCatView();
+createCatView(slot('screen'));
+// A drag is no gesture audio may start from on a phone, so the title screen's tap unlocks the sound first.
+// The bars and the safe areas take the title screen's color while it is up.
+backdrop.overlay(getComputedStyle(document.documentElement).getPropertyValue('--title-bg').trim());
+const startScreen = createStartScreen(slot('screen'), {
+  stage: slot('stage'),
+  onStart: () => {
+    backdrop.overlay(null);
+    unlockSound();
+  },
+});
 
 // Album switch keys, as the previous and next chevrons.
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
@@ -209,7 +246,8 @@ const VOLUME_KEYS = Object.freeze({ ArrowUp: 1, ArrowDown: -1 });
 document.addEventListener(
   'keydown',
   (event) => {
-    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    // The title screen takes Space and Enter itself, as the button it is.
+    if (event.altKey || event.ctrlKey || event.metaKey || startScreen.isOpen()) return;
     // An open dialog or menu keeps its keys: Space and the arrows scroll the dialog or move through the menu.
     if (document.querySelector('dialog[open]')) return;
     if (event.target instanceof Element && event.target.closest('[role="menu"]')) return;
@@ -245,11 +283,14 @@ function releaseClickFocus() {
   clickFocused = null;
 }
 
+// Safari ignores user-scalable=no (index.html) and touch-action for pinches, so its pinch gesture is cancelled here.
+document.addEventListener('gesturestart', (event) => event.preventDefault());
+
 // A focused button is pressed on Space's keyup, so that is held back too.
 document.addEventListener(
   'keyup',
   (event) => {
-    if (event.code === 'Space') event.preventDefault();
+    if (event.code === 'Space' && !startScreen.isOpen()) event.preventDefault();
   },
   { capture: true },
 );
@@ -472,6 +513,7 @@ function showSong(song, color) {
 
 // Audio may only start from a user gesture, so every gesture that can start playback unlocks it.
 function unlockSound() {
+  mediaCenter.unlock();
   music.unlock();
   soundEngine.unlock().catch((error) => console.error('sound engine failed to load', error));
 }
@@ -511,6 +553,28 @@ async function switchAlbum(step) {
   }
 }
 
+/**
+ * Plays the track `step` (-1 or 1) away from the current one. Past either end of the album it switches to the album
+ * next to it, as switchAlbum does, and plays its first track going forward or its last going back. A hidden page draws
+ * no frames for the records to change by, so there the album changes at once.
+ */
+async function stepTrack(step) {
+  if (swapping) return;
+  const next = trackIndexAt(album, elapsedMs / totalMs) + step;
+  if (next >= 0 && next < album.tracks.length) {
+    playFromTrack(next);
+    return;
+  }
+  if (document.hidden) {
+    elapsedMs = 0;
+    setState(PlaybackState.STOPPED);
+    showAlbum(wrapIndex(albumIndex + step, albums.length));
+  } else {
+    await switchAlbum(step);
+  }
+  playFromTrack(step > 0 ? 0 : album.tracks.length - 1);
+}
+
 // 0..1 through the track at `trackIndex`.
 function trackProgressAt(trackIndex) {
   return (elapsedMs / 1000 - trackStartSec(album, trackIndex)) / album.tracks[trackIndex].durationSec;
@@ -539,21 +603,32 @@ function seekTo(ms) {
     return;
   }
   unlockSound();
-  setState(PlaybackState.CUEING);
+  cue();
 }
 
 function togglePlayback() {
   if (swapping) return;
   unlockSound();
-  setState(state === PlaybackState.STOPPED ? PlaybackState.CUEING : PlaybackState.STOPPED);
+  if (state === PlaybackState.STOPPED) cue();
+  else setState(PlaybackState.STOPPED);
+}
+
+// A page hidden while the tonearm moves would wait for it until shown again, so it plays at once.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && state === PlaybackState.CUEING) startPlaying();
+});
+
+// Sets the tonearm down to play. A hidden page draws no frames, so the arm cannot move there: it plays at once.
+function cue() {
+  if (document.hidden) startPlaying();
+  else setState(PlaybackState.CUEING);
 }
 
 function startPlaying() {
   setState(PlaybackState.PLAYING);
   music.play(() => elapsedMs / 1000);
-  cancelAnimationFrame(tickFrame);
   lastFrameTs = null;
-  tickFrame = requestAnimationFrame(tick);
+  ticker.start();
 }
 
 function render() {
@@ -563,6 +638,12 @@ function render() {
   albumColumn.render(trackIndex);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
   backdrop.show(trackCover(album, trackIndex).url);
+  mediaCenter.setTrack({
+    key: `${album.id}:${trackIndex}`,
+    title: album.tracks[trackIndex].title,
+    album: album.title,
+    artworkUrl: trackCover(album, trackIndex).url,
+  });
   renderSong(trackIndex);
   renderData(trackIndex);
   renderSeason(trackIndex);
@@ -801,13 +882,17 @@ function setState(next) {
   if (next !== PlaybackState.PLAYING) music.stop();
   state = next;
   if (state !== PlaybackState.PLAYING) soundEngine.stop();
+  mediaCenter.setPlaying(state === PlaybackState.PLAYING || state === PlaybackState.CUEING);
   playHint.render(state);
   playButton.render(state);
   render();
 }
 
 function tick(ts) {
-  if (state !== PlaybackState.PLAYING) return;
+  if (state !== PlaybackState.PLAYING) {
+    ticker.stop();
+    return;
+  }
   const dtMs = lastFrameTs === null ? 0 : ts - lastFrameTs;
   // The ice and sea music sets the clock while it plays, so the globe follows what is heard; otherwise the frames do.
   const heardSec = music.positionSec();
@@ -821,7 +906,6 @@ function tick(ts) {
   }
   render();
   if (!globe.gliding) globe.follow(dtMs / 1000, shownSong?.followTauSec);
-  tickFrame = requestAnimationFrame(tick);
 }
 
 showAlbum(albumIndex);

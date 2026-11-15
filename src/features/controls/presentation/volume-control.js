@@ -12,7 +12,8 @@ const COLLAPSE_DELAY_MS = 1500;
 /**
  * Speaker button that expands into a volume slider, like a video player.
  * The first click expands it; once expanded, the speaker toggles mute.
- * It folds back after COLLAPSE_DELAY_MS without the pointer or keyboard focus inside.
+ * It folds back after COLLAPSE_DELAY_MS without the pointer or keyboard focus inside, and at once on a press anywhere
+ * else on the page.
  * `step(direction)` turns it up (1) or down (-1) by VOLUME_STEP, opening it for a moment to show the level.
  *
  * @param {HTMLElement} parent
@@ -93,6 +94,17 @@ export function createVolumeControl(parent, { onChange } = {}) {
     scheduleCollapse();
   });
   root.addEventListener('focusout', scheduleCollapse);
+  // Captured, so a control that stops the press from bubbling still folds it.
+  document.addEventListener(
+    'pointerdown',
+    (event) => {
+      if (!open || root.contains(event.target)) return;
+      clearTimeout(collapseTimer);
+      open = false;
+      render();
+    },
+    { capture: true },
+  );
 
   /** @param {number} direction 1 louder, -1 quieter */
   function step(direction) {

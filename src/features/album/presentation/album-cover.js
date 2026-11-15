@@ -63,17 +63,35 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
     face.style.removeProperty('--hover-y');
   });
 
-  // Fades `url` in over the covers shown, which go once it is in; another album's cover replaces them at once.
-  function showCover(url, fade) {
-    if (image?.getAttribute('src') === url) return;
+  // Fades `url` in over the covers shown, which go once it is in; another album's cover replaces them at once. That
+  // one is taken from `drawn` when another sleeve already shows it, else shown once decoded, so the sleeve never shows
+  // a blank or half-drawn cover in between (as a phone would while the record is drawn out of it).
+  function showCover(url, fade, drawn) {
+    if (image?.getAttribute('src') === url && image.parentNode === face) return;
+    const taken = fade ? null : drawn?.get(url);
+    if (taken) {
+      drawn.delete(url);
+      face.querySelectorAll('.album-cover-image').forEach((other) => other.remove());
+      // Shown even if the other sleeve was still waiting for it to decode.
+      taken.style.transition = 'none';
+      taken.classList.add('is-shown');
+      counter.before(taken);
+      image = taken;
+      return;
+    }
     const img = el('img', 'album-cover-image');
     img.src = url;
     img.alt = '';
     img.addEventListener('error', () => img.remove());
     const removeOthers = () => face.querySelectorAll('.album-cover-image').forEach((other) => other !== img && other.remove());
     if (!fade) {
-      removeOthers();
-      img.classList.add('is-shown');
+      img.decode().catch(() => {}).then(() => {
+        if (image !== img) return;
+        removeOthers();
+        // At once, without the fade.
+        img.style.transition = 'none';
+        img.classList.add('is-shown');
+      });
     } else {
       img.addEventListener('load', () => img.classList.add('is-shown'), { once: true });
       img.addEventListener('transitionend', removeOthers, { once: true });
@@ -82,10 +100,13 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
     image = img;
   }
 
-  /** @param {{ album: import('../domain/album.js').Album, index: number, count: number }} options */
-  function setAlbum({ album: next, index, count }) {
+  /**
+   * @param {{ album: import('../domain/album.js').Album, index: number, count: number }} options
+   * @param {Map<string, HTMLImageElement>} [drawn] covers other sleeves show, by URL, for this one to take its own from
+   */
+  function setAlbum({ album: next, index, count }, drawn) {
     album = next;
-    showCover(trackCover(album, 0).url, false);
+    showCover(trackCover(album, 0).url, false, drawn);
     cover.style.setProperty('--tilt', `${tiltDeg(index)}deg`);
 
     counter.textContent = `${index + 1} / ${count}`;
@@ -110,5 +131,13 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
     items.forEach((item, i) => item.classList.toggle('is-active', i === activeTrackIndex));
   }
 
-  return { el: cover, setAlbum, render };
+  return {
+    el: cover,
+    setAlbum,
+    render,
+    /** The cover image shown, or null. */
+    get image() {
+      return image?.parentNode === face ? image : null;
+    },
+  };
 }

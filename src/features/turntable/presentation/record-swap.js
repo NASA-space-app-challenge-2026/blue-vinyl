@@ -39,18 +39,21 @@ const EASING = 'ease-in-out';
 /**
  * @param {{
  *   recordEl: HTMLElement,
- *   recordGeometry: () => { x: number, y: number, r: number },
+ *   recordGeometry: (rectOf: (el: Element) => DOMRectReadOnly) => { x: number, y: number, r: number },
+ *   rectOf: (el: Element) => DOMRectReadOnly,
  *   column: {
- *     place: () => { x: number, y: number, size: number, right: number, spacing: number },
+ *     place: (rectOf: (el: Element) => DOMRectReadOnly) => { x: number, y: number, size: number, right: number, spacing: number },
  *     setTucked: (tucked: boolean) => void,
  *     moves: (from: number, to: number, options: KeyframeAnimationOptions) => Animation[],
  *     settle: () => void,
  *   },
  * }} options
- *   recordGeometry: the record's centre and radius in client pixels, on the platter.
+ *   recordGeometry: the record's centre and radius on the platter, in the pixels `rectOf` measures boxes in.
+ *   rectOf: an element's box in the pixels of the layout the record moves in, which a turned screen does not share
+ *     with the client's (see shared/screen-space.js).
  *   column: the album column (see createAlbumColumn) the sleeve stands in.
  */
-export function createRecordSwap({ recordEl, recordGeometry, column }) {
+export function createRecordSwap({ recordEl, recordGeometry, rectOf, column }) {
   let offsets = null;
   let scales = null;
   let spacing = 0;
@@ -62,8 +65,8 @@ export function createRecordSwap({ recordEl, recordGeometry, column }) {
   let turnedBack = false;
 
   function measure() {
-    const record = recordGeometry();
-    const sleeve = column.place();
+    const record = recordGeometry(rectOf);
+    const sleeve = column.place(rectOf);
     const shrunk = (SLEEVE_FILL * sleeve.size) / 2 / record.r;
     const toSleeveY = sleeve.y - record.y;
     scales = { [Place.AT_PLATTER]: 1, [Place.CLEAR]: shrunk, [Place.IN_SLEEVE]: shrunk };

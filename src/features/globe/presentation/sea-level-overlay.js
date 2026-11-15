@@ -6,6 +6,9 @@ const SCALE_MM = 100;
 // One wave of the surface (px). The water's top edge is cut to this shape, so the surface has no straight line.
 const WAVE = Object.freeze({ width: 160, height: 12, amplitude: 3.5 });
 const SWELL = Object.freeze({ width: 230, height: 16, amplitude: 5 });
+// The swell and the sky over the water are each masked by one image of whole waves, just wider than what it masks (the
+// label plus a wave), rather than by one wave tiled: phones leave hairline cracks between the tiles. Not wider, as
+// Safari leaves gaps in a mask image too large for it.
 
 /**
  * What the overlay shows at one moment.
@@ -23,24 +26,33 @@ function el(tag, className) {
 
 const heightOf = (mm) => BASE + (mm / SCALE_MM) * SPAN;
 
-// One period of a sine wave across `width`, as SVG path points, its middle `top` px below the image's top edge.
-function crest({ width, height, amplitude }, top = 0) {
-  // About every 4 px, ending exactly on the period's right edge, so the curve meets the next tile with no notch.
+// `periods` periods of a sine wave each `width` across, as SVG path points, its middle `top` px below the image's top
+// edge.
+function crest({ width, height, amplitude }, top = 0, periods = 1) {
+  // About every 4 px, ending exactly on the last period's right edge, so the curve meets the next tile with no notch.
   const steps = Math.ceil(width / 4);
   const points = [];
-  for (let k = 0; k <= steps; k++) {
+  for (let k = 0; k <= steps * periods; k++) {
     const x = (k / steps) * width;
     points.push(`${x.toFixed(2)} ${(top + height / 2 - amplitude * Math.sin((k / steps) * 2 * Math.PI)).toFixed(2)}`);
   }
   return points.join(' L');
 }
 
+// How many whole waves of `wave` an untiled mask over a label `labelPx` wide holds, and how wide that is (px): the
+// label, the wave it moves along by, and one more for rounding.
+function untiled(wave, labelPx) {
+  const periods = Math.ceil(labelPx / wave.width) + 2;
+  return { periods, width: periods * wave.width };
+}
+
 const svgImage = (svg) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg"${svg}</svg>`)}")`;
 
-// One period of the wave, filled below the curve, as a CSS mask image that tiles across.
-function waveMask(wave) {
-  const { width, height } = wave;
-  return svgImage(` width="${width}" height="${height}"><path d="M0 ${height} L${crest(wave)} L${width} ${height} Z"/>`);
+// The waves over a label `labelPx` wide, filled below the curve, as one CSS mask image (see untiled).
+function waveMask(wave, labelPx) {
+  const { height } = wave;
+  const { periods, width } = untiled(wave, labelPx);
+  return svgImage(` width="${width}" height="${height}"><path d="M0 ${height} L${crest(wave, 0, periods)} L${width} ${height} Z"/>`);
 }
 
 // The water as one shape: a period of the wave with the water filled below it all the way down. The image has no
@@ -52,10 +64,12 @@ function waterMask(wave) {
     + `<rect y="${height - 1}" width="${width}" height="100%"/>`);
 }
 
-// Everything above the wave, from `top` px over it: where the swell may show without lying under the water.
-function aboveMask(wave, top) {
-  const { width, height } = wave;
-  return svgImage(` width="${width}" height="${top + height}"><path d="M0 0 L${crest(wave, top)} L${width} 0 Z"/>`);
+// Everything above the waves, from `top` px over them: where the swell may show without lying under the water. One
+// image over a label `labelPx` wide (see untiled).
+function aboveMask(wave, top, labelPx) {
+  const { height } = wave;
+  const { periods, width } = untiled(wave, labelPx);
+  return svgImage(` width="${width}" height="${top + height}"><path d="M0 0 L${crest(wave, top, periods)} L${width} 0 Z"/>`);
 }
 
 function setText(node, text) {
@@ -101,10 +115,18 @@ export function createSeaLevelOverlay(container) {
     ['--swell-h', `${SWELL.height}px`],
     ['--swell-top', `${swellTop}px`],
     ['--water-mask', waterMask(WAVE)],
-    ['--above-mask', aboveMask(WAVE, swellTop)],
-    ['--swell-mask', waveMask(SWELL)],
   ]) {
     root.style.setProperty(name, value);
+  }
+  // The label width the swell's masks are drawn for.
+  let maskedPx = null;
+  function setSwellMasks(labelPx) {
+    if (labelPx === maskedPx) return;
+    maskedPx = labelPx;
+    root.style.setProperty('--above-mask', aboveMask(WAVE, swellTop, labelPx));
+    root.style.setProperty('--above-mask-w', `${untiled(WAVE, labelPx).width}px`);
+    root.style.setProperty('--swell-mask', waveMask(SWELL, labelPx));
+    root.style.setProperty('--swell-mask-w', `${untiled(SWELL, labelPx).width}px`);
   }
   // The label's height in pixels, kept here so drawing a frame never has to measure the page.
   let labelPx = 0;
@@ -112,6 +134,7 @@ export function createSeaLevelOverlay(container) {
   let shownWater = null;
   new ResizeObserver(() => {
     labelPx = root.clientHeight;
+    setSwellMasks(root.clientWidth);
     if (waterShare !== null) placeWater(waterShare);
   }).observe(root);
 

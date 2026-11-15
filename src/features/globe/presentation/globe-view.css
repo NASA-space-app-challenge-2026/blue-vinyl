@@ -92,8 +92,8 @@
   right: 0;
   height: calc(var(--swell-top) + var(--wave-h));
   mask-image: var(--above-mask);
-  mask-size: var(--wave-w) 100%;
-  mask-repeat: repeat-x;
+  mask-size: var(--above-mask-w) 100%;
+  mask-repeat: no-repeat;
 }
 
 /* A paler swell behind the surface, moving the other way; it fades out downwards, so it leaves no edge. */
@@ -105,9 +105,9 @@
   height: calc(var(--swell-h) * 2.5);
   background: rgb(150 225 255 / 0.4);
   mask-image: var(--swell-mask), linear-gradient(#000, transparent);
-  mask-size: var(--swell-w) var(--swell-h), 100% 100%;
+  mask-size: var(--swell-mask-w) var(--swell-h), 100% 100%;
   mask-position: 0 0, 0 0;
-  mask-repeat: repeat-x, no-repeat;
+  mask-repeat: no-repeat, no-repeat;
   mask-composite: intersect;
   animation: sea-overlay-swell 9s linear infinite;
 }
@@ -249,6 +249,8 @@
   color: var(--ink);
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
   pointer-events: none;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .globe-date-digit {
@@ -303,10 +305,14 @@
   font-size: 4.2cqw;
   letter-spacing: 0.03em;
   white-space: nowrap;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .wildfire-overlay-detail {
   margin-top: 0.35em;
   font-size: 2.8cqw;
   opacity: 0.9;
+  -webkit-user-select: text;
+  user-select: text;
 }
