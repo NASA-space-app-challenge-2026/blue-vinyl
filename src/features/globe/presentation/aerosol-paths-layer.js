@@ -147,20 +147,17 @@ export function createAerosolPathsLayer(view) {
     tailGeometry.setAttribute('side', new THREE.BufferAttribute(new Float32Array(vertices * 3), 3));
     tailGeometry.setAttribute('alpha', new THREE.BufferAttribute(new Float32Array(vertices), 1));
     const across = new Float32Array(vertices);
-    const halfPx = new Float32Array(vertices);
     const index = [];
-    for (const { steps, first, widthPx } of tailOf) {
+    for (const { steps, first } of tailOf) {
       for (let j = 0; j <= steps; j++) {
-        const t = j / steps;
         const v = 2 * (first + j);
         across[v] = -1;
         across[v + 1] = 1;
-        halfPx[v] = halfPx[v + 1] = 0.5 * widthPx * t ** TAIL_SHAPE.widthPow;
         if (j < steps) index.push(v, v + 1, v + 2, v + 1, v + 3, v + 2);
       }
     }
     tailGeometry.setAttribute('across', new THREE.BufferAttribute(across, 1));
-    tailGeometry.setAttribute('halfPx', new THREE.BufferAttribute(halfPx, 1));
+    tailGeometry.setAttribute('halfPx', new THREE.BufferAttribute(new Float32Array(vertices), 1));
     tailGeometry.setIndex(index);
     tails = new THREE.Mesh(
       tailGeometry,
@@ -216,43 +213,56 @@ export function createAerosolPathsLayer(view) {
     const tailPos = tails.geometry.attributes.position;
     const tailSide = tails.geometry.attributes.side;
     const tailAlpha = tails.geometry.attributes.alpha;
-    const tip = [0, 0, 0];
-    const here = [0, 0, 0];
+    const tailHalf = tails.geometry.attributes.halfPx;
     let s = 0;
     paths.forEach((particle, i) => {
       const local = Math.min(step - particle.release, particle.path.length - 1);
-      const { steps, first } = tailOf[i];
+      const { steps, first, widthPx } = tailOf[i];
       if (local < 0) {
         for (let j = 0; j <= steps; j++) tailAlpha.setX(2 * (first + j), 0), tailAlpha.setX(2 * (first + j) + 1, 0);
         return;
       }
       const points = xyz[i];
       lerp3(points, local, head);
-      // The tail: a point a step along the path from the head back, the ones before the release folded onto it.
-      const at = (j) => Math.max(0, local - (steps - j));
+      // The tail: the path's own points from `steps` steps back to the head, so what is drawn stays where it was drawn and
+      // only thins as it ages (t = 1 at the head, 0 `steps` steps behind it); the head is the last point. Points before
+      // the release are folded onto the first and not drawn.
+      const whole = Math.floor(local);
+      const ages = [];
+      const spots = [];
       for (let j = 0; j <= steps; j++) {
-        lerp3(points, at(j), here);
-        lerp3(points, at(Math.min(j + 1, steps)), tip);
-        const back = [0, 0, 0];
-        lerp3(points, at(Math.max(j - 1, 0)), back);
+        const k = whole - steps + 1 + j;
+        const spot = [0, 0, 0];
+        if (j < steps) {
+          for (let c = 0; c < 3; c++) spot[c] = points[3 * Math.max(k, 0) + c];
+          ages.push(k < 0 ? Infinity : local - k);
+        } else {
+          for (let c = 0; c < 3; c++) spot[c] = head[c];
+          ages.push(0);
+        }
+        spots.push(spot);
+      }
+      for (let j = 0; j <= steps; j++) {
+        const here = spots[j];
+        const tip = spots[Math.min(j + 1, steps)];
+        const back = spots[Math.max(j - 1, 0)];
         // The side across the path: the path's direction crossed with the way up (out from the globe's centre).
         const dx = tip[0] - back[0], dy = tip[1] - back[1], dz = tip[2] - back[2];
         let sx = dy * here[2] - dz * here[1], sy = dz * here[0] - dx * here[2], sz = dx * here[1] - dy * here[0];
         const len = Math.hypot(sx, sy, sz) || 1;
         sx /= len; sy /= len; sz /= len;
-        const t = j / steps;
-        const alive = local - (steps - j) >= 0;
-        const a = alive ? ALPHA.head * t ** TAIL_SHAPE.alphaPow : 0;
+        const t = Math.max(0, 1 - ages[j] / steps);
         const v = 2 * (first + j);
         tailPos.setXYZ(v, here[0], here[1], here[2]);
         tailPos.setXYZ(v + 1, here[0], here[1], here[2]);
         tailSide.setXYZ(v, sx, sy, sz);
         tailSide.setXYZ(v + 1, sx, sy, sz);
-        tailAlpha.setX(v, a);
-        tailAlpha.setX(v + 1, a);
+        tailHalf.setX(v, 0.5 * widthPx * t ** TAIL_SHAPE.widthPow);
+        tailHalf.setX(v + 1, 0.5 * widthPx * t ** TAIL_SHAPE.widthPow);
+        tailAlpha.setX(v, ALPHA.head * t ** TAIL_SHAPE.alphaPow);
+        tailAlpha.setX(v + 1, ALPHA.head * t ** TAIL_SHAPE.alphaPow);
       }
       // The path from the release to the head: segment k joins step k and k + 1, the last ends at the head.
-      const whole = Math.floor(local);
       for (let k = 0; k <= whole; k++) {
         const end = k === whole ? head : [points[3 * k + 3], points[3 * k + 4], points[3 * k + 5]];
         if (k === whole && local === whole) break;
@@ -273,7 +283,7 @@ export function createAerosolPathsLayer(view) {
     });
     segments.geometry.setDrawRange(0, 2 * s);
     segPos.needsUpdate = segAlpha.needsUpdate = true;
-    tailPos.needsUpdate = tailSide.needsUpdate = tailAlpha.needsUpdate = true;
+    tailPos.needsUpdate = tailSide.needsUpdate = tailAlpha.needsUpdate = tailHalf.needsUpdate = true;
   }
 
   /** @param {{ salt: boolean, dust: boolean, smoke: boolean, sulfate: boolean }} next */
