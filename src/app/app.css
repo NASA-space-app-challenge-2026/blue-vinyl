@@ -151,6 +151,14 @@ html:not(.is-booted) .screen > * {
   user-select: none;
 }
 
+/* The logo is a link back to the start: a reload of the page, which opens on the onboarding again. */
+.app-title a {
+  color: inherit;
+  text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
 /* In portrait orientation, force a rotated landscape layout that completely fills the screen */
 @media screen and (orientation: portrait) {
   :root {
