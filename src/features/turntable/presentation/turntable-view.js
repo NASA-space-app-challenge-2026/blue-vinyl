@@ -659,9 +659,13 @@ export function createTurntableView(
 
   placeArm();
 
-  /** Record centre and radius in client pixels, at rest on the platter. */
-  function recordGeometry() {
-    const rect = root.getBoundingClientRect();
+  /**
+   * Record centre and radius in client pixels, at rest on the platter; or in the pixels `rectOf` measures boxes in.
+   *
+   * @param {(el: Element) => DOMRectReadOnly} [rectOf]
+   */
+  function recordGeometry(rectOf = (el) => el.getBoundingClientRect()) {
+    const rect = rectOf(root);
     return {
       x: rect.left + (-BOUNDS.left / BOUNDS.width) * rect.width,
       y: rect.top + (-BOUNDS.top / BOUNDS.height) * rect.height,

@@ -47,12 +47,16 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
   }
 
   /**
-   * Lines the neighbours up above and below the sleeve and shows them; returns the sleeve in client pixels: its centre,
-   * side, right edge (its tilted corners included) and the spacing between sleeves.
+   * Lines the neighbours up above and below the sleeve and shows them; returns the sleeve in client pixels, or in the
+   * pixels `rectOf` measures boxes in: its centre, side, right edge (its tilted corners included) and the spacing
+   * between sleeves.
+   *
+   * @param {(el: Element) => DOMRectReadOnly} [rectOf]
    */
-  function place() {
+  function place(rectOf = (el) => el.getBoundingClientRect()) {
     const { el } = sleeve;
-    spacing = window.innerHeight;
+    // The parent's height is the viewport's along the column, even on a screen turned to show it landscape.
+    spacing = parent.offsetHeight;
     for (const { place: at, cover } of neighbours) {
       Object.assign(cover.el.style, {
         left: `${el.offsetLeft}px`,
@@ -62,7 +66,7 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
       cover.el.hidden = false;
     }
     // The tilt turns the sleeve round its centre, so its bounding box keeps the centre.
-    const rect = el.getBoundingClientRect();
+    const rect = rectOf(el);
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, size: el.offsetWidth, right: rect.right, spacing };
   }
 

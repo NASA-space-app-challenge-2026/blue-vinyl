@@ -45,6 +45,7 @@ import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../feature
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
+import { rectInScreen } from '../shared/screen-space.js';
 import { createTicker } from '../shared/ticker.js';
 
 // The contiguous United States, zoomed until the label's edge is 30 degrees of arc from its middle, so the West's fires
@@ -138,7 +139,12 @@ const turntable = createTurntableView(slot('stage'), {
 // The album's credits run round the record's rim.
 const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
 
-const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
+const recordSwap = createRecordSwap({
+  recordEl: turntable.recordEl,
+  recordGeometry: turntable.recordGeometry,
+  rectOf: (el) => rectInScreen(slot('screen'), el),
+  column: albumColumn,
+});
 const globe = createGlobeView(turntable.labelSlot);
 const seaOverlay = createSeaLevelOverlay(turntable.labelSlot);
 const wildfireOverlay = createWildfireOverlay(turntable.labelSlot);
