@@ -1,6 +1,6 @@
 import { loadAerosolTrack } from '../features/tracks/data/aerosol-track-source.js';
 import { sampleAerosol } from '../features/tracks/domain/aerosol-track.js';
-import { aerosolScore } from '../features/music/domain/aerosol-score.js';
+import { aerosolCues, aerosolScore } from '../features/music/domain/aerosol-score.js';
 import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
 'use strict';
 
@@ -62,6 +62,8 @@ let totalMs;
 let trackData = [];
 let aerosolData = [];
 let allAerosolNotes = [];
+// What the globe draws of each aerosol track's music, by track index (see aerosolCues).
+let aerosolTrackCues = [];
 let aerosolToggles = { salt: true, dust: true, smoke: true, sulfate: true };
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
@@ -262,6 +264,7 @@ function showAlbum(index) {
   loadAlbumData(album);
   aerosolData = album.tracks.map(() => null);
   allAerosolNotes = [];
+  aerosolTrackCues = [];
   loadAerosolData(album);
 }
 
@@ -671,6 +674,7 @@ async function loadAerosolData(loading) {
   }
   if (album !== loading) return;
   aerosolData = data;
+  aerosolTrackCues = album.tracks.map((track, i) => (data[i] ? aerosolCues(data[i].records, track.durationSec, track) : []));
   const starts = trackBoundaries(album).map((edge) => (edge * totalMs) / 1000);
   allAerosolNotes = album.tracks.flatMap((track, i) => {
     if (!data[i]) return [];
@@ -704,18 +708,29 @@ function renderAerosol(trackIndex) {
   const data = aerosolData[trackIndex];
   if (album?.id !== 'aerosol' || !track?.aerosol || !data) {
     globe.aerosol.hide();
+    globe.aerosolJourney.hide();
     particleToggles.hide();
     return;
   }
   particleToggles.show();
   const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
+  globe.aerosol.setLead(track.aerosol.events.filter((e) => (e.level ?? 1) >= 1).map((e) => e.particle));
   globe.aerosol.render(data.frames, trackSec, track.durationSec);
+  globe.aerosolJourney.render({
+    events: track.aerosol.events,
+    records: data.records,
+    frames: data.frames,
+    cues: aerosolTrackCues[trackIndex] ?? [],
+    trackSec,
+    durationSec: track.durationSec,
+    shown: aerosolToggles,
+  });
 
   if (track.aerosol.trackEye) {
     const s = sampleAerosol(data.records, trackSec / track.durationSec);
-    if (s) focus = { lat: s.current.viewLat, lon: s.current.viewLon };
+    if (s) focus = { lat: s.current.viewLat, lon: s.current.viewLon, arcDeg: track.aerosol.arcDeg };
   } else if (track.aerosol.viewLat !== undefined) {
-    focus = { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon };
+    focus = { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon, arcDeg: track.aerosol.arcDeg };
   }
 
   if (track.color) halo.setColor(track.color);

@@ -25,6 +25,8 @@ export const AlbumCategory = Object.freeze({
  * @property {number} [viewLat] latitude of the track's view centre
  * @property {number} [viewLon] longitude of the track's view centre
  * @property {boolean} [trackEye] whether the view follows the eye of the storm
+ * @property {number} [arcDeg] degrees of arc from the view centre to the label's edge, closer than the whole globe
+ * @property {number} [tonic] pitch class of the track's minor key (0 for C, the album's key, when left out)
  * @property {AerosolEvent[]} events what the track's music follows: an event leaving its source for a distant place
  */
 
@@ -35,8 +37,12 @@ export const AlbumCategory = Object.freeze({
  * @typedef {Object} AerosolEvent
  * @property {string} id the event, which picks its motif; the same event keeps its motif across tracks
  * @property {import('../../tracks/domain/aerosol-track.js').Particle} particle
- * @property {{ lat: number, lon: number }} source
- * @property {{ lat: number, lon: number } | null} receptor null when the receptor is the view centre (Erin's eye)
+ * @property {{ lat: number, lon: number } | 'eye'} source where it starts; 'eye' is the view centre (Erin's eye)
+ * @property {{ lat: number, lon: number } | 'eye' | null} receptor where it is heading; null for an event that only
+ *   spreads from its source
+ * @property {number} [level] how loud it is against the track's lead, 1 when left out
+ * @property {'arrival'} [heard] 'arrival' plays only its arrival, not its source or journey
+ * @property {boolean} [spin] its motif turns faster as the storm's wind rises (Erin)
  */
 
 /**

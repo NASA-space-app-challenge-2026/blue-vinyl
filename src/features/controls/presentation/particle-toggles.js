@@ -5,7 +5,7 @@ const PARTICLES = [
   {
     id: 'salt',
     name: 'Sea Salt',
-    desc: "Ocean spray churned by Erin's winds (blue) · Strings, timpani at the storm's peak",
+    desc: "Ocean spray churned up by Erin's winds (blue) · Violin at the eye, strings and timpani with its winds",
     color: '#4080ff',
   },
   {

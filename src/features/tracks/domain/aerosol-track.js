@@ -14,12 +14,12 @@
  *
  * @typedef {Object} AerosolPlume
  * @property {number} sourceAod AOD near the source: how strong the event is
- * @property {number} receptorAod AOD at the receptor: what arrives there
+ * @property {number} [receptorAod] AOD at the receptor: what arrives there (none for an event without one)
  * @property {number} reachKm how far the plume has spread from the source, in any direction
  * @property {number} areaMillionKm2 the plume's area
- * @property {number} frontLat latitude of the plume's point nearest the receptor
- * @property {number} frontLon longitude of that point
- * @property {number} frontToReceptorKm from that point to the receptor
+ * @property {number} [frontLat] latitude of the plume's point nearest the receptor
+ * @property {number} [frontLon] longitude of that point
+ * @property {number} [frontToReceptorKm] from that point to the receptor
  */
 
 /**
@@ -74,7 +74,11 @@ export function parseAerosolCsv(text) {
     });
     const plumes = {};
     for (const [particle, p] of plumeParticles) {
-      plumes[particle] = Object.fromEntries(Object.entries(PLUME_COLUMNS).map(([key, col]) => [key, num(`${p}_${col}`)]));
+      plumes[particle] = Object.fromEntries(
+        Object.entries(PLUME_COLUMNS)
+          .filter(([, col]) => index.has(`${p}_${col}`))
+          .map(([key, col]) => [key, num(`${p}_${col}`)]),
+      );
     }
     return {
       time: c[index.get('time')],

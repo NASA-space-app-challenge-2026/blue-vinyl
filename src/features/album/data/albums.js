@@ -90,8 +90,16 @@ export const albums = [
           framesDir: AEROSOL_FRAMES,
           lead: 'sea_salt',
           trackEye: true,
-          // The receptor is the eye itself, the view centre.
-          events: [{ id: 'sahara', particle: 'dust', source: SAHARA, receptor: null }],
+          // Close on the storm, so its salt can be seen spiralling.
+          arcDeg: 24,
+          // In A minor, a key of its own, so it does not sound like the Saharan Dust that follows in C minor.
+          tonic: 9,
+          // The lead is the salt Erin's winds churn up at its eye (EIC: "blue spirals"), its motif turning faster as
+          // the wind rises; the dust it pulls in from Africa is heard only as it arrives at the eye.
+          events: [
+            { id: 'erin', particle: 'seaSalt', source: 'eye', receptor: null, spin: true },
+            { id: 'sahara', particle: 'dust', source: SAHARA, receptor: 'eye', level: 0.5, heard: 'arrival' },
+          ],
         },
       },
       {

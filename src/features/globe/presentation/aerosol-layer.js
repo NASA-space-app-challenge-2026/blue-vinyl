@@ -1,15 +1,19 @@
 // Renders 3-hourly atmospheric aerosol distributions as a transparent shell above the globe surface.
 // Encoded frames (PNG, 576x722) provide 4 channels (dust, sulfate, sea salt in top half; smoke & flow in bottom).
 // The WebGL shader decodes AOD values, applies EIC's color scheme, and allows toggling each particle type.
+// Each point of the shell finds its latitude and longitude from globe.gl's own axes (as the lightning sky does), not
+// from the sphere's texture coordinates, which globe.gl's globe is turned against: the data lands where it belongs.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
 
 const ALTITUDE = 0.005;
+// How bright the lead particle types and the rest are drawn (see setLead).
+const LEAD_GAIN = Object.freeze({ lead: 1.9, rest: 0.4 });
 
 const vertexShader = `
-varying vec2 vUv;
+varying vec3 vPos;
 void main() {
-  vUv = uv;
+  vPos = position;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `;
@@ -22,10 +26,20 @@ uniform float uEnableSalt;
 uniform float uEnableDust;
 uniform float uEnableSmoke;
 uniform float uEnableSulf;
+uniform vec4 uGain; // salt, dust, smoke, sulfate: the track's lead particles brighter, the rest dimmer
 uniform float uOpacity;
-varying vec2 vUv;
+uniform vec3 uNorth;
+uniform vec3 uLon0;
+uniform vec3 uLon90;
+varying vec3 vPos;
 
 void main() {
+  // The frame's coordinates at this point: x from 180° W, y from 90° S.
+  vec3 n = normalize(vPos);
+  float lat = degrees(asin(clamp(dot(n, uNorth), -1.0, 1.0)));
+  float lon = degrees(atan(dot(n, uLon90), dot(n, uLon0)));
+  vec2 vUv = vec2((lon + 180.0) / 360.0, (lat + 90.0) / 180.0);
+
   // Top half: (0..360) -> v in [0.5, 1.0]
   // Bottom half: (361..721) -> v in [0.0, 0.5]
   vec2 uvTop = vec2(vUv.x, 0.5 + 0.5 * vUv.y);
@@ -58,10 +72,10 @@ void main() {
   vec3 cSmoke = vec3(1.00, 0.45, 0.10);
   vec3 cSulf  = vec3(0.30, 1.00, 0.35);
 
-  vec3 rgb = pow(lSalt, 1.35) * cSalt * uEnableSalt
-           + pow(lDust, 1.35) * cDust * uEnableDust
-           + pow(lSmoke, 1.35) * cSmoke * uEnableSmoke
-           + pow(lSulf, 1.35) * cSulf * uEnableSulf;
+  vec3 rgb = pow(lSalt, 1.35) * cSalt * uEnableSalt * uGain.x
+           + pow(lDust, 1.35) * cDust * uEnableDust * uGain.y
+           + pow(lSmoke, 1.35) * cSmoke * uEnableSmoke * uGain.z
+           + pow(lSulf, 1.35) * cSulf * uEnableSulf * uGain.w;
 
   // Softer tone mapping and gentle alpha so it never overwhelms the globe
   vec3 color = 1.0 - exp(-1.50 * rgb);
@@ -79,6 +93,7 @@ void main() {
  */
 export function createAerosolLayer(globe) {
   const radius = globe.getGlobeRadius();
+  const unit = (lat, lng) => new THREE.Vector3().copy(globe.getCoords(lat, lng, 0)).normalize();
   const geometry = new THREE.SphereGeometry(radius * (1 + ALTITUDE), 180, 90);
 
   const emptyTex = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1, THREE.RGBAFormat);
@@ -96,13 +111,20 @@ export function createAerosolLayer(globe) {
       uEnableSmoke: { value: 1.0 },
       uEnableSulf: { value: 1.0 },
       uOpacity: { value: 1.0 },
+      uGain: { value: new THREE.Vector4(1, 1, 1, 1) },
+      uNorth: { value: unit(90, 0) },
+      uLon0: { value: unit(0, 0) },
+      uLon90: { value: unit(0, 90) },
     },
     transparent: true,
     depthWrite: false,
+    // The map's tiles bulge through a shell this close in places; its far side is culled anyway (as the lightning sky).
+    depthTest: false,
     side: THREE.FrontSide,
   });
 
   const mesh = new THREE.Mesh(geometry, material);
+  mesh.renderOrder = 1;
   mesh.frustumCulled = false;
   mesh.visible = false;
   globe.scene().add(mesh);
@@ -154,6 +176,17 @@ export function createAerosolLayer(globe) {
     material.uniforms.uEnableSulf.value = sulfate ? 1.0 : 0.0;
   }
 
+  /**
+   * Brightens the track's lead particle types and dims the rest, so what the music follows stands out: Erin's salt
+   * shows its spiral. All alike when `lead` is empty.
+   *
+   * @param {string[]} lead particle types ('seaSalt', 'dust', 'smoke', 'sulfate')
+   */
+  function setLead(lead) {
+    const gain = (particle) => (lead.length === 0 ? 1 : lead.includes(particle) ? LEAD_GAIN.lead : LEAD_GAIN.rest);
+    material.uniforms.uGain.value.set(gain('seaSalt'), gain('dust'), gain('smoke'), gain('sulfate'));
+  }
+
   function hide() {
     mesh.visible = false;
   }
@@ -161,6 +194,7 @@ export function createAerosolLayer(globe) {
   return {
     render,
     setToggles,
+    setLead,
     hide,
   };
 }

@@ -14,7 +14,7 @@
         "message": "This visualization still image highlights how our atmosphere connects distant parts of the world."
       }
     ],
-    "note": "Ours: the two weeks around EIC's still, every 3 hours. The view centre is Erin's eye, from the NHC best track. Each particle type is a stem: its amount is the AOD over the visible half of the globe, weighted cos⁴ towards the view centre; its position is the AOD-weighted centre in degrees from the view centre; its speed is total mass flux over total mass. The event columns follow one plume from its source to a distant receptor (section 9.4): dust from the Sahara to Erin's eye, threshold AOD 0.2.",
+    "note": "Ours: the two weeks around EIC's still, every 3 hours. The view centre is Erin's eye, from the NHC best track. Each particle type is a stem: its amount is the AOD over the visible half of the globe, weighted cos⁴ towards the view centre; its position is the AOD-weighted centre in degrees from the view centre; its speed is total mass flux over total mass. The event columns follow one plume from its source to a distant receptor (section 9.4): sea salt from Erin's eye, spreading, threshold AOD 0.15; dust from the Sahara to Erin's eye, threshold AOD 0.2.",
     "sources": [
       {
         "source": "NASA GMAO GEOS-FP, tavg3_2d_aer_Nx (3-hourly 2-D aerosol diagnostics, 0.25° × 0.3125°)",
@@ -195,10 +195,13 @@
       "sulfate_east_deg": "degrees east of the view centre where the sulfate in view is centred",
       "sulfate_speed_m_s": "m/s, speed of the sulfate in view (mass flux over mass)",
       "erin_wind_kt": "kt, Erin's maximum sustained wind (NHC best track, interpolated)",
+      "sea_salt_source_aod": "sea salt AOD within reach of Erin's eye (unitless)",
+      "sea_salt_reach_km": "km, 95th percentile distance from Erin's eye of the sea salt plume connected to it",
+      "sea_salt_area_million_km2": "million km², area of that plume",
       "dust_source_aod": "dust AOD within reach of the Sahara (unitless)",
-      "dust_receptor_aod": "dust AOD at the Caribbean (unitless)",
       "dust_reach_km": "km, 95th percentile distance from the Sahara of the dust plume connected to it",
       "dust_area_million_km2": "million km², area of that plume",
+      "dust_receptor_aod": "dust AOD at the Caribbean (unitless)",
       "dust_front_lat": "degrees, latitude of the plume's point nearest the Caribbean",
       "dust_front_lon": "degrees, longitude of the plume's point nearest the Caribbean",
       "dust_front_to_receptor_km": "km, from that point to the Caribbean"
@@ -395,9 +398,9 @@
       "sulfate_east_deg": "degrees east of the view centre where the sulfate in view is centred",
       "sulfate_speed_m_s": "m/s, speed of the sulfate in view (mass flux over mass)",
       "dust_source_aod": "dust AOD within reach of the Sahara (unitless)",
-      "dust_receptor_aod": "dust AOD at the Caribbean (unitless)",
       "dust_reach_km": "km, 95th percentile distance from the Sahara of the dust plume connected to it",
       "dust_area_million_km2": "million km², area of that plume",
+      "dust_receptor_aod": "dust AOD at the Caribbean (unitless)",
       "dust_front_lat": "degrees, latitude of the plume's point nearest the Caribbean",
       "dust_front_lon": "degrees, longitude of the plume's point nearest the Caribbean",
       "dust_front_to_receptor_km": "km, from that point to the Caribbean"
@@ -594,9 +597,9 @@
       "sulfate_east_deg": "degrees east of the view centre where the sulfate in view is centred",
       "sulfate_speed_m_s": "m/s, speed of the sulfate in view (mass flux over mass)",
       "smoke_source_aod": "smoke AOD within reach of Spain's fires (unitless)",
-      "smoke_receptor_aod": "smoke AOD at Britain (unitless)",
       "smoke_reach_km": "km, 95th percentile distance from Spain's fires of the smoke plume connected to it",
       "smoke_area_million_km2": "million km², area of that plume",
+      "smoke_receptor_aod": "smoke AOD at Britain (unitless)",
       "smoke_front_lat": "degrees, latitude of the plume's point nearest Britain",
       "smoke_front_lon": "degrees, longitude of the plume's point nearest Britain",
       "smoke_front_to_receptor_km": "km, from that point to Britain"
@@ -793,16 +796,16 @@
       "sulfate_east_deg": "degrees east of the view centre where the sulfate in view is centred",
       "sulfate_speed_m_s": "m/s, speed of the sulfate in view (mass flux over mass)",
       "smoke_source_aod": "smoke AOD within reach of Spain's fires (unitless)",
-      "smoke_receptor_aod": "smoke AOD at Britain (unitless)",
       "smoke_reach_km": "km, 95th percentile distance from Spain's fires of the smoke plume connected to it",
       "smoke_area_million_km2": "million km², area of that plume",
+      "smoke_receptor_aod": "smoke AOD at Britain (unitless)",
       "smoke_front_lat": "degrees, latitude of the plume's point nearest Britain",
       "smoke_front_lon": "degrees, longitude of the plume's point nearest Britain",
       "smoke_front_to_receptor_km": "km, from that point to Britain",
       "sulfate_source_aod": "sulfate AOD within reach of Etna (unitless)",
-      "sulfate_receptor_aod": "sulfate AOD at Greece (unitless)",
       "sulfate_reach_km": "km, 95th percentile distance from Etna of the sulfate plume connected to it",
       "sulfate_area_million_km2": "million km², area of that plume",
+      "sulfate_receptor_aod": "sulfate AOD at Greece (unitless)",
       "sulfate_front_lat": "degrees, latitude of the plume's point nearest Greece",
       "sulfate_front_lon": "degrees, longitude of the plume's point nearest Greece",
       "sulfate_front_to_receptor_km": "km, from that point to Greece"
