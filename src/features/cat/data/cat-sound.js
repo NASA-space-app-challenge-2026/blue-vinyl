@@ -1,48 +1,70 @@
 'use strict';
 
-const MEOW_URL = new URL('../assets/meow.mp3', import.meta.url).href;
+const SOUND_URLS = Object.freeze([
+  new URL('../assets/meow-1.mp3', import.meta.url).href,
+  new URL('../assets/meow-2.m4a', import.meta.url).href,
+  new URL('../assets/meow-3.m4a', import.meta.url).href,
+]);
 
 /**
- * Loads and plays the cat's meow sound.
- * Guarantees synchronous playback trigger during user gesture to comply with browser autoplay policies.
+ * Loads and plays cute, cheerful kitten meows.
+ * Cycles through distinct high-pitched meow samples with subtle pitch jitter.
  */
 export function createCatSound() {
   let audioContext = null;
-  let audioBuffer = null;
+  const audioBuffers = new Map();
 
-  // Pre-load via HTML Audio for instant availability
-  const preloadedAudio = new Audio(MEOW_URL);
-  preloadedAudio.preload = 'auto';
-  preloadedAudio.load();
+  // Pre-load via HTMLAudio elements for instant synchronous availability
+  SOUND_URLS.forEach((url) => {
+    const audio = new Audio(url);
+    audio.preload = 'auto';
+    audio.load();
+  });
 
-  // Also pre-fetch and decode into Web Audio buffer for smooth overlapping meows
+  // Pre-decode into Web Audio buffers for zero-latency overlapping playback
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (AudioCtx) {
       audioContext = new AudioCtx();
-      fetch(MEOW_URL)
-        .then((res) => res.arrayBuffer())
-        .then((buf) => audioContext.decodeAudioData(buf))
-        .then((decoded) => {
-          audioBuffer = decoded;
-        })
-        .catch(() => {});
+      SOUND_URLS.forEach((url) => {
+        fetch(url)
+          .then((res) => res.arrayBuffer())
+          .then((buf) => audioContext.decodeAudioData(buf))
+          .then((decoded) => {
+            audioBuffers.set(url, decoded);
+          })
+          .catch(() => {});
+      });
     }
   } catch {
-    // AudioContext not supported or blocked
+    // AudioContext blocked or unsupported
+  }
+
+  let lastIndex = -1;
+
+  function pickSoundIndex() {
+    let nextIndex;
+    do {
+      nextIndex = Math.floor(Math.random() * SOUND_URLS.length);
+    } while (nextIndex === lastIndex && SOUND_URLS.length > 1);
+    lastIndex = nextIndex;
+    return nextIndex;
   }
 
   function play() {
-    const pitch = 0.96 + Math.random() * 0.08;
+    const index = pickSoundIndex();
+    const url = SOUND_URLS[index];
+    // Bright, sweet pitch variation for cute kitten vocalization
+    const pitch = 1.02 + Math.random() * 0.08;
 
-    // If Web Audio buffer is ready and context can run, use it for zero-latency polyphony
-    if (audioContext && audioBuffer) {
+    const buffer = audioBuffers.get(url);
+    if (audioContext && buffer) {
       try {
         if (audioContext.state === 'suspended') {
           audioContext.resume().catch(() => {});
         }
         const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
+        source.buffer = buffer;
         source.playbackRate.value = pitch;
         source.connect(audioContext.destination);
         source.start(0);
@@ -52,9 +74,9 @@ export function createCatSound() {
       }
     }
 
-    // Synchronous HTML Audio fallback (always preserves User Gesture)
+    // Synchronous HTML Audio fallback
     try {
-      const audio = new Audio(MEOW_URL);
+      const audio = new Audio(url);
       audio.playbackRate = pitch;
       const playPromise = audio.play();
       if (playPromise !== undefined) {
