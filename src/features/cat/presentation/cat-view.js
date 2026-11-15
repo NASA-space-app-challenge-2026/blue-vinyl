@@ -30,6 +30,9 @@ export function createCatView(screen) {
     const widget = document.getElementById(WIDGET_ID);
     if (!widget) return;
     observer.disconnect();
+    // Only a picture, so a screen reader passes it by; it has nothing to focus. Not inert: it still fades under the
+    // mouse.
+    widget.setAttribute('aria-hidden', 'true');
     screen.append(widget);
   });
   observer.observe(document.body, { childList: true });

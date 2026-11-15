@@ -746,6 +746,7 @@ function render() {
   soundEngine.setTrackFade(fade);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex);
+  globe.describe(`Globe showing ${album.globeAlt}. Track: ${album.tracks[trackIndex].title}.`);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
   backdrop.show(trackCover(album, trackIndex).url);
   mediaCenter.setTrack({

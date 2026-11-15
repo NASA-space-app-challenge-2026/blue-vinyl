@@ -64,6 +64,9 @@ function altitudeForArc(camera, arcDeg) {
  */
 export function createGlobeView(container) {
   container.classList.add('globe-view');
+  // One picture to a screen reader, named by `describe`: the canvas, the globe's own markup and the overlays drawn on
+  // it (the moving date among them) are not read out one by one.
+  container.setAttribute('role', 'img');
   const globe = new Globe(container, { animateIn: false })
     .backgroundColor('rgba(0, 0, 0, 0)')
     .showAtmosphere(false);
@@ -352,6 +355,10 @@ export function createGlobeView(container) {
     setCloseUp,
     follow,
     glide,
+    /** @param {string} text what the globe shows now, read out by a screen reader */
+    describe(text) {
+      if (container.getAttribute('aria-label') !== text) container.setAttribute('aria-label', text);
+    },
     get gliding() {
       return glideFrame !== null;
     },

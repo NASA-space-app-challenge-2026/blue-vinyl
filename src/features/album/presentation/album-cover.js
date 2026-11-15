@@ -61,10 +61,10 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
     face.style.removeProperty('--hover-y');
   });
 
-  // Fades `url` in over the covers shown, which go once it is in; another album's cover replaces them at once. That
+  // Fades the cover at `url` (`alt` saying what it shows) in over the covers shown, which go once it is in; another album's cover replaces them at once. That
   // one is taken from `drawn` when another sleeve already shows it, else shown once decoded, so the sleeve never shows
   // a blank or half-drawn cover in between (as a phone would while the record is drawn out of it).
-  function showCover(url, fade, drawn) {
+  function showCover({ url, alt }, fade, drawn) {
     if (image?.getAttribute('src') === url && image.parentNode === face) return;
     const taken = fade ? null : drawn?.get(url);
     if (taken) {
@@ -79,7 +79,7 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
     }
     const img = el('img', 'album-cover-image');
     img.src = url;
-    img.alt = '';
+    img.alt = alt;
     img.addEventListener('error', () => img.remove());
     const removeOthers = () => face.querySelectorAll('.album-cover-image').forEach((other) => other !== img && other.remove());
     if (!fade) {
@@ -104,11 +104,13 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
    */
   function setAlbum({ album: next, index, count }, drawn) {
     album = next;
-    showCover(trackCover(album, 0).url, false, drawn);
+    showCover(trackCover(album, 0), false, drawn);
     cover.style.setProperty('--tilt', `${tiltDeg(index)}deg`);
 
-    counter.textContent = `${index + 1} / ${count}`;
-    counter.setAttribute('aria-label', `Album ${index + 1} of ${count}`);
+    // "1 / 9" would be read out as "1 slash 9".
+    const shown = el('span', '', `${index + 1} / ${count}`);
+    shown.setAttribute('aria-hidden', 'true');
+    counter.replaceChildren(shown, el('span', 'visually-hidden', `Album ${index + 1} of ${count}`));
 
     const list = el('ol', 'album-cover-tracks');
     list.setAttribute('aria-label', 'Tracks');
@@ -132,7 +134,7 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
 
   /** @param {number} activeTrackIndex */
   function render(activeTrackIndex) {
-    showCover(trackCover(album, activeTrackIndex).url, true);
+    showCover(trackCover(album, activeTrackIndex), true);
     items.forEach((item, i) => item.classList.toggle('is-active', i === activeTrackIndex));
     buttons.forEach((button, i) => {
       if (i === activeTrackIndex) button.setAttribute('aria-current', 'true');
