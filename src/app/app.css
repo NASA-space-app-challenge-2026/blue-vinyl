@@ -83,11 +83,12 @@ body {
   transform: translateX(-50%);
 }
 
-/* The app's name in the top left corner, in a retro script like the name on a record label: warm cream lit from above,
-   tilted up a little as if signed. */
+/* The app's name in the top left corner, in a retro script like the name on a record label, warm cream lit from above.
+   The gradient only paints inside the box, so the padding leaves room for the script's swashes, which reach past the
+   letters (the last l's tail most of all). */
 .app-title {
   margin: 0;
-  padding: 0 0.15em 0.1em;
+  padding: 0.1em 0.5em 0.2em 0.15em;
   font-family: var(--font-title);
   font-size: clamp(26px, 2.4vw, 38px);
   font-weight: 400;
@@ -98,8 +99,6 @@ body {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.45));
-  transform: rotate(-4deg);
-  transform-origin: left center;
   pointer-events: none;
   user-select: none;
 }
