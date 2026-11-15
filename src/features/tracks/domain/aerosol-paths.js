@@ -5,10 +5,8 @@
 /** The most particles a track draws; the notebook keeps to it and so does the loader. */
 export const MAX_PARTICLES = 30;
 
-/**
- * How many steps of its path (3 hours each) a particle draws behind its head.
- */
-export const TAIL_STEPS = 24;
+/** How many steps of its path (3 hours each) a particle draws behind its head, and a track's lead particle (`hero`). */
+export const TAIL_STEPS = Object.freeze({ crowd: 24, hero: 48 });
 
 /**
  * @typedef {'seaSalt' | 'dust' | 'smoke' | 'sulfate'} AerosolParticle
@@ -17,6 +15,7 @@ export const TAIL_STEPS = 24;
 /**
  * @typedef {Object} AerosolParticlePath
  * @property {AerosolParticle} particle
+ * @property {boolean} [hero] the lead particle of its type on the track: the one that travels farthest
  * @property {number} release the step the particle is released at (a step is a row of the track's CSV)
  * @property {[number, number][]} path latitude and longitude of every step from the release; the longitude does not
  *   jump across the date line
@@ -48,10 +47,10 @@ function pointAt(path, at) {
  * @param {number} step the track's time in steps, with a fraction between two of them
  * @returns {[number, number][] | null}
  */
-export function visiblePath({ release, path }, step) {
+export function visiblePath({ release, path, hero }, step) {
   const local = step - release;
   const head = Math.min(local, path.length - 1);
-  const tail = Math.max(0, local - TAIL_STEPS);
+  const tail = Math.max(0, local - (hero ? TAIL_STEPS.hero : TAIL_STEPS.crowd));
   if (local <= 0 || tail >= head) return null;
   const points = [pointAt(path, tail)];
   for (let i = Math.floor(tail) + 1; i <= Math.floor(head); i++) points.push(path[i]);
