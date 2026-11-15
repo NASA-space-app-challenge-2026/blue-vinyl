@@ -78,40 +78,6 @@ export function parseNoonLine(csv) {
   };
 }
 
-/**
- * @typedef {Object} AirMonths  the global CO₂ of each month GEDI drew the canopy map in (April 2019 to March 2023)
- * @property {{ month: string, ppm: number }[]} months  `YYYY-MM`, in order
- * @property {number} min  the thinnest month (ppm)
- * @property {number} max  the thickest month (ppm)
- */
-
-/**
- * @param {string} csv  `month,xco2_ppm`
- * @returns {AirMonths}
- */
-export function parseAirMonths(csv) {
-  const months = csv.trim().split('\n').slice(1).map((line) => {
-    const [month, ppm] = line.split(',');
-    return { month, ppm: Number(ppm) };
-  });
-  const ppms = months.map(({ ppm }) => ppm);
-  return { months, min: Math.min(...ppms), max: Math.max(...ppms) };
-}
-
-/**
- * The air at a fractional step of the line: the months are laid evenly over one turn, so the line goes round once
- * while GEDI's four years go by. `thickness` is 0 in the window's thinnest month to 1 in its thickest.
- *
- * @param {AirMonths} air
- * @param {number} lineStep
- */
-export function airAt(air, lineStep) {
-  const { months, min, max } = air;
-  const i = Math.min(months.length - 1, Math.max(0, Math.floor((lineStep / LINE_STEPS) * months.length)));
-  const { month, ppm } = months[i];
-  return { month, ppm, thickness: max > min ? (ppm - min) / (max - min) : 0 };
-}
-
 /** Longitude of the noon line at a fractional step of the line (0 at the date line, LINE_STEPS once round). */
 export function lineLonAt(lineStep) {
   return START_LON - Math.max(0, Math.min(LINE_STEPS, lineStep));

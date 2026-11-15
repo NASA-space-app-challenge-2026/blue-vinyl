@@ -1,10 +1,9 @@
-// A forest track on the globe: the GEDI canopy map as trees, big and small, lit by the noon sun, a CO₂ field floating above it
-// as a faint haze (warmer as the air of GEDI's four years thickens), the noon meridian moving west, and a note of light wherever
-// the music strikes one: each forest voice glows at the forest it is playing, in its own colour, and lets a few motes
+// A forest track on the globe: the GEDI canopy map as trees, big and small, lit by the noon sun, the noon meridian
+// moving west, and a note of light wherever the music strikes one: each forest voice glows at the forest it is playing, in its own colour, and lets a few motes
 // of pollen rise from there.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
-import { BAND_LATS, Band, LINE_STEPS, airAt, lineLonAt, lineStepAt } from '../../tracks/domain/noon-line.js';
+import { BAND_LATS, Band, LINE_STEPS, lineLonAt, lineStepAt } from '../../tracks/domain/noon-line.js';
 import { forestNotesAt } from '../../music/domain/composers/noon.js';
 import { createGrowingTree } from './tree-sprites.js';
 
@@ -65,41 +64,6 @@ const VOICE_COLORS = Object.freeze({
 const LIGHT_HEART = '#fff1cf';
 // Steps a frame may jump and still have each one's notes shown (more is a seek).
 const MAX_STEPS_A_FRAME = 4;
-// CO₂ map is 1°, the mean of GEDI's window; the range it is coloured over (ppm), round that window's spread.
-const AIR_CELL_DEG = 1;
-const AIR_PPM = Object.freeze({ low: 409, high: 418 });
-const AIR_ALT = Object.freeze({ low: 0.014, high: 0.04 });
-const AIR_FOOTPRINT = 0.92;
-
-const airVertex = `
-attribute float aShare;
-varying float vShare;
-varying float vAcross;
-void main() {
-  vShare = aShare;
-  vAcross = max(abs(position.x), abs(position.y));
-  gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
-}`;
-
-const airFragment = `
-uniform float uAirThick;
-varying float vShare;
-varying float vAcross;
-void main() {
-  // The window's thinnest month: a faint cool veil. Its thickest: a warmer, denser one, still thin enough to see the
-  // forest through.
-  // Colours are sRGB, as picked; the shader works in linear light.
-  vec3 cool = pow(vec3(0.42, 0.62, 0.95), vec3(2.2));
-  vec3 warm = pow(vec3(1.0, 0.52, 0.36), vec3(2.2));
-  float thick = clamp(uAirThick, 0.0, 1.0);
-  vec3 color = mix(cool, warm, mix(vShare * 0.35, 0.55 + vShare * 0.45, thick));
-  float edge = 1.0 - smoothstep(0.3, 0.5, vAcross);
-  float alpha = edge * mix(0.05, 0.22, thick) * mix(0.6, 1.0, vShare);
-  if (alpha < 0.01) discard;
-  gl_FragColor = vec4(color, alpha);
-  #include <colorspace_fragment>
-}`;
-
 const meridianVertex = `
 varying float vAlong;
 varying float vAcross;
@@ -284,7 +248,6 @@ function mapTrees(map) {
  */
 export function createNoonLayer(view) {
   let trees = [];
-  let airMesh = null;
   let meridian = null;
   let canopyMap = null;
   let lights = null;
@@ -299,14 +262,13 @@ export function createNoonLayer(view) {
     m.material.dispose();
   }
 
-  /** Takes the forest and air off the globe and, for `song`, puts them and the noon meridian on. */
+  /** Takes the forest off the globe and, for `song`, puts them and the noon meridian on. */
   function reset(song, color) {
     for (const tree of trees) unplant(tree);
     trees = [];
-    disposeMesh(airMesh);
     disposeMesh(meridian);
     disposeMesh(lights);
-    airMesh = meridian = lights = null;
+    meridian = lights = null;
     canopyMap = null;
     nextLight = 0;
     lastNoteStep = null;
@@ -314,8 +276,6 @@ export function createNoonLayer(view) {
     if (!song) return;
     canopyMap = song.map;
     trees = pickTrees(song.map);
-    airMesh = buildAir(song.airMap);
-    view.globe.scene().add(airMesh);
     meridian = buildMeridian(color);
     view.globe.scene().add(meridian);
     lights = buildLights();
@@ -500,62 +460,6 @@ export function createNoonLayer(view) {
     growFrame = requestAnimationFrame(frame);
   }
 
-  function buildAir(airMap) {
-    const { width, height, ppm } = airMap;
-    const cells = [];
-    const span = AIR_PPM.high - AIR_PPM.low;
-    for (let row = 0; row < height; row++) {
-      for (let col = 0; col < width; col++) {
-        const value = ppm[row * width + col];
-        if (!(value > 0)) continue;
-        const share = Math.min(1, Math.max(0, (value - AIR_PPM.low) / span));
-        cells.push({
-          lat: 90 - (row + 0.5) * AIR_CELL_DEG,
-          lon: -180 + (col + 0.5) * AIR_CELL_DEG,
-          share,
-          alt: AIR_ALT.low + share * (AIR_ALT.high - AIR_ALT.low),
-        });
-      }
-    }
-    const n = cells.length;
-    const geometry = new THREE.PlaneGeometry(1, 1);
-    const material = new THREE.ShaderMaterial({
-      vertexShader: airVertex,
-      fragmentShader: airFragment,
-      uniforms: { uAirThick: { value: 0 } },
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-    });
-    const field = new THREE.InstancedMesh(geometry, material, n);
-    const unitsPerDeg = (view.globe.getGlobeRadius() * Math.PI) / 180;
-    const widthM = AIR_CELL_DEG * AIR_FOOTPRINT * unitsPerDeg;
-    const pole = new THREE.Vector3(0, 1, 0);
-    const up = new THREE.Vector3();
-    const east = new THREE.Vector3();
-    const north = new THREE.Vector3();
-    const matrix = new THREE.Matrix4();
-    const shares = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const cell = cells[i];
-      const { x, y, z } = view.globe.getCoords(cell.lat, cell.lon, cell.alt);
-      up.set(x, y, z).normalize();
-      east.crossVectors(pole, up).normalize();
-      if (east.lengthSq() < 1e-8) east.set(1, 0, 0).addScaledVector(up, -up.x).normalize();
-      north.crossVectors(up, east);
-      const across = widthM * Math.cos((cell.lat * Math.PI) / 180);
-      matrix.makeBasis(east.multiplyScalar(across), north.multiplyScalar(widthM), up.clone());
-      matrix.setPosition(x, y, z);
-      field.setMatrixAt(i, matrix);
-      shares[i] = cell.share;
-    }
-    geometry.setAttribute('aShare', new THREE.InstancedBufferAttribute(shares, 1));
-    field.frustumCulled = false;
-    field.renderOrder = 2;
-    return field;
-  }
-
   function buildMeridian(color) {
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(MERIDIAN_SAMPLES * 2 * 3);
@@ -610,7 +514,7 @@ export function createNoonLayer(view) {
   }
 
   /**
-   * @param {{ map: Object, airMap: Object, air: import('../../tracks/domain/noon-line.js').AirMonths, line: Object }} song
+   * @param {{ map: Object, line: Object }} song
    * @param {number} step
    * @param {boolean} [playing]  whether the music is playing, so notes are heard and lit
    */
@@ -629,7 +533,6 @@ export function createNoonLayer(view) {
       }
       if (tree.sprite) tree.sprite.material.color.setScalar(sunAt(tree.lat, tree.lon, headLon));
     }
-    if (airMesh) airMesh.material.uniforms.uAirThick.value = airAt(song.air, lineStep).thickness;
     placeMeridian(headLon);
     meridian.visible = true;
 

@@ -3,16 +3,13 @@
 //
 //   voices: north (23–52° N) on flute; tropics on the track's lead (harp); south on
 //     pizzicato. Height sets pitch and loudness; density sets rhythm.
-//   the air: GEDI drew its map from April 2019 to March 2023, and those 48 months of global CO₂ go by over the turn.
-//     The pad fills in and swells as the air thickens (dipping each northern summer), and a low cello joins it in
-//     the thicker half.
 //   landmarks: the sea is a wave; a bell marks each continent; a woodblock ticks every 30°.
 //   legend (the first track): ten bars that explain the mappings while the line is already moving.
 //
 // D dorian in 3/4 at 120 beats a minute: a step is a sixteenth (noon-line.js STEP_SEC) and a degree of longitude.
 
 import { Instrument } from '../instruments.js';
-import { Band, LEGEND_STEPS, LINE_STEPS, REGIONS, STEP_SEC, airAt, bandAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
+import { Band, LEGEND_STEPS, LINE_STEPS, REGIONS, STEP_SEC, bandAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
 
 const STEPS_PER_BAR = 12;
 const SCALE = [0, 2, 3, 5, 7, 9, 10]; // D dorian, above D
@@ -35,16 +32,6 @@ const SEA = Object.freeze({ note: 60, velocity: 45 });
 const TICK = Object.freeze({ everyDeg: 30, note: 76, velocity: 50, loudAtStart: 80 });
 const BELL_NOTES = Object.freeze([62, 69, 65, 72, 67]);
 const BELL_VELOCITY = 85;
-// The air: an open fifth on D (D3, A3), adding F3, C4 and E4 as the month's CO₂ passes a quarter, half and three
-// quarters of the window's range; louder the thicker. A cello D2 under the thicker half.
-const AIR = Object.freeze({
-  pad: Object.freeze([[50, 0], [57, 0], [53, 0.25], [60, 0.5], [64, 0.75]]),
-  padVelocity: Object.freeze([30, 88]),
-  cello: 38,
-  celloFrom: 0.5,
-  celloVelocity: Object.freeze([45, 80]),
-});
-
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -87,11 +74,9 @@ export class NoonComposer {
     Instrument.HARP,
     Instrument.PIZZICATO,
     Instrument.FLUTE,
-    Instrument.CELLO,
     Instrument.SEASHORE,
     Instrument.TUBULAR_BELLS,
     Instrument.WOODBLOCK,
-    Instrument.PAD,
   ]);
 
   stepSec = STEP_SEC;
@@ -99,8 +84,7 @@ export class NoonComposer {
 
   /**
    * @param {{ line: import('../../../tracks/domain/noon-line.js').NoonLine,
-   *   air: import('../../../tracks/domain/noon-line.js').AirMonths, lead: Object,
-   *   legend: boolean }} song
+   *   lead: Object, legend: boolean }} song
    */
   setSong(song) {
     this.song = song;
@@ -116,19 +100,9 @@ export class NoonComposer {
   playStep(music, { time, at }) {
     const step = Math.round(time / 1000 / STEP_SEC);
     if (step < 0 || step >= LINE_STEPS) return;
-    if (step % STEPS_PER_BAR === 0) this.playAir(music, step, at);
     // The noon line and the globe move from step 0; the legend (if any) only explains on top.
     if (this.song.legend && step < LEGEND_STEPS) this.playLegend(music, step, at);
     this.playLine(music, step, at);
-  }
-
-  playAir(music, step, at) {
-    const { thickness } = airAt(this.song.air, step);
-    const lerp = ([low, high]) => low + thickness * (high - low);
-    for (const [midi, from] of AIR.pad) {
-      if (thickness >= from) music.note(Instrument.PAD, midi, lerp(AIR.padVelocity), at, STEPS_PER_BAR);
-    }
-    if (thickness >= AIR.celloFrom) music.note(Instrument.CELLO, AIR.cello, lerp(AIR.celloVelocity), at, STEPS_PER_BAR);
   }
 
   playLine(music, lineStep, at) {
