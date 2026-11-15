@@ -18,7 +18,10 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.m
 // Under the storm's clouds (0.008), above the ice.
 const ALTITUDE = 0.006;
 // Changes ease in with this time constant, so a new year or day spreads the fire instead of jumping.
-const EASE_SEC = Object.freeze({ scar: 0.25, heat: 0.18, fade: 0.2 });
+const EASE_SEC = Object.freeze({ scar: 0.25, fade: 0.2 });
+// Track 2: a day's scar and heat ease in with a time constant of this share of its beat, so they are 95% there by the
+// next day, as its notes are.
+const DAY_EASE_SHARE = 1 / 3;
 const MAX_FRAME_SEC = 0.1;
 
 // The scar's radius is EXAGGERATION times a circle of the fire's area; each fire's mesh reaches up to FIRE_CAP radians,
@@ -322,6 +325,8 @@ export function createFiresLayer({ globe }) {
   /** Track 1's fires of the year shown, and of the year before while they fade. @type {Set<FireEntry>} */
   const yearFires = new Set();
   let shownYear = null;
+  // Track 2: the time constant each day's change eases in with.
+  let dayEaseSec = 0;
   // Track 1: the track's clock (s), so each fire lights when its pluck sounds, through seeks and pauses.
   let trackClock = () => 0;
 
@@ -359,8 +364,8 @@ export function createFiresLayer({ globe }) {
 
     for (const fire of seasonFires.values()) {
       if (!fire.shown) continue;
-      fire.scar = ease(fire.scar, fire.target.scar, dt, EASE_SEC.scar);
-      fire.heat = ease(fire.heat, fire.target.heat, dt, EASE_SEC.heat);
+      fire.scar = ease(fire.scar, fire.target.scar, dt, dayEaseSec);
+      fire.heat = ease(fire.heat, fire.target.heat, dt, dayEaseSec);
       drawShown(fire);
     }
 
@@ -451,8 +456,10 @@ export function createFiresLayer({ globe }) {
    *   mode: 'season',
    *   day: number,
    *   fires: import('../../tracks/domain/wildfire-series.js').WildfireFire[],
+   *   beatSec: number,
    * }} next null takes the fires off the globe. `year` names the year shown (a new one lights its fires anew);
-   *   its fires light through its bar, `spanSec` from `startSec` on the track's `clock` (s).
+   *   its fires light through its bar, `spanSec` from `startSec` on the track's `clock` (s). `beatSec` is how long a
+   *   day lasts.
    */
   function show(next) {
     if (!next) {
@@ -466,8 +473,10 @@ export function createFiresLayer({ globe }) {
     if (next.mode === 'annual') {
       trackClock = next.clock;
       showYear(next.year, next.fires, next.startSec, next.spanSec);
+    } else {
+      dayEaseSec = next.beatSec * DAY_EASE_SHARE;
+      showDay(next.day, next.fires);
     }
-    else showDay(next.day, next.fires);
     start();
   }
 

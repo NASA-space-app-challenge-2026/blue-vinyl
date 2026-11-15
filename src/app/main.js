@@ -1040,7 +1040,7 @@ function renderWildfire(data, trackIndex) {
   }
 
   const day = data.days[at];
-  globe.showFires({ mode: 'season', day: at, fires: data.fires });
+  globe.showFires({ mode: 'season', day: at, fires: data.fires, beatSec: WILDFIRE_DAY_TIMELINE.beatSec });
   // The date itself is on the date label.
   wildfireOverlay.render({
     detail: `${Math.round(day.areaKm2).toLocaleString('en')} km² active · ${day.nFires} large fires`,
