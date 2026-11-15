@@ -1,7 +1,7 @@
 // The particles of an aerosol track on the globe (see tracks/domain/aerosol-paths.js): each one the path the wind has
-// carried it along, faint, with its last TAIL_STEPS brighter toward the head, all in its particle type's own colour (EIC's, as the shell). All the track's particles are drawn in two
-// meshes, one of dots and one of path segments, so a hundred of them cost the same as one. Only the lead particle
-// (`hero`) has a dot at its head, circled.
+// carried it along, faint, with its last TAIL_STEPS brighter toward the head, all in its particle type's own colour
+// (EIC's, as the shell). All the track's particles are drawn in one mesh of path segments, so a couple of hundred of
+// them cost the same as one. Only the lead particle (`hero`) is marked: a disc in its colour with a white edge.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
 import { TAIL_STEPS } from '../../tracks/domain/aerosol-paths.js';
@@ -15,9 +15,8 @@ const PARTICLE = Object.freeze({
 });
 // Lifted a little off the surface, as the comet tails are.
 const ALTITUDE = 0.003;
-// A dot's size and the circle round the lead one, in pixels.
-const DOT_PX = 4;
-const RING_PX = 30;
+// The lead particle's marker, in pixels across.
+const MARKER_PX = 30;
 // A path's opacity: this far behind the head, and at the head; the tail fades from the one to the other.
 const ALPHA = Object.freeze({ path: 0.15, head: 0.9 });
 
@@ -35,28 +34,8 @@ void main() {
   gl_FragColor = vec4(color, vAlpha);
   #include <colorspace_fragment>
 }`;
-const dotVertex = `
-attribute float alpha;
-uniform float size;
-varying float vAlpha;
-void main() {
-  vAlpha = alpha;
-  gl_PointSize = size;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}`;
-// A soft round dot.
-const dotFragment = `
-uniform vec3 color;
-varying float vAlpha;
-void main() {
-  float d = length(gl_PointCoord - 0.5) * 2.0;
-  if (d > 1.0) discard;
-  gl_FragColor = vec4(color, vAlpha * (1.0 - d * d));
-  #include <colorspace_fragment>
-}`;
-
-/** A ring in `color` with a dark halo, so it reads on dark and on bright air. */
-function ringTexture(color) {
+/** A disc filled with `color` and edged in white, with a dark halo, so it reads on dark and on bright air. */
+function markerTexture(color) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 64;
   const ctx = canvas.getContext('2d');
@@ -65,10 +44,12 @@ function ringTexture(color) {
   halo.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = halo;
   ctx.fillRect(0, 0, 64, 64);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 3.5;
   ctx.beginPath();
-  ctx.arc(32, 32, 22, 0, 2 * Math.PI);
+  ctx.arc(32, 32, 21, 0, 2 * Math.PI);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 3;
   ctx.stroke();
   return new THREE.CanvasTexture(canvas);
 }
@@ -82,21 +63,20 @@ export function createAerosolPathsLayer(view) {
   let shownPaths = null;
   let shownStep = 0;
   let toggles = { salt: true, dust: true, smoke: true, sulfate: true };
-  // Built for one set of paths: where each particle is at every step (x, y, z), the meshes and the ring.
+  // Built for one set of paths: where each particle is at every step (x, y, z), the path mesh and the marker.
   let xyz = [];
   let segments = null;
-  let dots = null;
-  let ring = null;
+  let marker = null;
 
   function clear() {
-    for (const object of [segments, dots, ring]) {
+    for (const object of [segments, marker]) {
       if (!object) continue;
       globe.scene().remove(object);
       object.geometry?.dispose();
       object.material.map?.dispose();
       object.material.dispose();
     }
-    segments = dots = ring = null;
+    segments = marker = null;
     xyz = [];
     shownPaths = null;
   }
@@ -120,24 +100,10 @@ export function createAerosolPathsLayer(view) {
       new THREE.ShaderMaterial({ uniforms: { color: { value: new THREE.Color(color) } }, vertexShader: lineVertex, fragmentShader: lineFragment, transparent: true, depthWrite: false }),
     );
     segments.frustumCulled = false;
-    const dotGeometry = new THREE.BufferGeometry();
-    dotGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(paths.length * 3), 3));
-    dotGeometry.setAttribute('alpha', new THREE.BufferAttribute(new Float32Array(paths.length), 1));
-    dots = new THREE.Points(
-      dotGeometry,
-      new THREE.ShaderMaterial({
-        uniforms: { color: { value: new THREE.Color(color) }, size: { value: DOT_PX * globe.renderer().getPixelRatio() } },
-        vertexShader: dotVertex,
-        fragmentShader: dotFragment,
-        transparent: true,
-        depthWrite: false,
-      }),
-    );
-    dots.frustumCulled = false;
-    ring = new THREE.Sprite(new THREE.SpriteMaterial({ map: ringTexture(color), depthWrite: false, depthTest: false, transparent: true }));
-    ring.renderOrder = 4;
-    ring.visible = false;
-    globe.scene().add(segments, dots, ring);
+    marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTexture(color), depthWrite: false, depthTest: false, transparent: true }));
+    marker.renderOrder = 4;
+    marker.visible = false;
+    globe.scene().add(segments, marker);
   }
 
   const lerp3 = (points, at, out) => {
@@ -162,26 +128,19 @@ export function createAerosolPathsLayer(view) {
     }
     shownStep = step;
     const on = toggles[PARTICLE[paths[0].particle].toggle];
-    segments.visible = dots.visible = on;
-    ring.visible = false;
+    segments.visible = on;
+    marker.visible = false;
     if (!on) return;
 
     const segPos = segments.geometry.attributes.position;
     const segAlpha = segments.geometry.attributes.alpha;
-    const dotPos = dots.geometry.attributes.position;
-    const dotAlpha = dots.geometry.attributes.alpha;
     const head = [0, 0, 0];
     let s = 0;
     paths.forEach((particle, i) => {
       const local = Math.min(step - particle.release, particle.path.length - 1);
-      if (local < 0) {
-        dotAlpha.setX(i, 0);
-        return;
-      }
+      if (local < 0) return;
       const points = xyz[i];
       lerp3(points, local, head);
-      dotPos.setXYZ(i, head[0], head[1], head[2]);
-      dotAlpha.setX(i, particle.hero ? ALPHA.head : 0);
       // The path from the release to the head: segment k joins step k and k + 1, the last ends at the head.
       const whole = Math.floor(local);
       for (let k = 0; k <= whole; k++) {
@@ -196,13 +155,13 @@ export function createAerosolPathsLayer(view) {
       }
       if (particle.hero) {
         const [x, y, z] = head;
-        ring.position.set(x, y, z);
-        ring.scale.setScalar(RING_PX * view.unitsPerPx());
-        ring.visible = true;
+        marker.position.set(x, y, z);
+        marker.scale.setScalar(MARKER_PX * view.unitsPerPx());
+        marker.visible = true;
       }
     });
     segments.geometry.setDrawRange(0, 2 * s);
-    segPos.needsUpdate = segAlpha.needsUpdate = dotPos.needsUpdate = dotAlpha.needsUpdate = true;
+    segPos.needsUpdate = segAlpha.needsUpdate = true;
   }
 
   /** @param {{ salt: boolean, dust: boolean, smoke: boolean, sulfate: boolean }} next */
