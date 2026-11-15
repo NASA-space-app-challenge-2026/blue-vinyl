@@ -91,6 +91,28 @@ function smogTrack(title, file, durationSec, loop, cover, coverCredit, coverAlt)
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
   {
+    id: 'forest',
+    category: AlbumCategory.BIODIVERSITY,
+    title: 'The Forest Chorus',
+    coverUrl: `${FOREST_COVERS}/cover.jpg`,
+    coverCredit: 'Cover: SVS 4950, GEDI forest height · NASA Scientific Visualization Studio',
+    coverAlt: 'A globe centred on Africa with its forests raised in green by the height of their canopy, measured from space by GEDI',
+    globeAlt: "the world's forests by the height of their canopy, as the Earth turns once under the noon line",
+    dataCredit: 'Data: GEDI L3 (UMD, ORNL DAAC) via NASA GIBS · EIC 14696',
+    // One turn of the Earth under the noon line over GEDI's map (see notebooks/forest_album.ipynb, section 8).
+    tracks: [
+      {
+        title: 'Under the Noon Sun · 2019–2023',
+        durationSec: FOREST_LINE_SEC,
+        forest: {
+          lineUrl: `${FOREST_TRACKS}/forest_noon_line.csv`,
+          mapUrl: `${FOREST_TRACKS}/canopy_height_quarter_degree.png`,
+        },
+        color: '#8ecf7a',
+      },
+    ],
+  },
+  {
     id: 'arctic-bird',
     category: AlbumCategory.BIODIVERSITY,
     title: 'A Year on the Wing',
@@ -127,48 +149,6 @@ export const albums = [
     ],
   },
   {
-    id: 'glacier',
-    category: AlbumCategory.CLIMATE,
-    title: 'As the Ice Melts',
-    coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
-    coverCredit: 'NASA Scientific Visualization Studio',
-    globeAlt: 'the sea ice round one pole shrinking year after year, while the global sea level rises',
-    dataCredit: 'Data: NSIDC Sea Ice Index v4 · NOAA Laboratory for Satellite Altimetry',
-    // Close in on the pole, the ice large in the middle.
-    globeLens: GlobeLens.WIDE,
-    tracks: [
-      {
-        title: 'Arctic',
-        durationSec: POLAR_TRACK_SEC,
-        // Each track shows its own pole at its smallest ice of 2024, from the SVS page the track's ice comes from.
-        coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
-        coverCredit: 'Cover: SVS 5382, Arctic sea ice, Sep 11 2024',
-        coverAlt: 'Satellite view of the Arctic sea ice at its September 2024 low, a white cap on the dark ocean between Greenland and northern Canada',
-        iceSea: {
-          csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
-          shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
-          poleLat: 90,
-          // The ice on a vibraphone.
-          iceVoice: IceVoice.VIBRAPHONE,
-        },
-      },
-      {
-        title: 'Antarctic',
-        durationSec: POLAR_TRACK_SEC,
-        coverUrl: `${GLACIER_COVERS}/antarctic.jpg`,
-        coverCredit: 'Cover: SVS 5064, Antarctic sea ice, Feb 20 2024',
-        coverAlt: 'Satellite view of Antarctica in February 2024, the white continent ringed by only a thin edge of sea ice in the dark Southern Ocean',
-        iceSea: {
-          csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,
-          shapesUrl: `${GLACIER_DATA}/antarctic_february_sea_ice_extent.geojson`,
-          poleLat: -90,
-          // The ice on a piano, so the two tracks are told apart.
-          iceVoice: IceVoice.PIANO,
-        },
-      },
-    ],
-  },
-  {
     id: 'lightning',
     category: AlbumCategory.EXTREME_WEATHER,
     title: 'Lightning Crosses the Equator',
@@ -193,28 +173,6 @@ export const albums = [
         coverUrl: `${LIGHTNING_COVERS}/asia_australia.jpg`, coverCredit: 'Photo: ISS Expedition 49 crew, thunderstorms over South East Asia, cropped',
         coverAlt: 'Night view from the International Space Station of a thunderstorm flashing over South East Asia, city lights below and a docked spacecraft in front',
         lightning: { tracksDir: EXTREME_WEATHER_TRACKS, file: 'asia_australia_2021.csv', north: NorthInstrument.DULCIMER, south: SouthInstrument.MELODIC_TOM },
-      },
-    ],
-  },
-  {
-    id: 'forest',
-    category: AlbumCategory.BIODIVERSITY,
-    title: 'The Forest Chorus',
-    coverUrl: `${FOREST_COVERS}/cover.jpg`,
-    coverCredit: 'Cover: SVS 4950, GEDI forest height · NASA Scientific Visualization Studio',
-    coverAlt: 'A globe centred on Africa with its forests raised in green by the height of their canopy, measured from space by GEDI',
-    globeAlt: "the world's forests by the height of their canopy, as the Earth turns once under the noon line",
-    dataCredit: 'Data: GEDI L3 (UMD, ORNL DAAC) via NASA GIBS · EIC 14696',
-    // One turn of the Earth under the noon line over GEDI's map (see notebooks/forest_album.ipynb, section 8).
-    tracks: [
-      {
-        title: 'Under the Noon Sun · 2019–2023',
-        durationSec: FOREST_LINE_SEC,
-        forest: {
-          lineUrl: `${FOREST_TRACKS}/forest_noon_line.csv`,
-          mapUrl: `${FOREST_TRACKS}/canopy_height_quarter_degree.png`,
-        },
-        color: '#8ecf7a',
       },
     ],
   },
@@ -266,49 +224,70 @@ export const albums = [
     ],
   },
   {
-    id: 'hemispheres',
+    id: 'glacier',
     category: AlbumCategory.CLIMATE,
-    title: 'Mirror Storms',
-    coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
-    coverCredit: 'Public domain, via Wikimedia Commons',
-    globeAlt: 'every storm of one 2023 storm season in one ocean, each where it formed and the path it took',
-    dataCredit: STORMS_CREDIT,
-    // Two storm seasons around 2023, the year the oceans ran hottest on record, every storm of each: one northern ocean
-    // and one southern (see docs/albums/hemispheres.md). Each cover is one of the season's strongest storms.
+    title: 'As the Ice Melts',
+    coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
+    coverCredit: 'NASA Scientific Visualization Studio',
+    globeAlt: 'the sea ice round one pole shrinking year after year, while the global sea level rises',
+    dataCredit: 'Data: NSIDC Sea Ice Index v4 · NOAA Laboratory for Satellite Altimetry',
+    // Close in on the pole, the ice large in the middle.
+    globeLens: GlobeLens.WIDE,
     tracks: [
       {
-        title: 'North Atlantic 2023',
-        durationSec: seasonDurationSec(SEASON_SPANS.atlantic),
-        color: '#7fc4e8',
-        coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
-        coverCredit: 'Cover: Hurricane Lee, Sep 2023, MODIS (NASA GSFC)',
-        coverAlt: 'Satellite image of Hurricane Lee in September 2023, a bright round storm over the Atlantic east of Puerto Rico',
-        season: {
-          url: `${HEMISPHERES_DATA}/atlantic_2023.csv`,
-          span: SEASON_SPANS.atlantic,
-          hemisphere: Hemisphere.NORTH,
-          lead: Lead.WHISTLE,
-          focus: { lat: 24, lon: -59, arcDeg: NORTHERN_ARC_DEG },
+        title: 'Arctic',
+        durationSec: POLAR_TRACK_SEC,
+        // Each track shows its own pole at its smallest ice of 2024, from the SVS page the track's ice comes from.
+        coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
+        coverCredit: 'Cover: SVS 5382, Arctic sea ice, Sep 11 2024',
+        coverAlt: 'Satellite view of the Arctic sea ice at its September 2024 low, a white cap on the dark ocean between Greenland and northern Canada',
+        iceSea: {
+          csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
+          shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
+          poleLat: 90,
+          // The ice on a vibraphone.
+          iceVoice: IceVoice.VIBRAPHONE,
         },
       },
       {
-        // The southern summer of 2023, January to April, when Freddy crossed the whole ocean in the longest life of
-        // any tropical cyclone on record.
-        title: 'South Indian 2023',
-        durationSec: seasonDurationSec(SEASON_SPANS.southIndian),
-        color: '#b29ae6',
-        coverUrl: `${HEMISPHERES_COVERS}/cyclone_freddy_2023.jpg`,
-        coverCredit: 'Cover: Cyclone Freddy, Feb 19 2023, Suomi NPP VIIRS (NASA)',
-        coverAlt: 'Satellite image of Cyclone Freddy on February 19 2023, a compact spiral with a clear eye over the South Indian Ocean',
-        dataCredit: `${STORMS_CREDIT}, 14312 Freddy`,
-        season: {
-          url: `${HEMISPHERES_DATA}/south_indian_2023.csv`,
-          span: SEASON_SPANS.southIndian,
-          hemisphere: Hemisphere.SOUTH,
-          lead: Lead.BOWED,
-          focus: { lat: -18, lon: 80, arcDeg: SOUTHERN_ARC_DEG },
+        title: 'Antarctic',
+        durationSec: POLAR_TRACK_SEC,
+        coverUrl: `${GLACIER_COVERS}/antarctic.jpg`,
+        coverCredit: 'Cover: SVS 5064, Antarctic sea ice, Feb 20 2024',
+        coverAlt: 'Satellite view of Antarctica in February 2024, the white continent ringed by only a thin edge of sea ice in the dark Southern Ocean',
+        iceSea: {
+          csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,
+          shapesUrl: `${GLACIER_DATA}/antarctic_february_sea_ice_extent.geojson`,
+          poleLat: -90,
+          // The ice on a piano, so the two tracks are told apart.
+          iceVoice: IceVoice.PIANO,
         },
       },
+    ],
+  },
+  {
+    id: 'smog',
+    category: AlbumCategory.AIR_QUALITY,
+    title: 'The Wind That Sweeps the Smog',
+    coverUrl: `${SMOG_COVERS}/new_york.jpg`,
+    coverCredit: 'Cover: The Empire State Building in wildfire smoke, Jun 7 2023 (Photo: @Aelthemplaer, CC BY 4.0)',
+    globeAlt: 'smog flowing in over one city, covering it for a while and passing on',
+    dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
+    // Songs are timed in playback ms, one hour of the data a third of a second in all of them (see tracks/domain/smog.js).
+    msPerSec: 1000,
+    // Four cities whose smog flows in from outside the map, covers them and passes on, each a different length (see
+    // notebooks/smog_album.ipynb and docs/albums/smog.md), in time order. Each plays nell-v2's loops, heard through
+    // the air over the city.
+    tracks: [
+      smogTrack('New York 2023', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
+        'Cover: The Empire State Building in wildfire smoke, Jun 7 2023 (Photo: @Aelthemplaer, CC BY 4.0)',
+        'The Empire State Building barely visible through thick orange wildfire smoke on June 7 2023'),
+      smogTrack('Seoul 2025', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
+        'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)',
+        'Seoul seen from Namsan Tower, its towers and hills dimmed by grey smog and dust'),
+      smogTrack('Shanghai 2025', 'shanghai_2025.csv', 18, SmogLoop.HOUSE, 'shanghai.jpg',
+        'Cover: Lujiazui in the haze, May 28 2011 (Photo: Weixi Zeng, CC BY-SA 3.0)',
+        "Shanghai's Lujiazui skyscrapers and the Oriental Pearl Tower fading into grey haze"),
     ],
   },
   {
@@ -423,28 +402,49 @@ export const albums = [
     ],
   },
   {
-    id: 'smog',
-    category: AlbumCategory.AIR_QUALITY,
-    title: 'The Wind That Sweeps the Smog',
-    coverUrl: `${SMOG_COVERS}/new_york.jpg`,
-    coverCredit: 'Cover: The Empire State Building in wildfire smoke, Jun 7 2023 (Photo: @Aelthemplaer, CC BY 4.0)',
-    globeAlt: 'smog flowing in over one city, covering it for a while and passing on',
-    dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
-    // Songs are timed in playback ms, one hour of the data a third of a second in all of them (see tracks/domain/smog.js).
-    msPerSec: 1000,
-    // Four cities whose smog flows in from outside the map, covers them and passes on, each a different length (see
-    // notebooks/smog_album.ipynb and docs/albums/smog.md), in time order. Each plays nell-v2's loops, heard through
-    // the air over the city.
+    id: 'hemispheres',
+    category: AlbumCategory.CLIMATE,
+    title: 'Mirror Storms',
+    coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
+    coverCredit: 'Public domain, via Wikimedia Commons',
+    globeAlt: 'every storm of one 2023 storm season in one ocean, each where it formed and the path it took',
+    dataCredit: STORMS_CREDIT,
+    // Two storm seasons around 2023, the year the oceans ran hottest on record, every storm of each: one northern ocean
+    // and one southern (see docs/albums/hemispheres.md). Each cover is one of the season's strongest storms.
     tracks: [
-      smogTrack('New York 2023', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
-        'Cover: The Empire State Building in wildfire smoke, Jun 7 2023 (Photo: @Aelthemplaer, CC BY 4.0)',
-        'The Empire State Building barely visible through thick orange wildfire smoke on June 7 2023'),
-      smogTrack('Seoul 2025', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
-        'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)',
-        'Seoul seen from Namsan Tower, its towers and hills dimmed by grey smog and dust'),
-      smogTrack('Shanghai 2025', 'shanghai_2025.csv', 18, SmogLoop.HOUSE, 'shanghai.jpg',
-        'Cover: Lujiazui in the haze, May 28 2011 (Photo: Weixi Zeng, CC BY-SA 3.0)',
-        "Shanghai's Lujiazui skyscrapers and the Oriental Pearl Tower fading into grey haze"),
+      {
+        title: 'North Atlantic 2023',
+        durationSec: seasonDurationSec(SEASON_SPANS.atlantic),
+        color: '#7fc4e8',
+        coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
+        coverCredit: 'Cover: Hurricane Lee, Sep 2023, MODIS (NASA GSFC)',
+        coverAlt: 'Satellite image of Hurricane Lee in September 2023, a bright round storm over the Atlantic east of Puerto Rico',
+        season: {
+          url: `${HEMISPHERES_DATA}/atlantic_2023.csv`,
+          span: SEASON_SPANS.atlantic,
+          hemisphere: Hemisphere.NORTH,
+          lead: Lead.WHISTLE,
+          focus: { lat: 24, lon: -59, arcDeg: NORTHERN_ARC_DEG },
+        },
+      },
+      {
+        // The southern summer of 2023, January to April, when Freddy crossed the whole ocean in the longest life of
+        // any tropical cyclone on record.
+        title: 'South Indian 2023',
+        durationSec: seasonDurationSec(SEASON_SPANS.southIndian),
+        color: '#b29ae6',
+        coverUrl: `${HEMISPHERES_COVERS}/cyclone_freddy_2023.jpg`,
+        coverCredit: 'Cover: Cyclone Freddy, Feb 19 2023, Suomi NPP VIIRS (NASA)',
+        coverAlt: 'Satellite image of Cyclone Freddy on February 19 2023, a compact spiral with a clear eye over the South Indian Ocean',
+        dataCredit: `${STORMS_CREDIT}, 14312 Freddy`,
+        season: {
+          url: `${HEMISPHERES_DATA}/south_indian_2023.csv`,
+          span: SEASON_SPANS.southIndian,
+          hemisphere: Hemisphere.SOUTH,
+          lead: Lead.BOWED,
+          focus: { lat: -18, lon: 80, arcDeg: SOUTHERN_ARC_DEG },
+        },
+      },
     ],
   },
 ];
