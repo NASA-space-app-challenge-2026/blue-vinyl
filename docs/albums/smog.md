@@ -62,7 +62,7 @@ Shared: the bass is the analog synth's `CAVE`, the drums the standard kit. Four 
 | Data | Screen | Sound | Updated |
 | --- | --- | --- | --- |
 | Each cell's pollution (`pollutionOf`: AOD in multiples of a clear sky's 0.1 on a log scale to 5, 0 to 1) | The fog (`fogOf`): clear below an AOD of about 0.27, so the map shows; thicker and browner as it rises. Smooth between cells (bicubic) and between hours, billowing and drifting | (screen only) | Frame |
-| The air over the city (its cell's pollution level) | The colour of the glow round the globe (from its fog), the same colour on the city's dot and the shadow of its name (user, 2026-11-15) | The whole mix, against the song's own air (user, 2026-11-15: not absolute): from its cleanest hour (18 kHz, full volume) to its thickest (low-pass 220 Hz and volume 0.12, only a low hum), exponential low-pass and linear volume between. It also fades in and out over the song's first and last 1.5 s | Sixteenth note |
+| The air over the city (its cell's pollution level) | The colour of the glow round the globe (from its fog), the same colour on the shadow of the city's name and dot (user, 2026-11-15) | The whole mix, against the song's own air (user, 2026-11-15: not absolute): from its cleanest hour (18 kHz, full volume) to its thickest (low-pass 220 Hz and volume 0.12, only a low hum), exponential low-pass and linear volume between. It also fades in and out over the song's first and last 1.5 s | Sixteenth note |
 | How fast the fog thins (the fog each cell loses by the next hour) | A cold sheen where it thins | (screen only) | Frame |
 
 ## Globe
@@ -73,7 +73,7 @@ The fog is one patch of the globe over the box, drawn by nell-v2's shader in [`s
 
 Where the data ends, the fog fades out instead of being cut (user, 2026-11-15): by distance from the box's middle on the ground, 1 at its nearer sides, the fog is whole up to 0.45 and gone by 0.85, that distance pushed in and out by the billows (±0.125), so the fog's edge is round and ragged and nothing is left at the box's sides. Turned away, the rest of the globe is clear.
 
-The city is marked with a dot and its name, the name white at 22 px with no outline, its shadow and the dot in the glow's colour (blue for clear air, through yellow and orange to red and purple as the haze thickens).
+The city is marked with a dot and its name, the name white at 22 px with no outline, its shadow in the glow's colour (blue for clear air, through yellow and orange to red and purple as the haze thickens).
 
 ## Covers
 

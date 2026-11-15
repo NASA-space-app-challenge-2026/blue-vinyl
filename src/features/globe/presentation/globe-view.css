@@ -240,7 +240,7 @@
 }
 
 .smog-city-dot {
-  fill: var(--air, #fff);
+  fill: #fff;
   stroke: #111;
   stroke-width: 1;
 }
