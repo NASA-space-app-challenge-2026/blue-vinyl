@@ -62,18 +62,18 @@ Shared: the bass is the analog synth's `CAVE`, the drums the standard kit. Four 
 | Data | Screen | Sound | Updated |
 | --- | --- | --- | --- |
 | Each cell's pollution (`pollutionOf`: AOD in multiples of a clear sky's 0.1 on a log scale to 5, 0 to 1) | The fog (`fogOf`): clear below an AOD of about 0.27, so the map shows; thicker and browner as it rises. Smooth between cells (bicubic) and between hours, billowing and drifting | (screen only) | Frame |
-| The air over the city (its cell's pollution level) | The colour of the glow round the globe (from its fog); the colour of the city's dot and name by health band: the level's AOD taken as PM2.5 at 50 µg/m³ per unit (a rough middle value) and read on the EPA bands, neon cyan, yellow, orange, red, violet, pink; the colour glides between bands | The whole mix, against the song's own air (user, 2026-11-15: not absolute): from its cleanest hour (18 kHz, full volume) to its thickest (low-pass 220 Hz and volume 0.12, only a low hum), exponential low-pass and linear volume between. It also fades in and out over the song's first and last 1.5 s | Sixteenth note |
+| The air over the city (its cell's pollution level) | The colour of the glow round the globe (from its fog), the same colour on the city's dot and name (user, 2026-11-15) | The whole mix, against the song's own air (user, 2026-11-15: not absolute): from its cleanest hour (18 kHz, full volume) to its thickest (low-pass 220 Hz and volume 0.12, only a low hum), exponential low-pass and linear volume between. It also fades in and out over the song's first and last 1.5 s | Sixteenth note |
 | How fast the fog thins (the fog each cell loses by the next hour) | A cold sheen where it thins | (screen only) | Frame |
 
 ## Globe
 
-The globe keeps the city's cell in the middle, close enough that the fog fills the label: the label's edge is where the fog has faded out (0.85 of the way to the box's nearer sides on the ground), 2.5° to 3.5° of arc (user, 2026-11-15). It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
+The globe keeps the city's cell in the middle, close enough that the fog fills the label: the label's edge is where the fog has faded out (0.85 of the way to the box's nearer sides on the ground), 2.5° to 3.5° of arc (user, 2026-11-15). Seoul's view instead holds all of South Korea (user, 2026-11-15): centred on 36° N 127.8° E, 5° of arc to the edge. It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
 
 The fog is one patch of the globe over the box, drawn by nell-v2's shader in [`smog-layer.js`](../../src/features/globe/presentation/smog-layer.js); the textures are uploaded only when the hour changes. It fades in over the song's first 1.5 s and out over its last, as does the music.
 
 Where the data ends, the fog fades out instead of being cut (user, 2026-11-15): by distance from the box's middle on the ground, 1 at its nearer sides, the fog is whole up to 0.45 and gone by 0.85, that distance pushed in and out by the billows (±0.125), so the fog's edge is round and ragged and nothing is left at the box's sides. Turned away, the rest of the globe is clear.
 
-The city is marked with a dot and its name, both in a neon colour of the air's health band over it, glowing and gliding from one band's colour to the next over 0.8 s.
+The city is marked with a dot and its name, the name at 22 px with a black drop shadow and no outline, both in the glow's colour (blue for clear air, through yellow and orange to red and purple as the haze thickens).
 
 ## Covers
 

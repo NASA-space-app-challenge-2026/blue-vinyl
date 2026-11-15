@@ -55,6 +55,7 @@ export const AlbumCategory = Object.freeze({
  * @property {string} tracksDir the album's tracks folder, holding the track's CSVs and tracks.json
  * @property {string} file the track's CSV
  * @property {Object} loop the loop it plays (one of SmogLoop in music/domain/composers/smog.js)
+ * @property {{ lat: number, lon: number, arcDeg: number }} [view] where the globe looks, if not at the city's box
  */
 
 /**

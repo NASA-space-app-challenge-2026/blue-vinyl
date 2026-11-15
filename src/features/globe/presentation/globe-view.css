@@ -236,29 +236,21 @@
 .smog-city svg {
   display: block;
   overflow: visible;
-  /* A neon glow in the band's colour; the colour glides when the band changes. */
-  filter: drop-shadow(0 0 2px var(--air, #fff)) drop-shadow(0 0 6px var(--air, #fff));
-  transition: filter 0.8s ease;
+  filter: drop-shadow(0 1px 3px #000);
 }
 
 .smog-city-dot {
   fill: var(--air, #fff);
   stroke: #111;
   stroke-width: 1;
-  transition: fill 0.8s ease;
 }
 
 .smog-city-name {
   text-anchor: middle;
-  font-size: 11px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: 0.03em;
   fill: var(--air, #fff);
-  stroke: #111;
-  stroke-width: 2px;
-  transition: fill 0.8s ease;
-  stroke-linejoin: round;
-  paint-order: stroke;
 }
 
 /* The date at 6 o'clock on the globe (date-label.js), sized with the globe. */

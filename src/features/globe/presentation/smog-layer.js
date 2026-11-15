@@ -14,16 +14,15 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
 import { svg } from '../../../shared/svg.js';
 import { lastIndexAtOrBefore } from '../../tracks/domain/bird-track.js';
-import { airBandOf } from '../../tracks/domain/pollution.js';
 import { FADE_MS, FOG, FOG_EDGE, hourlyAt } from '../../tracks/domain/smog.js';
-import { airBandColor } from './pollution-color.js';
+import { smogColor } from './pollution-color.js';
 
 // Lifted above the map so the fog lies over it.
 const ALTITUDE = 0.004;
 // Vertices of the patch along each side: enough for the globe's curve under it.
 const SEGMENTS = 48;
 // A city's dot radius and where its name sits above it (px).
-const CITY = Object.freeze({ r: 2.5, nameDy: -7 });
+const CITY = Object.freeze({ r: 2.5, nameDy: -12 });
 
 const glsl = (v) => v.toFixed(4);
 
@@ -213,7 +212,7 @@ export function createSmogLayer({ globe, setElements }) {
     setElements([cityEl]);
   }
 
-  // The city's dot and name, coloured by the health band of the air over it.
+  // The city's dot and name, coloured as the glow round the globe is, by the haze over the city.
   let cityEl = null;
 
   // Loads hour `i` and the next into the textures.
@@ -253,7 +252,7 @@ export function createSmogLayer({ globe, setElements }) {
     if (i !== hour) upload(i);
     uniforms.uMix.value = Math.min(1, Math.max(0, (time - t[i]) / (t[i + 1] - t[i])));
     uniforms.uTime.value = performance.now() / 1000;
-    cityEl.el.style.setProperty('--air', airBandColor(airBandOf(hourlyAt(t, next.level, time))));
+    cityEl.el.style.setProperty('--air', smogColor(hourlyAt(t, next.haze, time)));
     uniforms.uFade.value = Math.max(0, Math.min(1, (time - t[0]) / FADE_MS, (t.at(-1) - time) / FADE_MS));
     mesh.visible = true;
   }

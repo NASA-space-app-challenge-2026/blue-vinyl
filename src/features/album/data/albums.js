@@ -58,18 +58,22 @@ const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAY
 const SMOG_TRACKS = 'data/smog/tracks';
 const SMOG_COVERS = 'assets/albums/smog';
 
+// South Korea whole in the globe: its middle, and the arc to the edge of the square view (its 33.1° to 38.6° N and 126° to
+// 129.6° E, with some sea round it).
+const SOUTH_KOREA_VIEW = Object.freeze({ lat: 36, lon: 127.8, arcDeg: 5 });
+
 /**
  * A smog song: the hours around its city, played on `loop` (one of SmogLoop) at 3 hours of the data a second, so it
  * lasts `durationSec` (checked against the data when it loads; see tracks/domain/smog.js).
  */
-function smogTrack(title, file, durationSec, loop, cover, coverCredit) {
+function smogTrack(title, file, durationSec, loop, cover, coverCredit, view) {
   return {
     title,
     durationSec,
     color: '#bab8b6',
     coverUrl: `${SMOG_COVERS}/${cover}`,
     coverCredit,
-    smog: { tracksDir: SMOG_TRACKS, file, loop },
+    smog: { tracksDir: SMOG_TRACKS, file, loop, view },
   };
 }
 
@@ -304,7 +308,8 @@ export const albums = [
       smogTrack('New York', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
         'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)'),
       smogTrack('Seoul', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
-        'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)'),
+        'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)',
+        SOUTH_KOREA_VIEW),
       smogTrack('Pyongyang', 'pyongyang_2025.csv', 47, SmogLoop.BREAKS, 'pyongyang.jpg',
         'Cover: The sun setting through haze in Pyongyang, Apr 4 2013 (Photo: Kristoferb, CC BY-SA 4.0)'),
       smogTrack('Shanghai', 'shanghai_2025.csv', 18, SmogLoop.HOUSE, 'shanghai.jpg',

@@ -26,18 +26,3 @@ const FULL_SCALE_AOD = 5;
 export function pollutionOf(aod) {
   return Math.min(1, Math.max(0, Math.log1p(aod / CLEAR_SKY_AOD) / Math.log1p(FULL_SCALE_AOD / CLEAR_SKY_AOD)));
 }
-
-// A rough surface PM2.5 (µg/m³) for each unit of column aerosol optical depth, to read the air's health band off the
-// AOD the album follows (the ratio really varies with the weather and the place; this is only a middle value).
-const PM25_PER_AOD = 50;
-
-/** The aerosol optical depth a pollution level (pollutionOf) stands for: pollutionOf turned back. */
-export function aodOf(level) {
-  return CLEAR_SKY_AOD * Math.expm1(level * Math.log1p(FULL_SCALE_AOD / CLEAR_SKY_AOD));
-}
-
-/** The health band of air at pollution `level` (pollutionOf), its aerosol optical depth taken as PM2.5 at PM25_PER_AOD. */
-export function airBandOf(level) {
-  const pm25 = aodOf(level) * PM25_PER_AOD;
-  return Object.values(AirBand).findLast((band) => pm25 >= band.from);
-}
