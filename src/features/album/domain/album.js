@@ -2,6 +2,7 @@ export const AlbumCategory = Object.freeze({
   BIODIVERSITY: 'biodiversity',
   CLIMATE: 'climate',
   EXTREME_WEATHER: 'extreme-weather',
+  AIR_QUALITY: 'air-quality',
   DISASTER: 'disaster',
 });
 
@@ -11,6 +12,7 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
   [AlbumCategory.CLIMATE]: 'Climate',
   [AlbumCategory.EXTREME_WEATHER]: 'Extreme Weather',
   [AlbumCategory.DISASTER]: 'Disaster',
+  [AlbumCategory.AIR_QUALITY]: 'Air Quality',
 });
 
 /**
@@ -87,6 +89,15 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  */
 
 /**
+ * A track that plays the smog around a city, from the files the album notebook exports (see docs/data-guide.md).
+ *
+ * @typedef {Object} SmogSource
+ * @property {string} tracksDir the album's tracks folder, holding the track's CSVs and tracks.json
+ * @property {string} file the track's CSV
+ * @property {Object} loop the loop it plays (one of SmogLoop in music/domain/composers/smog.js)
+ */
+
+/**
  * @typedef {Object} Track
  * @property {AerosolSource} [aerosol] aerosol data and view
  * @property {string} title
@@ -95,6 +106,7 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  * @property {StormSource} [storm] data, sound and view of a hurricane track
  * @property {StormSeasonSource} [season] data, sound and view of a storm season track
  * @property {LightningSource} [lightning] data and sound of a lightning track
+ * @property {SmogSource} [smog] data, sound and view of a smog track
  * @property {{ kind: 'annual' | 'season', csvUrl: string, firesUrl: string }} [wildfire]
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
  * @property {{ lineUrl: string, mapUrl: string, airMapUrl: string, airUrl: string }} [forest] the noon line, canopy

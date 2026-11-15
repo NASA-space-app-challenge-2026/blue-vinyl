@@ -12,9 +12,12 @@ export function createDateLabel(container) {
   el.setAttribute('aria-hidden', 'true');
   container.append(el);
 
-  /** @param {number | null} time ms since the epoch (UTC; for a track laid over one year, ms into it), or null to show nothing */
-  function show(time) {
-    showDigits(el, time === null ? '' : new Date(time).toLocaleDateString(LOCALE, FORMAT));
+  /**
+   * @param {number | null} time ms since the epoch (UTC; for a track laid over one year, ms into it), or null to show nothing
+   * @param {Intl.DateTimeFormatOptions} [format] how to print it, if not as the month and day in UTC
+   */
+  function show(time, format = FORMAT) {
+    showDigits(el, time === null ? '' : new Date(time).toLocaleString(LOCALE, format));
   }
 
   /** @param {string | null} text any text to print instead of a date, or null to show nothing */
