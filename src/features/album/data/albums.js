@@ -373,7 +373,7 @@ export const albums = [
         },
       },
       {
-        title: 'Spain and Etna',
+        title: "Etna's Breath",
         durationSec: AEROSOL_TRACK_SEC,
         color: '#e0a030',
         coverUrl: `${AEROSOL_COVERS}/spain_and_etna.jpg`,

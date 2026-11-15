@@ -15,7 +15,7 @@ EIC's still is one moment, Aug 19, 2025, 20:00 UTC, with four kinds of particles
 | 1 | Hurricane Erin | Erin's eye, from its birth west of Cape Verde (16.5° N, 23.1° W, Aug 11) | (spreads round the storm); the Sahara's dust arrives at the eye | sea salt | A minor | `#4080ff` |
 | 2 | Saharan Dust | the Sahara (18° N, 2° E) | the Caribbean (17.5° N, 67.5° W) | dust | C minor | `#ff58a0` |
 | 3 | Southern Africa Smoke | the fires of southern Africa (12° S, 22° E) | St Helena (15.9° S, 5.7° W) | smoke | C minor | `#ff7820` |
-| 4 | Spain and Etna | Spain's fires (42° N, 6° W); Etna (37.75° N, 15° E) | Britain (52.5° N, 1.5° W); Greece (38.5° N, 22.5° E) | smoke and sulfate | C minor | `#e0a030` |
+| 4 | Etna's Breath | Etna (37.75° N, 15° E) | Greece (38.5° N, 22.5° E) | sulfate | C minor | `#e0a030` |
 
 The receptors are ours; EIC names the Caribbean and the United States for the dust and the Atlantic for the smoke. Kilauea, in EIC's caption, has no track: GEOS-FP carries no stream west of it these weeks (as much sulfate downwind as upwind, near the clean-air floor; section 8 of the notebook).
 
