@@ -70,7 +70,7 @@ import { createTicker } from '../shared/ticker.js';
 const CONUS_FOCUS = Object.freeze({ lat: 39, lon: -98, arcDeg: 30 });
 
 // Set by showAlbum().
-let albumIndex = 0;
+let albumIndex = albums.findIndex((candidate) => candidate.id === 'aerosol'); // TEMP(#63): was 0
 let album;
 let totalMs;
 // Data of each track of the album, by track index; null until loaded, and for tracks without data.
@@ -253,17 +253,9 @@ applyGlobeTheme(DEFAULT_GLOBE_THEME);
 createCatView(slot('screen'));
 // A drag is no gesture audio may start from on a phone, so the onboarding's taps unlock the sound first.
 // The bars and the safe areas take the onboarding's color while it is up.
-backdrop.overlay(getComputedStyle(document.documentElement).getPropertyValue('--title-bg').trim());
+// TEMP(#63): onboarding skipped while working on the aerosol album; revert before merging.
 document.documentElement.classList.add('is-booted');
-const onboarding = createOnboarding(slot('screen'), {
-  content: ONBOARDING,
-  stage: slot('stage'),
-  preview: createSpatialPreview(),
-  onStart: () => {
-    backdrop.overlay(null);
-    unlockSound();
-  },
-});
+const onboarding = { isOpen: () => false };
 
 // Album switch keys, as the previous and next chevrons.
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
