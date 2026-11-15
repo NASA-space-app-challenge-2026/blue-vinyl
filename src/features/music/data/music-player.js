@@ -5,6 +5,8 @@ const REVERB = Object.freeze({ seconds: 2.6, decaySec: 0.55, wet: 0.22 });
 // Notes are scheduled this far ahead of the moment play() is called, so the first ones are not late.
 const START_DELAY_SEC = 0.06;
 const STOP_FADE_SEC = 0.08;
+// The track's fade is set every frame; the gain glides to each with this time constant, so the frames do not step.
+const TRACK_FADE_TAU_SEC = 0.05;
 // A note held longer than its sample is built from overlapping copies of the sample's body.
 const SUSTAIN = Object.freeze({ skipSec: 0.25, crossfadeSec: 0.6 });
 // Catches the rare peak, such as a timpani stroke on a loud chord, before it clips.
@@ -154,7 +156,11 @@ export function createMusicPlayer() {
   const limiter = context.createDynamicsCompressor();
   for (const [name, value] of Object.entries(LIMITER)) limiter[name].value = value;
   master.connect(limiter).connect(context.destination);
-  const bus = createMixBus(context, master);
+  // The track's fade, ahead of the volume (see setTrackFade).
+  const trackFade = context.createGain();
+  trackFade.connect(master);
+  let fadeLevel = 1;
+  const bus = createMixBus(context, trackFade);
 
   let notes = [];
   let ready = Promise.resolve(new Map());
@@ -217,6 +223,13 @@ export function createMusicPlayer() {
     master.gain.setTargetAtTime(level ** 2, context.currentTime, 0.02);
   }
 
+  /** @param {number} level how far the track has faded in, 0..1; set every frame while it plays */
+  function setTrackFade(level) {
+    if (level === fadeLevel) return;
+    fadeLevel = level;
+    trackFade.gain.setTargetAtTime(level, context.currentTime, TRACK_FADE_TAU_SEC);
+  }
+
   /** Browsers start audio only after a user gesture; call this from one. */
   function unlock() {
     if (context.state !== 'running') context.resume();
@@ -231,5 +244,5 @@ export function createMusicPlayer() {
     }
   }
 
-  return { load, play, stop, positionSec, setVolume, unlock };
+  return { load, play, stop, positionSec, setVolume, setTrackFade, unlock };
 }

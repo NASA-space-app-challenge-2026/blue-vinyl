@@ -7,7 +7,7 @@ import { createParticleToggles } from '../features/controls/presentation/particl
 // Composition root: wires the features together.
 
 import { albums, WILDFIRE_DAY_TIMELINE, WILDFIRE_YEAR_TIMELINE } from '../features/album/data/albums.js';
-import { ALBUM_CATEGORY_LABEL, albumDurationSec, trackBoundaries, trackCover, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
+import { ALBUM_CATEGORY_LABEL, albumDurationSec, trackBoundaries, trackCover, trackFadeAt, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
@@ -687,6 +687,10 @@ function startPlaying() {
 function render() {
   const progress = elapsedMs / totalMs;
   const trackIndex = trackIndexAt(album, progress);
+  // Every track's music fades in at its start and out at its end.
+  const fade = trackFadeAt(album, trackIndex, elapsedMs / 1000 - trackStartSec(album, trackIndex));
+  music.setTrackFade(fade);
+  soundEngine.setTrackFade(fade);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
