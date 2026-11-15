@@ -8,10 +8,10 @@ One album is one LP record. The screen shows a single album at a time: the sleev
 
 ## Typography
 
-- Gowun Batang is the typeface for everything except the app title. Do not add another font family.
+- Gowun Batang is the typeface for everything except the app title and the onboarding's logo. Do not add another font family.
 - The app title alone is set in Yellowtail, a retro script like the name on a record label (`--font-title`, SIL Open Font License 1.1, loaded with Gowun Batang).
 - Loaded from Google Fonts (weights 400 and 700) in `index.html`. Licensed under the SIL Open Font License 1.1.
-- Referenced through the `--font` token in `src/app/app.css`. Every element inherits it from `body`; never set `font-family` elsewhere, except `.app-title`.
+- Referenced through the `--font` token in `src/app/app.css`. Every element inherits it from `body`; never set `font-family` elsewhere, except `.app-title` and `.onboarding-logo`.
 - Weights: 400 for body text, 700 for the album title and the active track.
 
 | Role | Style |
@@ -107,6 +107,15 @@ The globe uses the default theme, Map; there is no theme picker in the UI. Theme
 - It casts a soft drop shadow down and to the right onto the record, falling a little away from it as it stands above the record.
 - It eases (exponentially) between positions instead of jumping: onto the groove when cued, back to rest when lifted. While playing it follows the groove for the current position.
 - The listener can grab and drag it. While held, the clock stops and the needle position scrubs the album; released over the record, playback resumes from there; released off it, the arm returns to rest.
+
+## Onboarding
+
+Before the player, a short onboarding covers the whole screen (`src/features/info/presentation/onboarding.js`, its copy in `src/features/info/data/onboarding.js`). It is set in deep space (`--title-bg`), crossed by a slanting band of scattered sunlight, after Voyager 1's Pale Blue Dot photo.
+
+1. **Intro**: the Blue Vinyl text logo (Yellowtail, cream fading to gold, like the app title), a one-line promise and a short introduction, beside the Pale Blue Dot: one glowing blue speck in a ray of light, marked "You are here", with rings pulsing out of it like a beacon (still under reduced motion). The logo stands level.
+2. **Spatial audio**: recommends earphones and explains that the music is placed around the listener (HRTF panning), beside a head with gold headphones seen from above (shoulders behind, the nose ahead) and a blue dot circling it. "Hear it move" plays about twelve seconds of one warm, bright chord, G major with an added ninth: detuned saws under a soft filter that opens as it plays, so it grows brighter, in a long reverb, circling the head twice in time with the dot and drifting nearer and further. Pressed again while it plays, as Stop, it fades out quickly (`src/features/music/data/spatial-preview.js`).
+
+Next and Back (or the arrow keys) step through it, with dots for the steps; Skip or Start listening closes it. Browsers let audio start only from a tap, a click or a key, so these taps unlock the sound before anything can be played. While it is up, everything under it is inert and the cat waits out of sight. It is the only place besides the app title that uses Yellowtail.
 
 ## Interaction
 

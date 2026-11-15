@@ -14,7 +14,7 @@
 :root {
   --bg: #4b3a24;
   --bg-deep: #3a2c1a;
-  --title-bg: #0e67ae;
+  --title-bg: #05070d;
   transition: --bg 1.2s ease, --bg-deep 1.2s ease;
   --ink: #f3ece1;
   --ink-muted: rgb(243 236 225 / 0.65);
