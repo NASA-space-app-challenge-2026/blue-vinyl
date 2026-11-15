@@ -85,6 +85,19 @@
   min-height: 0;
 }
 
+/* The first step gives its text more room, so the intro reads in two lines. */
+.onboarding-step.is-intro {
+  grid-template-columns: minmax(0, 0.55fr) minmax(0, 1.45fr);
+}
+
+.is-intro .onboarding-text {
+  max-width: none;
+}
+
+.is-intro .onboarding-body {
+  text-wrap: balance;
+}
+
 .onboarding-step[hidden] {
   display: none;
 }
@@ -136,6 +149,8 @@
   font-size: clamp(20px, 4.6cqmin, 36px);
   font-weight: 700;
   line-height: 1.3;
+  /* A line break in the heading's text is kept. */
+  white-space: pre-line;
 }
 
 .onboarding-body + .onboarding-body {

@@ -6,7 +6,7 @@ export const ONBOARDING = Object.freeze({
     {
       visual: 'pale-blue-dot',
       eyebrow: 'An Earth Information Jukebox',
-      heading: 'Listen to the sound of the Pale Blue Dot.',
+      heading: 'Listen to the sound of the\nPale Blue Dot.',
       body: [
         'Blue Vinyl turns NASA Earth data into music. Each album is one story of our planet, from sea ice and storms to '
           + 'birds and wildfires, pressed onto a record.',
