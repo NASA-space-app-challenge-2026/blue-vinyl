@@ -124,8 +124,11 @@ body {
     --safe-left: env(safe-area-inset-top, 0px);
   }
 
+  /* Absolute, not fixed: iOS 26 Safari tints its bars and the safe areas from a fixed element at the screen's edges in
+     place of the body, and this one has no background of its own, so they would keep the first color. The page does
+     not scroll, so it stays put all the same. */
   .screen {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 100vw;
     left: 100dvw;
