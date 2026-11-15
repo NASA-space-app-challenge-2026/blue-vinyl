@@ -1,0 +1,56 @@
+[
+  {
+    "id": "us_annual_burned_acres",
+    "title": "Burned Acres",
+    "file": "us_annual_burned_acres.csv",
+    "duration_hint_s": 30,
+    "message": "US annual wildfire burned area has increased since the 1980s; all ten largest years are since 2004.",
+    "eic": [
+      {
+        "id": 5453,
+        "title": "Annual Wildfire Burned Area in the United States",
+        "url": "https://svs.gsfc.nasa.gov/5453/"
+      }
+    ],
+    "sources": [
+      {
+        "name": "United States Total Wildland Fires and Acres",
+        "provider": "NIFC / NICC",
+        "url": "https://www.nifc.gov/fire-information/statistics/wildfires",
+        "download_date": "2026-11-14",
+        "license": "US federal public information",
+        "substitute": null
+      }
+    ]
+  },
+  {
+    "id": "feds_2020_season",
+    "title": "2020 Fire Season",
+    "file": "feds_2020_daily_large_fires.csv",
+    "globe_file": "feds_2020_fire_days.csv",
+    "duration_hint_s": 29,
+    "message": "In 2020, one of 5453's peak years, large FEDS fires spread across the CONUS; active large-fire area peaked in mid-September.",
+    "eic": [
+      {
+        "id": 5453,
+        "title": "Annual Wildfire Burned Area in the United States",
+        "url": "https://svs.gsfc.nasa.gov/5453/"
+      },
+      {
+        "id": 5639,
+        "title": "Daily Visualizations of the Largest Wildfires in the United States: 2026",
+        "url": "https://svs.gsfc.nasa.gov/5639/"
+      }
+    ],
+    "sources": [
+      {
+        "name": "Fire Events Data Suite (FEDS) perimeter archive",
+        "provider": "NASA EIS / VEDA",
+        "url": "https://openveda.cloud/api/features/collections/public.eis_fire_lf_perimeter_archive",
+        "download_date": "2026-11-14",
+        "license": "NASA open data via VEDA",
+        "substitute": "5453/NIFC has no coordinates. FEDS is listed under datasets on EIC 5639 and related wildfire pages. Prototype keeps farea>50 km² for 2020."
+      }
+    ]
+  }
+]

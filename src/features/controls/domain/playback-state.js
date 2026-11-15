@@ -7,4 +7,6 @@ export const PlaybackState = Object.freeze({
   PLAYING: 'playing',
   /** The listener holds the tonearm; the clock follows the needle instead of running. */
   SCRUBBING: 'scrubbing',
+  /** The listener's hand holds the playing record; the needle stays on it, the music waits and the clock follows the hand. */
+  HELD: 'held',
 });

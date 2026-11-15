@@ -70,7 +70,19 @@ function degreeToMidi(degree) {
 /**
  * @typedef {Object} Music what a composer plays through (see data/sound-engine.js)
  * @property {(instrument: Object, midi: number, velocity: number, at: number, steps: number) => void} note
+ * @property {(instrument: Object, midi: number, velocity: number, at: number) => void} hold  a note held until released
+ * @property {(instrument: Object, midi: number, at: number) => void} release
+ * @property {(instrument: Object, semitones: number, at: number) => void} bend  the instrument's pitch wheel
  * @property {(instrument: Object, cc: number, value: number, at: number) => void} control
+ * @property {(instrument: Object, sound: { program: number, volume: number }, at: number) => void} program  another
+ *   sound of the same kind (melodic or drums) on the instrument's channel
+ * @property {(patch: Object, midi: number, velocity: number, at: number, steps: number, shape: Object) => void} synthNote
+ *   a note of a Patch on the analog synth (see data/analog-synth.js)
+ * @property {(velocity: number, at: number, steps: number, fromHz: number, toHz: number) => void} noise  a noise hit
+ * @property {(lead: Object, sound: Object, at: number) => { move: Function, close: Function }} voice  a held voice of a
+ *   Lead on the analog synth, moved and closed by the composer
+ * @property {(effect: Object, value: number, at: number) => void} effect  an Effect on the whole mix (see
+ *   domain/effects.js)
  */
 
 export class FlockComposer {
@@ -91,12 +103,12 @@ export class FlockComposer {
   stepsPerBar = STEPS_PER_BAR;
 
   /**
-   * Fits the melody's range and the speed tiers to a track's flock, sampled once a day.
+   * Fits the melody's range and the speed tiers to a track's flock, sampled once a day (its `path`).
    *
-   * @param {(import('../../../tracks/domain/bird-track.js').Flock)[]} samples
-   * @param {Object} lead the Instrument that plays the melody
+   * @param {{ path: import('../../../tracks/domain/bird-track.js').Flock[], lead: Object }} song `lead`: the
+   *   Instrument that plays the melody
    */
-  setSong(samples, lead) {
+  setSong({ path: samples, lead }) {
     this.lead = lead;
     const lats = samples.map((s) => s.lat);
     this.lat = { min: Math.min(...lats), max: Math.max(...lats) };
@@ -113,9 +125,9 @@ export class FlockComposer {
 
   /**
    * @param {Music} music
-   * @param {{ flock: import('../../../tracks/domain/bird-track.js').Flock, step: number, bar: number, at: number }} now
+   * @param {{ sample: import('../../../tracks/domain/bird-track.js').Flock, step: number, bar: number, at: number }} now
    */
-  playStep(music, { flock, step, bar, at }) {
+  playStep(music, { sample: flock, step, bar, at }) {
     const tier = SpeedTier[this.tierSpeeds.filter((speed) => flock.speed >= speed).length];
     if (step % tier.melodyEvery === 0) {
       const note = this.playMelody(music, flock, tier, at);

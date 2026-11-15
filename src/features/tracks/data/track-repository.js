@@ -1,4 +1,5 @@
 import { parseIceSeaCsv } from '../domain/ice-sea-series.js';
+import { parseAnnualCsv, parseDailyCsv, parseFireDaysCsv } from '../domain/wildfire-series.js';
 
 /**
  * A polar track's data, ready to play and draw.
@@ -8,6 +9,22 @@ import { parseIceSeaCsv } from '../domain/ice-sea-series.js';
  * @property {Map<number, object>} iceByYear GeoJSON geometry of each year's ice
  * @property {(object | null)[]} iceShapes the same geometries in the order of `years`, null where one is missing
  */
+
+/**
+ * @typedef {Object} WildfireAnnualData
+ * @property {'annual'} kind
+ * @property {import('../domain/wildfire-series.js').WildfireYear[]} years
+ * @property {number} acresMax the largest year's acres
+ */
+
+/**
+ * @typedef {Object} WildfireSeasonData
+ * @property {'season'} kind
+ * @property {import('../domain/wildfire-series.js').WildfireDay[]} days
+ * @property {import('../domain/wildfire-series.js').WildfireFire[]} fires each large fire, day by day
+ */
+
+/** @typedef {WildfireAnnualData | WildfireSeasonData} WildfireTrackData */
 
 const cache = new Map();
 
@@ -35,6 +52,31 @@ export function loadIceSeaTrack({ csvUrl, shapesUrl }) {
       return { years, iceByYear, iceShapes: years.map((y) => iceByYear.get(y.year) ?? null) };
     });
     // A failed load is not kept, so the next attempt fetches again.
+    loading.catch(() => cache.delete(key));
+    cache.set(key, loading);
+  }
+  return cache.get(key);
+}
+
+/**
+ * Loads a wildfire track: either the national annual series, or a peak-year daily series with fire points.
+ *
+ * @param {{ kind: 'annual', csvUrl: string } | { kind: 'season', csvUrl: string, firesUrl: string }} source
+ * @returns {Promise<WildfireTrackData>}
+ */
+export function loadWildfireTrack(source) {
+  const key = source.kind === 'annual' ? source.csvUrl : `${source.csvUrl}|${source.firesUrl}`;
+  if (!cache.has(key)) {
+    const loading =
+      source.kind === 'annual'
+        ? fetchText(source.csvUrl).then((csv) => {
+            const years = parseAnnualCsv(csv);
+            return { kind: 'annual', years, acresMax: Math.max(...years.map((y) => y.acres)) };
+          })
+        : Promise.all([fetchText(source.csvUrl), fetchText(source.firesUrl)]).then(([csv, firesCsv]) => {
+            const days = parseDailyCsv(csv);
+            return { kind: 'season', days, fires: parseFireDaysCsv(firesCsv, days) };
+          });
     loading.catch(() => cache.delete(key));
     cache.set(key, loading);
   }

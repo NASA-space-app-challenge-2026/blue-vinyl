@@ -39,7 +39,7 @@ Mix: set from the RMS of the samples (the first 1.82 s, decoded outside the brow
 
 ## Globe
 
-See [design.md](../design.md#data-on-the-globe): the ice morphing from one year's shape into the next over a fading blue trail of the years before, pieces of the lost ice falling into the water, the year with its extent and its change since 1993 in percent, and the label as the porthole of SVS 5235: water rising past a centimetre ruler, with the 1993 sea level at its foot and the year's measured rise at its height. The 1993 sea level sits 14% up the label and each 10 cm of rise takes 30% of its height.
+See [design.md](../design.md#data-on-the-globe): the ice morphing from one year's shape into the next over a fading blue trail of the years before, pieces of the lost ice falling into the water, the year, and the label as the porthole of SVS 5235: water rising with the sea level. The 1993 sea level sits 14% up the label and each 10 cm of rise takes 30% of its height.
 
 ## Credits
 

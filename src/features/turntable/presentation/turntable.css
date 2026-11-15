@@ -19,16 +19,38 @@
   overflow: visible;
 }
 
+/* The disc and grooves, drawn once; only the top layer (vinyl-top) takes the record's clicks. */
 .turntable-vinyl-layer {
   filter: drop-shadow(0 18px 24px rgb(0 0 0 / 0.45));
+  pointer-events: none;
 }
 
-.turntable-vinyl-layer .vinyl {
-  cursor: pointer;
+/* The glints and credits turning with the record, on a layer of their own so turning them redraws nothing. */
+.turntable-vinyl-spin {
+  pointer-events: none;
+  will-change: transform;
+}
+
+.turntable-vinyl-spin .vinyl-credit {
+  font-family: var(--font);
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+/* The record can be clicked, or held and turned by hand (see turntable-view.js). */
+.turntable-vinyl-top .vinyl-hit {
+  cursor: grab;
+  touch-action: none;
+}
+
+.turntable-vinyl-top.held .vinyl-hit {
+  cursor: grabbing;
 }
 
 /* Only the arm itself catches pointers, so the globe under the layer stays draggable. */
 .turntable-arm-layer {
+  /* The arm stands above the record, so its shadow falls a little away from it, down and right of the light. */
+  filter: drop-shadow(6px 12px 8px rgb(0 0 0 / 0.45));
   pointer-events: none;
 }
 

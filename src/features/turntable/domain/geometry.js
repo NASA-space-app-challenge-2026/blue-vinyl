@@ -9,20 +9,26 @@ export const GROOVE = Object.freeze({ outerRadius: 0.95, innerRadius: 0.66 });
 /** The label (and the globe in it) starts right where the grooves end. */
 export const LABEL_RADIUS = GROOVE.innerRadius;
 
-/**
- * Tonearm pivoting at about 1 o'clock. It reads the right side of the record from the outer groove inward
- * and rests with its needle `restRadius` from the centre, just off the record's right edge.
- */
-export const TONEARM = Object.freeze({
-  pivotClockDeg: 40,
-  pivotDistance: 1.25,
-  armLength: 1.1,
-  restRadius: 1.12,
-});
+/** Where the tonearm's pivot is mounted round the record as first laid out: at about 1 o'clock, this far out. */
+const ARM_MOUNT = Object.freeze({ clockDeg: 40, distance: 1.25 });
+
+/** The record sits this far above where it was laid out with the arm; the arm stays where it was mounted. */
+export const RECORD_RAISE = 0.07;
 
 export const PIVOT = Object.freeze({
-  x: TONEARM.pivotDistance * Math.sin(TONEARM.pivotClockDeg * RAD),
-  y: -TONEARM.pivotDistance * Math.cos(TONEARM.pivotClockDeg * RAD),
+  x: ARM_MOUNT.distance * Math.sin(ARM_MOUNT.clockDeg * RAD),
+  y: -ARM_MOUNT.distance * Math.cos(ARM_MOUNT.clockDeg * RAD) + RECORD_RAISE,
+});
+
+/**
+ * Tonearm pivoting at PIVOT. It reads the right side of the record from the outer groove inward and rests with its
+ * needle `restRadius` from the centre, just off the record's right edge.
+ */
+export const TONEARM = Object.freeze({
+  pivotClockDeg: Math.atan2(PIVOT.x, -PIVOT.y) / RAD,
+  pivotDistance: Math.hypot(PIVOT.x, PIVOT.y),
+  armLength: 1.1,
+  restRadius: 1.12,
 });
 
 /** Platter speed, and the seconds it takes to spin up from a stop and to coast down from full speed. */

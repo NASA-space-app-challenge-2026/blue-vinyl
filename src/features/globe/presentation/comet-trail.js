@@ -1,5 +1,6 @@
 // A comet tail drawn straight into the globe.gl scene behind a bird: wide, bright and glowing at the bird, thinning
-// and fading toward the tail, with a white-hot core near the head.
+// and fading toward the tail, with a white-hot core near the head. Other ribbons along a path, such as a storm's
+// track, take their own TrailStyle.
 
 // The same three.js revision globe.gl@2.46.2 bundles, so the mesh fits its scene.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
@@ -9,13 +10,24 @@ const ALTITUDE = 0.003;
 // Ribbon samples per degree of arc, held between these bounds so short tails still curve and long ones stay cheap.
 const SAMPLES_PER_DEG = 4;
 const SAMPLES = Object.freeze({ min: 16, max: 512 });
-// Shape along the tail, with t = 0 at its end and 1 at the bird: width = HEAD_WIDTH_PX · t^WIDTH_POW on screen,
-// opacity = t^ALPHA_POW.
-const HEAD_WIDTH_PX = 7;
-const WIDTH_POW = 0.6;
-const ALPHA_POW = 1.6;
-// How far the core whitens at the head, and how sharp it is across the ribbon.
-const CORE_WHITE = 0.6;
+/**
+ * Shape along a ribbon, with t = 0 at its end and 1 at its head: width = headWidthPx · t^widthPow on screen, opacity =
+ * tailAlpha + (1 - tailAlpha) · t^alphaPow, times `alpha`. `coreWhite`: how far the core whitens at the head.
+ * `additive`: whether it adds light to what is under it (glows) or is laid over it.
+ *
+ * @typedef {Object} TrailStyle
+ * @property {number} headWidthPx
+ * @property {number} widthPow
+ * @property {number} alpha
+ * @property {number} tailAlpha
+ * @property {number} alphaPow
+ * @property {number} coreWhite
+ * @property {boolean} additive
+ */
+
+/** @type {TrailStyle} */
+export const COMET = Object.freeze({ headWidthPx: 7, widthPow: 0.6, alpha: 1, tailAlpha: 0, alphaPow: 1.6, coreWhite: 0.6, additive: true });
+// How sharp the core is across the ribbon.
 const CORE_SHARPNESS = 8;
 
 const vertexShader = `
@@ -32,12 +44,13 @@ void main() {
 // Soft edges across the ribbon; the core brightens toward the bird.
 const fragmentShader = `
 uniform vec3 color;
+uniform float coreWhite;
 varying float vAlpha;
 varying float vAcross;
 void main() {
   float edge = 1.0 - abs(vAcross);
   float core = pow(edge, ${CORE_SHARPNESS.toFixed(1)}) * vAlpha;
-  gl_FragColor = vec4(mix(color, vec3(1.0), ${CORE_WHITE.toFixed(2)} * core), vAlpha * edge * edge);
+  gl_FragColor = vec4(mix(color, vec3(1.0), coreWhite * core), vAlpha * edge * edge);
   #include <colorspace_fragment>
 }`;
 
@@ -54,8 +67,9 @@ const INDEX = (() => {
 /**
  * @param {Object} globe a globe.gl instance
  * @param {string} color CSS color
+ * @param {TrailStyle} [style]
  */
-export function createCometTrail(globe, color) {
+export function createCometTrail(globe, color, style = COMET) {
   const geometry = new THREE.BufferGeometry();
   const position = new THREE.BufferAttribute(new Float32Array(SAMPLES.max * 2 * 3), 3);
   const alpha = new THREE.BufferAttribute(new Float32Array(SAMPLES.max * 2), 1);
@@ -65,12 +79,12 @@ export function createCometTrail(globe, color) {
   geometry.setAttribute('across', new THREE.BufferAttribute(across, 1));
   geometry.setIndex(new THREE.BufferAttribute(INDEX, 1));
   const material = new THREE.ShaderMaterial({
-    uniforms: { color: { value: new THREE.Color(color) } },
+    uniforms: { color: { value: new THREE.Color(color) }, coreWhite: { value: style.coreWhite } },
     vertexShader,
     fragmentShader,
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    blending: style.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
     side: THREE.DoubleSide,
   });
   const mesh = new THREE.Mesh(geometry, material);
@@ -101,7 +115,7 @@ export function createCometTrail(globe, color) {
     const samples = THREE.MathUtils.clamp(Math.ceil(arcDeg * SAMPLES_PER_DEG), SAMPLES.min, SAMPLES.max);
     // A chord between far-apart points dips into the globe, so every sample goes back onto the sphere.
     const points = curve.getSpacedPoints(samples - 1).map((p) => p.setLength(radius));
-    const headWidth = HEAD_WIDTH_PX * unitsPerPx;
+    const headWidth = style.headWidthPx * unitsPerPx;
     const tangent = new THREE.Vector3();
     const side = new THREE.Vector3();
     for (let i = 0; i < samples; i++) {
@@ -109,11 +123,12 @@ export function createCometTrail(globe, color) {
       tangent.subVectors(points[Math.min(i + 1, samples - 1)], points[Math.max(i - 1, 0)]);
       side.crossVectors(tangent, p).normalize();
       const t = i / (samples - 1);
-      const half = 0.5 * headWidth * t ** WIDTH_POW;
+      const half = 0.5 * headWidth * t ** style.widthPow;
+      const a = style.alpha * (style.tailAlpha + (1 - style.tailAlpha) * t ** style.alphaPow);
       position.setXYZ(2 * i, p.x - side.x * half, p.y - side.y * half, p.z - side.z * half);
       position.setXYZ(2 * i + 1, p.x + side.x * half, p.y + side.y * half, p.z + side.z * half);
-      alpha.setX(2 * i, t ** ALPHA_POW);
-      alpha.setX(2 * i + 1, t ** ALPHA_POW);
+      alpha.setX(2 * i, a);
+      alpha.setX(2 * i + 1, a);
     }
     position.needsUpdate = true;
     alpha.needsUpdate = true;

@@ -1,0 +1,134 @@
+[
+  {
+    "file": "katrina_2005.csv",
+    "title": "Katrina 2005",
+    "pages": [
+      {
+        "svsId": 5072,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5072/",
+        "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
+      }
+    ],
+    "note": "Ours: Grows over the Gulf of Mexico to category 5, comes ashore in Louisiana and Mississippi at 110 and 105 kt and dies over land, fading over the Ohio Valley. From its birth until its wind falls below 50 km/h over land (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
+    "sources": [
+      {
+        "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
+        "sourceUrl": "https://www.nhc.noaa.gov/data/#hurdat",
+        "downloadUrl": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-092326.txt",
+        "version": "hurdat2-1851-2025-092326 (revised 2026-09-23)",
+        "downloaded": "2026-11-14",
+        "license": "US government work, public domain",
+        "credit": "Landsea, C. W. and J. L. Franklin, 2013: Atlantic Hurricane Database Uncertainty and Presentation of a New Database Format. Mon. Wea. Rev., 141, 3576-3592."
+      }
+    ],
+    "units": {
+      "wind_kt": "kt (1-minute sustained)",
+      "pressure_hpa": "hPa",
+      "lat": "°",
+      "lon": "°"
+    },
+    "timeRange": [
+      "2005-08-23T18:00Z",
+      "2005-08-31T06:00Z"
+    ]
+  },
+  {
+    "file": "felix_2007.csv",
+    "title": "Felix 2007",
+    "pages": [
+      {
+        "svsId": 5072,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5072/",
+        "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
+      }
+    ],
+    "note": "Ours: Grows across the Caribbean to category 5, comes ashore in Nicaragua at 140 kt and dies over land in Honduras within a day. From its birth until its wind falls below 50 km/h over land (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
+    "sources": [
+      {
+        "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
+        "sourceUrl": "https://www.nhc.noaa.gov/data/#hurdat",
+        "downloadUrl": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-092326.txt",
+        "version": "hurdat2-1851-2025-092326 (revised 2026-09-23)",
+        "downloaded": "2026-11-14",
+        "license": "US government work, public domain",
+        "credit": "Landsea, C. W. and J. L. Franklin, 2013: Atlantic Hurricane Database Uncertainty and Presentation of a New Database Format. Mon. Wea. Rev., 141, 3576-3592."
+      }
+    ],
+    "units": {
+      "wind_kt": "kt (1-minute sustained)",
+      "pressure_hpa": "hPa",
+      "lat": "°",
+      "lon": "°"
+    },
+    "timeRange": [
+      "2007-08-31T12:00Z",
+      "2007-09-05T06:00Z"
+    ]
+  },
+  {
+    "file": "laura_2020.csv",
+    "title": "Laura 2020",
+    "pages": [
+      {
+        "svsId": 5072,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5072/",
+        "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
+      }
+    ],
+    "note": "Ours: Crosses the Caribbean as a tropical storm, five landfalls on the way, grows over the Gulf of Mexico to 130 kt, comes ashore in Louisiana at its peak and dies over land, fading over Arkansas. From its birth until its wind falls below 50 km/h over land (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
+    "sources": [
+      {
+        "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
+        "sourceUrl": "https://www.nhc.noaa.gov/data/#hurdat",
+        "downloadUrl": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-092326.txt",
+        "version": "hurdat2-1851-2025-092326 (revised 2026-09-23)",
+        "downloaded": "2026-11-14",
+        "license": "US government work, public domain",
+        "credit": "Landsea, C. W. and J. L. Franklin, 2013: Atlantic Hurricane Database Uncertainty and Presentation of a New Database Format. Mon. Wea. Rev., 141, 3576-3592."
+      }
+    ],
+    "units": {
+      "wind_kt": "kt (1-minute sustained)",
+      "pressure_hpa": "hPa",
+      "lat": "°",
+      "lon": "°"
+    },
+    "timeRange": [
+      "2020-08-20T00:00Z",
+      "2020-08-28T06:00Z"
+    ]
+  },
+  {
+    "file": "helene_2024.csv",
+    "title": "Helene 2024",
+    "pages": [
+      {
+        "svsId": 5072,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5072/",
+        "message": "These simple visualizations are plots of time vs. wind speed for each tropical storm/hurricane of Atlantic Hurricane seasons from 1950 to the present. Horizontal lines indicate wind speed category thresholds."
+      }
+    ],
+    "note": "Ours: Grows over the Gulf of Mexico to 120 kt, comes ashore in Florida's Big Bend at its peak and dies over land, its remnant low turning over Kentucky. From its birth until its wind falls below 50 km/h over land (section 12). It dies after its last landfall: its wind never rises again (section 9.2).",
+    "sources": [
+      {
+        "source": "HURDAT2 Atlantic best track (NOAA National Hurricane Center)",
+        "sourceUrl": "https://www.nhc.noaa.gov/data/#hurdat",
+        "downloadUrl": "https://www.nhc.noaa.gov/data/hurdat/hurdat2-1851-2025-092326.txt",
+        "version": "hurdat2-1851-2025-092326 (revised 2026-09-23)",
+        "downloaded": "2026-11-14",
+        "license": "US government work, public domain",
+        "credit": "Landsea, C. W. and J. L. Franklin, 2013: Atlantic Hurricane Database Uncertainty and Presentation of a New Database Format. Mon. Wea. Rev., 141, 3576-3592."
+      }
+    ],
+    "units": {
+      "wind_kt": "kt (1-minute sustained)",
+      "pressure_hpa": "hPa",
+      "lat": "°",
+      "lon": "°"
+    },
+    "timeRange": [
+      "2024-09-24T12:00Z",
+      "2024-09-28T12:00Z"
+    ]
+  }
+]
