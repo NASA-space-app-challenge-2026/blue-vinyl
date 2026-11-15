@@ -249,6 +249,8 @@
   color: var(--ink);
   text-shadow: 0 1px 3px rgb(0 0 0 / 0.9);
   pointer-events: none;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .globe-date-digit {
@@ -303,10 +305,14 @@
   font-size: 4.2cqw;
   letter-spacing: 0.03em;
   white-space: nowrap;
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .wildfire-overlay-detail {
   margin-top: 0.35em;
   font-size: 2.8cqw;
   opacity: 0.9;
+  -webkit-user-select: text;
+  user-select: text;
 }

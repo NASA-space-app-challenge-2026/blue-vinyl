@@ -39,15 +39,21 @@ html {
   box-sizing: border-box;
 }
 
-/* Only text can be selected: a drag across the page never paints the globe, the record, icons or images. */
-canvas,
-img,
-svg,
-video {
+/* Only text can be selected: nothing else takes part in a selection, so a drag or a long press never paints the globe,
+   the turntable, icons or images. Text held directly by a div opts back in where it is styled (globe-view.css). */
+body {
   -webkit-user-select: none;
   user-select: none;
 }
 
+p,
+h1,
+h2,
+h3,
+li,
+span,
+legend,
+label,
 svg text {
   -webkit-user-select: text;
   user-select: text;
