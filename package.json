@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "npx --yes browser-sync@3.0.4 start --server --files \"index.html\" \"src/**/*\" \"data/**/*\" --no-notify --no-ui --port $(node scripts/port.mjs)",
+    "https": "npx --yes browser-sync@3.0.4 start --server --https --open external --files \"index.html\" \"src/**/*\" \"data/**/*\" --no-notify --no-ui --port $(node scripts/port.mjs)",
     "dev": "npm start",
     "watch": "npm start",
     "serve": "npx --yes serve@14.2.6 . -l $(node scripts/port.mjs)",
