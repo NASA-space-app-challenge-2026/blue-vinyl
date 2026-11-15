@@ -892,7 +892,7 @@ function renderAerosol(trackIndex) {
     return;
   }
   particleToggles.show();
-  // Each track starts with its lead particle type alone, which cannot be switched off.
+  // Each track starts with every particle type on, its lead one locked on.
   if (togglesTrack !== trackIndex) {
     togglesTrack = trackIndex;
     particleToggles.setLead(PARTICLE_TOGGLE[data.paths[0].particle]);

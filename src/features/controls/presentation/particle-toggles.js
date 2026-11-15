@@ -165,11 +165,11 @@ export function createParticleToggles(parent, onChange) {
       container.hidden = true;
       caption.style.opacity = '0';
     },
-    /** Starts a track: its lead particle type on and locked, every other one off. */
+    /** Starts a track: every particle type on, its lead one locked on. */
     setLead(id) {
       lead = id;
       for (const key of buttons.keys()) {
-        states[key] = key === id;
+        states[key] = true;
         paint(key);
       }
       onChange({ ...states });
