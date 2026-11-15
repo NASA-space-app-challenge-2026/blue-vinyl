@@ -6,6 +6,23 @@ export const NoiseShape = Object.freeze({ HIT: 'hit', RISE: 'rise' });
 // A Patch is a stack of oscillators played as one note: `waves`, each { type, octave (above the note), detune (cents),
 // gain (its share of the patch) }, and `level`, which evens out how loud patches play.
 export const Patch = Object.freeze({
+  // A square with a quieter square an octave up: a hollow, woody pulse.
+  PULSE: Object.freeze({
+    level: 0.65,
+    waves: Object.freeze([
+      { type: 'square', octave: 0, detune: 0, gain: 1 },
+      { type: 'square', octave: 1, detune: 4, gain: 0.35 },
+    ]),
+  }),
+  // Two sawtooths beating against each other with a quieter one an octave up: a bright chord stab.
+  STAB: Object.freeze({
+    level: 2,
+    waves: Object.freeze([
+      { type: 'sawtooth', octave: 0, detune: -10, gain: 1 },
+      { type: 'sawtooth', octave: 0, detune: 10, gain: 1 },
+      { type: 'sawtooth', octave: 1, detune: 0, gain: 0.4 },
+    ]),
+  }),
   // A sine an octave down under a soft triangle and a faint, slowly beating sawtooth: a deep hum that the filter opens
   // from a dull rumble to a hollow, cave-like drone.
   CAVE: Object.freeze({
