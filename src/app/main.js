@@ -600,9 +600,8 @@ async function switchAlbum(step) {
 }
 
 /**
- * Plays the track `step` (-1 or 1) away from the current one. Past either end of the album it switches to the album
- * next to it, as switchAlbum does, and plays its first track going forward or its last going back. A hidden page draws
- * no frames for the records to change by, so there the album changes at once.
+ * Plays the track `step` (-1 or 1) away from the current one. Past either end of the album it plays on into the album
+ * next to it (see playNextAlbum).
  */
 async function stepTrack(step) {
   if (swapping) return;
@@ -611,6 +610,14 @@ async function stepTrack(step) {
     playFromTrack(next);
     return;
   }
+  await playNextAlbum(step);
+}
+
+/**
+ * Switches to the album `step` (-1 or 1) away, as switchAlbum does, and plays its first track going forward or its
+ * last going back. A hidden page draws no frames for the records to change by, so there the album changes at once.
+ */
+async function playNextAlbum(step) {
   if (document.hidden) {
     elapsedMs = 0;
     setState(PlaybackState.STOPPED);
@@ -1042,9 +1049,9 @@ function tick(ts) {
   if (heardSec !== null) elapsedMs = heardSec * 1000;
   else elapsedMs += dtMs;
   lastFrameTs = ts;
+  // The album's last track has ended: the record changes and the next album plays from its first track.
   if (elapsedMs >= totalMs) {
-    elapsedMs = 0;
-    setState(PlaybackState.STOPPED);
+    playNextAlbum(1);
     return;
   }
   render();
