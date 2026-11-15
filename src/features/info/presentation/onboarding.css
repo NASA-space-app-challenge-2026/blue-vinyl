@@ -373,7 +373,7 @@
 
 .onboarding-nav {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   max-width: 1120px;
   width: 100%;
@@ -405,24 +405,6 @@
   box-shadow: 0 6px 24px rgb(226 199 154 / 0.3);
   color: #2a1f10;
   font-weight: 700;
-}
-
-.onboarding-dots {
-  display: flex;
-  gap: 8px;
-}
-
-.onboarding-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 3px;
-  background: rgb(243 236 225 / 0.3);
-  transition: width 0.3s ease, background 0.3s ease;
-}
-
-.onboarding-dot.is-current {
-  width: 20px;
-  background: var(--earth);
 }
 
 .onboarding-preview {

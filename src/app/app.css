@@ -73,6 +73,18 @@ body {
   font-family: var(--font);
 }
 
+/* Until main.js runs (the scripts above it are fetched first), the page shows the onboarding's own dark sky, not the
+   album backdrop and the title that would flash first. main.js sets .is-booted on the root. */
+html:not(.is-booted),
+html:not(.is-booted) body {
+  background-color: var(--title-bg);
+  background-image: none;
+}
+
+html:not(.is-booted) .screen > * {
+  visibility: hidden;
+}
+
 .screen {
   position: absolute;
   inset: 0;
