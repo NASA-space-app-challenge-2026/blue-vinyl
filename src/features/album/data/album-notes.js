@@ -139,4 +139,21 @@ export const ALBUM_NOTES = Object.freeze({
       { name: 'Spain and Etna', desc: "Smoke from Spain's wildfires reaching Britain, and Etna's volcanic sulphur dioxide reaching Greece (cello to horn, celesta to vibraphone)." },
     ],
   },
+
+  smog: {
+    subtitle: 'Haze that drifts in with the weather and moves on',
+    message:
+      "Small particles stay in the air for only a few days, but the weather can carry them far from where they rose. Built on the haze computed by NASA's GEOS-CF atmospheric model, hour by hour, this album follows smog over three cities as it drifts in from beyond the map, covers the city and passes on: Canadian wildfire smoke over New York, an early summer haze over Seoul and winter smog over Shanghai.",
+    globeVisual:
+      'The globe holds the city in the middle as a brown fog drifts in, thickening over it and then thinning away. The glow around the globe turns from blue in clean air through yellow and orange to red and purple as the haze over the city thickens.',
+    sonification:
+      'Each city plays one bright dance loop that never changes; only the air it is heard through does. As the haze over the city thickens, the music grows muffled and quiet, down to a low hum at its haziest hour, and opens up again as the air clears.',
+    docentTip:
+      "This is smog drifting over three cities, from NASA's atmospheric model. Listen as the bright dance music grows muffled, as if heard through the haze, when the smog rolls in over the city, then opens up again as the wind sweeps it away.",
+    tracks: [
+      { name: 'New York 2023', desc: "Smoke from Canada's wildfires drifts over the city, June 5 to 8 (synth-pop loop with a square-wave arpeggio)." },
+      { name: 'Seoul 2025', desc: 'An early summer haze passes over the city, June 15 to 17 (house loop with saw-wave chord stabs).' },
+      { name: 'Shanghai 2025', desc: 'Winter smog drifts in over the city and moves on, December 28 to 31 (the same house loop as Seoul).' },
+    ],
+  },
 });
