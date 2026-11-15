@@ -66,7 +66,7 @@ import { boxFocus, hourlyAt, smogDurationSec } from '../features/tracks/domain/s
 import { STEP_SEC, levelAt, lineLonAt } from '../features/tracks/domain/noon-line.js';
 import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
-import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
+import { YEAR_TIMELINE, yearAt, yearStartSec } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 import { pointInScreen, rectInScreen } from '../shared/screen-space.js';
@@ -1020,7 +1020,14 @@ function renderWildfire(data, trackIndex) {
   if (data.kind === 'annual') {
     const year = data.years[at];
     const fires = data.firesByYear[at];
-    globe.showFires({ mode: 'annual', year: year.year, fires, spanSec: WILDFIRE_YEAR_TIMELINE.beatSec });
+    globe.showFires({
+      mode: 'annual',
+      year: year.year,
+      fires,
+      startSec: yearStartSec(WILDFIRE_YEAR_TIMELINE, at),
+      spanSec: WILDFIRE_YEAR_TIMELINE.beatSec,
+      clock: () => elapsedMs / 1000 - trackStartSec(album, trackIndex),
+    });
     // The acres are NIFC's, all of the year's fires; the globe shows the large ones MTBS maps, none before 1984.
     const acresM = (year.acres / 1e6).toFixed(1);
     const mapped = fires.length ? ` · ${fires.length} large fires mapped` : ' · no fire map before 1984';
