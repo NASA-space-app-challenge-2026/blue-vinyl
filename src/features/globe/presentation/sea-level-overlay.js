@@ -6,6 +6,9 @@ const SCALE_MM = 100;
 // One wave of the surface (px). The water's top edge is cut to this shape, so the surface has no straight line.
 const WAVE = Object.freeze({ width: 160, height: 12, amplitude: 3.5 });
 const SWELL = Object.freeze({ width: 230, height: 16, amplitude: 5 });
+// The swell and the sky over the water are masked by one image this wide (px), whole waves, rather than by one wave
+// tiled: phones leave hairline cracks between the tiles. Wider than the widest label plus a wave.
+const UNTILED_MASK_PX = 4096;
 
 /**
  * What the overlay shows at one moment.
@@ -23,24 +26,32 @@ function el(tag, className) {
 
 const heightOf = (mm) => BASE + (mm / SCALE_MM) * SPAN;
 
-// One period of a sine wave across `width`, as SVG path points, its middle `top` px below the image's top edge.
-function crest({ width, height, amplitude }, top = 0) {
-  // About every 4 px, ending exactly on the period's right edge, so the curve meets the next tile with no notch.
+// `periods` periods of a sine wave each `width` across, as SVG path points, its middle `top` px below the image's top
+// edge.
+function crest({ width, height, amplitude }, top = 0, periods = 1) {
+  // About every 4 px, ending exactly on the last period's right edge, so the curve meets the next tile with no notch.
   const steps = Math.ceil(width / 4);
   const points = [];
-  for (let k = 0; k <= steps; k++) {
+  for (let k = 0; k <= steps * periods; k++) {
     const x = (k / steps) * width;
     points.push(`${x.toFixed(2)} ${(top + height / 2 - amplitude * Math.sin((k / steps) * 2 * Math.PI)).toFixed(2)}`);
   }
   return points.join(' L');
 }
 
+// How many whole waves of `wave` the untiled masks hold, and how wide that is (px).
+function untiled(wave) {
+  const periods = Math.ceil(UNTILED_MASK_PX / wave.width);
+  return { periods, width: periods * wave.width };
+}
+
 const svgImage = (svg) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg"${svg}</svg>`)}")`;
 
-// One period of the wave, filled below the curve, as a CSS mask image that tiles across.
+// The waves, filled below the curve, as one CSS mask image (see UNTILED_MASK_PX).
 function waveMask(wave) {
-  const { width, height } = wave;
-  return svgImage(` width="${width}" height="${height}"><path d="M0 ${height} L${crest(wave)} L${width} ${height} Z"/>`);
+  const { height } = wave;
+  const { periods, width } = untiled(wave);
+  return svgImage(` width="${width}" height="${height}"><path d="M0 ${height} L${crest(wave, 0, periods)} L${width} ${height} Z"/>`);
 }
 
 // The water as one shape: a period of the wave with the water filled below it all the way down. The image has no
@@ -52,10 +63,12 @@ function waterMask(wave) {
     + `<rect y="${height - 1}" width="${width}" height="100%"/>`);
 }
 
-// Everything above the wave, from `top` px over it: where the swell may show without lying under the water.
+// Everything above the waves, from `top` px over them: where the swell may show without lying under the water. One
+// image, untiled (see UNTILED_MASK_PX).
 function aboveMask(wave, top) {
-  const { width, height } = wave;
-  return svgImage(` width="${width}" height="${top + height}"><path d="M0 0 L${crest(wave, top)} L${width} 0 Z"/>`);
+  const { height } = wave;
+  const { periods, width } = untiled(wave);
+  return svgImage(` width="${width}" height="${top + height}"><path d="M0 0 L${crest(wave, top, periods)} L${width} 0 Z"/>`);
 }
 
 function setText(node, text) {
@@ -98,6 +111,8 @@ export function createSeaLevelOverlay(container) {
     ['--wave-w', `${WAVE.width}px`],
     ['--wave-h', `${WAVE.height}px`],
     ['--swell-w', `${SWELL.width}px`],
+    ['--above-mask-w', `${untiled(WAVE).width}px`],
+    ['--swell-mask-w', `${untiled(SWELL).width}px`],
     ['--swell-h', `${SWELL.height}px`],
     ['--swell-top', `${swellTop}px`],
     ['--water-mask', waterMask(WAVE)],
