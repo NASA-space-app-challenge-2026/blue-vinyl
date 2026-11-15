@@ -18,7 +18,7 @@ export const ALBUM_NOTES = Object.freeze({
     sonification:
       'Each species has its own lead (flute, oboe, French horn or ocarina). It climbs higher the farther north the birds fly, and breaks into breathless sixteenth-note runs as they fly faster.',
     docentTip:
-      "This is a year in the flight of migratory birds, drawn from satellite tracking of Arctic wildlife. Listen as the instruments rise higher the farther north the birds travel across the globe, and quicken into rapid sixteenth notes as they pick up speed.",
+      'This album lets you hear a year in the flight of migratory birds, drawn from tracking data. Listen as the melody climbs higher when the birds head north, and as the rhythm changes when they take flight.',
     tracks: [
       { name: 'Buff-breasted Sandpiper', desc: 'Crosses the length of the Americas, from Alaska to the Argentine pampas (flute).' },
       { name: 'Whimbrel', desc: 'A master of long-haul flight, covering some 20,000 km a year (oboe).' },
@@ -36,7 +36,7 @@ export const ALBUM_NOTES = Object.freeze({
     sonification:
       'On the right, the clear sound of the ice (vibraphone and piano) sinks lower and weaker as the sea ice shrinks. On the left, the sound of the sea (strings) grows higher and grander as the water rises.',
     docentTip:
-      'This is the loss of polar ice and the rise of the sea, recorded by 32 years of satellite observation. As the clear ice in your right ear sinks lower with the shrinking ice, the sea in your left ear rises higher. Feel the tension as the two draw closer.',
+      'This album lets you hear 32 years of satellite records of shrinking polar ice and a rising sea. Feel the tension between a sound that sinks lower as the ice shrinks and a sound that climbs higher as the sea rises.',
     tracks: [
       { name: 'Arctic', desc: "The steep decline of the Arctic's September sea ice minimum, against the rising sea (vibraphone and low strings)." },
       { name: 'Antarctic', desc: "The swings of Antarctica's February summer sea ice, against the steadily rising sea (piano and low strings)." },
@@ -52,7 +52,7 @@ export const ALBUM_NOTES = Object.freeze({
     sonification:
       'In January, when the Southern Hemisphere is hot, the music plays in heavy drums and a dark minor key. In July, as the lightning moves north, it turns to shimmering metallic tones and a bright major key.',
     docentTip:
-      'This is a year of lightning seen from the Space Station, some 60,000 flashes in all. Listen to the energy shift as the heavy drums and dark minor key of the southern summer in January give way to bright metallic instruments and a major key when the lightning crosses into the northern summer in July.',
+      "This album lets you hear where lightning strikes over a year. Lightning in the Southern Hemisphere is played on heavy drums, and lightning in the Northern Hemisphere on bright metallic instruments. Listen to the lightning's energy move as the year goes by.",
     tracks: [
       { name: 'The Americas and Africa', desc: 'Lightning moving with the seasons across the Americas and Africa, either side of the Atlantic (taiko and celesta).' },
       { name: 'Asia and Australia', desc: 'The breath of great thunderstorms passing between East Asia and Australia (melodic toms and dulcimer).' },
@@ -68,7 +68,7 @@ export const ALBUM_NOTES = Object.freeze({
     sonification:
       'The taller and denser the trees, the higher and faster the flute and harp play, while the pad and cello beneath them grow louder and heavier as the carbon dioxide thickens over time.',
     docentTip:
-      "This is the height of Earth's forests, measured by a laser in space, and the carbon in its air. As the sun circles the continents, a clear harp rings out wherever the trees grow tall and dense, but as the carbon dioxide thickens, the music beneath grows heavier and more stifling.",
+      "This album lets you hear the height and density of the world's forests. Where the forest is dense, the notes pour out all at once; where it is sparse, listen to them fall one by one.",
     tracks: [
       { name: 'Under the Noon Sun · 2019–2023', desc: 'The noon sun circling the Earth, and four years of thickening carbon dioxide in the air (harp, flute and pizzicato strings).' },
     ],
@@ -83,7 +83,7 @@ export const ALBUM_NOTES = Object.freeze({
     sonification:
       "As the hurricane's winds strengthen, the drums race from about 40 to as many as 200 beats per minute, and at the moment of peak wind speed a single, devastating cymbal crash erupts.",
     docentTip:
-      'These are the real wind speed curves of major Atlantic hurricanes. As the winds grow stronger, the drums race like a heartbeat, up to 200 beats per minute. Listen for the enormous cymbal crash the moment the storm reaches its peak.',
+      'This album lets you hear the changing wind speed of Atlantic hurricanes. As the wind picks up, the drums race like a heartbeat; listen for the cymbal crash that bursts out the moment the storm reaches its top speed.',
     tracks: [
       { name: 'Katrina 2005', desc: 'The storm of the century that struck the Gulf of Mexico (rock drum kit).' },
       { name: 'Felix 2007', desc: 'A violent Category 5 hurricane that struck Nicaragua (marching drumline).' },
@@ -100,7 +100,7 @@ export const ALBUM_NOTES = Object.freeze({
     sonification:
       'Each storm that forms adds a new synthesizer melody. Its pitch rises in the north and sinks in the south as the storm heads toward the pole, and the sound moves between your ears as the storm travels west and east.',
     docentTip:
-      'These are the storm tracks over the oceans of both hemispheres in 2023, the year the sea ran hottest. Each time a storm is born at sea, a new instrument joins in. Feel the sound cross between your ears, following the direction each storm travels, in three-dimensional space.',
+      'This album lets you hear the tracks of storms over the oceans of both hemispheres. Feel which way the storms move, rising in the north and sinking in the south, in three-dimensional sound.',
     tracks: [
       { name: 'North Atlantic 2023', desc: 'A North Atlantic season that brought 20 storms despite El Niño (analogue whistle).' },
       { name: 'South Indian 2023', desc: 'Cyclone Freddy, which crossed the whole South Indian Ocean and set a record as the longest-lived (analogue bowed strings).' },
@@ -116,7 +116,7 @@ export const ALBUM_NOTES = Object.freeze({
     sonification:
       'The more land burns in a year, the higher and rougher the French horn cries. At 2015 and 2020, the worst fire years on record, the whole orchestra erupts in a scream, then falls still for a breath before the fire roars back.',
     docentTip:
-      'This is 40 years of US wildfire damage statistics and large fire observations. The French horn surges as more land burns, and at the peaks of 2015 and 2020, the two worst years on record, every instrument erupts in a scream. Listen for the breath of silence that follows.',
+      'This album lets you hear observations of large wildfires in the United States. Listen as every instrument erupts in a scream when the burned land peaks, and to the silence that follows.',
     tracks: [
       { name: 'Burned Acres', desc: 'Land burned across the US each year from 1983 to 2024, and a history of its large fire ignitions (French horn and timpani).' },
       { name: '2020 Fire Season', desc: 'The 214-day spread of the 2020 fire season that turned the sky orange, day by day (trombone and tuba).' },
@@ -131,7 +131,7 @@ export const ALBUM_NOTES = Object.freeze({
     sonification:
       'A guitar and cello melody played where the particles rise is reborn as the very same melody on a distant harp and horn the moment they cross the air and arrive, in the Caribbean, on Saint Helena or in Britain, up to 7,000 km away.',
     docentTip:
-      "This is the journey of fine dust, tracked by NASA's global atmospheric model. Listen for the link the air makes: a melody of dust that begins in the heart of the Sahara rides the wind across the Atlantic, and rings out again far away, the very same melody, the moment it reaches the Caribbean.",
+      'This album lets you hear fine dust moving through the air, tracked by a global atmospheric model. Listen to the direction and speed of particles that set out from around the world and ride the wind across the ocean to faraway places.',
     tracks: [
       { name: 'Hurricane Erin', desc: 'Hurricane Erin, born off Cape Verde, and the sea salt swirling in it (violin).' },
       { name: 'Saharan Dust', desc: 'A great sandstorm leaving the Sahara and reaching the Caribbean in 6.8 days (guitar to harp).' },
@@ -149,7 +149,7 @@ export const ALBUM_NOTES = Object.freeze({
     sonification:
       'Each city plays one bright dance loop that never changes; only the air it is heard through does. As the haze over the city thickens, the music grows muffled and quiet, down to a low hum at its haziest hour, and opens up again as the air clears.',
     docentTip:
-      "This is smog drifting over three cities, from NASA's atmospheric model. Listen as the bright dance music grows muffled, as if heard through the haze, when the smog rolls in over the city, then opens up again as the wind sweeps it away.",
+      'This album lets you hear how thick the smog is as it rolls over a city. When the smog covers the city, the bright dance music grows muffled, as if heard through fog; listen as it rings out clear again when the wind sweeps the smog away.',
     tracks: [
       { name: 'New York 2023', desc: "Smoke from Canada's wildfires drifts over the city, June 5 to 8 (synth-pop loop with a square-wave arpeggio)." },
       { name: 'Seoul 2025', desc: 'An early summer haze passes over the city, June 15 to 17 (house loop with saw-wave chord stabs).' },
