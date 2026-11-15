@@ -2,21 +2,16 @@
 // "The Wind That Sweeps the Smog", its fog over the music widened.
 //
 // Each song plays its own four-bar loop (its `loop`, a SmogLoop) at 120 BPM, unchanged from start to end; the air only
-// changes how it comes through, the same way in every song:
-//   - The fog: clear air plays the loop crisp; the more smog over the city's cell (its aerosol optical depth, as the map draws it), the
-//     more the whole mix is muffled, as if through a wall, and smeared into reverb and grit, rising and falling with
-//     the air hour by hour.
-//   - The clearing: while the fog on the map is thinning, a gust of wind blows on every beat, as loud as the city is
-//     losing fog.
-//   - The turns (see tracks/domain/smog.js): as the smog rolls in, a deep boom as the map darkens; as the front sweeps
-//     it out, a riser over the two bars before, the beat before it silent, and a crash as the map flashes clear.
+// muffles it (user, 2026-11-15: the music goes on the same, only its muffling follows the concentration), the same way
+// in every song: the more smog over the city's cell (its aerosol optical depth, as the map draws it), the lower the
+// low-pass over the whole mix, as if through a wall, rising and falling with the air hour by hour.
 //
 // The bar and step are read from the song's playback time, so the loop stays in place wherever the needle is set down.
 
 import { Effect } from '../effects.js';
 import { CC, Instrument } from '../instruments.js';
-import { NoiseShape, Patch } from '../patches.js';
-import { CLEAR_LEVEL, STEPS_PER_BAR, STEPS_PER_BEAT, STEP_MS, gridAt, hourlyAt } from '../../../tracks/domain/smog.js';
+import { Patch } from '../patches.js';
+import { CLEAR_LEVEL, STEPS_PER_BAR, STEP_MS, gridAt, hourlyAt } from '../../../tracks/domain/smog.js';
 
 // A chord: its four notes, low to high, that the parts above the bass play (the pad and stabs its lowest three, the
 // pad an octave down), and the bass's root (MIDI).
@@ -90,30 +85,17 @@ const ARP_SHAPE = Object.freeze({ cutoff: 2.5, resonance: 3, env: 1.5, decay: 0.
 const STAB_SHAPE = Object.freeze({ cutoff: 1.5, resonance: 5, env: 2.5, decay: 0.18, gate: 0.4, release: 0.12 });
 const SOUND_FONT_REVERB = 40;
 // The standard kit's keys.
-const Drum = Object.freeze({ KICK: 36, SNARE: 38, CLOSED_HAT: 42, CRASH: 49 });
+const Drum = Object.freeze({ KICK: 36, SNARE: 38, CLOSED_HAT: 42 });
 
 // The fog over the music follows the air over the city hour by hour (user, 2026-11-15: the change in concentration is
 // the point, and the smog as muffled as it can be): none while the air is clear (pollution level below CLEAR_LEVEL,
 // about AOD 0.67), all of it at full scale (level 1, AOD 5, where the map's fog is at its thickest and brownest),
-// in between as the level goes. At none the mix is as it is; at all of it the low-pass is down to MUFFLED_HZ and the
-// reverb and grit are at their most.
+// in between as the level goes. At none the mix is open; at all of it the low-pass is down to MUFFLED_HZ. The reverb
+// and grit stay as they are in clear air.
 const OPEN_HZ = 18000;
 const MUFFLED_HZ = 220;
-const REVERB = Object.freeze([0.12, 0.6]);
-const DRIVE = Object.freeze([0, 0.3]);
-// A gust on each beat while the city is losing fog: a burst of noise falling from 6 kHz, as loud as the share of a
-// whole fog the city's cell loses an hour, none from `from` and full at `full`.
-const GUST = Object.freeze({ from: 0.008, full: 0.06, velocity: 120, steps: STEPS_PER_BEAT, hz: [6000, 700] });
-// The turns: the riser, silent beat, crash and impact of a clearing; the boom of the smog rolling in.
-const RISER = Object.freeze({ velocity: 110, steps: 2 * STEPS_PER_BAR, hz: [300, 9000] });
-const SILENT_STEPS = STEPS_PER_BEAT;
-const CRASH_VELOCITY = 124;
-const IMPACT = Object.freeze({ velocity: 115, steps: 4, hz: [150, 2500] });
-const BOOM = Object.freeze({ midi: 26, velocity: 127, steps: 2 * STEPS_PER_BAR });
-const BOOM_SHAPE = Object.freeze({ cutoff: 1, resonance: 2, env: 3, decay: 0.6, gate: 0.3, release: 2 });
-const BOOM_NOISE = Object.freeze({ velocity: 100, steps: 8, hz: [800, 60] });
-
-const lerp = ([from, to], amount) => from + (to - from) * amount;
+const REVERB = 0.12;
+const DRIVE = 0;
 
 export class SmogComposer {
   instruments = Object.freeze([...SOUND_FONTS, Instrument.STANDARD_KIT]);
@@ -128,7 +110,6 @@ export class SmogComposer {
   setSong({ track, loop }) {
     this.track = track;
     this.loop = loop;
-    this.turns = new Map(track.turns.map((turn) => [gridAt(turn.at).index, turn]));
   }
 
   reset() {
@@ -149,10 +130,6 @@ export class SmogComposer {
     if (grid.index === this.lastIndex) return;
     this.lastIndex = grid.index;
     this.hear(music, this.fogAt(time), at);
-    this.playTurns(music, grid, at);
-    const clearing = this.track.turns.find((turn) => turn.clear && turn.at > grid.time);
-    if (clearing && clearing.at - grid.time <= SILENT_STEPS * STEP_MS) return;
-    this.playGust(music, grid, at);
     this.playLoop(music, grid, at);
   }
 
@@ -165,31 +142,8 @@ export class SmogComposer {
 
   hear(music, fog, at) {
     music.effect(Effect.LOWPASS, OPEN_HZ * (MUFFLED_HZ / OPEN_HZ) ** fog, at);
-    music.effect(Effect.REVERB, lerp(REVERB, fog), at);
-    music.effect(Effect.DRIVE, lerp(DRIVE, fog), at);
-  }
-
-  playTurns(music, grid, at) {
-    if (this.turns.get(grid.index + RISER.steps)?.clear) {
-      music.noise(RISER.velocity, at, RISER.steps, ...RISER.hz, NoiseShape.RISE);
-    }
-    const turn = this.turns.get(grid.index);
-    if (!turn) return;
-    if (turn.clear) {
-      music.note(Instrument.STANDARD_KIT, Drum.CRASH, CRASH_VELOCITY, at, STEPS_PER_BAR);
-      music.noise(IMPACT.velocity, at, IMPACT.steps, ...IMPACT.hz, NoiseShape.HIT);
-    } else {
-      music.synthNote(Patch.CAVE, BOOM.midi, BOOM.velocity, at, BOOM.steps, BOOM_SHAPE);
-      music.noise(BOOM_NOISE.velocity, at, BOOM_NOISE.steps, ...BOOM_NOISE.hz, NoiseShape.HIT);
-    }
-  }
-
-  playGust(music, { step, time }, at) {
-    if (step % STEPS_PER_BEAT) return;
-    const cleared = hourlyAt(this.track.t, this.track.cleared, time);
-    if (cleared < GUST.from) return;
-    const velocity = GUST.velocity * Math.min(1, (cleared - GUST.from) / (GUST.full - GUST.from));
-    music.noise(velocity, at, GUST.steps, ...GUST.hz, NoiseShape.HIT);
+    music.effect(Effect.REVERB, REVERB, at);
+    music.effect(Effect.DRIVE, DRIVE, at);
   }
 
   playLoop(music, { step, bar }, at) {

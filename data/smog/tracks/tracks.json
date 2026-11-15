@@ -1,7 +1,7 @@
 [
   {
-    "file": "portland_2020.csv",
-    "title": "Portland",
+    "file": "new_york_2023.csv",
+    "title": "New York",
     "pages": [
       {
         "svsId": 5151,
@@ -9,12 +9,12 @@
         "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
       }
     ],
-    "note": "Ours: smog blown over the city and swept out again, picked by the app's rules and how fast its fog flows (section 5); every hour of it.",
+    "note": "Ours: smog blown in from outside the map, over the city and on, picked by the rules of section 5; every hour of it, played at 3 hours a second (46 s).",
     "sources": [
       {
         "source": "GEOS-CF v1 (NASA GMAO), xgc_tavg_1hr_g1440x721_x1, the sum of aod550_bc, aod550_oc, aod550_sulfate, aod550_dust, aod550_sala, aod550_salc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[23552:23717][526:558][213:245],aod550_oc.aod550_oc[23552:23717][526:558][213:245],aod550_sulfate.aod550_sulfate[23552:23717][526:558][213:245],aod550_dust.aod550_dust[23552:23717][526:558][213:245],aod550_sala.aod550_sala[23552:23717][526:558][213:245],aod550_salc.aod550_salc[23552:23717][526:558][213:245]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[47501:47639][507:539][408:440],aod550_oc.aod550_oc[47501:47639][507:539][408:440],aod550_sulfate.aod550_sulfate[47501:47639][507:539][408:440],aod550_dust.aod550_dust[47501:47639][507:539][408:440],aod550_sala.aod550_sala[47501:47639][507:539][408:440],aod550_salc.aod550_salc[47501:47639][507:539][408:440]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
@@ -24,24 +24,24 @@
       }
     ],
     "city": {
-      "name": "Portland",
-      "lat": 45.52,
-      "lon": -122.68
+      "name": "New York",
+      "lat": 40.71,
+      "lon": -74.01
     },
     "grid": {
-      "south": 41.5,
-      "west": -126.75,
+      "south": 36.75,
+      "west": -78.0,
       "stepDeg": 0.25,
       "rows": 33,
       "cols": 33
     },
-    "timeZone": "America/Los_Angeles",
+    "timeZone": "America/New_York",
     "units": {
       "<lat>_<lon>": "aerosol optical depth at 550 nm, unitless (hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2020-09-08T08:30Z",
-      "2020-09-15T05:30Z"
+      "2023-06-03T05:30Z",
+      "2023-06-08T23:30Z"
     ]
   },
   {
@@ -54,12 +54,12 @@
         "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
       }
     ],
-    "note": "Ours: smog blown over the city and swept out again, picked by the app's rules and how fast its fog flows (section 5); every hour of it.",
+    "note": "Ours: smog blown in from outside the map, over the city and on, picked by the rules of section 5; every hour of it, played at 3 hours a second (44 s).",
     "sources": [
       {
         "source": "GEOS-CF v1 (NASA GMAO), xgc_tavg_1hr_g1440x721_x1, the sum of aod550_bc, aod550_oc, aod550_sulfate, aod550_dust, aod550_sala, aod550_salc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[63298:63447][494:526][1212:1244],aod550_oc.aod550_oc[63298:63447][494:526][1212:1244],aod550_sulfate.aod550_sulfate[63298:63447][494:526][1212:1244],aod550_dust.aod550_dust[63298:63447][494:526][1212:1244],aod550_sala.aod550_sala[63298:63447][494:526][1212:1244],aod550_salc.aod550_salc[63298:63447][494:526][1212:1244]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[65252:65384][494:526][1212:1244],aod550_oc.aod550_oc[65252:65384][494:526][1212:1244],aod550_sulfate.aod550_sulfate[65252:65384][494:526][1212:1244],aod550_dust.aod550_dust[65252:65384][494:526][1212:1244],aod550_sala.aod550_sala[65252:65384][494:526][1212:1244],aod550_salc.aod550_salc[65252:65384][494:526][1212:1244]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
@@ -70,8 +70,8 @@
     ],
     "city": {
       "name": "Seoul",
-      "lat": 37.568295,
-      "lon": 126.997785
+      "lat": 37.57,
+      "lon": 126.98
     },
     "grid": {
       "south": 33.5,
@@ -85,13 +85,13 @@
       "<lat>_<lon>": "aerosol optical depth at 550 nm, unitless (hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2025-03-22T10:30Z",
-      "2025-03-28T15:30Z"
+      "2025-06-11T20:30Z",
+      "2025-06-17T08:30Z"
     ]
   },
   {
-    "file": "jakarta_2025.csv",
-    "title": "Jakarta",
+    "file": "pyongyang_2025.csv",
+    "title": "Pyongyang",
     "pages": [
       {
         "svsId": 5151,
@@ -99,12 +99,12 @@
         "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
       }
     ],
-    "note": "Ours: smog blown over the city and swept out again, picked by the app's rules and how fast its fog flows (section 5); every hour of it.",
+    "note": "Ours: smog blown in from outside the map, over the city and on, picked by the rules of section 5; every hour of it, played at 3 hours a second (48 s).",
     "sources": [
       {
         "source": "GEOS-CF v1 (NASA GMAO), xgc_tavg_1hr_g1440x721_x1, the sum of aod550_bc, aod550_oc, aod550_sulfate, aod550_dust, aod550_sala, aod550_salc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[65924:66092][319:351][1131:1163],aod550_oc.aod550_oc[65924:66092][319:351][1131:1163],aod550_sulfate.aod550_sulfate[65924:66092][319:351][1131:1163],aod550_dust.aod550_dust[65924:66092][319:351][1131:1163],aod550_sala.aod550_sala[65924:66092][319:351][1131:1163],aod550_salc.aod550_salc[65924:66092][319:351][1131:1163]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[69169:69313][500:532][1207:1239],aod550_oc.aod550_oc[69169:69313][500:532][1207:1239],aod550_sulfate.aod550_sulfate[69169:69313][500:532][1207:1239],aod550_dust.aod550_dust[69169:69313][500:532][1207:1239],aod550_sala.aod550_sala[69169:69313][500:532][1207:1239],aod550_salc.aod550_salc[69169:69313][500:532][1207:1239]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
@@ -114,24 +114,69 @@
       }
     ],
     "city": {
-      "name": "Jakarta",
-      "lat": -6.172472,
-      "lon": 106.827492
+      "name": "Pyongyang",
+      "lat": 39.021385,
+      "lon": 125.752745
     },
     "grid": {
-      "south": -10.25,
-      "west": 102.75,
+      "south": 35.0,
+      "west": 121.75,
       "stepDeg": 0.25,
       "rows": 33,
       "cols": 33
     },
-    "timeZone": "Asia/Jakarta",
+    "timeZone": "Asia/Pyongyang",
     "units": {
       "<lat>_<lon>": "aerosol optical depth at 550 nm, unitless (hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2025-07-09T20:30Z",
-      "2025-07-16T20:30Z"
+      "2025-11-22T01:30Z",
+      "2025-11-28T01:30Z"
+    ]
+  },
+  {
+    "file": "shanghai_2025.csv",
+    "title": "Shanghai",
+    "pages": [
+      {
+        "svsId": 5151,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5151/",
+        "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
+      }
+    ],
+    "note": "Ours: smog blown in from outside the map, over the city and on, picked by the rules of section 5; every hour of it, played at 3 hours a second (50 s).",
+    "sources": [
+      {
+        "source": "GEOS-CF v1 (NASA GMAO), xgc_tavg_1hr_g1440x721_x1, the sum of aod550_bc, aod550_oc, aod550_sulfate, aod550_dust, aod550_sala, aod550_salc",
+        "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[69956:70106][469:501][1190:1222],aod550_oc.aod550_oc[69956:70106][469:501][1190:1222],aod550_sulfate.aod550_sulfate[69956:70106][469:501][1190:1222],aod550_dust.aod550_dust[69956:70106][469:501][1190:1222],aod550_sala.aod550_sala[69956:70106][469:501][1190:1222],aod550_salc.aod550_salc[69956:70106][469:501][1190:1222]",
+        "version": "v1",
+        "doi": "https://doi.org/10.1029/2020MS002413",
+        "downloaded": "2026-11-15",
+        "license": "NASA data, no restrictions on use",
+        "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
+        "substitute": "EIC 5151 shows surface PM2.5 from GEOS-CF v2 (from 2025-08-04); the album plays the same model's column AOD (v1 holds every song), as surface PM2.5 empties and refills in place each day."
+      }
+    ],
+    "city": {
+      "name": "Shanghai",
+      "lat": 31.23,
+      "lon": 121.47
+    },
+    "grid": {
+      "south": 27.25,
+      "west": 117.5,
+      "stepDeg": 0.25,
+      "rows": 33,
+      "cols": 33
+    },
+    "timeZone": "Asia/Shanghai",
+    "units": {
+      "<lat>_<lon>": "aerosol optical depth at 550 nm, unitless (hourly mean, the cell centred there)"
+    },
+    "timeRange": [
+      "2025-12-24T20:30Z",
+      "2025-12-31T02:30Z"
     ]
   }
 ]

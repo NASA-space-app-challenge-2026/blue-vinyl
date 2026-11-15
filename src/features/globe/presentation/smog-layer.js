@@ -7,8 +7,6 @@
 //     box's edge, round on the ground and ragged with the billows, so it has no edge where the data ends and the rest
 //     of the globe is clear (user, 2026-11-15).
 //   - Where the fog is thinning, a cold sheen runs through it, the front sweeping it out.
-//   - The turns, on the downbeat they sound on: as the box clears the clear air flashes; as the smog rolls in, the
-//     map darkens for a moment. Both fade over TURN_FADE_MS of the song.
 //   - The city: a dot and its name, so the fog has a place to cover and uncover.
 // Only the hour's textures are uploaded, once an hour.
 
@@ -22,8 +20,6 @@ import { FOG, FOG_EDGE } from '../../tracks/domain/smog.js';
 const ALTITUDE = 0.004;
 // Vertices of the patch along each side: enough for the globe's curve under it.
 const SEGMENTS = 48;
-// The flash of a clearing and the darkening of the smog rolling in fade over this long of the song (playback ms).
-const TURN_FADE_MS = 1200;
 // The fog fades in over its song's first moments and out over its last (playback ms).
 const FADE_MS = 1500;
 // A city's dot radius and where its name sits above it (px).
@@ -49,8 +45,6 @@ uniform vec2 uSpan;
 uniform vec2 uGround;
 uniform float uTime;
 uniform vec2 uFog;
-uniform float uFlash;
-uniform float uDark;
 uniform float uFade;
 varying vec2 vUv;
 
@@ -125,11 +119,6 @@ void main() {
   float sheen = smoothstep(0.03, 0.15, clearing) * billow;
   color = mix(color, sky, 0.5 * sheen);
   alpha = max(alpha, 0.35 * sheen);
-  // The clear air flashing as the box clears, the map darkening as the smog rolls in.
-  color = mix(color, sky, uFlash * (1.0 - fog));
-  alpha = max(alpha, 0.5 * uFlash * (1.0 - fog));
-  color = mix(color, vec3(0.22, 0.16, 0.11), uDark);
-  alpha = max(alpha, 0.55 * uDark);
   // Faded out toward the box's edge, round on the ground and ragged with the billows.
   float reach = length((vUv - 0.5) * uGround) / (0.5 * min(uGround.x, uGround.y)) + (billow - 0.5) * ${glsl(FOG_EDGE.ragged)};
   float edge = 1.0 - smoothstep(${glsl(FOG_EDGE.from)}, ${glsl(FOG_EDGE.to)}, reach);
@@ -159,8 +148,6 @@ export function createSmogLayer({ globe, setElements }) {
     uGround: { value: new THREE.Vector2() },
     uTime: { value: 0 },
     uFog: { value: new THREE.Vector2(FOG.from, FOG.full) },
-    uFlash: { value: 0 },
-    uDark: { value: 0 },
     uFade: { value: 1 },
   };
   const mesh = new THREE.Mesh(
@@ -261,12 +248,6 @@ export function createSmogLayer({ globe, setElements }) {
     if (i !== hour) upload(i);
     uniforms.uMix.value = Math.min(1, Math.max(0, (time - t[i]) / (t[i + 1] - t[i])));
     uniforms.uTime.value = performance.now() / 1000;
-    const since = (clear) => {
-      const turn = next.turns.findLast((tn) => tn.clear === clear && tn.at <= time);
-      return turn ? Math.exp(-(time - turn.at) / TURN_FADE_MS) : 0;
-    };
-    uniforms.uFlash.value = since(true);
-    uniforms.uDark.value = since(false);
     uniforms.uFade.value = Math.max(0, Math.min(1, (time - t[0]) / FADE_MS, (t.at(-1) - time) / FADE_MS));
     mesh.visible = true;
   }
