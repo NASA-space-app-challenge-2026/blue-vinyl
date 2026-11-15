@@ -41,6 +41,21 @@ function createCloseIcon() {
 export function createInfoDialog(parent, { id, title, subtitle, body }) {
   const dialog = el('dialog', 'info-dialog');
   dialog.id = id;
+
+  /** Plays the closing animation, then closes; closes at once when motion is reduced. */
+  function requestClose() {
+    if (!dialog.open || dialog.classList.contains('is-closing')) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      dialog.close();
+      return;
+    }
+    dialog.classList.add('is-closing');
+    dialog.addEventListener('animationend', () => {
+      dialog.classList.remove('is-closing');
+      dialog.close();
+    }, { once: true });
+  }
+
   dialog.setAttribute('aria-labelledby', `${id}-title`);
 
   const heading = el('h2', 'info-title', [title]);
@@ -51,7 +66,7 @@ export function createInfoDialog(parent, { id, title, subtitle, body }) {
   const close = el('button', 'info-close', [createCloseIcon()]);
   close.type = 'button';
   close.setAttribute('aria-label', 'Close');
-  close.addEventListener('click', () => dialog.close());
+  close.addEventListener('click', requestClose);
 
   const content = el('div', 'info-body', body);
   dialog.append(el('header', 'info-header', [headingGroup, close]), content);
@@ -62,7 +77,13 @@ export function createInfoDialog(parent, { id, title, subtitle, body }) {
     const box = dialog.getBoundingClientRect();
     const inside = event.clientX >= box.left && event.clientX <= box.right
       && event.clientY >= box.top && event.clientY <= box.bottom;
-    if (!inside) dialog.close();
+    if (!inside) requestClose();
+  });
+
+  // Escape would close the dialog at once, so it is held back until the closing animation has played.
+  dialog.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    requestClose();
   });
 
   parent.append(dialog);
@@ -112,10 +133,9 @@ export function renderAbout(about, albums) {
     el('p', 'info-challenge', ['Made for ', link(about.challenge.label, about.challenge.url), '.']),
     section('How it works', [how]),
     section('Albums', [albumList]),
-    section('Listening', [shortcuts]),
+    section('Shortcuts', [shortcuts]),
     section(about.teamName, [team]),
-    el('p', 'info-fineprint', [about.disclaimer]),
-    el('p', 'info-version', [`Version ${about.version}`]),
+    section('Version', [el('p', 'info-version', [about.version])]),
   ];
 }
 

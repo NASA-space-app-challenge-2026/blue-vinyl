@@ -17,7 +17,6 @@
  * @property {{ label: string, url: string }} challenge
  * @property {string} teamName
  * @property {TeamMember[]} team
- * @property {string} disclaimer
  */
 
 /**

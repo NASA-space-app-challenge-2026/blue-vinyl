@@ -45,6 +45,4 @@ export const ABOUT = Object.freeze({
     { name: 'Nell', github: 'nero-angela' },
     { name: 'shkim', github: 'coco0402' },
   ],
-  disclaimer: 'Blue Vinyl is a team entry for the NASA Space Apps Challenge. It is not made, endorsed or supported by '
-    + 'NASA.',
 });
