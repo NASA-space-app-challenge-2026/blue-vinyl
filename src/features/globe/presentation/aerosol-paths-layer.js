@@ -2,7 +2,7 @@
 // Storms are: each one a comet tail behind it, wide and bright at its head and thinning to nothing, and the path it has
 // gone, faint, all in its particle type's own colour (EIC's, as the shell). The tails of all the track's particles are
 // one mesh and the paths another, so a hundred of them cost about as much as one. The lead particle (`hero`) has a
-// wider, longer tail, its path is white, and it is marked: its type's shape (PARTICLE_SHAPE) in its colour with a white
+// wider, longer tail, its tail and path are white, and it is marked: its type's shape (PARTICLE_SHAPE) in its colour with a white
 // edge.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
@@ -14,7 +14,7 @@ const COLOR = Object.freeze({ seaSalt: '#408cff', dust: '#ff59bf', smoke: '#ff73
 // Lifted a little off the surface, as the comet tails are.
 const ALTITUDE = 0.003;
 // The lead particle's marker, in pixels across.
-const MARKER_PX = 15;
+const MARKER_PX = 19.5;
 // The opacity of a path, and of a tail at its head.
 const ALPHA = Object.freeze({ path: 0.15, heroPath: 0.6, head: 0.9 });
 // A tail's width at its head in pixels. From the head it thins as t^widthPow and fades as t^alphaPow, t = 1 at the head
@@ -47,26 +47,31 @@ attribute vec3 side;
 attribute float across;
 attribute float halfPx;
 attribute float alpha;
+attribute float white;
 uniform float tanHalfFov;
 uniform float viewHeightPx;
 varying float vAlpha;
 varying float vAcross;
+varying float vWhite;
 void main() {
   vAlpha = alpha;
   vAcross = across;
+  vWhite = white;
   vec4 centre = modelViewMatrix * vec4(position, 1.0);
   float unitsPerPx = 2.0 * -centre.z * tanHalfFov / viewHeightPx;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position + side * across * halfPx * unitsPerPx, 1.0);
 }`;
-// Soft edges across the ribbon, a whiter core toward the head.
+// Soft edges across the ribbon, a whiter core toward the head; the lead's tail is white throughout.
 const tailFragment = `
 uniform vec3 color;
 varying float vAlpha;
 varying float vAcross;
+varying float vWhite;
 void main() {
   float edge = 1.0 - abs(vAcross);
   float core = pow(edge, 8.0) * vAlpha;
-  gl_FragColor = vec4(mix(color, vec3(1.0), 0.5 * core), vAlpha * edge * edge);
+  vec3 tint = mix(color, vec3(1.0), vWhite);
+  gl_FragColor = vec4(mix(tint, vec3(1.0), 0.5 * core), vAlpha * edge * edge);
   #include <colorspace_fragment>
 }`;
 
@@ -142,7 +147,7 @@ export function createAerosolPathsLayer(view) {
     let points = 0;
     tailOf = paths.map(({ hero }) => {
       const steps = hero ? TAIL_STEPS.hero : TAIL_STEPS.crowd;
-      const tail = { steps, first: points, widthPx: hero ? TAIL_WIDTH_PX.hero : TAIL_WIDTH_PX.crowd };
+      const tail = { steps, first: points, widthPx: hero ? TAIL_WIDTH_PX.hero : TAIL_WIDTH_PX.crowd, hero: Boolean(hero) };
       points += steps + 1;
       return tail;
     });
@@ -152,16 +157,19 @@ export function createAerosolPathsLayer(view) {
     tailGeometry.setAttribute('side', new THREE.BufferAttribute(new Float32Array(vertices * 3), 3));
     tailGeometry.setAttribute('alpha', new THREE.BufferAttribute(new Float32Array(vertices), 1));
     const across = new Float32Array(vertices);
+    const white = new Float32Array(vertices);
     const index = [];
-    for (const { steps, first } of tailOf) {
+    for (const { steps, first, hero } of tailOf) {
       for (let j = 0; j <= steps; j++) {
         const v = 2 * (first + j);
         across[v] = -1;
         across[v + 1] = 1;
+        white[v] = white[v + 1] = hero ? 1 : 0;
         if (j < steps) index.push(v, v + 1, v + 2, v + 1, v + 3, v + 2);
       }
     }
     tailGeometry.setAttribute('across', new THREE.BufferAttribute(across, 1));
+    tailGeometry.setAttribute('white', new THREE.BufferAttribute(white, 1));
     tailGeometry.setAttribute('halfPx', new THREE.BufferAttribute(new Float32Array(vertices), 1));
     tailGeometry.setIndex(index);
     tails = new THREE.Mesh(
