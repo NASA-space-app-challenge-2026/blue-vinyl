@@ -49,9 +49,14 @@ const MAX_STEPS_A_FRAME = 4;
 const meridianVertex = `
 varying float vAlong;
 varying float vAcross;
+varying float vFacing;
+uniform vec2 uLimb;
 void main() {
   vAlong = uv.y;
   vAcross = uv.x * 2.0 - 1.0;
+  // The ribbon is drawn without a depth test (it lies too close to the globe's surface, and the depth buffer cut it
+  // into pieces), so it fades out toward the globe's edge instead, as the trees do.
+  vFacing = smoothstep(uLimb.x, uLimb.y, dot(normalize(position), normalize(cameraPosition - position)));
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }`;
 
@@ -60,11 +65,12 @@ uniform vec3 uColor;
 uniform float uStrength;
 varying float vAlong;
 varying float vAcross;
+varying float vFacing;
 void main() {
   float edge = 1.0 - abs(vAcross);
   float core = pow(edge, 6.0);
   float fade = smoothstep(0.0, 0.08, vAlong) * smoothstep(1.0, 0.92, vAlong);
-  float alpha = uStrength * fade * (0.35 * edge * edge + 0.65 * core);
+  float alpha = uStrength * fade * vFacing * (0.35 * edge * edge + 0.65 * core);
   gl_FragColor = vec4(mix(uColor, vec3(1.0), core * 0.7), alpha);
   #include <colorspace_fragment>
 }`;
@@ -351,10 +357,12 @@ export function createNoonLayer(view) {
     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
     geometry.setIndex(new THREE.BufferAttribute(index, 1));
     const material = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: new THREE.Color(color) }, uStrength: { value: MERIDIAN_STRENGTH.thin } },
+      uniforms: { uColor: { value: new THREE.Color(color) }, uStrength: { value: MERIDIAN_STRENGTH.thin },
+        uLimb: { value: new THREE.Vector2(TREE_LIMB.hiddenAt, TREE_LIMB.shownFrom) } },
       vertexShader: meridianVertex,
       fragmentShader: meridianFragment,
       transparent: true,
+      depthTest: false,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
