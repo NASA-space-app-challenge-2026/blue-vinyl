@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>Blue Vinyl</title>
+  <defs>
+    <radialGradient id="earth" cx="0.38" cy="0.34" r="0.75">
+      <stop offset="0" stop-color="#6fb6ff"/>
+      <stop offset="0.55" stop-color="#2a74d6"/>
+      <stop offset="1" stop-color="#0d3a86"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.22"/>
+      <stop offset="0.5" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0.12"/>
+    </linearGradient>
+  </defs>
+  <!-- The record. -->
+  <circle cx="32" cy="32" r="31" fill="#15130f"/>
+  <g fill="none" stroke="#f3ece1" stroke-opacity="0.13" stroke-width="0.8">
+    <circle cx="32" cy="32" r="27"/>
+    <circle cx="32" cy="32" r="24"/>
+    <circle cx="32" cy="32" r="21"/>
+  </g>
+  <circle cx="32" cy="32" r="31" fill="url(#sheen)"/>
+  <!-- The label: a blue Earth with its meridians and equator. -->
+  <circle cx="32" cy="32" r="16" fill="url(#earth)"/>
+  <g fill="none" stroke="#dff0ff" stroke-opacity="0.55" stroke-width="1">
+    <ellipse cx="32" cy="32" rx="7" ry="16"/>
+    <path d="M16 32h32"/>
+    <path d="M18.2 24h27.6M18.2 40h27.6" stroke-opacity="0.35"/>
+  </g>
+  <!-- The spindle hole. -->
+  <circle cx="32" cy="32" r="2.2" fill="#15130f"/>
+</svg>

@@ -58,6 +58,11 @@ body {
   z-index: 3;
 }
 
+#corner-top-left {
+  top: var(--gutter);
+  left: var(--gutter);
+}
+
 #corner-top-right {
   top: var(--gutter);
   right: var(--gutter);
@@ -75,6 +80,27 @@ body {
   bottom: var(--gutter);
   left: 50%;
   transform: translateX(-50%);
+}
+
+/* The app's name in the top left corner. */
+.app-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: clamp(16px, 1.5vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-shadow: 0 1px 8px rgb(0 0 0 / 0.35);
+  pointer-events: none;
+  user-select: none;
+}
+
+.app-title-icon {
+  width: 1.8em;
+  height: 1.8em;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.35));
 }
 
 /* In portrait orientation, force a rotated landscape layout that completely fills the screen */

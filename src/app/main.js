@@ -3,7 +3,7 @@
 // Composition root: wires the features together.
 
 import { albums, WILDFIRE_DAY_TIMELINE, WILDFIRE_YEAR_TIMELINE } from '../features/album/data/albums.js';
-import { albumDurationSec, trackBoundaries, trackCover, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
+import { ALBUM_CATEGORY_LABEL, albumDurationSec, trackBoundaries, trackCover, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
@@ -12,18 +12,21 @@ import { PlaybackState } from '../features/controls/domain/playback-state.js';
 import { createAlbumSwitcher } from '../features/controls/presentation/album-switcher.js';
 import { createFullscreenButton } from '../features/controls/presentation/fullscreen-button.js';
 import { createGlassCapsule } from '../features/controls/presentation/glass-capsule.js';
+import { createMoreMenu } from '../features/controls/presentation/more-menu.js';
 import { createPlayButton } from '../features/controls/presentation/play-button.js';
 import { createPlayHint } from '../features/controls/presentation/play-hint.js';
-import { createSettingsMenu } from '../features/controls/presentation/settings-menu.js';
 import { createVolumeControl } from '../features/controls/presentation/volume-control.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
-import { DEFAULT_GLOBE_THEME, GlobeTheme } from '../features/globe/domain/globe-theme.js';
+import { DEFAULT_GLOBE_THEME } from '../features/globe/domain/globe-theme.js';
 import { createDateLabel } from '../features/globe/presentation/date-label.js';
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
 import { createHalo } from '../features/globe/presentation/halo.js';
 import { createSeaLevelOverlay } from '../features/globe/presentation/sea-level-overlay.js';
 import { createWildfireOverlay } from '../features/globe/presentation/wildfire-overlay.js';
+import { ABOUT } from '../features/info/data/about.js';
+import { LICENSES } from '../features/info/data/licenses.js';
+import { createInfoDialog, renderAbout, renderLicenses } from '../features/info/presentation/info-dialog.js';
 import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
@@ -175,10 +178,23 @@ createAlbumSwitcher(albumControls, {
 });
 const viewControls = createGlassCapsule(slot('corner-top-right'));
 createFullscreenButton(viewControls);
-createSettingsMenu(viewControls, {
-  globeThemes: Object.values(GlobeTheme).map((theme) => ({ value: theme, label: GLOBE_THEMES[theme].label })),
-  globeTheme: DEFAULT_GLOBE_THEME,
-  onGlobeThemeChange: applyGlobeTheme,
+const aboutDialog = createInfoDialog(slot('screen'), {
+  id: 'about',
+  title: 'Blue Vinyl',
+  subtitle: ABOUT.tagline,
+  body: renderAbout(ABOUT, albums.map(({ title, category }) => ({ title, category: ALBUM_CATEGORY_LABEL[category] }))),
+});
+const licenseDialog = createInfoDialog(slot('screen'), {
+  id: 'license',
+  title: 'Licenses',
+  subtitle: 'Software, sound, photos and data',
+  body: renderLicenses(LICENSES),
+});
+createMoreMenu(viewControls, {
+  items: [
+    { label: 'About', onSelect: () => aboutDialog.open() },
+    { label: 'License', onSelect: () => licenseDialog.open() },
+  ],
 });
 applyGlobeTheme(DEFAULT_GLOBE_THEME);
 createCatView();
@@ -194,6 +210,9 @@ document.addEventListener(
   'keydown',
   (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
+    // An open dialog or menu keeps its keys: Space and the arrows scroll the dialog or move through the menu.
+    if (document.querySelector('dialog[open]')) return;
+    if (event.target instanceof Element && event.target.closest('[role="menu"]')) return;
     if (event.code === 'Space') {
       event.preventDefault();
       releaseClickFocus();
@@ -203,7 +222,7 @@ document.addEventListener(
     const albumStep = ALBUM_KEYS[event.key];
     const volumeStep = VOLUME_KEYS[event.key];
     if (!albumStep && !volumeStep) return;
-    // The volume slider and the theme radios keep their arrows while used from the keyboard.
+    // The volume slider keeps its arrows while used from the keyboard.
     if (event.target instanceof HTMLInputElement && event.target !== clickFocused) return;
     event.preventDefault();
     releaseClickFocus();
