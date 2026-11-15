@@ -125,6 +125,14 @@ export const LICENSES = Object.freeze([
         license: 'CC BY 3.0',
         licenseUrl: LICENSE_URL.CC_BY_3,
       },
+      {
+        name: 'Cat Meow Sound',
+        url: 'https://github.com/joshwcomeau/use-sound',
+        by: 'Josh W. Comeau',
+        use: 'The cat in the corner meowing when tapped',
+        license: 'MIT',
+        licenseUrl: LICENSE_URL.MIT,
+      },
     ],
   },
   {

@@ -1,5 +1,7 @@
 'use strict';
 
+import { createCatSound } from '../data/cat-sound.js';
+
 // Hijiki, the Live2D black cat, sitting in the bottom right corner.
 // Rendered by live2d-widget (global L2Dwidget, loaded in index.html).
 
@@ -18,6 +20,7 @@ const DISPLAY = Object.freeze({
  *   a portrait screen is drawn rotated to landscape (see app.css)
  */
 export function createCatView(screen) {
+  const catSound = createCatSound();
   const size = window.innerWidth <= MOBILE_MAX_WIDTH ? DISPLAY.mobile : DISPLAY.desktop;
   window.L2Dwidget.init({
     model: { jsonPath: HIJIKI_MODEL_URL, scale: 1 },
@@ -31,6 +34,24 @@ export function createCatView(screen) {
     if (!widget) return;
     observer.disconnect();
     screen.append(widget);
+
+    const onMeow = (event) => {
+      if (event.button !== undefined && event.button !== 0) return;
+      catSound.play();
+      const canvas = document.getElementById('live2dcanvas');
+      if (canvas) {
+        canvas.classList.remove('meowing');
+        void canvas.offsetWidth;
+        canvas.classList.add('meowing');
+        canvas.addEventListener(
+          'animationend',
+          () => canvas.classList.remove('meowing'),
+          { once: true },
+        );
+      }
+    };
+
+    widget.addEventListener('pointerdown', onMeow);
   });
   observer.observe(document.body, { childList: true });
 }
