@@ -261,8 +261,11 @@ const onboarding = createOnboarding(slot('screen'), {
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
 // Volume keys: up louder, down quieter.
 const VOLUME_KEYS = Object.freeze({ ArrowUp: 1, ArrowDown: -1 });
+// The number keys, on the main row or the keypad, go straight to the album at that place in the catalog (1 the first).
+const ALBUM_NUMBER_CODE = /^(?:Digit|Numpad)([1-9])$/;
 
-// Space always plays or pauses, left and right switch albums and up and down set the volume, wherever the focus is.
+// Space always plays or pauses, left and right switch albums, 1 to 9 go to an album and up and down set the volume,
+// wherever the focus is.
 // Captured before any control sees the key, so a button left focused by a click is not pressed again.
 document.addEventListener(
   'keydown',
@@ -276,6 +279,14 @@ document.addEventListener(
       event.preventDefault();
       releaseClickFocus();
       if (!event.repeat) togglePlayback();
+      return;
+    }
+    const albumNumber = ALBUM_NUMBER_CODE.exec(event.code);
+    // A text field keeps its digits.
+    if (albumNumber && !(event.target instanceof HTMLInputElement && event.target.type !== 'range')) {
+      event.preventDefault();
+      releaseClickFocus();
+      if (!event.repeat) goToAlbum(Number(albumNumber[1]) - 1);
       return;
     }
     const albumStep = ALBUM_KEYS[event.key];
@@ -576,8 +587,12 @@ function takePendingStep() {
  * Changes records, once for `step` (-1 or 1) and once more for each step asked for meanwhile, even while the new
  * record is being drawn out (see createRecordSwap): the arm lifts, the record goes into its sleeve and the column of
  * sleeves moves along to the new album, whose record comes out stopped at its start. The catalog wraps around.
+ * Given a `target` album, the first change goes straight to it, its sleeve standing next to the current one.
+ *
+ * @param {number} step
+ * @param {number | null} [target]
  */
-async function switchAlbum(step) {
+async function switchAlbum(step, target = null) {
   if (swapping) {
     if (recordSwap.skip()) pendingSteps += step;
     return;
@@ -587,9 +602,11 @@ async function switchAlbum(step) {
   slot('stage').inert = true;
   elapsedMs = 0;
   setState(PlaybackState.STOPPED);
+  if (target !== null) albumColumn.setNeighbour(step, target);
   try {
     await recordSwap.play(step, (direction) => {
-      showAlbum(wrapIndex(albumIndex + direction, albums.length));
+      showAlbum(target ?? wrapIndex(albumIndex + direction, albums.length));
+      target = null;
       render();
     }, takePendingStep);
   } finally {
@@ -597,6 +614,16 @@ async function switchAlbum(step) {
     slot('stage').inert = false;
     swapping = false;
   }
+}
+
+/**
+ * Changes records straight to the album at `index`, in one change as switchAlbum does: its sleeve comes from below a
+ * later album, from above an earlier one. Nothing happens for the album already shown, an album the catalog does not
+ * have, or while the records change.
+ */
+function goToAlbum(index) {
+  if (swapping || index === albumIndex || index >= albums.length) return;
+  switchAlbum(Math.sign(index - albumIndex), index);
 }
 
 /**
