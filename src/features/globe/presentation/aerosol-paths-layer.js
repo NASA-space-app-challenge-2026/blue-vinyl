@@ -1,7 +1,8 @@
-// The particles of an aerosol track on the globe (see tracks/domain/aerosol-paths.js): each one the path the wind has
-// carried it along, faint, with its last TAIL_STEPS brighter toward the head, all in its particle type's own colour
-// (EIC's, as the shell). All the track's particles are drawn in one mesh of path segments, so a couple of hundred of
-// them cost the same as one. Only the lead particle (`hero`) is marked: a disc in its colour with a white edge.
+// The particles of an aerosol track on the globe (see tracks/domain/aerosol-paths.js), drawn as the storms of Mirror
+// Storms are: each one a comet tail behind it, wide and bright at its head and thinning to nothing, and the path it has
+// gone, faint, all in its particle type's own colour (EIC's, as the shell). The tails of all the track's particles are
+// one mesh and the paths another, so a hundred of them cost about as much as one. The lead particle (`hero`) has a
+// wider, longer tail and is marked: a disc in its colour with a white edge.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
 import { PARTICLE_TOGGLE, TAIL_STEPS } from '../../tracks/domain/aerosol-paths.js';
@@ -12,8 +13,12 @@ const COLOR = Object.freeze({ seaSalt: '#408cff', dust: '#ff59bf', smoke: '#ff73
 const ALTITUDE = 0.003;
 // The lead particle's marker, in pixels across.
 const MARKER_PX = 15;
-// A path's opacity: this far behind the head, and at the head; the tail fades from the one to the other.
+// The opacity of a path, and of a tail at its head.
 const ALPHA = Object.freeze({ path: 0.15, head: 0.9 });
+// A tail's width at its head in pixels. From the head it thins as t^widthPow and fades as t^alphaPow, t = 1 at the head
+// and 0 at the tail's end (as comet-trail.js).
+const TAIL_WIDTH_PX = Object.freeze({ crowd: 4, hero: 8 });
+const TAIL_SHAPE = Object.freeze({ widthPow: 0.6, alphaPow: 1.6 });
 
 const lineVertex = `
 attribute float alpha;
@@ -29,6 +34,36 @@ void main() {
   gl_FragColor = vec4(color, vAlpha);
   #include <colorspace_fragment>
 }`;
+// A tail is a ribbon across the path, its width held in pixels by the shader whatever the camera's distance: the vertex
+// is pushed `across` * `halfPx` pixels along `side`, a world-space direction across the path.
+const tailVertex = `
+attribute vec3 side;
+attribute float across;
+attribute float halfPx;
+attribute float alpha;
+uniform float tanHalfFov;
+uniform float viewHeightPx;
+varying float vAlpha;
+varying float vAcross;
+void main() {
+  vAlpha = alpha;
+  vAcross = across;
+  vec4 centre = modelViewMatrix * vec4(position, 1.0);
+  float unitsPerPx = 2.0 * -centre.z * tanHalfFov / viewHeightPx;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position + side * across * halfPx * unitsPerPx, 1.0);
+}`;
+// Soft edges across the ribbon, a whiter core toward the head.
+const tailFragment = `
+uniform vec3 color;
+varying float vAlpha;
+varying float vAcross;
+void main() {
+  float edge = 1.0 - abs(vAcross);
+  float core = pow(edge, 8.0) * vAlpha;
+  gl_FragColor = vec4(mix(color, vec3(1.0), 0.5 * core), vAlpha * edge * edge);
+  #include <colorspace_fragment>
+}`;
+
 /** A disc filled with `color` and edged in white, with a thin dark halo, so it reads on dark and on bright air. */
 function markerTexture(color) {
   const canvas = document.createElement('canvas');
@@ -57,21 +92,25 @@ export function createAerosolPathsLayer(view) {
   let shownPaths = null;
   let shownStep = 0;
   let toggles = { salt: true, dust: true, smoke: true, sulfate: true };
-  // Built for one set of paths: where each particle is at every step (x, y, z), the path mesh and the marker.
+  // Built for one set of paths: where each particle is at every step (x, y, z), the tail and path meshes, the marker, and
+  // each particle's tail: the steps it covers and where its points start in the tail mesh.
   let xyz = [];
+  let tails = null;
   let segments = null;
   let marker = null;
+  let tailOf = [];
 
   function clear() {
-    for (const object of [segments, marker]) {
+    for (const object of [tails, segments, marker]) {
       if (!object) continue;
       globe.scene().remove(object);
       object.geometry?.dispose();
       object.material.map?.dispose();
       object.material.dispose();
     }
-    segments = marker = null;
+    tails = segments = marker = null;
     xyz = [];
+    tailOf = [];
     shownPaths = null;
   }
 
@@ -94,10 +133,51 @@ export function createAerosolPathsLayer(view) {
       new THREE.ShaderMaterial({ uniforms: { color: { value: new THREE.Color(color) } }, vertexShader: lineVertex, fragmentShader: lineFragment, transparent: true, depthWrite: false }),
     );
     segments.frustumCulled = false;
+    // The tails: one ribbon of TAIL_STEPS + 1 points a particle, two vertices a point.
+    let points = 0;
+    tailOf = paths.map(({ hero }) => {
+      const steps = hero ? TAIL_STEPS.hero : TAIL_STEPS.crowd;
+      const tail = { steps, first: points, widthPx: hero ? TAIL_WIDTH_PX.hero : TAIL_WIDTH_PX.crowd };
+      points += steps + 1;
+      return tail;
+    });
+    const vertices = points * 2;
+    const tailGeometry = new THREE.BufferGeometry();
+    tailGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices * 3), 3));
+    tailGeometry.setAttribute('side', new THREE.BufferAttribute(new Float32Array(vertices * 3), 3));
+    tailGeometry.setAttribute('alpha', new THREE.BufferAttribute(new Float32Array(vertices), 1));
+    const across = new Float32Array(vertices);
+    const halfPx = new Float32Array(vertices);
+    const index = [];
+    for (const { steps, first, widthPx } of tailOf) {
+      for (let j = 0; j <= steps; j++) {
+        const t = j / steps;
+        const v = 2 * (first + j);
+        across[v] = -1;
+        across[v + 1] = 1;
+        halfPx[v] = halfPx[v + 1] = 0.5 * widthPx * t ** TAIL_SHAPE.widthPow;
+        if (j < steps) index.push(v, v + 1, v + 2, v + 1, v + 3, v + 2);
+      }
+    }
+    tailGeometry.setAttribute('across', new THREE.BufferAttribute(across, 1));
+    tailGeometry.setAttribute('halfPx', new THREE.BufferAttribute(halfPx, 1));
+    tailGeometry.setIndex(index);
+    tails = new THREE.Mesh(
+      tailGeometry,
+      new THREE.ShaderMaterial({
+        uniforms: { color: { value: new THREE.Color(color) }, tanHalfFov: { value: 1 }, viewHeightPx: { value: 1 } },
+        vertexShader: tailVertex,
+        fragmentShader: tailFragment,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    );
+    tails.frustumCulled = false;
     marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTexture(color), depthWrite: false, depthTest: false, transparent: true, sizeAttenuation: false }));
     marker.renderOrder = 4;
     marker.visible = false;
-    globe.scene().add(segments, marker);
+    globe.scene().add(tails, segments, marker);
   }
 
   const lerp3 = (points, at, out) => {
@@ -122,19 +202,55 @@ export function createAerosolPathsLayer(view) {
     }
     shownStep = step;
     const on = toggles[PARTICLE_TOGGLE[paths[0].particle]];
-    segments.visible = on;
+    tails.visible = segments.visible = on;
     marker.visible = false;
     if (!on) return;
 
     const segPos = segments.geometry.attributes.position;
     const segAlpha = segments.geometry.attributes.alpha;
     const head = [0, 0, 0];
+    const { fov } = globe.camera();
+    const viewHeightPx = globe.renderer().domElement.clientHeight;
+    tails.material.uniforms.tanHalfFov.value = Math.tan((fov * Math.PI) / 360);
+    tails.material.uniforms.viewHeightPx.value = viewHeightPx;
+    const tailPos = tails.geometry.attributes.position;
+    const tailSide = tails.geometry.attributes.side;
+    const tailAlpha = tails.geometry.attributes.alpha;
+    const tip = [0, 0, 0];
+    const here = [0, 0, 0];
     let s = 0;
     paths.forEach((particle, i) => {
       const local = Math.min(step - particle.release, particle.path.length - 1);
-      if (local < 0) return;
+      const { steps, first } = tailOf[i];
+      if (local < 0) {
+        for (let j = 0; j <= steps; j++) tailAlpha.setX(2 * (first + j), 0), tailAlpha.setX(2 * (first + j) + 1, 0);
+        return;
+      }
       const points = xyz[i];
       lerp3(points, local, head);
+      // The tail: a point a step along the path from the head back, the ones before the release folded onto it.
+      const at = (j) => Math.max(0, local - (steps - j));
+      for (let j = 0; j <= steps; j++) {
+        lerp3(points, at(j), here);
+        lerp3(points, at(Math.min(j + 1, steps)), tip);
+        const back = [0, 0, 0];
+        lerp3(points, at(Math.max(j - 1, 0)), back);
+        // The side across the path: the path's direction crossed with the way up (out from the globe's centre).
+        const dx = tip[0] - back[0], dy = tip[1] - back[1], dz = tip[2] - back[2];
+        let sx = dy * here[2] - dz * here[1], sy = dz * here[0] - dx * here[2], sz = dx * here[1] - dy * here[0];
+        const len = Math.hypot(sx, sy, sz) || 1;
+        sx /= len; sy /= len; sz /= len;
+        const t = j / steps;
+        const alive = local - (steps - j) >= 0;
+        const a = alive ? ALPHA.head * t ** TAIL_SHAPE.alphaPow : 0;
+        const v = 2 * (first + j);
+        tailPos.setXYZ(v, here[0], here[1], here[2]);
+        tailPos.setXYZ(v + 1, here[0], here[1], here[2]);
+        tailSide.setXYZ(v, sx, sy, sz);
+        tailSide.setXYZ(v + 1, sx, sy, sz);
+        tailAlpha.setX(v, a);
+        tailAlpha.setX(v + 1, a);
+      }
       // The path from the release to the head: segment k joins step k and k + 1, the last ends at the head.
       const whole = Math.floor(local);
       for (let k = 0; k <= whole; k++) {
@@ -142,9 +258,8 @@ export function createAerosolPathsLayer(view) {
         if (k === whole && local === whole) break;
         segPos.setXYZ(2 * s, points[3 * k], points[3 * k + 1], points[3 * k + 2]);
         segPos.setXYZ(2 * s + 1, end[0], end[1], end[2]);
-        const behind = (a) => Math.max(0, Math.min(1, 1 - (local - a) / TAIL_STEPS));
-        segAlpha.setX(2 * s, ALPHA.path + (ALPHA.head - ALPHA.path) * behind(k));
-        segAlpha.setX(2 * s + 1, ALPHA.path + (ALPHA.head - ALPHA.path) * behind(Math.min(k + 1, local)));
+        segAlpha.setX(2 * s, ALPHA.path);
+        segAlpha.setX(2 * s + 1, ALPHA.path);
         s++;
       }
       if (particle.hero) {
@@ -152,13 +267,13 @@ export function createAerosolPathsLayer(view) {
         marker.position.set(x, y, z);
         // Not shrunk or grown by the camera's distance, so the marker keeps its size while the camera glides in: its scale is
         // a share of the view's height (twice the tangent of half the field of view, at any distance).
-        const { fov } = globe.camera();
-        marker.scale.setScalar((MARKER_PX * 2 * Math.tan((fov * Math.PI) / 360)) / globe.renderer().domElement.clientHeight);
+        marker.scale.setScalar((MARKER_PX * 2 * Math.tan((fov * Math.PI) / 360)) / viewHeightPx);
         marker.visible = true;
       }
     });
     segments.geometry.setDrawRange(0, 2 * s);
     segPos.needsUpdate = segAlpha.needsUpdate = true;
+    tailPos.needsUpdate = tailSide.needsUpdate = tailAlpha.needsUpdate = true;
   }
 
   /** @param {{ salt: boolean, dust: boolean, smoke: boolean, sulfate: boolean }} next */

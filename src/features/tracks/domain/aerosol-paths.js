@@ -3,10 +3,10 @@
 // released; nothing is steered.
 
 /** The most particles a track draws; the notebook keeps to it and so does the loader. */
-export const MAX_PARTICLES = 1;
+export const MAX_PARTICLES = 100;
 
-/** How many steps of its path (3 hours each) a particle draws brightly behind its head. */
-export const TAIL_STEPS = 24;
+/** How many steps of its path (3 hours each) a particle's tail covers behind its head, and the lead particle's (`hero`). */
+export const TAIL_STEPS = Object.freeze({ crowd: 24, hero: 48 });
 
 /**
  * @typedef {'seaSalt' | 'dust' | 'smoke' | 'sulfate'} AerosolParticle
