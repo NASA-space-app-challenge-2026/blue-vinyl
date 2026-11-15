@@ -346,8 +346,7 @@
 }
 
 .onboarding button:focus-visible {
-  outline: 2px solid var(--earth);
-  outline-offset: 3px;
+  outline: none;
 }
 
 .onboarding-skip,
