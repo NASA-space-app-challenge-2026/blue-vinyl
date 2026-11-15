@@ -7,7 +7,6 @@ import { Instrument } from '../../music/domain/instruments.js';
 import { Lead } from '../../music/domain/patches.js';
 import { NorthInstrument, SouthInstrument } from '../../music/domain/composers/lightning.js';
 import { SmogLoop } from '../../music/domain/composers/smog.js';
-import { SONG_MS } from '../../tracks/domain/smog.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
 import { Hemisphere, seasonDurationSec, seasonSpan } from '../../tracks/domain/storm-season.js';
 
@@ -58,12 +57,15 @@ const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAY
 
 const SMOG_TRACKS = 'data/smog/tracks';
 const SMOG_COVERS = 'assets/albums/smog';
+// How long each smog song plays: its pace aims at 54 s and rounds each stretch to whole bars, which comes to 56 s for
+// every song (see paceOf in tracks/domain/smog.js; checked against the data when a song loads).
+const SMOG_SONG_SEC = 56;
 
-/** A smog song: the hours around its city, played on `loop` (one of SmogLoop), 54 s (see tracks/domain/smog.js). */
+/** A smog song: the hours around its city, played on `loop` (one of SmogLoop) (see tracks/domain/smog.js). */
 function smogTrack(title, file, loop, cover, coverCredit) {
   return {
     title,
-    durationSec: SONG_MS / 1000,
+    durationSec: SMOG_SONG_SEC,
     color: '#bab8b6',
     coverUrl: `${SMOG_COVERS}/${cover}`,
     coverCredit,
@@ -296,15 +298,15 @@ export const albums = [
     // Songs are timed in playback ms; each sets the pace of its own hours (see tracks/domain/smog.js).
     msPerSec: 1000,
     // Three cities of three regions whose air filled with smog and cleared again once (see notebooks/smog_album.ipynb
-    // and docs/albums/smog.md), in time order: wildfire smoke, winter smog and Saharan dust. Each plays nell-v2's loops
-    // in turn, heard through the smog.
+    // and docs/albums/smog.md): wildfire smoke, and the winter smog of two cities. Each plays nell-v2's loops in turn,
+    // heard through the smog.
     tracks: [
       smogTrack('Portland', 'portland_2020.csv', SmogLoop.SYNTH_POP, 'portland.jpg',
         'Cover: Downtown Portland from SE Portland during the 2020 wildfires, Sep 10 2020 (Photo: Tedder, CC BY-SA 4.0)'),
       smogTrack('Beijing', 'beijing_2025.csv', SmogLoop.HOUSE, 'beijing.jpg',
         'Cover: Jade Peak Pagoda in smog from Longevity Hill, Beijing (Photo: Daniel Case, CC BY-SA 3.0)'),
-      smogTrack('Dakar', 'dakar_2025.csv', SmogLoop.BREAKS, 'dakar.jpg',
-        'Cover: Harmattan dust over Dakar, Jan 2015 (Photo: EquipeTKNal, CC BY-SA 4.0)'),
+      smogTrack('Lahore', 'lahore_2024.csv', SmogLoop.BREAKS, 'lahore.jpg',
+        'Cover: The sun dimmed by smog over Lahore, Jun 2008 (Photo: Tore Urnes, CC BY 2.0)'),
     ],
   },
 ];

@@ -42,7 +42,7 @@ import { loadStormSeason } from '../features/tracks/data/storm-season-source.js'
 import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack, loadWildfireTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
-import { boxFocus, hourlyAt } from '../features/tracks/domain/smog.js';
+import { boxFocus, hourlyAt, smogDurationSec } from '../features/tracks/domain/smog.js';
 import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
@@ -389,6 +389,9 @@ async function loadSong(track, target) {
   }
   if (track.smog) {
     const { track: smogTrack, city, timeZone } = await loadSmogTrack(track.smog);
+    if (smogDurationSec(smogTrack) !== track.durationSec) {
+      throw new Error(`${track.smog.file} plays ${smogDurationSec(smogTrack)} s, not ${track.durationSec} s`);
+    }
     return {
       smog: true,
       track: smogTrack,

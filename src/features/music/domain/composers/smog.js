@@ -3,10 +3,10 @@
 //
 // Each song plays its own four-bar loop (its `loop`, a SmogLoop) at 120 BPM, unchanged from start to end; the air only
 // changes how it comes through, the same way in every song:
-//   - The fog: clear air plays the loop crisp; as the smog gathers over the box (the haze, the fog the map draws,
-//     averaged) the whole mix is muffled more and more, and from the moment it rolls in until the air clears it is
+//   - The fog: clear air plays the loop crisp; as the smog gathers over the city (the haze, the fog the map draws
+//     over the city's cell) the whole mix is muffled more and more, and from the moment it rolls in until the air clears it is
 //     heard through a wall, smeared into reverb and grit.
-//   - The clearing: while the fog on the map is thinning, a gust of wind blows on every beat, as loud as the box is
+//   - The clearing: while the fog on the map is thinning, a gust of wind blows on every beat, as loud as the city is
 //     losing fog.
 //   - The turns (see tracks/domain/smog.js): as the smog rolls in, a deep boom as the map darkens; as the front sweeps
 //     it out, a riser over the two bars before, the beat before it silent, and a crash as the map flashes clear.
@@ -109,8 +109,8 @@ const OPEN_HZ = 18000;
 const MUFFLED_HZ = 220;
 const REVERB = Object.freeze([0.12, 0.6]);
 const DRIVE = Object.freeze([0, 0.3]);
-// A gust on each beat while the box is losing fog: a burst of noise falling from 6 kHz, as loud as the share of a
-// whole fog the box loses an hour, none from `from` and full at `full`.
+// A gust on each beat while the city is losing fog: a burst of noise falling from 6 kHz, as loud as the share of a
+// whole fog the city's cell loses an hour, none from `from` and full at `full`.
 const GUST = Object.freeze({ from: 0.008, full: 0.06, velocity: 120, steps: STEPS_PER_BEAT, hz: [6000, 700] });
 // The turns: the riser, silent beat, crash and impact of a clearing; the boom of the smog rolling in.
 const RISER = Object.freeze({ velocity: 110, steps: 2 * STEPS_PER_BAR, hz: [300, 9000] });
