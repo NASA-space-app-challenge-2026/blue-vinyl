@@ -40,6 +40,17 @@ function pointAt(path, at) {
 }
 
 /**
+ * Where a particle's head is at a step: its release point before it is released, its end once its path is done.
+ *
+ * @param {AerosolParticlePath} particle
+ * @param {number} step
+ * @returns {[number, number]}
+ */
+export function headOf({ release, path }, step) {
+  return pointAt(path, Math.max(0, Math.min(step - release, path.length - 1)));
+}
+
+/**
  * The part of a particle's path to draw at a step of the track: from its tail to its head, or null while it is not yet
  * released or once its tail has caught up with where its path ends.
  *
@@ -77,8 +88,8 @@ const unit = ([lat, lon]) => [Math.cos(rad(lat)) * Math.cos(rad(lon)), Math.cos(
  */
 export function heroFocus(particles, step) {
   const heroes = particles.filter((p) => p.hero);
-  if (!heroes.some((p) => step > p.release)) return null;
-  const heads = heroes.map((p) => unit(pointAt(p.path, Math.max(0, Math.min(step - p.release, p.path.length - 1)))));
+  if (!heroes.some((p) => step >= p.release)) return null;
+  const heads = heroes.map((p) => unit(headOf(p, step)));
   const sum = heads.reduce((a, v) => a.map((x, i) => x + v[i]), [0, 0, 0]);
   const norm = Math.hypot(...sum) || 1;
   const centre = sum.map((x) => x / norm);
