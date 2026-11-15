@@ -27,8 +27,10 @@
   pointer-events: none;
 }
 
+/* Turned over, the notes lie over the record (the turntable is z-index 1) so they can be read to the edge, but stay
+   under the corners' controls (z-index 3), as the cover does. */
 .album-cover.is-flipped {
-  z-index: 5;
+  z-index: 2;
 }
 
 .album-cover.is-flipped .album-cover-flipper {
@@ -191,6 +193,16 @@
   content: counter(track) '. ';
 }
 
+/* The docent's introduction (see album-cover.js): not a track, so it is not counted, and is marked with a microphone
+   in its number's place. */
+.album-cover-track-docent {
+  counter-increment: none;
+}
+
+.album-cover-track-docent .album-cover-track-button::before {
+  content: '🎙️ ';
+}
+
 .album-cover-track.is-active {
   color: var(--ink);
   font-weight: 700;
@@ -255,30 +267,33 @@
   color: color-mix(in srgb, var(--ink) 82%, transparent);
 }
 
+/* A bare ✕ in the top right corner, as plain as the NOTE link on the front. */
 .album-cover-flip-back-btn {
   position: absolute;
   top: 0;
   right: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6cqw;
-  padding: 0.7cqw 1.8cqw;
+  margin: 0;
+  padding: 0;
   font-family: inherit;
-  font-size: 2cqw;
-  font-weight: 500;
-  color: var(--ink);
-  background: rgb(255 255 255 / 0.14);
-  border: 1px solid rgb(255 255 255 / 0.28);
-  border-radius: 999px;
-  backdrop-filter: blur(8px);
+  font-size: 3.2cqw;
+  line-height: 1;
+  color: color-mix(in srgb, var(--ink) 80%, transparent);
+  background: none;
+  border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.2s ease;
   text-shadow: inherit;
 }
 
 .album-cover-flip-back-btn:hover {
-  background: rgb(255 255 255 / 0.25);
-  transform: translateY(-1px);
+  color: #fff;
+}
+
+/* A comfortable hit area round the small mark. */
+.album-cover-flip-back-btn::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
 }
 
 .album-cover-back-scroll {

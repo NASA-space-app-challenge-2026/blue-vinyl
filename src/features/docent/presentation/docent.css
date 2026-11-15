@@ -1,0 +1,88 @@
+/* The docent's speech bubble (docent-bubble.js): along the bottom, just left of the cat in the bottom right corner
+   (cat-view.js, 150 px wide, 80 px on a phone), its tail pointing at the cat. Over the stage, as the corners are. */
+.docent-bubble {
+  --cat-width: 150px;
+  /* The tail's height above the bubble's bottom, level with the cat's head. */
+  --tail-bottom: 84px;
+  position: absolute;
+  right: calc(var(--gutter) + var(--safe-right) + var(--cat-width));
+  bottom: calc(var(--gutter) + var(--safe-bottom) + 24px);
+  z-index: 3;
+  width: min(440px, 40%);
+  margin: 0;
+  padding: 14px 18px 16px;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 18px;
+  background: rgb(20 15 11 / 0.82);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.4);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  color: var(--ink);
+  transform-origin: right bottom;
+}
+
+.docent-bubble[hidden] {
+  display: none;
+}
+
+/* The tail, pointing right at the cat. */
+.docent-bubble::after {
+  content: '';
+  position: absolute;
+  right: -9px;
+  bottom: min(var(--tail-bottom), calc(100% - 30px));
+  width: 16px;
+  height: 16px;
+  border-top: 1px solid rgb(255 255 255 / 0.2);
+  border-right: 1px solid rgb(255 255 255 / 0.2);
+  background: inherit;
+  rotate: 45deg;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.docent-bubble-label {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #f0b040;
+}
+
+.docent-bubble-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* A short landscape screen (a phone on its side, as in app.css): smaller, so it leaves the record in sight. */
+@media screen and (orientation: landscape) and (max-height: 540px) {
+  .docent-bubble {
+    --tail-bottom: 48px;
+    width: min(340px, 36%);
+    padding: 10px 14px 12px;
+  }
+
+  .docent-bubble-label {
+    margin-bottom: 4px;
+    font-size: 10px;
+  }
+
+  .docent-bubble-text {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 768px) {
+  .docent-bubble {
+    --cat-width: 80px;
+    --tail-bottom: 36px;
+    width: min(320px, 60%);
+    padding: 10px 14px 12px;
+  }
+
+  .docent-bubble-text {
+    font-size: 12px;
+  }
+}

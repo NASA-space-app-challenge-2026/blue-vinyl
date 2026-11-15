@@ -1,5 +1,6 @@
 import { ALBUM_CATEGORY_LABEL, formatDuration, trackCover } from '../domain/album.js';
 import { ALBUM_NOTES } from '../data/album-notes.js';
+import { docentIntroSec } from '../../docent/domain/docent.js';
 
 // Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always
 // leans the same way and never stands straight.
@@ -24,12 +25,14 @@ function el(tag, className, text) {
 /**
  * Album sleeve with title and track list on the front, and liner notes on the back.
  * The face leans in 3D toward the mouse like a card held in the hand.
- * Clicking the "Liner Notes" button in the top right flips the sleeve to the back.
+ * Clicking the NOTE button in the top right flips the sleeve to the back.
+ * While the docent is on (setDocent), the track list opens with the docent's introduction, which plays before the
+ * first track; clicking it calls `onSelectDocent`.
  *
  * @param {HTMLElement} parent
- * @param {{ onSelectTrack?: (trackIndex: number) => void }} [options]
+ * @param {{ onSelectTrack?: (trackIndex: number) => void, onSelectDocent?: () => void }} [options]
  */
-export function createAlbumCover(parent, { onSelectTrack } = {}) {
+export function createAlbumCover(parent, { onSelectTrack, onSelectDocent } = {}) {
   const cover = el('article', 'album-cover');
   const flipper = el('div', 'album-cover-flipper');
   const face = el('div', 'album-cover-face');
@@ -49,13 +52,25 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
   let image = null;
   let items = [];
 
+  // The docent's introduction, above the first track while the docent is on. It has no number: it is not a track.
+  const docentItem = el('li', 'album-cover-track album-cover-track-docent');
+  const docentButton = el('button', 'album-cover-track-button');
+  docentButton.type = 'button';
+  const docentDuration = el('span', 'album-cover-track-duration');
+  docentButton.append(el('span', 'album-cover-track-title', 'Docent'), docentDuration);
+  docentButton.addEventListener('click', () => onSelectDocent?.());
+  docentItem.append(docentButton);
+  docentItem.hidden = true;
+
   // Front layout
   noteBtn.type = 'button';
-  noteBtn.setAttribute('aria-label', '앨범 노트 보기');
-  noteBtn.textContent = '앨범 노트';
+  noteBtn.setAttribute('aria-label', 'Show liner notes');
+  noteBtn.textContent = 'NOTE';
   noteBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
   noteBtn.addEventListener('click', (e) => {
     e.stopPropagation();
+    // The notes open at their top, wherever they were left scrolled to, even on another album.
+    backScroll.scrollTop = 0;
     cover.classList.add('is-flipped');
   });
 
@@ -63,8 +78,8 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
 
   // Back layout
   flipBackBtn.type = 'button';
-  flipBackBtn.setAttribute('aria-label', '커버로 돌아가기');
-  flipBackBtn.append(el('span', 'album-cover-flip-back-icon', '✕'), el('span', 'album-cover-flip-back-text', '커버 보기'));
+  flipBackBtn.setAttribute('aria-label', 'Back to the cover');
+  flipBackBtn.textContent = '✕';
   flipBackBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
   flipBackBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -137,48 +152,40 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
   function renderNotes(targetAlbum) {
     const notes = ALBUM_NOTES[targetAlbum.id];
     backCategory.textContent = ALBUM_CATEGORY_LABEL[targetAlbum.category] || '';
-    backTitle.textContent = notes?.title || targetAlbum.title;
+    backTitle.textContent = targetAlbum.title;
     backSubtitle.textContent = notes?.subtitle || '';
 
     backScroll.replaceChildren();
 
     if (!notes) {
-      const p = el('p', 'album-cover-note-item', '이 앨범의 라이너 노트가 준비 중입니다.');
-      backScroll.append(p);
+      backScroll.append(el('p', 'album-cover-note-desc', 'Liner notes for this album are on their way.'));
       return;
     }
 
-    // 1. Docent Tip Card (Highlight)
+    // 1. The docent's introduction, highlighted.
     if (notes.docentTip) {
       const docentCard = el('div', 'album-cover-note-card docent-tip-card');
-      const tipHeader = el('h4', 'album-cover-note-section-title', '🎙️ 도슨트 감상 팁');
-      const tipText = el('p', 'album-cover-note-desc', notes.docentTip);
+      const tipHeader = el('h4', 'album-cover-note-section-title', "🎙️ Docent's Note");
+      const tipText = el('p', 'album-cover-note-desc', `“${notes.docentTip}”`);
       docentCard.append(tipHeader, tipText);
       backScroll.append(docentCard);
     }
 
-    // 2. Data & Message
-    const infoSection = el('section', 'album-cover-note-section');
-    const dataTitle = el('h4', 'album-cover-note-section-title', '📡 데이터 출처');
-    const dataText = el('p', 'album-cover-note-desc', notes.dataSource);
-    const msgTitle = el('h4', 'album-cover-note-section-title', '🌍 전달하는 메시지');
-    const msgText = el('p', 'album-cover-note-desc', notes.message);
-    infoSection.append(dataTitle, dataText, msgTitle, msgText);
-    backScroll.append(infoSection);
-
-    // 3. Visual & Audio
+    // 2. The data, the globe and the music.
     const guideSection = el('section', 'album-cover-note-section');
-    const visualTitle = el('h4', 'album-cover-note-section-title', '👀 눈으로 보는 시각화 (Globe)');
-    const visualText = el('p', 'album-cover-note-desc', notes.globeVisual);
-    const soundTitle = el('h4', 'album-cover-note-section-title', '🎧 귀로 듣는 청각화 (Music)');
-    const soundText = el('p', 'album-cover-note-desc', notes.sonification);
-    guideSection.append(visualTitle, visualText, soundTitle, soundText);
+    for (const [title, text] of [
+      ['📡 Data & Message', notes.message],
+      ['👀 On the Globe', notes.globeVisual],
+      ['🎧 In the Music', notes.sonification],
+    ]) {
+      guideSection.append(el('h4', 'album-cover-note-section-title', title), el('p', 'album-cover-note-desc', text));
+    }
     backScroll.append(guideSection);
 
-    // 4. Tracks
+    // 3. Tracks
     if (notes.tracks && notes.tracks.length > 0) {
       const trackSection = el('section', 'album-cover-note-section');
-      const trackListTitle = el('h4', 'album-cover-note-section-title', '🎵 수록곡 안내');
+      const trackListTitle = el('h4', 'album-cover-note-section-title', '🎵 Tracks');
       const trackList = el('ul', 'album-cover-note-track-list');
       notes.tracks.forEach((t, i) => {
         const li = el('li', 'album-cover-note-track-item');
@@ -220,22 +227,33 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
       item.append(button);
       return item;
     });
-    list.append(...items);
+    docentDuration.textContent = formatDuration(docentIntroSec(ALBUM_NOTES[album.id]?.docentTip));
+    list.append(docentItem, ...items);
     body.replaceChildren(el('p', 'album-cover-category', ALBUM_CATEGORY_LABEL[album.category]), el('h1', 'album-cover-title', album.title), list);
 
     renderNotes(album);
   }
 
-  /** @param {number} activeTrackIndex */
-  function render(activeTrackIndex) {
+  /**
+   * @param {number} activeTrackIndex
+   * @param {boolean} [inDocent] whether the docent's introduction is playing, before the track
+   */
+  function render(activeTrackIndex, inDocent = false) {
     showCover(trackCover(album, activeTrackIndex).url, true);
-    items.forEach((item, i) => item.classList.toggle('is-active', i === activeTrackIndex));
+    docentItem.classList.toggle('is-active', inDocent);
+    items.forEach((item, i) => item.classList.toggle('is-active', !inDocent && i === activeTrackIndex));
+  }
+
+  /** @param {boolean} on whether the docent is on, so its introduction is listed */
+  function setDocent(on) {
+    docentItem.hidden = !on;
   }
 
   return {
     el: cover,
     setAlbum,
     render,
+    setDocent,
     /** The cover image shown, or null. */
     get image() {
       return image?.parentNode === face ? image : null;
