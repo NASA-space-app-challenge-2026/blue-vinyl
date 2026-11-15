@@ -16,7 +16,7 @@ const PARTICLE = Object.freeze({
 // Lifted a little off the surface, as the comet tails are.
 const ALTITUDE = 0.003;
 // The lead particle's marker, in pixels across.
-const MARKER_PX = 7.5;
+const MARKER_PX = 15;
 // A path's opacity: this far behind the head, and at the head; the tail fades from the one to the other.
 const ALPHA = Object.freeze({ path: 0.15, head: 0.9 });
 
