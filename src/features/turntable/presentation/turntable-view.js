@@ -31,8 +31,8 @@ const SHEEN = Object.freeze({ angleDeg: -50, wide: { halfDeg: 16, opacity: 0.09 
 // same in every browser, which place dominant-baseline along a path each their own way.
 const CREDIT = Object.freeze({ radius: (GROOVE.outerRadius + 1) / 2, fontSize: 0.026, maxTurn: 0.96, capHeightEm: 0.7 });
 const ARM_WIDTH = 0.018;
-// Invisible stroke along the tube that makes the thin arm easy to grab.
-const ARM_GRAB_WIDTH = 0.08;
+// Invisible stroke along the tube that makes the thin arm easy to grab; wider for a finger than for a mouse.
+const ARM_GRAB_WIDTH = Object.freeze({ fine: 0.08, coarse: 0.24 });
 const COUNTERWEIGHT = Object.freeze({ length: 0.2, width: 0.07, height: 0.09, rings: 5 });
 const BASE_RADIUS = 0.12;
 const BEARING_RADIUS = 0.065;
@@ -204,7 +204,7 @@ function tonearmSvg() {
   });
   const lift = FINGER_LIFT;
   return `
-    ${tubeStroke('transparent', ARM_GRAB_WIDTH)}
+    ${tubeStroke('transparent', matchMedia('(pointer: coarse)').matches ? ARM_GRAB_WIDTH.coarse : ARM_GRAB_WIDTH.fine)}
     ${body}
     <g filter="url(#arm-tube-soft)">${bands.join('')}</g>
     <rect x="${-weight.width / 2}" y="${weight.length - weight.height}" width="${weight.width}"
@@ -288,7 +288,7 @@ function arcFromTop(share) {
  *
  * @param {(trackProgress: number) => void} onSeek
  */
-function createProgressRing(onSeek) {
+function createProgressRing(onSeek, { rectOf, pointOf }) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'record-progress');
   const side = 2 * (1 + RING_BLEED);
@@ -310,9 +310,10 @@ function createProgressRing(onSeek) {
   const dot = svg.querySelector('.record-progress-dot');
 
   svg.querySelector('.record-progress-hit').addEventListener('click', (event) => {
-    const rect = svg.getBoundingClientRect();
-    const x = event.clientX - (rect.left + rect.width / 2);
-    const y = event.clientY - (rect.top + rect.height / 2);
+    const rect = rectOf(svg);
+    const pointer = pointOf(event);
+    const x = pointer.x - (rect.left + rect.width / 2);
+    const y = pointer.y - (rect.top + rect.height / 2);
     // Clockwise from 12 o'clock, 0..1.
     const turn = (Math.atan2(x, -y) / (2 * Math.PI) + 1) % 1;
     onSeek(turn);
@@ -400,14 +401,18 @@ function createProgressRing(onSeek) {
  *   onHandHold: () => void,
  *   onHandTurn: (sec: number) => void,
  *   onHandRelease: () => void,
+ *   space: { rectOf: (el: Element) => DOMRectReadOnly, pointOf: (event: PointerEvent) => { x: number, y: number } },
  * }} options
  *   onToggle: called when the record is clicked off the grooves.
  *   onCued: called when the arm, swung on by render(CUEING), has reached its groove.
+ *   space: an element's box and a pointer's place in the pixels of the layout the turntable is drawn in, which a
+ *     turned screen does not share with the client's (see shared/screen-space.js); pointers are read in them.
  */
 export function createTurntableView(
   parent,
-  { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek, onSelectGroove, onHandHold, onHandTurn, onHandRelease },
+  { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek, onSelectGroove, onHandHold, onHandTurn, onHandRelease, space },
 ) {
+  const { rectOf, pointOf } = space;
   const root = document.createElement('div');
   root.className = 'turntable';
   root.style.aspectRatio = `${BOUNDS.width} / ${BOUNDS.height}`;
@@ -435,7 +440,7 @@ export function createTurntableView(
   labelSlot.className = 'record-label-slot';
   const rim = document.createElement('div');
   rim.className = 'record-label-rim';
-  const progressRing = createProgressRing(onSeek);
+  const progressRing = createProgressRing(onSeek, space);
   label.append(labelSlot, rim, progressRing.el);
 
   const armLayer = layer('turntable-arm-layer', armLayerSvg());
@@ -569,21 +574,24 @@ export function createTurntableView(
 
   // Distance (vinyl radii) from the record centre to a pointer event; the grooves are round, so the spin doesn't matter.
   function pointerRadius(event) {
-    const { x, y, r } = recordGeometry();
-    return Math.hypot(event.clientX - x, event.clientY - y) / r;
+    const { x, y, r } = recordGeometry(rectOf);
+    const pointer = pointOf(event);
+    return Math.hypot(pointer.x - x, pointer.y - y) / r;
   }
 
   // Angle (degrees clockwise from up) of a pointer event round the record centre.
   function pointerAngle(event) {
-    const { x, y } = recordGeometry();
-    return Math.atan2(event.clientX - x, -(event.clientY - y)) / RAD;
+    const { x, y } = recordGeometry(rectOf);
+    const pointer = pointOf(event);
+    return Math.atan2(pointer.x - x, -(pointer.y - y)) / RAD;
   }
 
   // Bearing (degrees clockwise from up, 0..360) from the pivot to a pointer event.
   function pointerBearing(event) {
-    const rect = armLayer.getBoundingClientRect();
-    const x = BOUNDS.left + ((event.clientX - rect.left) / rect.width) * BOUNDS.width;
-    const y = BOUNDS.top + ((event.clientY - rect.top) / rect.height) * BOUNDS.height;
+    const rect = rectOf(armLayer);
+    const pointer = pointOf(event);
+    const x = BOUNDS.left + ((pointer.x - rect.left) / rect.width) * BOUNDS.width;
+    const y = BOUNDS.top + ((pointer.y - rect.top) / rect.height) * BOUNDS.height;
     return (Math.atan2(x - PIVOT.x, -(y - PIVOT.y)) / RAD + 360) % 360;
   }
 

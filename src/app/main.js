@@ -45,7 +45,7 @@ import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../feature
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
-import { rectInScreen } from '../shared/screen-space.js';
+import { pointInScreen, rectInScreen } from '../shared/screen-space.js';
 import { createTicker } from '../shared/ticker.js';
 
 // The contiguous United States, zoomed until the label's edge is 30 degrees of arc from its middle, so the West's fires
@@ -95,7 +95,14 @@ const backdrop = createBackdrop(document.documentElement);
 const playHint = createPlayHint(slot('bottom-center'));
 
 const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack });
+// Boxes and pointers in the layout's own pixels, which a portrait screen turned to show it landscape does not share
+// with the client's.
+const screenSpace = Object.freeze({
+  rectOf: (el) => rectInScreen(slot('screen'), el),
+  pointOf: (event) => pointInScreen(slot('screen'), event.clientX, event.clientY),
+});
 const turntable = createTurntableView(slot('stage'), {
+  space: screenSpace,
   onToggle: togglePlayback,
   onCued: () => {
     if (state === PlaybackState.CUEING) startPlaying();
@@ -142,7 +149,7 @@ const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
 const recordSwap = createRecordSwap({
   recordEl: turntable.recordEl,
   recordGeometry: turntable.recordGeometry,
-  rectOf: (el) => rectInScreen(slot('screen'), el),
+  rectOf: screenSpace.rectOf,
   column: albumColumn,
 });
 const globe = createGlobeView(turntable.labelSlot);
