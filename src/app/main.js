@@ -1,3 +1,4 @@
+import { heroFocus } from '../features/tracks/domain/aerosol-paths.js';
 import { loadAerosolTrack } from '../features/tracks/data/aerosol-track-source.js';
 import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
 'use strict';
@@ -890,13 +891,15 @@ function renderAerosol(trackIndex) {
   particleToggles.show();
   const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
   globe.aerosol.render(data.frames, trackSec, track.durationSec);
-  globe.aerosolPaths.render(data.paths, Math.min(1, trackSec / track.durationSec) * (data.records.length - 1));
+  const step = Math.min(1, trackSec / track.durationSec) * (data.records.length - 1);
+  globe.aerosolPaths.render(data.paths, step);
 
-  // TEMP(#63): the whole globe, still, with no zoom: on the track's own view, or where Erin's eye starts.
+  // The camera follows the track's lead particle(s), zoomed in on them; until one is released it rests on the track's
+  // own view or where Erin's eye starts.
   const view = track.aerosol.viewLat !== undefined
     ? { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon }
     : { lat: data.records[0].viewLat, lon: data.records[0].viewLon };
-  focus = view;
+  focus = heroFocus(data.paths, step) ?? view;
 
   if (track.color) halo.setColor(track.color);
   if (state === PlaybackState.PLAYING) halo.wake();

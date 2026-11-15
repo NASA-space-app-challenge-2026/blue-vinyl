@@ -57,3 +57,32 @@ export function visiblePath({ release, path, hero }, step) {
   if (head > Math.floor(head)) points.push(pointAt(path, head));
   return points.length > 1 ? points : null;
 }
+
+/** The view arc (degrees from the focus to the edge of the label) that keeps the lead particles in frame. */
+export const HERO_ARC_DEG = Object.freeze({ close: 32, wide: 75 });
+// Padding round the lead particles when there are several, as a share of their spread.
+const SPREAD_PAD = 1.8;
+
+const rad = (d) => (d * Math.PI) / 180;
+const deg = (r) => (r * 180) / Math.PI;
+const unit = ([lat, lon]) => [Math.cos(rad(lat)) * Math.cos(rad(lon)), Math.cos(rad(lat)) * Math.sin(rad(lon)), Math.sin(rad(lat))];
+
+/**
+ * Where the camera should look at a step: the lead particles' heads (their release point until released, their end once
+ * their path is done), zoomed close on them, or wider when several are far apart. Null until one is released.
+ *
+ * @param {AerosolParticlePath[]} particles
+ * @param {number} step
+ * @returns {{ lat: number, lon: number, arcDeg: number } | null}
+ */
+export function heroFocus(particles, step) {
+  const heroes = particles.filter((p) => p.hero);
+  if (!heroes.some((p) => step > p.release)) return null;
+  const heads = heroes.map((p) => unit(pointAt(p.path, Math.max(0, Math.min(step - p.release, p.path.length - 1)))));
+  const sum = heads.reduce((a, v) => a.map((x, i) => x + v[i]), [0, 0, 0]);
+  const norm = Math.hypot(...sum) || 1;
+  const centre = sum.map((x) => x / norm);
+  const spreadDeg = Math.max(...heads.map((v) => deg(Math.acos(Math.min(1, centre.reduce((s, x, i) => s + x * v[i], 0))))));
+  const arcDeg = Math.min(HERO_ARC_DEG.wide, Math.max(HERO_ARC_DEG.close, spreadDeg * SPREAD_PAD + HERO_ARC_DEG.close * 0.5));
+  return { lat: deg(Math.asin(centre[2])), lon: deg(Math.atan2(centre[1], centre[0])), arcDeg };
+}

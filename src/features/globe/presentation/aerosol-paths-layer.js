@@ -14,10 +14,12 @@ const PARTICLE = Object.freeze({
   smoke: { color: '#ff731a', toggle: 'smoke' },
   sulfate: { color: '#4cff59', toggle: 'sulfate' },
 });
-const CROWD = Object.freeze({ ...COMET, headWidthPx: 3, alpha: 0.45 });
-const HERO = Object.freeze({ ...COMET, headWidthPx: 12, widthPow: 0.5, coreWhite: 0.9 });
+const CROWD = Object.freeze({ ...COMET, headWidthPx: 3, alpha: 0.35 });
+const HERO = Object.freeze({ ...COMET, headWidthPx: 20, widthPow: 0.45, coreWhite: 1 });
 // The glow at a lead particle's head: its diameter on screen, and how far above the surface it floats.
-const GLOW_PX = 56;
+const GLOW_PX = 120;
+// The glow breathes: its size swings by this share, once every PULSE_SEC.
+const PULSE = Object.freeze({ share: 0.2, sec: 1.2 });
 const GLOW_ALTITUDE = 0.006;
 
 /** A white radial falloff, tinted by the sprite's colour. */
@@ -103,7 +105,8 @@ export function createAerosolPathsLayer(view) {
       const [lat, lng] = points[points.length - 1];
       const { x, y, z } = globe.getCoords(lat, lng, GLOW_ALTITUDE);
       glow.position.set(x, y, z);
-      glow.scale.setScalar(GLOW_PX * unitsPerPx);
+      const pulse = 1 + PULSE.share * Math.sin((performance.now() / 1000 / PULSE.sec) * 2 * Math.PI);
+      glow.scale.setScalar(GLOW_PX * pulse * unitsPerPx);
     });
   }
 
