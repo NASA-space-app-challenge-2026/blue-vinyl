@@ -33,9 +33,12 @@ export function createVolumeControl(parent, { onChange } = {}) {
   const toggle = document.createElement('button');
   toggle.type = 'button';
   toggle.className = 'glass-segment';
+  toggle.setAttribute('aria-controls', 'volume-slider');
+  toggle.setAttribute('aria-keyshortcuts', 'ArrowUp ArrowDown');
 
   const slider = document.createElement('input');
   slider.type = 'range';
+  slider.id = 'volume-slider';
   slider.className = 'volume-slider';
   slider.min = '0';
   slider.max = String(MAX_VOLUME);
@@ -51,7 +54,11 @@ export function createVolumeControl(parent, { onChange } = {}) {
     onChange?.(shown / MAX_VOLUME);
     root.classList.toggle('is-open', open);
     slider.tabIndex = open ? 0 : -1;
+    // Folded away, the slider is out of reach of a screen reader too.
+    slider.inert = !open;
     slider.value = String(shown);
+    slider.setAttribute('aria-valuetext', muted ? 'Muted' : `${shown}%`);
+    toggle.setAttribute('aria-expanded', String(open));
     slider.style.setProperty('--fill', `${(shown / MAX_VOLUME) * 100}%`);
     toggle.setAttribute('aria-label', open ? (muted ? 'Unmute' : 'Mute') : 'Volume');
     toggle.replaceChildren(createControlIcon(speakerIcon()));

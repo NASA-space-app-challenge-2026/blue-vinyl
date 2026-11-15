@@ -36,6 +36,10 @@ export const ABOUT = Object.freeze({
     { keys: '← / →', action: 'Previous or next album' },
     { keys: '1 – 9', action: 'Go to that album' },
     { keys: '↑ / ↓', action: 'Volume up or down' },
+    { keys: 'D', action: 'Docent on or off' },
+    { keys: 'Tab', action: 'Move between the track list, the progress ring and each group of buttons' },
+    { keys: '← / → in a group', action: 'Move between its buttons; ↑ / ↓ in the track list' },
+    { keys: '← / →, Home / End on the ring', action: 'Seek 5 seconds, or to the start or end of the track' },
   ],
   challenge: {
     label: 'NASA Space Apps Challenge 2026 · The Earth Information Jukebox',

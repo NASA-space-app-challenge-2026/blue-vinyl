@@ -20,10 +20,11 @@ const TUCKED_Z_INDEX = '2';
  *
  * @param {HTMLElement} parent
  * @param {import('../domain/album.js').Album[]} albums
- * @param {{ onSelectTrack: (trackIndex: number) => void }} options  a track of the current album's sleeve was clicked
+ * @param {{ onSelectTrack: (trackIndex: number) => void, onSelectDocent: () => void }} options  a track, or the
+ *   docent's introduction, of the current album's sleeve was clicked
  */
-export function createAlbumColumn(parent, albums, { onSelectTrack }) {
-  const sleeve = createAlbumCover(parent, { onSelectTrack });
+export function createAlbumColumn(parent, albums, { onSelectTrack, onSelectDocent }) {
+  const sleeve = createAlbumCover(parent, { onSelectTrack, onSelectDocent });
   const neighbours = NEIGHBOUR_PLACES.map((place) => {
     const cover = createAlbumCover(parent);
     cover.el.classList.add('album-cover-neighbour');
@@ -128,5 +129,10 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
   }
 
   settle();
-  return { setAlbum, setNeighbour, render: sleeve.render, place, setTucked, moves, settle };
+  /** @param {boolean} on whether the docent is on: every sleeve lists its introduction, the neighbours too */
+  function setDocent(on) {
+    for (const cover of [sleeve, ...neighbours.map((n) => n.cover)]) cover.setDocent(on);
+  }
+
+  return { setAlbum, setNeighbour, render: sleeve.render, focusTracks: sleeve.focusTracks, setDocent, place, setTucked, moves, settle };
 }

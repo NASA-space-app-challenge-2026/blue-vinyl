@@ -9,6 +9,7 @@ export function createPlayButton(parent, { onToggle }) {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'glass-segment';
+  button.setAttribute('aria-keyshortcuts', 'Space');
   button.addEventListener('click', onToggle);
   parent.append(button);
 

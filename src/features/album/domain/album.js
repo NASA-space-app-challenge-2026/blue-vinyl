@@ -32,28 +32,11 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  * @typedef {Object} AerosolSource
  * @property {string} csvUrl the track's time series CSV
  * @property {string} framesDir directory containing the visual PNG frames
- * @property {string} lead particle type that leads the track ('sea_salt', 'dust', 'smoke', 'sulfate')
+ * @property {string} pathsUrl the particles' paths (see tracks/domain/aerosol-paths.js)
+ * @property {{ lead: import('../../music/domain/patches.js').Lead, baseMidi: number }} sound what the lead particle sings on,
+ *   and the note its lowest latitude sings, the track's tonic (see music/domain/composers/aerosol.js)
  * @property {number} [viewLat] latitude of the track's view centre
  * @property {number} [viewLon] longitude of the track's view centre
- * @property {boolean} [trackEye] whether the view follows the eye of the storm
- * @property {number} [arcDeg] degrees of arc from the view centre to the label's edge, closer than the whole globe
- * @property {number} [tonic] pitch class of the track's minor key (0 for C, the album's key, when left out)
- * @property {AerosolEvent[]} events what the track's music follows: an event leaving its source for a distant place
- */
-
-/**
- * One event of an aerosol track: a plume of one particle type leaving its source and reaching a distant receptor.
- * Its numbers are the CSV's `<particle>_*` event columns.
- *
- * @typedef {Object} AerosolEvent
- * @property {string} id the event, which picks its motif; the same event keeps its motif across tracks
- * @property {import('../../tracks/domain/aerosol-track.js').Particle} particle
- * @property {{ lat: number, lon: number } | 'eye'} source where it starts; 'eye' is the view centre (Erin's eye)
- * @property {{ lat: number, lon: number } | 'eye' | null} receptor where it is heading; null for an event that only
- *   spreads from its source
- * @property {number} [level] how loud it is against the track's lead, 1 when left out
- * @property {'arrival'} [heard] 'arrival' plays only its arrival, not its source or journey
- * @property {boolean} [spin] its motif turns faster as the storm's wind rises (Erin)
  */
 
 /**
@@ -115,6 +98,7 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  * @property {string} [color] CSS color the track's data is drawn in
  * @property {string} [coverUrl] the track's own cover image, shown on the sleeve while it is the current track
  * @property {string} [coverCredit] credit and license of the track's cover image
+ * @property {string} [coverAlt] what the track's cover image shows, for a screen reader; given with `coverUrl`
  * @property {string} [dataCredit] sources of the track's data, shown instead of the album's while it is current
  */
 
@@ -127,6 +111,9 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  * @property {string} title
  * @property {string} coverUrl
  * @property {string} coverCredit
+ * @property {string} [coverAlt] what the album's cover image shows, for a screen reader; needed when a track has no
+ *   cover of its own, as the sleeve then shows the album's
+ * @property {string} globeAlt what the globe shows through the album, for a screen reader, completing "Globe showing …"
  * @property {string} [dataCredit] sources of the album's data, shown with the cover credit
  * @property {Track[]} tracks
  * @property {number} [msPerSec] ms of data time a second of a track plays, for an album whose tracks play data
@@ -220,10 +207,14 @@ export function trackFadeAt(album, index, sec) {
  *
  * @param {Album} album
  * @param {number} trackIndex
- * @returns {{ url: string, credit: string }}
+ * @returns {{ url: string, credit: string, alt: string }} `alt` is empty when the data gives none
  */
 export function trackCover(album, trackIndex) {
   const track = album.tracks[trackIndex];
-  if (!track?.coverUrl) return { url: album.coverUrl, credit: album.coverCredit };
-  return { url: track.coverUrl, credit: [track.coverCredit, album.coverCredit].filter(Boolean).join(' · ') };
+  if (!track?.coverUrl) return { url: album.coverUrl, credit: album.coverCredit, alt: album.coverAlt ?? '' };
+  return {
+    url: track.coverUrl,
+    credit: [track.coverCredit, album.coverCredit].filter(Boolean).join(' · '),
+    alt: track.coverAlt ?? '',
+  };
 }
