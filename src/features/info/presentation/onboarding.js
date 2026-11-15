@@ -41,6 +41,9 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
   const top = el('div', 'onboarding-top', [skip]);
 
   let orbit = null;
+  // The step with the preview, which plays on its own once as the step comes up, and the function that plays it.
+  let previewStep = -1;
+  let playPreview = () => {};
   const steps = content.steps.map((step, index) => {
     const section = el('section', 'onboarding-step');
     section.setAttribute('aria-label', `Step ${index + 1} of ${count}`);
@@ -57,6 +60,7 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
       const picture = earphones();
       orbit = picture.orbit;
       visual = picture.node;
+      previewStep = index;
       text.append(previewButton());
     } else {
       visual = paleBlueDot();
@@ -67,9 +71,7 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
 
   const back = button('onboarding-back', content.back);
   const next = button('onboarding-next', content.next);
-  const dots = el('div', 'onboarding-dots', steps.map(() => el('span', 'onboarding-dot')));
-  dots.setAttribute('aria-hidden', 'true');
-  const nav = el('div', 'onboarding-nav', [back, dots, next]);
+  const nav = el('div', 'onboarding-nav', [back, next]);
 
   root.append(sky(), top, el('div', 'onboarding-steps', steps), nav);
   parent.append(root);
@@ -79,16 +81,14 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
   for (const child of covered) child.inert = true;
   stage.classList.add('before-start');
 
-  // The dot circles the head on its own, slowly, unless motion is reduced; the preview starts it over in time.
+  // The dot circles the head once, in time with the preview, and rests where it began.
   let spin = null;
   function startOrbit() {
     spin?.cancel();
     spin = orbit.animate([{ transform: 'rotate(0turn)' }, { transform: 'rotate(1turn)' }], {
       duration: preview.turnSec * 1000,
-      iterations: Infinity,
     });
   }
-  if (!reduce()) startOrbit();
 
   let current = -1;
   let open = true;
@@ -102,7 +102,6 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
       section.hidden = !active;
       section.inert = !active;
     });
-    [...dots.children].forEach((dot, i) => dot.classList.toggle('is-current', i === current));
     root.setAttribute('aria-labelledby', `onboarding-heading-${current}`);
     const last = current === count - 1;
     back.classList.toggle('is-hidden', current === 0);
@@ -119,11 +118,15 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
       });
     }
     next.focus();
+    // Coming to the preview's step plays it once, from the tap or key that came here; leaving it silences it.
+    if (current === previewStep) playPreview();
+    else if (from === previewStep) preview.stop();
   }
 
   function finish() {
     if (!open) return;
     open = false;
+    root.style.pointerEvents = 'none';
     preview.stop();
     onStart();
     for (const child of covered) child.inert = false;
@@ -148,7 +151,7 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
   next.addEventListener('click', () => (current === count - 1 ? finish() : show(current + 1)));
   back.addEventListener('click', () => show(current - 1));
   skip.addEventListener('click', finish);
-  // The arrows step through, as the dots read; Enter and Space press the focused button.
+  // The arrows step through; Enter and Space press the focused button.
   root.addEventListener('keydown', (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
     if (event.key === 'ArrowRight' && current < count - 1) show(current + 1);
@@ -174,18 +177,17 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
       toggle.setAttribute('aria-pressed', String(on));
       label.textContent = on ? content.previewStop : content.preview;
     }
-    toggle.addEventListener('click', () => {
-      if (playing) {
-        preview.stop();
-        return;
-      }
+    function begin() {
+      if (playing) return;
       set(true);
       startOrbit();
       preview.play().then(() => {
         set(false);
         if (reduce()) spin?.cancel();
       });
-    });
+    }
+    playPreview = begin;
+    toggle.addEventListener('click', () => (playing ? preview.stop() : begin()));
     return toggle;
   }
 }

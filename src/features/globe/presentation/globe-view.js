@@ -1,8 +1,9 @@
-import { createAerosolJourney } from './aerosol-journey.js';
 import { createAerosolLayer } from './aerosol-layer.js';
+import { createAerosolPathsLayer } from './aerosol-paths-layer.js';
 import { createIceFall } from './ice-fall.js';
 import { createIceFields, createIceMorph } from './ice-morph.js';
 
+import { prefersReducedMotion } from '../../../shared/motion.js';
 import { DEFAULT_GLOBE_LENS } from '../domain/globe-lens.js';
 import { createBirdsLayer } from './birds-layer.js';
 import { createLightningLayer } from './lightning-layer.js';
@@ -64,6 +65,9 @@ function altitudeForArc(camera, arcDeg) {
  */
 export function createGlobeView(container) {
   container.classList.add('globe-view');
+  // One picture to a screen reader, named by `describe`: the canvas, the globe's own markup and the overlays drawn on
+  // it (the moving date among them) are not read out one by one.
+  container.setAttribute('role', 'img');
   const globe = new Globe(container, { animateIn: false })
     .backgroundColor('rgba(0, 0, 0, 0)')
     .showAtmosphere(false);
@@ -280,7 +284,7 @@ export function createGlobeView(container) {
     pinTileLevel();
   }
 
-  /** Eases the globe to the focus for GLIDE_SEC, then settles it there. */
+  /** Eases the globe to the focus for GLIDE_SEC, then settles it there; turns it there at once with less motion. */
   function glide() {
     stopGlide();
     let start = null;
@@ -288,7 +292,7 @@ export function createGlobeView(container) {
     const step = (now) => {
       glideFrame = null;
       start ??= now;
-      const done = now - start >= GLIDE_SEC * 1000;
+      const done = prefersReducedMotion() || now - start >= GLIDE_SEC * 1000;
       follow(done ? Infinity : (now - (last ?? now)) / 1000, GLIDE_TAU_SEC);
       last = now;
       if (!done) glideFrame = requestAnimationFrame(step);
@@ -316,10 +320,10 @@ export function createGlobeView(container) {
   }
 
   const aerosol = createAerosolLayer(globe);
-  const aerosolJourney = createAerosolJourney(globe);
   // Birds, storms, the forest and the smog's cities are never on the globe together: each layer sets the globe's HTML elements
   // while it is shown.
   const layerView = { globe, unitsPerPx, setElements: (elements) => globe.htmlElementsData(elements) };
+  const aerosolPaths = createAerosolPathsLayer(layerView);
   const birds = createBirdsLayer(layerView);
   const storms = createStormsLayer(layerView);
   const fires = createFiresLayer({ globe });
@@ -339,7 +343,7 @@ export function createGlobeView(container) {
     setWaterLine,
     birds,
     aerosol,
-    aerosolJourney,
+    aerosolPaths,
     lightning,
     smog,
     storm,
@@ -352,6 +356,10 @@ export function createGlobeView(container) {
     setCloseUp,
     follow,
     glide,
+    /** @param {string} text what the globe shows now, read out by a screen reader */
+    describe(text) {
+      if (container.getAttribute('aria-label') !== text) container.setAttribute('aria-label', text);
+    },
     get gliding() {
       return glideFrame !== null;
     },

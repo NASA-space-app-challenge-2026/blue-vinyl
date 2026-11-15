@@ -1,6 +1,6 @@
-import { loadAerosolTrack } from '../features/tracks/data/aerosol-track-source.js';
-import { sampleAerosol } from '../features/tracks/domain/aerosol-track.js';
-import { aerosolCues, aerosolScore } from '../features/music/domain/aerosol-score.js';
+import { heroFocus } from '../features/tracks/domain/aerosol-paths.js';
+import { loadAerosolTrack, loadHeroAods } from '../features/tracks/data/aerosol-track-source.js';
+import { heroAt, heroSeries } from '../features/tracks/domain/aerosol-hero.js';
 import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
 'use strict';
 
@@ -11,7 +11,7 @@ import { albumDurationSec, formatDuration, trackBoundaries, trackCover, trackFad
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
-import { createCatView } from '../features/cat/presentation/cat-view.js';
+import { catCheek, createCatView } from '../features/cat/presentation/cat-view.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
 import { createMediaCenter } from '../features/controls/data/media-center.js';
 import { createAlbumSwitcher } from '../features/controls/presentation/album-switcher.js';
@@ -21,6 +21,12 @@ import { createMoreMenu } from '../features/controls/presentation/more-menu.js';
 import { createPlayButton } from '../features/controls/presentation/play-button.js';
 import { createPlayHint } from '../features/controls/presentation/play-hint.js';
 import { createVolumeControl } from '../features/controls/presentation/volume-control.js';
+import { ALBUM_NOTES } from '../features/album/data/album-notes.js';
+import { createDocentBubble } from '../features/docent/presentation/docent-bubble.js';
+import { createDocentToggle } from '../features/docent/presentation/docent-toggle.js';
+import { createDocentNarrator } from '../features/docent/presentation/docent-narrator.js';
+import { createDocentVoice } from '../features/docent/data/docent-voice.js';
+import { introLines, introSec as docentIntroLength, trackLines } from '../features/docent/data/docent-audio.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
 import { DEFAULT_GLOBE_THEME } from '../features/globe/domain/globe-theme.js';
@@ -39,6 +45,7 @@ import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
 import { createSpatialPreview } from '../features/music/data/spatial-preview.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
+import { AerosolComposer, aerosolSong } from '../features/music/domain/composers/aerosol.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
 import { HurricaneComposer } from '../features/music/domain/composers/hurricane.js';
 import { LightningComposer } from '../features/music/domain/composers/lightning.js';
@@ -63,6 +70,8 @@ import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.j
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 import { pointInScreen, rectInScreen } from '../shared/screen-space.js';
+import { createAnnouncer } from '../shared/announcer.js';
+import { isRovingKey } from '../shared/roving-focus.js';
 import { createTicker } from '../shared/ticker.js';
 
 // The contiguous United States, zoomed until the label's edge is 30 degrees of arc from its middle, so the West's fires
@@ -77,10 +86,8 @@ let totalMs;
 /** @type {(import('../features/tracks/data/track-repository.js').IceSeaTrackData | null)[]} */
 let trackData = [];
 let aerosolData = [];
-let allAerosolNotes = [];
-// What the globe draws of each aerosol track's music, by track index (see aerosolCues).
-let aerosolTrackCues = [];
-let aerosolToggles = { salt: true, dust: true, smoke: true, sulfate: true };
+// The track whose particle toggles are set (see renderAerosol); null while none is shown.
+let togglesTrack = null;
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
 // The attribution of the globe's map and imagery, shown with the album's credits.
@@ -105,18 +112,32 @@ let shownFireKey = null;
 
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
+// Whether the docent is on. While it is, an album opens with the docent's introduction before its first track, its
+// words read aloud and shown as captions (docentNarrator): introMs is how far into it the record is, and null once
+// past it (or when the docent is off). The album's own clock (elapsedMs) waits at 0 meanwhile, and its music is silent.
+let docentOn = false;
+let introMs = null;
+// Whether the voice has begun this introduction, so playing again after a pause resumes it rather than starting over.
+let introVoiced = false;
+// The track the docent last announced (album id and track index), so each is announced once as it begins.
+let announcedKey = null;
+const docentVoice = createDocentVoice();
 let lastFrameTs = null;
 // True while the records change; steps asked for meanwhile add up in pendingSteps.
 let swapping = false;
 let pendingSteps = 0;
 // True while a hand holds the record that was playing.
 let handHeld = false;
+// The album and track a screen reader was last told of (see tellScreenReader), null before the first render.
+let announcedAlbum = null;
+let announcedTrack = null;
 
 const slot = (id) => document.getElementById(id);
 
 const backdrop = createBackdrop(document.documentElement);
+const announcer = createAnnouncer(slot('screen'));
 const playHint = createPlayHint(slot('bottom-center'));
-const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack });
+const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack, onSelectDocent: playDocent });
 // Boxes and pointers in the layout's own pixels, which a portrait screen turned to show it landscape does not share
 // with the client's.
 const screenSpace = Object.freeze({
@@ -125,7 +146,6 @@ const screenSpace = Object.freeze({
 });
 const turntable = createTurntableView(slot('stage'), {
   space: screenSpace,
-  onToggle: togglePlayback,
   onCued: () => {
     if (state === PlaybackState.CUEING) startPlaying();
   },
@@ -135,11 +155,13 @@ const turntable = createTurntableView(slot('stage'), {
   },
   onScrub: (progress) => {
     if (progress === null) return;
+    leaveIntro();
     elapsedMs = progress * totalMs;
     render();
     globe.glide();
   },
   onDrop: (progress) => {
+    leaveIntro();
     elapsedMs = progress * totalMs;
     startPlaying();
   },
@@ -155,6 +177,7 @@ const turntable = createTurntableView(slot('stage'), {
   },
   onHandTurn: (sec) => {
     if (!handHeld || state !== PlaybackState.HELD) return;
+    leaveIntro();
     elapsedMs = Math.min(totalMs - 1, Math.max(0, elapsedMs + sec * 1000));
     render();
     globe.glide();
@@ -168,9 +191,7 @@ const turntable = createTurntableView(slot('stage'), {
 // The album's credits run round the record's rim.
 const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
 const particleToggles = createParticleToggles(turntable.label, (toggles) => {
-  aerosolToggles = toggles;
   globe.aerosol.setToggles(toggles);
-  applyAerosolScore();
 });
 
 const recordSwap = createRecordSwap({
@@ -192,6 +213,7 @@ const flockComposer = new FlockComposer();
 const hurricaneComposer = new HurricaneComposer();
 const lightningComposer = new LightningComposer();
 const smogComposer = new SmogComposer();
+const aerosolComposer = new AerosolComposer();
 const ticker = createTicker(tick);
 // The system's media controls play and pause, and step through the tracks, on into the next or previous album.
 const mediaCenter = createMediaCenter({
@@ -209,20 +231,37 @@ const noonComposer = new NoonComposer();
 // ahead of the line, so the eased camera settles on the line itself rather than trailing it.
 const FOREST_FOLLOW_TAU_SEC = 0.5;
 
-const transportControls = createGlassCapsule(slot('corner-bottom-left'));
+const transportControls = createGlassCapsule(slot('corner-bottom-left'), { label: 'Playback' });
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
 const volumeControl = createVolumeControl(transportControls, {
   onChange: (level) => {
     music.setVolume(level);
     soundEngine.setVolume(level);
+    docentVoice.setVolume(level);
   },
 });
-const albumControls = createGlassCapsule(slot('corner-bottom-left'));
-createAlbumSwitcher(albumControls, {
+const albumControls = createGlassCapsule(slot('corner-bottom-left'), { label: 'Album' });
+const albumSwitcher = createAlbumSwitcher(albumControls, {
   onPrevious: () => switchAlbum(-1),
   onNext: () => switchAlbum(1),
 });
-const viewControls = createGlassCapsule(slot('corner-top-right'));
+// Whether the docent is on when the page opens.
+const DOCENT_ON_AT_START = true;
+// The docent, on from the start (DOCENT_ON_AT_START) until turned off: the cat says the current album's introduction (see showAlbum).
+// The bubble keeps clear of the globe on the record's label, and points at the cat.
+const docentBubble = createDocentBubble(slot('screen'), {
+  avoid: () => {
+    const rect = screenSpace.rectOf(turntable.label);
+    return rect.width ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, r: rect.width / 2 } : null;
+  },
+  speaker: () => catCheek(screenSpace.rectOf),
+});
+const docentNarrator = createDocentNarrator(docentVoice, docentBubble);
+const docentToggle = createDocentToggle(createGlassCapsule(slot('corner-bottom-left'), { label: 'Docent' }), {
+  on: DOCENT_ON_AT_START,
+  onChange: setDocent,
+});
+const viewControls = createGlassCapsule(slot('corner-top-right'), { label: 'View' });
 createFullscreenButton(viewControls);
 const aboutDialog = createInfoDialog(slot('screen'), {
   id: 'about',
@@ -254,6 +293,7 @@ createCatView(slot('screen'));
 // A drag is no gesture audio may start from on a phone, so the onboarding's taps unlock the sound first.
 // The bars and the safe areas take the onboarding's color while it is up.
 backdrop.overlay(getComputedStyle(document.documentElement).getPropertyValue('--title-bg').trim());
+document.documentElement.classList.add('is-booted');
 const onboarding = createOnboarding(slot('screen'), {
   content: ONBOARDING,
   stage: slot('stage'),
@@ -270,6 +310,8 @@ const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
 const VOLUME_KEYS = Object.freeze({ ArrowUp: 1, ArrowDown: -1 });
 // The number keys, on the main row or the keypad, go straight to the album at that place in the catalog (1 the first).
 const ALBUM_NUMBER_CODE = /^(?:Digit|Numpad)([1-9])$/;
+// The docent key, by its place on the keyboard (so it works whatever the layout's letter there, Korean too).
+const DOCENT_KEY = 'KeyD';
 
 // Space always plays or pauses, left and right switch albums, 1 to 9 go to an album and up and down set the volume,
 // wherever the focus is.
@@ -288,6 +330,13 @@ document.addEventListener(
       if (!event.repeat) togglePlayback();
       return;
     }
+    // D turns the docent on and off, as its button does; a text field keeps its letters.
+    if (event.code === DOCENT_KEY && !(event.target instanceof HTMLInputElement && event.target.type !== 'range')) {
+      event.preventDefault();
+      releaseClickFocus();
+      if (!event.repeat) docentToggle.toggle();
+      return;
+    }
     const albumNumber = ALBUM_NUMBER_CODE.exec(event.code);
     // A text field keeps its digits.
     if (albumNumber && !(event.target instanceof HTMLInputElement && event.target.type !== 'range')) {
@@ -299,8 +348,11 @@ document.addEventListener(
     const albumStep = ALBUM_KEYS[event.key];
     const volumeStep = VOLUME_KEYS[event.key];
     if (!albumStep && !volumeStep) return;
-    // The volume slider keeps its arrows while used from the keyboard.
-    if (event.target instanceof HTMLInputElement && event.target !== clickFocused) return;
+    // A toolbar or the track list reached from the keyboard keeps the arrows that move between its items.
+    if (event.target !== clickFocused && isRovingKey(event.target, event.key)) return;
+    // The volume slider and the progress ring keep their arrows while used from the keyboard.
+    const slider = event.target instanceof HTMLInputElement || (event.target instanceof Element && event.target.closest('[role="slider"]'));
+    if (slider && event.target !== clickFocused) return;
     event.preventDefault();
     releaseClickFocus();
     // Holding an up or down key keeps turning the volume; holding left or right switches albums once.
@@ -322,8 +374,11 @@ function releaseClickFocus() {
   clickFocused = null;
 }
 
-// Safari ignores user-scalable=no (index.html) and touch-action for pinches, so its pinch gesture is cancelled here.
-document.addEventListener('gesturestart', (event) => event.preventDefault());
+// Safari ignores touch-action for pinches, so a pinch on the turntable (the record, the arm, the globe), which takes its
+// own touches, would zoom the page too; there it is cancelled. Anywhere else a pinch zooms the page.
+document.addEventListener('gesturestart', (event) => {
+  if (event.target instanceof Element && event.target.closest('.turntable')) event.preventDefault();
+});
 
 // A focused button is pressed on Space's keyup, so that is held back too.
 document.addEventListener(
@@ -345,6 +400,10 @@ function showAlbum(index) {
   album = albums[albumIndex];
   totalMs = albumDurationSec(album) * 1000;
   albumColumn.setAlbum(albumIndex);
+  albumSwitcher.render(albums[wrapIndex(index - 1, albums.length)].title, albums[wrapIndex(index + 1, albums.length)].title);
+  // A new album opens with the docent's introduction while the docent is on.
+  if (docentOn) enterIntro();
+  else leaveIntro();
   globe.setLens(album.globeLens ?? DEFAULT_GLOBE_LENS);
   turntable.setTrackStarts(trackBoundaries(album).slice(1, -1));
   songs = [];
@@ -358,8 +417,6 @@ function showAlbum(index) {
   music.load([]);
   loadAlbumData(album);
   aerosolData = album.tracks.map(() => null);
-  allAerosolNotes = [];
-  aerosolTrackCues = [];
   loadAerosolData(album);
 }
 
@@ -419,7 +476,7 @@ async function loadAlbumData(loading) {
   });
   music.load(notes);
   musicCredits = [SOUNDFONT_CREDIT];
-  if (state === PlaybackState.PLAYING) music.play(() => elapsedMs / 1000);
+  if (state === PlaybackState.PLAYING) playMusic();
   render();
   globe.glide();
 }
@@ -590,21 +647,31 @@ function takePendingStep() {
   return step;
 }
 
+// True while the listener means the music to play: playing, the arm moving onto the record, or a hand holding it.
+function isPlaying() {
+  return state === PlaybackState.PLAYING || state === PlaybackState.CUEING || state === PlaybackState.HELD;
+}
+
 /**
  * Changes records, once for `step` (-1 or 1) and once more for each step asked for meanwhile, even while the new
  * record is being drawn out (see createRecordSwap): the arm lifts, the record goes into its sleeve and the column of
- * sleeves moves along to the new album, whose record comes out stopped at its start. The catalog wraps around.
+ * sleeves moves along to the new album, whose record comes out at its start. The catalog wraps around.
  * Given a `target` album, the first change goes straight to it, its sleeve standing next to the current one.
+ * With `resume`, by default when the music was playing, the arm sets down on the new record to play it; otherwise
+ * it stays off.
  *
  * @param {number} step
  * @param {number | null} [target]
+ * @param {boolean} [resume]
  */
-async function switchAlbum(step, target = null) {
+async function switchAlbum(step, target = null, resume = isPlaying()) {
   if (swapping) {
     if (recordSwap.skip()) pendingSteps += step;
     return;
   }
   swapping = true;
+  // A track list reached from the keyboard gets the focus back on the new sleeve, as the inert stage drops it.
+  const focusedTracks = document.activeElement !== clickFocused && document.activeElement?.closest('.album-cover-tracks');
   // Nothing on the stage can be touched while the records change.
   slot('stage').inert = true;
   elapsedMs = 0;
@@ -621,6 +688,8 @@ async function switchAlbum(step, target = null) {
     slot('stage').inert = false;
     swapping = false;
   }
+  if (focusedTracks) albumColumn.focusTracks();
+  if (resume) cue();
 }
 
 /**
@@ -648,18 +717,24 @@ async function stepTrack(step) {
 }
 
 /**
- * Switches to the album `step` (-1 or 1) away, as switchAlbum does, and plays its first track going forward or its
- * last going back. A hidden page draws no frames for the records to change by, so there the album changes at once.
+ * Switches to the album `step` (-1 or 1) away, as switchAlbum does, and moves to its first track going forward or its
+ * last going back, playing it if the music was playing. A hidden page draws no frames for the records to change by,
+ * so there the album changes at once.
  */
 async function playNextAlbum(step) {
+  const resume = isPlaying();
   if (document.hidden) {
     elapsedMs = 0;
     setState(PlaybackState.STOPPED);
     showAlbum(wrapIndex(albumIndex + step, albums.length));
   } else {
-    await switchAlbum(step);
+    await switchAlbum(step, null, false);
   }
-  playFromTrack(step > 0 ? 0 : album.tracks.length - 1);
+  if (swapping) return;
+  // Going forward, the album opens with the docent's introduction while the docent is on.
+  if (step > 0 && docentOn) playDocent();
+  else playFromTrack(step > 0 ? 0 : album.tracks.length - 1);
+  if (resume) cue();
 }
 
 // 0..1 through the track at `trackIndex`.
@@ -667,30 +742,125 @@ function trackProgressAt(trackIndex) {
   return (elapsedMs / 1000 - trackStartSec(album, trackIndex)) / album.tracks[trackIndex].durationSec;
 }
 
-// Plays the current track from `trackProgress` (0..1) on: the arm moves there, and sets down first if it was off.
+// Moves to `trackProgress` (0..1) through the current track: playing, the music plays on from there; stopped, it
+// stays stopped there.
 function seekTrack(trackProgress) {
   if (swapping) return;
   const trackIndex = trackIndexAt(album, elapsedMs / totalMs);
   seekTo((trackStartSec(album, trackIndex) + trackProgress * album.tracks[trackIndex].durationSec) * 1000);
 }
 
-// Plays the track at `trackIndex` from its start, as seekTrack does.
+// Moves to the start of the track at `trackIndex`, as seekTrack does.
 function playFromTrack(trackIndex) {
   if (swapping) return;
   seekTo(trackStartSec(album, trackIndex) * 1000);
 }
 
+// Moves the clock to `ms`, keeping the music playing or stopped as it was.
 function seekTo(ms) {
+  leaveIntro();
   elapsedMs = ms;
   globe.glide();
+  // The ice and sea music sets the clock while it plays, so it starts again from the new place.
+  if (state === PlaybackState.PLAYING) playMusic();
+  render();
+}
+
+// Moves to the start of the docent's introduction, before the album's first track, as playFromTrack does: playing, the
+// docent speaks from there; stopped, it stays stopped there.
+function playDocent() {
+  if (swapping) return;
+  elapsedMs = 0;
+  enterIntro();
+  globe.glide();
   if (state === PlaybackState.PLAYING) {
-    // The ice and sea music sets the clock while it plays, so it starts again from the new place.
-    music.play(() => elapsedMs / 1000);
-    render();
+    music.stop();
+    soundEngine.stop();
+    syncVoice();
+  }
+  render();
+}
+
+/**
+ * Turns the docent on or off. Turned on with the record at the album's start, the introduction is played first;
+ * turned off during it, the album goes on from its first track at once.
+ *
+ * @param {boolean} on
+ */
+function setDocent(on) {
+  docentOn = on;
+  docentBubble.setOn(on);
+  albumColumn.setDocent(on);
+  if (on && introMs === null && elapsedMs === 0 && state === PlaybackState.STOPPED) enterIntro();
+  if (!on && introMs !== null) {
+    leaveIntro();
+    if (state === PlaybackState.PLAYING) playMusic();
+  }
+  // Turned on, it announces the track playing; turned off, it falls silent at once.
+  announcedKey = null;
+  if (!on) docentNarrator.cancel();
+  render();
+}
+
+// The record is set at the start of the docent's introduction, its words not yet said.
+function enterIntro() {
+  docentNarrator.cancel();
+  introMs = 0;
+  introVoiced = false;
+  announcedKey = null;
+}
+
+// The record leaves the docent's introduction, its words cut off.
+function leaveIntro() {
+  if (introMs !== null) docentNarrator.cancel();
+  introMs = null;
+}
+
+// The docent's introduction is over: the album plays on from its first track.
+function finishIntro() {
+  if (introMs === null) return;
+  leaveIntro();
+  playMusic();
+  render();
+}
+
+// The voice says the introduction while it plays, from where it was held, and holds while it does not.
+function syncVoice() {
+  if (introMs === null) return;
+  if (state !== PlaybackState.PLAYING) {
+    docentNarrator.pause();
     return;
   }
-  unlockSound();
-  cue();
+  if (introVoiced) {
+    docentNarrator.resume();
+    return;
+  }
+  introVoiced = true;
+  docentNarrator.speak(introLines(album.id, album.title, ALBUM_NOTES[album.id]?.docentTip), () => {
+    if (state === PlaybackState.PLAYING) finishIntro();
+  });
+}
+
+// While the docent is on, it says each track's number and title as the track begins to play (for a listener who
+// cannot see the sleeve), and the bubble shows it.
+function announceTrack(trackIndex) {
+  if (!docentOn || !sounding()) return;
+  const key = `${album.id}:${trackIndex}`;
+  if (key === announcedKey) return;
+  announcedKey = key;
+  const { title } = album.tracks[trackIndex];
+  docentNarrator.speak(trackLines(album.id, trackIndex, title));
+}
+
+// Plays the album's music from the clock, unless the docent's introduction is playing before it.
+function playMusic() {
+  if (introMs !== null) return;
+  music.play(() => elapsedMs / 1000);
+}
+
+// Whether the album's music sounds now: playing, and past the docent's introduction.
+function sounding() {
+  return state === PlaybackState.PLAYING && introMs === null;
 }
 
 function togglePlayback() {
@@ -713,7 +883,7 @@ function cue() {
 
 function startPlaying() {
   setState(PlaybackState.PLAYING);
-  music.play(() => elapsedMs / 1000);
+  playMusic();
   lastFrameTs = null;
   ticker.start();
 }
@@ -726,7 +896,10 @@ function render() {
   music.setTrackFade(fade);
   soundEngine.setTrackFade(fade);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
-  albumColumn.render(trackIndex);
+  albumColumn.render(trackIndex, introMs !== null);
+  announceTrack(trackIndex);
+  tellScreenReader(trackIndex);
+  globe.describe(`Globe showing ${album.globeAlt}. Track: ${album.tracks[trackIndex].title}.`);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
   backdrop.show(trackCover(album, trackIndex).url);
   mediaCenter.setTrack({
@@ -750,7 +923,7 @@ function renderSeason(trackIndex) {
   const time = seasonTimeAt(song.span, song.durationSec, trackSec);
   globe.storms.render(song.tracks, time);
   dateLabel.show(time);
-  if (state !== PlaybackState.PLAYING) return;
+  if (!sounding()) return;
   soundEngine.follow(song, trackSec);
   halo.wake();
 }
@@ -879,33 +1052,31 @@ async function loadAerosolData(loading) {
   }
   if (album !== loading) return;
   aerosolData = data;
-  aerosolTrackCues = album.tracks.map((track, i) => (data[i] ? aerosolCues(data[i].records, track.durationSec, track) : []));
-  const starts = trackBoundaries(album).map((edge) => (edge * totalMs) / 1000);
-  allAerosolNotes = album.tracks.flatMap((track, i) => {
-    if (!data[i]) return [];
-    return aerosolScore(data[i].records, track.durationSec, track)
-      .map((note) => ({ ...note, timeSec: note.timeSec + starts[i] }));
-  });
-  applyAerosolScore();
-  musicCredits = [SOUNDFONT_CREDIT, 'Data: NASA GMAO GEOS-FP · NOAA NHC'];
-  if (state === PlaybackState.PLAYING) music.play(() => elapsedMs / 1000);
+  musicCredits = ['Data: NASA GMAO GEOS-FP · NOAA NHC'];
   render();
   globe.glide();
+  // The music takes a while to decode from the frames; the globe does not wait for it.
+  const aerosolSongs = await loadAerosolSongs(loading, data);
+  if (album !== loading) return;
+  songs = aerosolSongs;
 }
 
-function applyAerosolScore() {
-  if (!album.tracks.some((track) => track.aerosol)) return;
-  const activeNotes = allAerosolNotes.filter((n) => {
-    if (n.part === 'salt') return aerosolToggles.salt;
-    if (n.part === 'dust') return aerosolToggles.dust;
-    if (n.part === 'smoke') return aerosolToggles.smoke;
-    if (n.part === 'sulfate') return aerosolToggles.sulfate;
-    return true;
-  });
-  music.load(activeNotes);
-  if (state === PlaybackState.PLAYING) {
-    music.play(() => elapsedMs / 1000);
+// The song of each of `target`'s aerosol tracks: its lead particle's way and the air it goes through, which the
+// particle toggles switch particle type by particle type.
+async function loadAerosolSongs(target, data) {
+  const loaded = data.filter(Boolean);
+  let aods;
+  try {
+    aods = await loadHeroAods(loaded);
+  } catch (error) {
+    console.warn('Aerosol music unavailable:', error);
+    return [];
   }
+  return data.map((track, i) => {
+    if (!track) return null;
+    const hero = heroSeries(track.paths, aods[loaded.indexOf(track)]);
+    return aerosolSong(aerosolComposer, hero, target.tracks[i].durationSec, target.tracks[i].aerosol.sound, heroAt, () => particleToggles.states);
+  });
 }
 
 function renderAerosol(trackIndex) {
@@ -913,30 +1084,28 @@ function renderAerosol(trackIndex) {
   const data = aerosolData[trackIndex];
   if (album?.id !== 'aerosol' || !track?.aerosol || !data) {
     globe.aerosol.hide();
-    globe.aerosolJourney.hide();
+    globe.aerosolPaths.hide();
     particleToggles.hide();
+    togglesTrack = null;
     return;
   }
   particleToggles.show();
-  const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
-  globe.aerosol.setLead(track.aerosol.events.filter((e) => (e.level ?? 1) >= 1).map((e) => e.particle));
-  globe.aerosol.render(data.frames, trackSec, track.durationSec);
-  globe.aerosolJourney.render({
-    events: track.aerosol.events,
-    records: data.records,
-    frames: data.frames,
-    cues: aerosolTrackCues[trackIndex] ?? [],
-    trackSec,
-    durationSec: track.durationSec,
-    shown: aerosolToggles,
-  });
-
-  if (track.aerosol.trackEye) {
-    const s = sampleAerosol(data.records, trackSec / track.durationSec);
-    if (s) focus = { lat: s.current.viewLat, lon: s.current.viewLon, arcDeg: track.aerosol.arcDeg };
-  } else if (track.aerosol.viewLat !== undefined) {
-    focus = { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon, arcDeg: track.aerosol.arcDeg };
+  // Each track starts with every particle type on.
+  if (togglesTrack !== trackIndex) {
+    togglesTrack = trackIndex;
+    particleToggles.reset();
   }
+  const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
+  globe.aerosol.render(data.frames, trackSec, track.durationSec);
+  const step = Math.min(1, trackSec / track.durationSec) * (data.records.length - 1);
+  globe.aerosolPaths.render(data.paths, step);
+
+  // The camera follows the track's lead particle(s), zoomed in on them; until one is released it rests on the track's
+  // own view or where Erin's eye starts.
+  const view = track.aerosol.viewLat !== undefined
+    ? { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon }
+    : { lat: data.records[0].viewLat, lon: data.records[0].viewLon };
+  focus = heroFocus(data.paths, step) ?? view;
 
   if (track.color) halo.setColor(track.color);
   if (state === PlaybackState.PLAYING) halo.wake();
@@ -967,6 +1136,11 @@ function renderSong(trackIndex) {
     renderForest(trackIndex, song);
     return;
   }
+  if (song.aerosol) {
+    // The globe is drawn by renderAerosol; the music follows the clock.
+    if (state === PlaybackState.PLAYING) soundEngine.follow(song, elapsedMs / 1000 - trackStartSec(album, trackIndex));
+    return;
+  }
   if (shownSong !== song) {
     showSong(song, album.tracks[trackIndex].color);
     globe.glide();
@@ -976,7 +1150,7 @@ function renderSong(trackIndex) {
   globe.birds.render(song.tracks, time);
   dateLabel.show(time);
   focus = sampleFlock(song.tracks, time) ?? focus;
-  if (state !== PlaybackState.PLAYING) return;
+  if (!sounding()) return;
   soundEngine.follow(song, elapsedSec);
   halo.wake();
 }
@@ -1000,7 +1174,7 @@ function renderStorm(trackIndex, song) {
   if (color) halo.setColor(color);
   dateLabel.show(time);
   focus = { lat: sample.lat, lon: sample.lon };
-  if (state !== PlaybackState.PLAYING) return;
+  if (!sounding()) return;
   soundEngine.follow(song, sec);
   halo.wake();
 }
@@ -1019,7 +1193,7 @@ function renderLightning(trackIndex, song) {
   const time = song.startMs + elapsedSec * song.msPerSec;
   globe.lightning.render(song.season, time, song.msPerSec);
   dateLabel.show(time);
-  if (state !== PlaybackState.PLAYING) return;
+  if (!sounding()) return;
   soundEngine.follow(song, elapsedSec);
   halo.wake();
 }
@@ -1061,15 +1235,37 @@ function renderForest(trackIndex, song) {
   // easing after it with time constant τ trails it by τ of travel, so it aims τ ahead.
   const lead = state === PlaybackState.PLAYING ? FOREST_FOLLOW_TAU_SEC / STEP_SEC : 0;
   focus = { lat: 0, lon: lineLonAt(step + lead) };
-  if (state !== PlaybackState.PLAYING) return;
+  if (!sounding()) return;
   soundEngine.follow(song, elapsedSec);
   halo.wake();
+}
+
+/**
+ * Tells a screen reader of a new album or track, which the eye sees on the sleeve: the album's place and title when
+ * the album changes, the track and its album otherwise. The page's first album is left to the page itself, and a
+ * track the docent is introducing aloud (see announceTrack) is left to the docent, so the two do not talk over each
+ * other.
+ *
+ * @param {number} trackIndex
+ */
+function tellScreenReader(trackIndex) {
+  const track = album.tracks[trackIndex];
+  if (album === announcedAlbum && track === announcedTrack) return;
+  const first = announcedAlbum === null;
+  const newAlbum = album !== announcedAlbum;
+  announcedAlbum = album;
+  announcedTrack = track;
+  if (first) return;
+  if (docentOn && isPlaying()) return;
+  if (newAlbum) announcer.say(`Album ${albumIndex + 1} of ${albums.length}: ${album.title}. Track: ${track.title}.`);
+  else announcer.say(`${isPlaying() ? 'Now playing: ' : ''}${track.title}, from ${album.title}.`);
 }
 
 function setState(next) {
   if (next !== PlaybackState.PLAYING) music.stop();
   state = next;
   if (state !== PlaybackState.PLAYING) soundEngine.stop();
+  syncVoice();
   mediaCenter.setPlaying(state === PlaybackState.PLAYING || state === PlaybackState.CUEING);
   playHint.render(state);
   playButton.render(state);
@@ -1082,6 +1278,20 @@ function tick(ts) {
     return;
   }
   const dtMs = lastFrameTs === null ? 0 : ts - lastFrameTs;
+  // The docent's introduction plays on its own clock, the album's waiting at its start; past it, the music begins.
+  if (introMs !== null) {
+    lastFrameTs = ts;
+    introMs += dtMs;
+    // It ends when the voice does (see syncVoice); with no voice heard, after the words' estimated length.
+    const introSec = docentIntroLength(album.id, album.title, ALBUM_NOTES[album.id]?.docentTip);
+    if (!docentNarrator.speaking && introMs >= introSec * 1000) {
+      finishIntro();
+      return;
+    }
+    render();
+    if (!globe.gliding) globe.follow(dtMs / 1000, shownSong?.followTauSec);
+    return;
+  }
   // The ice and sea music sets the clock while it plays, so the globe follows what is heard; otherwise the frames do.
   const heardSec = music.positionSec();
   if (heardSec !== null) elapsedMs = heardSec * 1000;
@@ -1097,4 +1307,5 @@ function tick(ts) {
 }
 
 showAlbum(albumIndex);
+setDocent(DOCENT_ON_AT_START);
 setState(PlaybackState.STOPPED);

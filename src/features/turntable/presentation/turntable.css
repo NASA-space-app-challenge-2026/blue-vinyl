@@ -4,11 +4,13 @@
   z-index: 1;
   flex: none;
   width: min(54vw, 100vh);
+  pointer-events: none;
 }
 
 .turntable-record {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 
 .turntable-layer {
@@ -17,6 +19,7 @@
   width: 100%;
   height: 100%;
   overflow: visible;
+  pointer-events: none;
 }
 
 /* The disc and grooves, drawn once; only the top layer (vinyl-top) takes the record's clicks. */
@@ -41,6 +44,7 @@
 .turntable-vinyl-top .vinyl-hit {
   cursor: grab;
   touch-action: none;
+  pointer-events: auto;
 }
 
 .turntable-vinyl-top.held .vinyl-hit {
@@ -77,6 +81,7 @@
 .record-label {
   position: absolute;
   border-radius: 50%;
+  pointer-events: auto;
 }
 
 .record-label-slot,
@@ -101,6 +106,16 @@
   height: 100%;
   overflow: visible;
   pointer-events: none;
+}
+
+/* The ring reached from the keyboard: a circle just outside it, as the svg box is round (border-radius above). */
+.record-progress:focus {
+  outline: none;
+}
+
+.record-progress:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 /* The current track's progress round the rim; only the band round the rail takes a click. */
