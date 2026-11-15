@@ -7,8 +7,8 @@ import { LINE_STEPS, STEP_SEC, lineStepAt } from './noon-line.js';
 // Canopy PNG is 0.25°.
 const MAP_CELL_DEG = 0.25;
 const MAP_NORTH = 52;
-// The forest stands as one tree on each 2° square of the map where at least a quarter of the square is forest. The
-// tree is as tall as the square's tall canopy (90th percentile of its forest cells).
+// The forest stands on each 2° square of the map where at least a quarter of the square is forest. A tree is as tall as
+// the tall canopy (90th percentile) of the forest cells it stands for.
 const TREE = Object.freeze({ cellDeg: 2, minForestShare: 0.25, percentile: 0.9 });
 // Forest cells at least this tall (m) count as forest.
 export const FOREST_FROM_M = 4;
@@ -26,9 +26,10 @@ export const TREE_KINDS = Object.freeze([
   { kind: TreeKind.SILVER, fromM: 20 },
   { kind: TreeKind.GOLD, fromM: 28 },
 ]);
-// Only some trees grow: picked at random, the taller likelier (`tallBias`), and no two closer than `spacing` times
-// the mean of their sizes, so the forest stays open. Each grows `afterSteps` after the noon line has crossed it.
-const TREE_PICK = Object.freeze({ tallBias: 3, spacing: 0.23, afterSteps: [1, 10] });
+// A tree for every `cellsPerTree` forest cells (0.25°) of a square, so a thick forest has many. Each starts to grow
+// `afterStep` steps after the noon line has crossed it, plus a random time inside a window that is `thinWindow` steps
+// long for a thin forest and `thickWindow` for a thick one, so a thick forest bursts and a thin one trickles.
+const TREE_PICK = Object.freeze({ cellsPerTree: 32, afterStep: 1, thinWindow: 9, thickWindow: 1 });
 // Every tree shoots up at one pace: the smallest reaches its tips in `smallestSec`, a bigger one in proportion to its size.
 const TREE_GROWTH = Object.freeze({ smallestSec: 0.2 });
 const PICK_SEED = 58;
@@ -63,67 +64,58 @@ export function kindOf(metres) {
   return { ...TREE_KINDS[at], toM: TREE_KINDS[at + 1]?.fromM ?? TREE_SIZE.fullM };
 }
 
-/** The angle between two places on the globe (degrees). */
-function arcDeg(a, b) {
-  const rad = Math.PI / 180;
-  const cos = Math.sin(a.lat * rad) * Math.sin(b.lat * rad) + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.cos((a.lon - b.lon) * rad);
-  return Math.acos(Math.min(1, Math.max(-1, cos))) / rad;
-}
-
-/** The trees of the canopy map: one per TREE.cellDeg square that is forest enough, as { lat, lon, metres }. */
-function mapTrees(map) {
+/**
+ * The trees that grow on the globe, picked from the map, each as { lat, lon, metres, kind, startStep, growSec, seed }:
+ * the step (fractional) it starts growing at and how long it takes (s). Each 2° square that is forest enough grows one
+ * tree for every `cellsPerTree` of its forest cells, so a thick forest stands thick, and its trees start growing
+ * close together, a thin one stands apart and starts one by one.
+ *
+ * @param {{ width: number, height: number, metres: Float32Array }} map
+ */
+export function pickTrees(map) {
+  const random = seeded(PICK_SEED);
   const { width, height, metres } = map;
   const span = Math.round(TREE.cellDeg / MAP_CELL_DEG);
-  const trees = [];
+  const [afterFrom, thinWindow, thickWindow] = [TREE_PICK.afterStep, TREE_PICK.thinWindow, TREE_PICK.thickWindow];
+  const picked = [];
   for (let r0 = 0; r0 < height; r0 += span) {
     for (let c0 = 0; c0 < width; c0 += span) {
       const forest = [];
       for (let row = r0; row < Math.min(height, r0 + span); row++) {
         for (let col = c0; col < Math.min(width, c0 + span); col++) {
           const h = metres[row * width + col];
-          if (h >= FOREST_FROM_M) forest.push(h);
+          if (h >= FOREST_FROM_M) {
+            forest.push({ lat: MAP_NORTH - (row + 0.5) * MAP_CELL_DEG, lon: -180 + (col + 0.5) * MAP_CELL_DEG, metres: h });
+          }
         }
       }
-      if (forest.length < TREE.minForestShare * span * span) continue;
-      forest.sort((a, b) => a - b);
-      trees.push({
-        lat: MAP_NORTH - (r0 + span / 2) * MAP_CELL_DEG,
-        lon: -180 + (c0 + span / 2) * MAP_CELL_DEG,
-        metres: forest[Math.min(forest.length - 1, Math.floor(TREE.percentile * forest.length))],
-      });
+      const share = forest.length / (span * span);
+      if (share < TREE.minForestShare) continue;
+      // How thick the forest is, 0 where it only just counts to 1 where it fills the square.
+      const thick = (share - TREE.minForestShare) / (1 - TREE.minForestShare);
+      const window = thinWindow + (thickWindow - thinWindow) * thick;
+      // The square's forest cells in a random order, a tree for each run of `cellsPerTree`: it stands at the run's first
+      // cell and is as tall as the run's tall canopy (90th percentile).
+      for (let i = forest.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [forest[i], forest[j]] = [forest[j], forest[i]];
+      }
+      const count = Math.max(1, Math.round(forest.length / TREE_PICK.cellsPerTree));
+      for (let t = 0; t < count; t++) {
+        const run = forest.slice(Math.floor((t * forest.length) / count), Math.floor(((t + 1) * forest.length) / count));
+        const heights = run.map((cell) => cell.metres).sort((a, b) => a - b);
+        const tall = heights[Math.min(heights.length - 1, Math.floor(TREE.percentile * heights.length))];
+        picked.push({
+          lat: run[0].lat,
+          lon: run[0].lon,
+          metres: tall,
+          kind: kindOf(tall).kind,
+          startStep: lineStepAt(run[0].lon) + afterFrom + random() * window,
+          growSec: growSecOf(tall),
+          seed: Math.floor(random() * 1e9),
+        });
+      }
     }
-  }
-  return trees;
-}
-
-/**
- * The trees that grow on the globe, picked from the map's, each as { lat, lon, metres, kind, startStep, growSec, seed }:
- * the step (fractional) it starts growing at and how long it takes (s).
- *
- * @param {{ width: number, height: number, metres: Float32Array }} map
- */
-export function pickTrees(map) {
-  const random = seeded(PICK_SEED);
-  const unitsPerDeg = (100 * Math.PI) / 180;
-  const sizeDeg = (metres) => treeSizeU(metres) / unitsPerDeg;
-  const shareOf = (metres) => (treeSizeU(metres) - TREE_SIZE.smallestU) / (TREE_SIZE.tallestU - TREE_SIZE.smallestU);
-  // A weighted random order: the taller a tree, the likelier it comes early.
-  const order = mapTrees(map)
-    .map((tree) => ({ tree, key: random() ** (1 / (1 + TREE_PICK.tallBias * shareOf(tree.metres))) }))
-    .sort((a, b) => b.key - a.key)
-    .map(({ tree }) => tree);
-  const [afterFrom, afterTo] = TREE_PICK.afterSteps;
-  const picked = [];
-  for (const tree of order) {
-    const crowded = picked.some((other) => arcDeg(tree, other) < ((sizeDeg(tree.metres) + sizeDeg(other.metres)) / 2) * TREE_PICK.spacing);
-    if (crowded) continue;
-    picked.push({
-      ...tree,
-      kind: kindOf(tree.metres).kind,
-      startStep: lineStepAt(tree.lon) + afterFrom + random() * (afterTo - afterFrom),
-      growSec: growSecOf(tree.metres),
-      seed: Math.floor(random() * 1e9),
-    });
   }
   return picked;
 }
