@@ -99,7 +99,7 @@ export function createAerosolPathsLayer(view) {
       new THREE.ShaderMaterial({ uniforms: { color: { value: new THREE.Color(color) } }, vertexShader: lineVertex, fragmentShader: lineFragment, transparent: true, depthWrite: false }),
     );
     segments.frustumCulled = false;
-    marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTexture(color), depthWrite: false, depthTest: false, transparent: true }));
+    marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTexture(color), depthWrite: false, depthTest: false, transparent: true, sizeAttenuation: false }));
     marker.renderOrder = 4;
     marker.visible = false;
     globe.scene().add(segments, marker);
@@ -155,7 +155,10 @@ export function createAerosolPathsLayer(view) {
       if (particle.hero) {
         const [x, y, z] = head;
         marker.position.set(x, y, z);
-        marker.scale.setScalar(MARKER_PX * view.unitsPerPx());
+        // Not shrunk or grown by the camera's distance, so the marker keeps its size while the camera glides in: its scale is
+        // a share of the view's height (twice the tangent of half the field of view, at any distance).
+        const { fov } = globe.camera();
+        marker.scale.setScalar((MARKER_PX * 2 * Math.tan((fov * Math.PI) / 360)) / globe.renderer().domElement.clientHeight);
         marker.visible = true;
       }
     });
