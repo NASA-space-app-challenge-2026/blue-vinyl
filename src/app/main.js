@@ -236,6 +236,9 @@ function releaseClickFocus() {
   clickFocused = null;
 }
 
+// Safari ignores user-scalable=no (index.html) and touch-action for pinches, so its pinch gesture is cancelled here.
+document.addEventListener('gesturestart', (event) => event.preventDefault());
+
 // A focused button is pressed on Space's keyup, so that is held back too.
 document.addEventListener(
   'keyup',
