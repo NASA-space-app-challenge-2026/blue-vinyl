@@ -32,7 +32,10 @@ const PAN_SPAN_DEG = 20;
 // What each particle type plays: its instrument, and the tone it holds, in semitones above the air's root (the
 // tonic, in the octave from C3). Together they are the tonic minor chord.
 const AIR_ROOT_MIDI = 48;
-const AIR_VELOCITY = 80;
+// The air plays at full velocity and channel volume (CC 7), over the instruments' usual evening out, so it is heard
+// under the lead.
+const AIR_VELOCITY = 127;
+const AIR_VOLUME = 127;
 const AIR = Object.freeze({
   seaSalt: Object.freeze({ instrument: Instrument.SEASHORE, above: 12 }),
   dust: Object.freeze({ instrument: Instrument.HALO_PAD, above: 0 }),
@@ -111,6 +114,7 @@ export class AerosolComposer {
     const tonic = baseMidi % 12;
     for (const particle of this.air) {
       const { instrument, above } = AIR[particle];
+      music.control(instrument, CC.VOLUME, AIR_VOLUME, at);
       music.control(instrument, CC.EXPRESSION, 0, at);
       music.hold(instrument, AIR_ROOT_MIDI + tonic + above, AIR_VELOCITY, at);
     }
