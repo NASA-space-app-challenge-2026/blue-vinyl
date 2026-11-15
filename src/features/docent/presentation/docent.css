@@ -1,6 +1,6 @@
 /* The docent's speech bubble (docent-bubble.js): a small cream card along the bottom, just left of the cat in the
-   bottom right corner (cat-view.js, 150 px wide, 80 px on a phone), as wide as its caption and no wider than a short
-   line, so it sits below the globe; its rounded tail curls toward the cat. Over the stage, as the corners are. */
+   bottom right corner (cat-view.js, 150 px wide, 80 px on a phone), as wide as its sentence and no wider than a short
+   paragraph, so it sits below the globe; its rounded tail curls toward the cat. Over the stage, as the corners are. */
 .docent-bubble {
   --cat-width: 150px;
   /* The tail's height above the bubble's bottom, level with the cat's head. */
@@ -10,11 +10,11 @@
   --honey: #c98a2b;
   position: absolute;
   right: calc(var(--gutter) + var(--safe-right) + var(--cat-width));
-  /* As low as the corners' controls, so two lines of caption stay below the globe. */
+  /* As low as the corners' controls, so a sentence's few lines stay below the globe. */
   bottom: calc(var(--gutter) + var(--safe-bottom));
   z-index: 3;
   width: max-content;
-  max-width: min(320px, 30%);
+  max-width: min(420px, 34%);
   margin: 0;
   padding: 14px 18px 12px;
   border-radius: 22px;
@@ -72,22 +72,6 @@
   line-height: 1.5;
 }
 
-/* Each word of a caption streams in after the one before, quickly, so the whole caption is there within a third of a
-   second and never trails the voice. */
-.docent-word {
-  display: inline-block;
-  animation: docent-word-in 0.16s ease-out backwards;
-  animation-delay: calc(var(--i) * 18ms);
-}
-
-@keyframes docent-word-in {
-  from {
-    opacity: 0;
-    translate: 0 4px;
-    filter: blur(2px);
-  }
-}
-
 /* A slow breath up and down while the bubble is out, as if the cat were still talking. */
 @keyframes docent-bubble-float {
   from {
@@ -100,8 +84,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .docent-bubble,
-  .docent-word {
+  .docent-bubble {
     animation: none;
   }
 }
@@ -114,7 +97,7 @@
     top: calc(var(--gutter) + var(--safe-top) + 56px);
     right: calc(var(--gutter) + var(--safe-right));
     bottom: auto;
-    max-width: 200px;
+    max-width: 230px;
     padding: 10px 12px 8px;
     border-radius: 16px;
     transform-origin: right top;

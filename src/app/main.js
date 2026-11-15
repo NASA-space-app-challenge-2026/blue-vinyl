@@ -25,8 +25,9 @@ import { ALBUM_NOTES } from '../features/album/data/album-notes.js';
 import { createDocentBubble } from '../features/docent/presentation/docent-bubble.js';
 import { createDocentToggle } from '../features/docent/presentation/docent-toggle.js';
 import { createDocentNarrator } from '../features/docent/presentation/docent-narrator.js';
-import { docentIntroSec, introText, trackAnnouncement } from '../features/docent/domain/docent.js';
+import { docentIntroSec, introText } from '../features/docent/domain/docent.js';
 import { createDocentVoice } from '../features/docent/data/docent-voice.js';
+import { introLines, trackLines } from '../features/docent/data/docent-audio.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
 import { DEFAULT_GLOBE_THEME } from '../features/globe/domain/globe-theme.js';
@@ -242,7 +243,13 @@ createAlbumSwitcher(albumControls, {
   onNext: () => switchAlbum(1),
 });
 // The docent, off until turned on: the cat says the current album's introduction (see showAlbum).
-const docentBubble = createDocentBubble(slot('screen'));
+// The bubble keeps clear of the globe on the record's label.
+const docentBubble = createDocentBubble(slot('screen'), {
+  avoid: () => {
+    const rect = screenSpace.rectOf(turntable.label);
+    return rect.width ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, r: rect.width / 2 } : null;
+  },
+});
 const docentNarrator = createDocentNarrator(docentVoice, docentBubble);
 createDocentToggle(createGlassCapsule(slot('corner-bottom-left')), { onChange: setDocent });
 const viewControls = createGlassCapsule(slot('corner-top-right'));
@@ -802,7 +809,7 @@ function syncVoice() {
     return;
   }
   introVoiced = true;
-  docentNarrator.speak(introText(album.title, ALBUM_NOTES[album.id]?.docentTip), () => {
+  docentNarrator.speak(introLines(album.id, album.title, ALBUM_NOTES[album.id]?.docentTip), () => {
     if (state === PlaybackState.PLAYING) finishIntro();
   });
 }
@@ -815,7 +822,7 @@ function announceTrack(trackIndex) {
   if (key === announcedKey) return;
   announcedKey = key;
   const { title } = album.tracks[trackIndex];
-  docentNarrator.speak(trackAnnouncement(trackIndex, title));
+  docentNarrator.speak(trackLines(album.id, trackIndex, title));
 }
 
 // Plays the album's music from the clock, unless the docent's introduction is playing before it.
@@ -1225,7 +1232,8 @@ function tick(ts) {
     lastFrameTs = ts;
     introMs += dtMs;
     // It ends when the voice does (see syncVoice); with no voice heard, after the words' estimated length.
-    if (!docentNarrator.speaking && introMs >= docentIntroSec(introText(album.title, ALBUM_NOTES[album.id]?.docentTip)) * 1000) {
+    const introSec = docentIntroSec(introText(album.title, ALBUM_NOTES[album.id]?.docentTip));
+    if (!docentNarrator.speaking && introMs >= introSec * 1000) {
       finishIntro();
       return;
     }

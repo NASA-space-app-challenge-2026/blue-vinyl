@@ -1,7 +1,7 @@
 // What the docent says, and for how long. While the docent is on, an album opens with the docent's introduction
 // before its first track, for as long as its words take to say: spoken, it ends when the voice does. That length is
 // estimated, for the sleeve's list and for when no voice is heard (no speech synthesis, or none starts), at the pace
-// of a device voice at its normal rate, with its pause between sentences (macOS: 45 words in about 26 s).
+// of a device voice at its normal rate (macOS: 45 words in about 26 s), with a breath between sentences.
 const WORDS_PER_SEC = 1.8;
 
 /**
@@ -24,58 +24,17 @@ export function trackAnnouncement(trackIndex, title) {
   return `Track ${trackIndex + 1}: ${title}.`;
 }
 
-// The most words in one caption: two short lines in the bubble, so it stays small and clear of the globe.
-const CAPTION_WORDS = 12;
-// Words a long phrase is best cut before, so a caption ends where a speaker would draw breath.
-const BREAK_BEFORE = new Set(['and', 'as', 'when', 'while', 'but', 'then', 'before', 'after', 'because', 'so', 'or', 'where', 'which', 'that', 'to', 'into', 'from', 'with', 'across', 'over', 'up']);
+// The breath the docent draws between sentences (s), so each one can settle before the next.
+export const SENTENCE_GAP_SEC = 0.6;
 
 /**
- * The docent's words as sentences, each said as one (so the voice flows), and each cut into captions shown in turn:
- * where the sentence pauses (a comma, colon or semicolon), and a phrase still too long before a joining word near its
- * middle, so that no caption runs much past CAPTION_WORDS.
+ * The docent's words as sentences: each is said, and shown in the bubble, whole and on its own.
  *
  * @param {string} text
- * @returns {{ text: string, captions: { text: string, start: number, wordsBefore: number }[] }[]}
- *   each sentence, and its captions with where each starts in it (character index, as a voice's word boundary
- *   reports) and how many of its words come before
+ * @returns {string[]}
  */
-export function docentSentences(text) {
-  const sentences = text.match(/[^.!?]+[.!?]+["”]?/g)?.map((s) => s.trim()) ?? [text.trim()];
-  return sentences.map((sentence) => {
-    const words = sentence.split(/\s+/);
-    const cuts = [];
-    let from = 0;
-    while (words.length - from > CAPTION_WORDS) {
-      cuts.push((from = cutAt(words, from)));
-    }
-    const bounds = [0, ...cuts, words.length];
-    let start = 0;
-    const captions = bounds.slice(0, -1).map((at, i) => {
-      const line = words.slice(at, bounds[i + 1]).join(' ');
-      const caption = { text: line, start, wordsBefore: at };
-      start += line.length + 1;
-      return caption;
-    });
-    return { text: sentence, captions };
-  });
-}
-
-// Where the caption starting at word `from` ends: after a pause within its reach, else before a joining word nearest
-// the middle of what is left, else halfway.
-function cutAt(words, from) {
-  const last = Math.min(words.length - 1, from + CAPTION_WORDS);
-  for (let i = last; i > from + 3; i -= 1) {
-    if (/[,;:]$/.test(words[i - 1])) return i;
-  }
-  const ideal = from + Math.min(CAPTION_WORDS, Math.ceil((words.length - from) / 2));
-  let best = -1;
-  for (let i = from + 4; i <= last; i += 1) {
-    if (BREAK_BEFORE.has(words[i].toLowerCase()) && (best === -1 || Math.abs(i - ideal) < Math.abs(best - ideal))) best = i;
-  }
-  let at = best === -1 ? ideal : best;
-  // Never leave a caption hanging on a little word that leads into the next ("the", "a", "of").
-  while (at > from + 4 && /^(the|a|an|of|its|their|in|on|at)$/i.test(words[at - 1])) at -= 1;
-  return at;
+export function sentencesOf(text) {
+  return text.match(/[^.!?]+[.!?]+["”]?/g)?.map((sentence) => sentence.trim()) ?? [text.trim()];
 }
 
 /**
@@ -85,5 +44,6 @@ function cutAt(words, from) {
  */
 export function docentIntroSec(text) {
   const words = text?.trim().split(/\s+/).filter(Boolean).length ?? 0;
-  return Math.max(1, Math.ceil(words / WORDS_PER_SEC));
+  const breaths = text ? sentencesOf(text).length - 1 : 0;
+  return Math.max(1, Math.ceil(words / WORDS_PER_SEC + breaths * SENTENCE_GAP_SEC));
 }
