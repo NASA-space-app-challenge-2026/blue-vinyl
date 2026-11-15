@@ -329,6 +329,52 @@ export const albums = [
     ],
   },
   {
+    id: 'hemispheres',
+    category: AlbumCategory.CLIMATE,
+    title: 'Mirror Storms',
+    coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
+    coverCredit: 'Public domain, via Wikimedia Commons',
+    globeAlt: 'every storm of one 2023 storm season in one ocean, each where it formed and the path it took',
+    dataCredit: STORMS_CREDIT,
+    // Two storm seasons around 2023, the year the oceans ran hottest on record, every storm of each: one northern ocean
+    // and one southern (see docs/albums/hemispheres.md). Each cover is one of the season's strongest storms.
+    tracks: [
+      {
+        title: 'North Atlantic 2023',
+        durationSec: seasonDurationSec(SEASON_SPANS.atlantic),
+        color: '#7fc4e8',
+        coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
+        coverCredit: 'Cover: Hurricane Lee, Sep 2023, MODIS (NASA GSFC)',
+        coverAlt: 'Satellite image of Hurricane Lee in September 2023, a bright round storm over the Atlantic east of Puerto Rico',
+        season: {
+          url: `${HEMISPHERES_DATA}/atlantic_2023.csv`,
+          span: SEASON_SPANS.atlantic,
+          hemisphere: Hemisphere.NORTH,
+          lead: Lead.WHISTLE,
+          focus: { lat: 24, lon: -59, arcDeg: NORTHERN_ARC_DEG },
+        },
+      },
+      {
+        // The southern summer of 2023, January to April, when Freddy crossed the whole ocean in the longest life of
+        // any tropical cyclone on record.
+        title: 'South Indian 2023',
+        durationSec: seasonDurationSec(SEASON_SPANS.southIndian),
+        color: '#b29ae6',
+        coverUrl: `${HEMISPHERES_COVERS}/cyclone_freddy_2023.jpg`,
+        coverCredit: 'Cover: Cyclone Freddy, Feb 19 2023, Suomi NPP VIIRS (NASA)',
+        coverAlt: 'Satellite image of Cyclone Freddy on February 19 2023, a compact spiral with a clear eye over the South Indian Ocean',
+        dataCredit: `${STORMS_CREDIT}, 14312 Freddy`,
+        season: {
+          url: `${HEMISPHERES_DATA}/south_indian_2023.csv`,
+          span: SEASON_SPANS.southIndian,
+          hemisphere: Hemisphere.SOUTH,
+          lead: Lead.BOWED,
+          focus: { lat: -18, lon: 80, arcDeg: SOUTHERN_ARC_DEG },
+        },
+      },
+    ],
+  },
+  {
     id: 'aerosol',
     category: AlbumCategory.CLIMATE,
     title: 'Connected by the Air',
@@ -397,52 +443,6 @@ export const albums = [
           sound: { lead: Lead.BRASS, baseMidi: 48 },
           viewLat: 40.0,
           viewLon: 5.0,
-        },
-      },
-    ],
-  },
-  {
-    id: 'hemispheres',
-    category: AlbumCategory.CLIMATE,
-    title: 'Mirror Storms',
-    coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
-    coverCredit: 'Public domain, via Wikimedia Commons',
-    globeAlt: 'every storm of one 2023 storm season in one ocean, each where it formed and the path it took',
-    dataCredit: STORMS_CREDIT,
-    // Two storm seasons around 2023, the year the oceans ran hottest on record, every storm of each: one northern ocean
-    // and one southern (see docs/albums/hemispheres.md). Each cover is one of the season's strongest storms.
-    tracks: [
-      {
-        title: 'North Atlantic 2023',
-        durationSec: seasonDurationSec(SEASON_SPANS.atlantic),
-        color: '#7fc4e8',
-        coverUrl: `${HEMISPHERES_COVERS}/hurricane_lee_2023.jpg`,
-        coverCredit: 'Cover: Hurricane Lee, Sep 2023, MODIS (NASA GSFC)',
-        coverAlt: 'Satellite image of Hurricane Lee in September 2023, a bright round storm over the Atlantic east of Puerto Rico',
-        season: {
-          url: `${HEMISPHERES_DATA}/atlantic_2023.csv`,
-          span: SEASON_SPANS.atlantic,
-          hemisphere: Hemisphere.NORTH,
-          lead: Lead.WHISTLE,
-          focus: { lat: 24, lon: -59, arcDeg: NORTHERN_ARC_DEG },
-        },
-      },
-      {
-        // The southern summer of 2023, January to April, when Freddy crossed the whole ocean in the longest life of
-        // any tropical cyclone on record.
-        title: 'South Indian 2023',
-        durationSec: seasonDurationSec(SEASON_SPANS.southIndian),
-        color: '#b29ae6',
-        coverUrl: `${HEMISPHERES_COVERS}/cyclone_freddy_2023.jpg`,
-        coverCredit: 'Cover: Cyclone Freddy, Feb 19 2023, Suomi NPP VIIRS (NASA)',
-        coverAlt: 'Satellite image of Cyclone Freddy on February 19 2023, a compact spiral with a clear eye over the South Indian Ocean',
-        dataCredit: `${STORMS_CREDIT}, 14312 Freddy`,
-        season: {
-          url: `${HEMISPHERES_DATA}/south_indian_2023.csv`,
-          span: SEASON_SPANS.southIndian,
-          hemisphere: Hemisphere.SOUTH,
-          lead: Lead.BOWED,
-          focus: { lat: -18, lon: 80, arcDeg: SOUTHERN_ARC_DEG },
         },
       },
     ],
