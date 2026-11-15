@@ -1,73 +1,75 @@
 # Smog Album: The Wind That Sweeps the Smog
 
-The album's story, data and mappings. It follows [album-guide.md](../album-guide.md) and is built after nell-v2's album of the same name (its way of hearing smog, not its region or tracks); the data comes from `notebooks/smog_album.ipynb` (issue #49).
+The album's story, data and mappings. It follows [album-guide.md](../album-guide.md) and reproduces nell-v2's album of the same name as it is (user, 2026-11-15): its region, songs, sound, globe and numbers, written fresh here; the data is downloaded again by `notebooks/smog_album.ipynb` (issue #49).
 
 ## Message
 
 > "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems." ([SVS 5151](https://svs.gsfc.nasa.gov/5151/), Particulate Matter (PM) 2.5)
 
-PM2.5 comes and goes within days, carried by the weather. The album follows four cities through 2025: Seoul, and the three cities of other regions whose air swung most often between their own cleanest and dirtiest days (ours; EIC names no city). The listener hears the loop go muffled as the smog rolls in, and burst open as the air clears.
+In winter the North China Plain fills with smog for days under still air, until a cold front from the north sweeps it away within hours. The aim is not a new fact but a feeling anyone can follow by eye and ear at once: as much as the map is hidden by smog, the music is muffled; when the air clears, both open together.
 
-- Main information: how thick the city's air is each day (the fog over the map, how muffled the music is).
-- Supporting information: the swings, the days the air crosses into the city's dirtiest tenth of days (the smog rolls in) or its cleanest tenth (it clears), and how fast the fog over the box thins.
+- Main information: how thick the smog over the plain is (each cell's PM2.5, and their mean).
+- Supporting information: the moments the air turns (the smog rolling in, the front sweeping it out), and how fast the fog thins.
 
 ## Tracks
 
-| # | Track | Swings (smog / clear) | p10 – p90 (µg/m³) | Lead | Loop | Length |
+| # | Track | Stretch (local time) | Smog rolls in | Front sweeps it out | Loop | Length |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Seoul | 6 (3 / 3) | 10.7 – 100.6 | Celesta | D minor | 0:40 |
-| 2 | Pretoria | 20 (10 / 10) | 25.3 – 135.3 | Marimba | A minor | 0:40 |
-| 3 | New York | 30 (15 / 15) | 13.7 – 55.5 | Electric piano | F minor | 0:40 |
-| 4 | Lisbon | 32 (16 / 16) | 4.3 – 24.8 | Vibraphone | E minor | 0:40 |
+| 1 | Morning, December 23 | 2018-12-17 12:30 to 12-23 18:30 (151 h) | 0:08 | 0:46 | Synth-pop, D minor | 0:54 |
+| 2 | Dawn, January 15 | 2019-01-08 12:30 to 01-15 16:30 (173 h) | 0:10 | 0:46 | House, A minor | 0:54 |
+| 3 | Midday, January 20 | 2019-01-16 12:30 to 01-20 18:30 (103 h) | 0:08 | 0:46 | Breakbeat, E minor | 0:54 |
 
-Data files: `data/smog/tracks/` (see `tracks.json` for the source, version, credit, each city and its box).
+Data files: `data/smog/tracks/` (see `tracks.json` for the source, version, credit, box and time zone).
 
-- GEOS-CF v1 (NASA GMAO), surface PM2.5 (`pm25_rh35_gcc`). 5151 links v2, which starts on 2025-08-04; v1 holds all of 2025 (user, 2026-11-15).
-- One hour a day, the mean of 00:00–01:00 UTC: morning in Seoul, night in Pretoria and Lisbon, the evening before in New York. A year plays in 40 s, a day in 0.11 s, so one value a day is all the music can carry.
-- The cities were picked on a 1° grid (notebook, section 4). The tracks read the city's own 0.25° cell, and its swings are counted again there: Pretoria's fall from 38 to 20, the others stay close (section 6).
-- The map: the box of 33 × 33 cells (0.25°, ±4°) around the city's cell, rounded to whole µg/m³.
+- GEOS-CF v1 (NASA GMAO), surface PM2.5 (`pm25_rh35_gcc`), hourly means on the 0.25° grid. 5151 links v2, which starts on 2025-08-04; the winter of 2018-19 is only in v1.
+- The box: 34–42° N, 112–121° E, 33 × 37 cells, every hour of each stretch, rounded to whole µg/m³. The values differ from nell-v2's files by at most 1 µg/m³ in under 1 % of the values, as nell-v2 rounded its cache to four significant digits before rounding again.
+- The values are the model's and may differ from what was measured; the map and the music follow them as they are.
 
 ## Time
 
-136 BPM in 4/4, a day a sixteenth note (0.110 s), 365 days: 40.3 s a track. The steps are counted from January 1, so the bars stay in place wherever the needle is set down. The date on the label is the day playing.
+120 BPM in 4/4: a bar is 2 s, a step a sixteenth note (0.125 s). Songs are timed in playback ms, and each sets the pace of its own hours (`paceOf` in [`tracks/domain/smog.js`](../../src/features/tracks/domain/smog.js)):
+
+- The 12 hours before the front sweeps the smog out play for eight bars (16 s), the 6 hours before the smog rolls in for three bars, and the clear air after the last sweep for four bars.
+- The rest of the song shares out what is left of 54 s; within it, the hours in which the haze changes fast pass more slowly (an hour weighs 1 + 8 · |change in haze| / 0.05).
+- Every turn lands on a downbeat. The bar and step are read from the playback time, so the loop stays in place wherever the needle is set down.
+
+The date on the label is the real local time (China Standard Time) by the hour.
 
 ## Sound
 
-Dark deep house in a minor key (user, 2026-11-15): bad news does not sound bright ([album-guide](../album-guide.md)). Each track plays one four-bar loop from start to end; the air only changes how it comes through, the same way in every track (nell-v2).
+Each song plays its own bright dance loop from start to end, heard through the air ([`composers/smog.js`](../../src/features/music/domain/composers/smog.js)). The loop never changes with the data; only how it comes through does, the same way in every song.
 
-| Part | What it plays |
-| --- | --- |
-| Lead (main) | The track's hook on keys or mallets (`SmogLead`), one or two octaves over the chords |
-| Pad | Warm pad, the bar's chord |
-| Bass | Synth bass 1, the chord's root on the off-beats |
-| Drums | Standard kit: kick on every beat, clap on 2 and 4, closed hat off the beat, quiet hats on the sixteenths between |
+| Song | Loop | Chords | Lead and backing | Drums |
+| --- | --- | --- | --- | --- |
+| Morning, December 23 | `SYNTH_POP` | D minor: Dm, B♭, F, C | Square-wave arpeggio (`PULSE`), halo pad, syncopated bass | Kick on every beat, snare on 2 and 4, eighth-note hats, sixteenth ghosts |
+| Dawn, January 15 | `HOUSE` | A minor: Am, F, C, G | Saw chord stabs off the beat (`STAB`), offbeat bass | Kick on every beat, snare on 2 and 4, offbeat hats, sixteenth ghosts |
+| Midday, January 20 | `BREAKS` | E minor: Em, C, G, D | Dulcimer hook, warm pad, held bass | Broken kick, snare on 2 and 4, eighth-note hats and ghosts |
 
-| Data | Sound | Screen |
-| --- | --- | --- |
-| The city's PM2.5 that day, as fog: 0 at 15 µg/m³ (WHO 24-hour guideline), 1 from 125.5 µg/m³ (EPA "very unhealthy"), log-scaled, the same scale for every city (user, 2026-11-15) | The whole mix through a low-pass from 18 kHz (clear) down to 220 Hz (full fog), as if through a wall; reverb 0.12 to 0.6 and overdrive 0 to 0.3 with it (nell-v2) | The fog over each cell, on the same scale |
-| A swing into the high band (the smog rolls in) | A deep boom (analog `CAVE` at D1 and a falling noise hit) | The map darkens and recovers over 1.2 s |
-| A swing into the low band (it clears) | A noise riser over the beat before, the loop silent through it, then a crash and an impact | The clear places flash bright and fade over 1.2 s |
-| The fog the box loses by the next day (mean over its cells) | A gust of noise on each beat, none below 0.1 and full at 0.3 of a whole fog (ours, not yet heard) | The fog thins |
+Shared: the bass is the analog synth's `CAVE`, the drums the standard kit. Clear air plays dry (reverb 0.12); the thicker the smog, the more reverb (up to 0.6) and overdrive (up to 0.3).
 
-Swings sound on their own day, not moved onto the beat: the air can swing back the very next day (New York, Lisbon and Pretoria all do), and moving them would drop one of the two.
+## Mapping
 
-Code: [`composers/smog.js`](../../src/features/music/domain/composers/smog.js), [`tracks/domain/smog.js`](../../src/features/tracks/domain/smog.js).
+| Data | Screen | Sound | Updated |
+| --- | --- | --- | --- |
+| Each cell's pollution (`pollutionOf`: PM2.5 in multiples of 15 µg/m³ on a log scale to 600, 0 to 1) | The fog (`fogOf`): clear below about 40 µg/m³, so the map shows; thicker and browner as it rises. Smooth between cells (bicubic) and between hours, billowing and drifting | (screen only) | Frame |
+| The plain's haze (the mean fog over its cells) | The colour of the glow round the globe | The whole mix's low-pass: 18 kHz at haze 0.05 or less, down to 220 Hz from 0.8, as if through a wall (exponential); reverb and overdrive rise with it | Sixteenth note |
+| How fast the fog thins (the fog each cell loses by the next hour) | A cold sheen where it thins | While the plain loses 0.008 or more an hour, a gust on each beat (noise falling from 6 kHz to 700 Hz), loudest at 0.06 | Frame, beat |
+| The turns (`turnsOf`: the haze rising past 0.5 is the smog rolling in, falling below 0.3 the front sweeping it out; in between it stays as it was) | Rolling in: the map darkens for a moment. Swept out: the clear places flash bright. Both fade over 1.2 s | Rolling in: a deep boom (`CAVE` at D1 and a low noise hit). Swept out: a riser from two bars before, a silent beat, then a crash and an impact | The downbeat |
 
 ## Globe
 
-The globe holds still over the city: it cannot be turned or zoomed by hand, as there is no smog drawn beyond the box (user, 2026-11-15). The label's edge is 90% of the way to the box's nearest edge (about 3° of arc).
+The globe holds still over the plain's middle (38° N, 116.5° E): it cannot be turned or zoomed by hand, as there is no smog drawn beyond the box (user, 2026-11-15; nell-v2 let it be turned). It is drawn as close as nell-v2's, the globe eleven times the label's size, so the label's edge is asin(1/11) ≈ 5.2° of arc from the middle.
 
-The fog is one patch of the globe over the box, drawn by a shader in [`smog-layer.js`](../../src/features/globe/presentation/smog-layer.js): each cell's fog blended from one day to the next as the day passes, smooth between cells, stirred by slowly drifting noise, from a pale haze to a dirty brown as it thickens, fading out at the box's edge. A small white ring marks the city. Below the date, the read-out gives the city's PM2.5 that day.
+The fog is one patch of the globe over the box, drawn by nell-v2's shader in [`smog-layer.js`](../../src/features/globe/presentation/smog-layer.js); the textures are uploaded only when the hour changes. It fades in over the song's first 1.5 s and out over its last. Nine cities are named on the map, north to south: Beijing, Tangshan, Tianjin, Baoding, Cangzhou, Shijiazhuang, Hengshui, Jinan and Handan.
 
-## Covers
+## Cover
 
-Each track's cover is its city in haze, from Wikimedia Commons (credits in [`albums.js`](../../src/features/album/data/albums.js)). New York's is the wildfire smoke of June 2023, not 2025.
+The Jade Peak Pagoda in smog, from Longevity Hill, Beijing (Daniel Case, CC BY-SA 3.0, Wikimedia Commons), on every track, as in nell-v2.
 
 ## Checks
 
 | Check | Result |
 | --- | --- |
-| Length | 40.3 s a track |
-| Swings heard | Every swing gives one boom or one crash and riser (mock run of the composer over each year) |
-| Muffling range | Low-pass reaches 220 Hz in Seoul and Pretoria, 249 Hz in New York, 1,122 Hz in Lisbon |
-| Listening, volumes of the new instruments, screen | Not yet done: needs the user |
+| Length | 54 s each; the turns land on 0:08 / 0:46, 0:10 / 0:46 and 0:08 / 0:46, as in nell-v2 |
+| Muffling | The low-pass reaches 247 Hz, 220 Hz and 236 Hz (mock run of the composer over each song) |
+| Listening, screen | Not yet done: needs the user |
