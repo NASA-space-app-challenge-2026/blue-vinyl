@@ -41,8 +41,24 @@ const HEIGHT_RANGE_M = Object.freeze({ low: 4, high: 24 });
 const KIND_DEGREES = 4;
 const VELOCITY = Object.freeze({ low: 50, high: 115 });
 
-// The drone: a fifth, D2 and A2, from this level of forest on, from soft to strong with the level (0..1).
-const DRONE = Object.freeze({ notes: [38, 45], fromLevel: 0.02, velocity: { low: 35, high: 105 } });
+// The drone: a fifth on cello from this level of forest on, from soft to strong with the level (0..1). Its root walks a
+// slow round of D dorian chords, one every two bars (D, C, G, A: D-A, C-G, G-D, A-E), so it never sits still; on the
+// second bar of each pair a viola adds the chord's colour tone (its third) up high, softly.
+// The velocity swells and ebbs a little (`swell`, a share of it) over a round of eight bars.
+const DRONE = Object.freeze({
+  chords: [
+    { root: 38, color: 53 }, // D2 + A2, F4
+    { root: 36, color: 52 }, // C2 + G2, E4
+    { root: 43, color: 59 }, // G2 + D3, B4
+    { root: 33, color: 60 }, // A1 + E2, C5
+  ],
+  barsPerChord: 2,
+  fifth: 7,
+  colorSoftness: 0.6,
+  swell: 0.15,
+  fromLevel: 0.02,
+  velocity: { low: 35, high: 105 },
+});
 const TICK = Object.freeze({ everyDeg: 30, note: 76, velocity: 50, loudAtStart: 80 });
 const BELL_NOTES = Object.freeze([62, 69, 65, 72, 67]);
 const BELL_VELOCITY = 85;
@@ -66,6 +82,7 @@ export class NoonComposer {
   instruments = Object.freeze([
     ...new Set(TREE_KINDS.map(({ kind }) => KIND_VOICES[kind].instrument)),
     Instrument.CELLO,
+    Instrument.VIOLA,
     Instrument.TUBULAR_BELLS,
     Instrument.WOODBLOCK,
   ]);
@@ -117,8 +134,14 @@ export class NoonComposer {
   playDrone(music, lineStep, at) {
     const level = barLevelAt(this.song.line, lineStep);
     if (level < DRONE.fromLevel) return;
-    const velocity = DRONE.velocity.low + level * (DRONE.velocity.high - DRONE.velocity.low);
-    for (const note of DRONE.notes) music.note(Instrument.CELLO, note, velocity, at, STEPS_PER_BAR);
+    const bar = lineStep / STEPS_PER_BAR;
+    const chord = DRONE.chords[Math.floor(bar / DRONE.barsPerChord) % DRONE.chords.length];
+    const swell = 1 + DRONE.swell * Math.sin((bar / (DRONE.chords.length * DRONE.barsPerChord)) * 2 * Math.PI);
+    const velocity = Math.min(127, (DRONE.velocity.low + level * (DRONE.velocity.high - DRONE.velocity.low)) * swell);
+    for (const note of [chord.root, chord.root + DRONE.fifth]) music.note(Instrument.CELLO, note, velocity, at, STEPS_PER_BAR);
+    if (bar % DRONE.barsPerChord === DRONE.barsPerChord - 1) {
+      music.note(Instrument.VIOLA, chord.color, velocity * DRONE.colorSoftness, at, STEPS_PER_BAR);
+    }
   }
 
   /** A tree `heightM` tall: its class's instrument, a note up its class with its height, held for `steps` (as long as it grows). */
