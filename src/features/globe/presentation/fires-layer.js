@@ -8,6 +8,9 @@
 // Track 2 (2020 Fire Season): each large FEDS fire where it burned, its scar as large as the fire has grown, its front
 // and smoke as bright as the VIIRS pixels newly burning that day.
 // In both, a scar is in proportion to its fire's area, far larger than life so it reads on a record label.
+//
+// Track 1 holds up to about 1,600 fires at once (2011's 824 lit while 2010's fade), so the fires are drawn as one
+// instanced mesh per cap size, and the shader skips the work, or the fragment, wherever the fire adds nothing.
 
 // The same three.js revision globe.gl@2.46.2 bundles, so the meshes fit its scene.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
@@ -34,20 +37,22 @@ const FULL_HEAT_KM2 = 1214;
 const FLARE_SEC = 0.05;
 const BURN_SEC = 0.35;
 
+// Each fire's scar, heat, visibility and seed.
 const vertexShader = `
+attribute vec4 aFire;
 varying vec3 vPos;
+varying vec4 vFire;
 void main() {
   vPos = position;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  vFire = aFire;
+  gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
 }`;
 
 const common = `
 uniform float uTime;
-uniform float uVisible;
-uniform float uHeat;
-uniform float uSeed;
 uniform float uCap;
 varying vec3 vPos;
+varying vec4 vFire;
 
 // A different offset on each axis: p.x * p.y * p.z * (p.x + p.y + p.z) is the same for any order of the axes, so with
 // one offset for all the noise, and every fire's edge, came out mirrored across the diagonal.
@@ -89,79 +94,117 @@ const vec3 CHAR_WARM = vec3(0.085, 0.032, 0.02);
 const vec3 SMOKE = vec3(0.5, 0.48, 0.46);
 
 // Premultiplied: the scar and smoke cover the map, the light adds to it.
-vec4 compose(float charA, float smokeA, vec3 light) {
-  vec3 rgb = mix(CHAR, CHAR_WARM, noise(vPos * 0.9)) * charA;
+vec4 compose(float charA, float smokeA, vec3 light, float d, float visible) {
+  vec3 rgb = charA > 0.0 ? mix(CHAR, CHAR_WARM, noise(vPos * 0.9)) * charA : vec3(0.0);
   float a = charA;
   rgb = SMOKE * smokeA + rgb * (1.0 - smokeA);
   a = smokeA + a * (1.0 - smokeA);
   // Faded out before the mesh's rim, so no edge shows where it ends.
-  float rim = smoothstep(uCap, uCap * 0.8, length(normalize(vPos).xz));
-  return vec4(rgb + light, a) * uVisible * rim;
+  float rim = smoothstep(uCap, uCap * 0.8, d);
+  return vec4(rgb + light, a) * visible * rim;
+}
+
+// Under half an 8-bit step: a term this faint changes no pixel, so it is not worked out.
+const float EPS = 0.002;
+// How many widths out a bell of this peak, exp(-x^2) * amp, stays above EPS.
+float reachOf(float amp) {
+  return sqrt(log(max(amp, EPS) / EPS));
 }
 `;
 
 // The cap is centred on +Y with east along +X, so vPos.xz is the place in radians from the centre (east, south).
 const fireShader = `
-uniform float uScar;
 ${common}
 void main() {
+  float scarSize = vFire.x;
+  float heat = vFire.y;
+  float visible = vFire.z;
+  float seed = vFire.w;
   vec2 p = normalize(vPos).xz;
   float d = length(p);
-  float scale = max(uScar, 0.0015);
+  float scale = max(scarSize, 0.0015);
   vec2 q = p / scale;
+  // Every light term is at most its peak times heat * visible.
+  float hv = heat * visible;
+
+  // Bounds that need no noise: the ragged edge lies within 0.7 to 1.3 scales of the centre, so the scar, front, flames
+  // and halo are within coreR of it, and the smoke and sparks downwind are at most smokeMax and sparkMax.
+  float frontWidth = 0.22 * scale + 0.0012;
+  float frontReach = reachOf(1.3 * hv) * frontWidth;
+  float flameReach = scale * (0.25 + 0.9 * heat) + 0.003;
+  float haloWidth = scale * 1.3 + 0.003;
+  float coreR = max(1.3 * scale + max(hv * 1.1 > EPS ? flameReach : 0.0, frontReach), reachOf(0.14 * hv) * haloWidth);
+  float alongLo = max(p.x - 0.65 * scale, 0.0);
+  float alongHi = p.x - 0.35 * scale;
+  float widthHi = 0.003 + 0.22 * max(alongHi, 0.0) + 0.6 * scale;
+  float crossWind = p.y * p.y / (widthHi * widthHi);
+  float smokeMax = alongHi > -0.004 ? 0.2 * hv * exp(-alongLo / (0.02 + 0.04 * heat) - crossWind) : 0.0;
+  float sparkMax = alongHi > -0.003 ? 1.4 * hv * exp(-alongLo / (0.008 + 0.02 * heat) - crossWind / 0.6) : 0.0;
+  if (d > coreR && smokeMax < EPS && sparkMax < EPS) discard;
+
   // A ragged edge rather than a circle.
-  float edge = scale * (1.0 + 0.6 * (fbm(vec3(q * 1.8, uSeed)) - 0.5));
-  float scar = uScar > 0.0 ? smoothstep(edge, edge * 0.82, d) : 0.0;
-  float flicker = 0.5 + 1.0 * noise(vec3(q * 4.0, uTime * 2.4 + uSeed));
-  // Only stretches of the perimeter burn at a time, wandering slowly round it.
-  float burning = smoothstep(0.38, 0.62, fbm(vec3(q * 1.3, uTime * 0.12 + uSeed * 2.0)));
-  float front = exp(-pow((d - edge) / (0.22 * scale + 0.0012), 2.0)) * uHeat * flicker * (0.25 + 0.75 * burning);
-  // Flames lick outward past the edge in ragged tongues that run out from the fire, yellow at the root, red at the tip.
-  vec2 dir = p / max(d, 1e-5);
+  float edge = scale * (1.0 + 0.6 * (fbm(vec3(q * 1.8, seed)) - 0.5));
+  float scar = scarSize > 0.0 ? smoothstep(edge, edge * 0.82, d) : 0.0;
   float past = d - edge;
-  float tongues = fbm(vec3(dir * 2.5 + uSeed, past / scale * 3.0 - uTime * 3.2));
-  float reach = (scale * (0.25 + 0.9 * uHeat) + 0.003) * tongues * (0.3 + 0.7 * burning);
-  float tip = clamp(past / max(reach, 1e-5), 0.0, 1.0);
-  float flames = past > 0.0 ? (1.0 - tip) * (1.0 - tip) * uHeat * smoothstep(0.25, 0.6, tongues) : 0.0;
-  float embers = scar * uHeat * smoothstep(0.6, 0.85, fbm(vec3(q * 5.0, uTime * 0.9 + uSeed)));
-  float halo = uHeat * 0.16 * exp(-d * d / pow(scale * 1.3 + 0.003, 2.0));
+  bool atFront = abs(past) < frontReach;
+  bool inFlames = hv * 1.1 > EPS && past > 0.0 && past < flameReach;
+  float front = 0.0;
+  float flames = 0.0;
+  float tip = 0.0;
+  if (atFront || inFlames) {
+    // Only stretches of the perimeter burn at a time, wandering slowly round it.
+    float burning = smoothstep(0.38, 0.62, fbm(vec3(q * 1.3, uTime * 0.12 + seed * 2.0)));
+    if (atFront) {
+      float flicker = 0.5 + 1.0 * noise(vec3(q * 4.0, uTime * 2.4 + seed));
+      front = exp(-pow(past / frontWidth, 2.0)) * heat * flicker * (0.25 + 0.75 * burning);
+    }
+    if (inFlames) {
+      // Flames lick outward past the edge in ragged tongues that run out from the fire, yellow at the root, red at
+      // the tip.
+      vec2 dir = p / max(d, 1e-5);
+      float tongues = fbm(vec3(dir * 2.5 + seed, past / scale * 3.0 - uTime * 3.2));
+      float reach = (scale * (0.25 + 0.9 * heat) + 0.003) * tongues * (0.3 + 0.7 * burning);
+      tip = clamp(past / max(reach, 1e-5), 0.0, 1.0);
+      flames = (1.0 - tip) * (1.0 - tip) * heat * smoothstep(0.25, 0.6, tongues);
+    }
+  }
+  float embers = scar > 0.0 && hv * 0.8 > EPS
+    ? scar * heat * smoothstep(0.6, 0.85, fbm(vec3(q * 5.0, uTime * 0.9 + seed)))
+    : 0.0;
+  float halo = heat * 0.16 * exp(-d * d / pow(haloWidth, 2.0));
   float glow = front + 0.9 * embers + halo;
   vec3 light = fireLight(0.2 + 0.8 * min(1.0, front + embers)) * glow * 0.85
     + fireLight(1.0 - 0.8 * tip) * flames * 1.1;
   // Smoke streams east (+x), widening downwind.
   float along = p.x - edge * 0.5;
   float width = 0.003 + 0.22 * max(along, 0.0) + 0.6 * scale;
-  float plume = smoothstep(-0.004, 0.012, along) * exp(-max(along, 0.0) / (0.02 + 0.04 * uHeat))
+  float plume = smoothstep(-0.004, 0.012, along) * exp(-max(along, 0.0) / (0.02 + 0.04 * heat))
     * exp(-p.y * p.y / (width * width));
-  float puffs = fbm(vec3(p.x * 70.0 - uTime * 0.5, p.y * 70.0, uSeed + 3.0));
-  float smoke = 0.2 * uHeat * plume * smoothstep(0.3, 0.8, puffs);
-  // The smoke's underside lit by the fire, near it.
-  light += vec3(1.0, 0.42, 0.12) * smoke * uHeat * 0.9 * exp(-max(along, 0.0) / 0.006);
+  float smoke = 0.0;
+  if (0.2 * hv * plume > EPS) {
+    float puffs = fbm(vec3(p.x * 70.0 - uTime * 0.5, p.y * 70.0, seed + 3.0));
+    smoke = 0.2 * heat * plume * smoothstep(0.3, 0.8, puffs);
+    // The smoke's underside lit by the fire, near it.
+    light += vec3(1.0, 0.42, 0.12) * smoke * heat * 0.9 * exp(-max(along, 0.0) / 0.006);
+  }
   // Sparks carried east on the wind, twinkling out as they go.
   vec2 drift = (p - vec2(uTime * 0.007, 0.0)) * 130.0;
   vec2 cell = floor(drift);
-  float h = hash(vec3(cell, uSeed));
+  float h = hash(vec3(cell, seed));
   float spot = smoothstep(0.5, 0.0, length(fract(drift) - 0.5));
-  float sparkZone = smoothstep(-0.003, 0.003, along) * exp(-max(along, 0.0) / (0.008 + 0.02 * uHeat))
+  float sparkZone = smoothstep(-0.003, 0.003, along) * exp(-max(along, 0.0) / (0.008 + 0.02 * heat))
     * exp(-p.y * p.y / (width * width * 0.6));
-  float sparks = step(0.95, h) * spot * sparkZone * uHeat * (0.4 + 0.6 * sin(uTime * 9.0 + h * 60.0));
+  float sparks = step(0.95, h) * spot * sparkZone * heat * (0.4 + 0.6 * sin(uTime * 9.0 + h * 60.0));
   light += fireLight(0.85) * max(sparks, 0.0) * 1.4;
-  gl_FragColor = compose(0.8 * scar, smoke, light);
+  gl_FragColor = compose(0.8 * scar, smoke, light, d, visible);
   #include <colorspace_fragment>
 }`;
 
-function capMaterial(fragmentShader, uniforms) {
+function capMaterial(cap, time) {
   return new THREE.ShaderMaterial({
-    uniforms: {
-      uTime: { value: 0 },
-      uVisible: { value: 0 },
-      uHeat: { value: 0 },
-      uSeed: { value: 0 },
-      uCap: { value: FIRE_CAP },
-      ...uniforms,
-    },
+    uniforms: { uTime: time, uCap: { value: cap } },
     vertexShader,
-    fragmentShader,
+    fragmentShader: fireShader,
     transparent: true,
     depthWrite: false,
     // Drawn over the map tiles, which bulge above the sphere (as the storm is); hidden on the far side instead.
@@ -180,7 +223,11 @@ const capOf = (scar, heat) => CAP_SIZES.find((cap) => cap >= 2.6 * scar + 0.012 
 
 /**
  * @typedef {Object} FireEntry
- * @property {THREE.Mesh} mesh
+ * @property {number} cap the cap size it is drawn with
+ * @property {number[]} matrix turns the cap to sit where the fire burned
+ * @property {THREE.Vector3} up
+ * @property {number} seed
+ * @property {boolean} shown
  * @property {number} scar shown now, eased toward `target.scar`
  * @property {number} heat
  * @property {number} fade 0 to 1, eased toward `target.fade`
@@ -198,8 +245,8 @@ export function createFiresLayer({ globe }) {
   group.renderOrder = 1;
   globe.scene().add(group);
 
-  // Turns a cap (centred on +Y) to sit on lat/lon with its +X pointing east.
-  function place(mesh, lat, lon) {
+  // A cap (centred on +Y) turned to sit on lat/lon with its +X pointing east.
+  function fireAt(fireid, lat, lon, cap) {
     const at = (la, lo) => {
       const { x, y, z } = globe.getCoords(la, lo, 0);
       return new THREE.Vector3(x, y, z);
@@ -208,33 +255,66 @@ export function createFiresLayer({ globe }) {
     const east = at(lat, lon + 0.5).sub(at(lat, lon)).normalize();
     east.sub(up.clone().multiplyScalar(east.dot(up))).normalize();
     const south = new THREE.Vector3().crossVectors(east, up);
-    mesh.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(east, up, south));
-    mesh.userData.up = up;
+    const matrix = new THREE.Matrix4().makeBasis(east, up, south).elements;
+    return { cap, matrix, up, seed: seedOf(fireid), shown: false };
   }
 
-  const geometries = new Map(
-    CAP_SIZES.map((cap) => [cap, new THREE.SphereGeometry(radius, Math.round(64 * Math.sqrt(cap / FIRE_CAP)) + 8, 24, 0, 2 * Math.PI, 0, cap)]),
+  const time = { value: 0 };
+  // One instanced mesh per cap size, its instances refilled each frame with the fires drawn.
+  const batches = new Map(
+    CAP_SIZES.map((cap) => {
+      const shape = new THREE.SphereGeometry(radius, Math.round(64 * Math.sqrt(cap / FIRE_CAP)) + 8, 24, 0, 2 * Math.PI, 0, cap);
+      return [cap, { cap, shape, material: capMaterial(cap, time), mesh: null, count: 0 }];
+    }),
   );
-  const fireMaterial = capMaterial(fireShader, { uScar: { value: 0 } });
-  // Meshes no fire uses now, kept for the next ones: Track 1 shows a new year's hundreds of fires every bar.
-  const spare = [];
 
-  function takeMesh(fireid, lat, lon, cap) {
-    const mesh = spare.pop() ?? new THREE.Mesh(geometries.get(FIRE_CAP), fireMaterial.clone());
-    mesh.geometry = geometries.get(cap);
-    mesh.material.uniforms.uCap.value = cap;
-    mesh.material.uniforms.uSeed.value = seedOf(fireid);
+  // Room for at least `size` fires, keeping those already written.
+  function grow(batch, size) {
+    const old = batch.mesh;
+    const capacity = Math.max(64, 2 ** Math.ceil(Math.log2(size)));
+    const geometry = batch.shape.clone();
+    const attribute = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
+    attribute.setUsage(THREE.DynamicDrawUsage);
+    geometry.setAttribute('aFire', attribute);
+    const mesh = new THREE.InstancedMesh(geometry, batch.material, capacity);
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    mesh.frustumCulled = false;
     mesh.renderOrder = 1;
-    mesh.visible = false;
-    place(mesh, lat, lon);
+    if (old) {
+      mesh.instanceMatrix.array.set(old.instanceMatrix.array);
+      attribute.array.set(old.geometry.getAttribute('aFire').array);
+      group.remove(old);
+      old.geometry.dispose();
+      old.dispose();
+    }
     group.add(mesh);
-    return mesh;
+    batch.mesh = mesh;
   }
 
-  function release(entry) {
-    entry.mesh.visible = false;
-    group.remove(entry.mesh);
-    spare.push(entry.mesh);
+  function draw(fire, scar, heat, visible) {
+    const batch = batches.get(fire.cap);
+    if (!batch.mesh || batch.count === batch.mesh.instanceMatrix.count) grow(batch, batch.count + 1);
+    const i = batch.count++;
+    batch.mesh.instanceMatrix.array.set(fire.matrix, i * 16);
+    const values = batch.mesh.geometry.getAttribute('aFire').array;
+    values[i * 4] = scar;
+    values[i * 4 + 1] = heat;
+    values[i * 4 + 2] = visible;
+    values[i * 4 + 3] = fire.seed;
+  }
+
+  function beginFrame() {
+    for (const batch of batches.values()) batch.count = 0;
+  }
+
+  function endFrame() {
+    for (const batch of batches.values()) {
+      if (!batch.mesh) continue;
+      batch.mesh.count = batch.count;
+      batch.mesh.visible = batch.count > 0;
+      batch.mesh.instanceMatrix.needsUpdate = true;
+      batch.mesh.geometry.getAttribute('aFire').needsUpdate = true;
+    }
   }
 
   /** Track 2's fires by fireid; they stay all season. @type {Map<string, FireEntry>} */
@@ -246,7 +326,7 @@ export function createFiresLayer({ globe }) {
   function seasonFireOf(fire) {
     if (!seasonFires.has(fire.fireid)) {
       seasonFires.set(fire.fireid, {
-        mesh: takeMesh(fire.fireid, fire.lat, fire.lon, FIRE_CAP),
+        ...fireAt(fire.fireid, fire.lat, fire.lon, FIRE_CAP),
         scar: 0,
         heat: 0,
         fade: 1,
@@ -265,44 +345,43 @@ export function createFiresLayer({ globe }) {
     const dt = lastNow === null ? 0 : Math.min(MAX_FRAME_SEC, (now - lastNow) / 1000);
     lastNow = now;
     const camera = globe.camera().position.clone().normalize();
-    const facing = (mesh) => THREE.MathUtils.smoothstep(mesh.userData.up.dot(camera), 0.05, 0.25);
-    const time = now / 1000;
+    const seconds = now / 1000;
+    time.value = seconds;
+    beginFrame();
 
-    const draw = (fire) => {
-      const u = fire.mesh.material.uniforms;
-      u.uScar.value = fire.scar;
-      u.uHeat.value = fire.heat;
-      u.uTime.value = time;
-      u.uVisible.value = facing(fire.mesh) * fire.fade;
+    // A fire on the far side, or faded out, is not drawn at all.
+    const drawShown = (fire) => {
+      const visible = THREE.MathUtils.smoothstep(fire.up.dot(camera), 0.05, 0.25) * fire.fade;
+      if (visible > 0) draw(fire, fire.scar, fire.heat, visible);
     };
 
     for (const fire of seasonFires.values()) {
-      if (!fire.mesh.visible) continue;
+      if (!fire.shown) continue;
       fire.scar = ease(fire.scar, fire.target.scar, dt, EASE_SEC.scar);
       fire.heat = ease(fire.heat, fire.target.heat, dt, EASE_SEC.heat);
-      draw(fire);
+      drawShown(fire);
     }
 
     for (const fire of yearFires) {
       fire.fade = ease(fire.fade, fire.target.fade, dt, EASE_SEC.fade);
       if (fire.target.fade === 0 && fire.fade < 0.01) {
-        release(fire);
         yearFires.delete(fire);
         continue;
       }
-      const lit = time - fire.igniteAt;
+      const lit = seconds - fire.igniteAt;
       if (lit < 0) {
-        fire.mesh.visible = false;
+        fire.shown = false;
         continue;
       }
-      if (!fire.mesh.visible) {
-        fire.mesh.visible = true;
+      if (!fire.shown) {
+        fire.shown = true;
         fire.scar = fire.target.scar * 0.3;
       }
       fire.scar = ease(fire.scar, fire.target.scar, dt, EASE_SEC.scar);
       fire.heat = fire.peakHeat * (1 - Math.exp(-lit / FLARE_SEC)) * Math.exp(-lit / BURN_SEC);
-      draw(fire);
+      drawShown(fire);
     }
+    endFrame();
     frame = requestAnimationFrame(animate);
   }
 
@@ -312,10 +391,10 @@ export function createFiresLayer({ globe }) {
 
   function hide() {
     mode = null;
-    for (const fire of seasonFires.values()) release(fire);
     seasonFires.clear();
-    for (const fire of yearFires) release(fire);
     yearFires.clear();
+    beginFrame();
+    endFrame();
     shownYear = null;
     if (frame !== null) cancelAnimationFrame(frame);
     frame = null;
@@ -333,7 +412,7 @@ export function createFiresLayer({ globe }) {
       const scar = scarOf(data.areaKm2);
       const peakHeat = Math.min(1, Math.sqrt(data.areaKm2 / FULL_HEAT_KM2));
       yearFires.add({
-        mesh: takeMesh(data.fireid, data.lat, data.lon, capOf(scar, peakHeat)),
+        ...fireAt(data.fireid, data.lat, data.lon, capOf(scar, peakHeat)),
         scar: 0,
         heat: 0,
         fade: 1,
@@ -351,11 +430,11 @@ export function createFiresLayer({ globe }) {
       fire.target.scar = scarOf(data.areaKm2[day]);
       fire.target.heat = Math.min(1, Math.sqrt(data.newPixels[day] / FULL_HEAT_PIXELS));
       const shown = fire.target.scar > 0;
-      if (shown && !fire.mesh.visible) {
+      if (shown && !fire.shown) {
         fire.scar = fire.target.scar * 0.3;
         fire.heat = 0;
       }
-      fire.mesh.visible = shown;
+      fire.shown = shown;
     }
   }
 
