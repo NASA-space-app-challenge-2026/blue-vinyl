@@ -161,7 +161,7 @@ export const albums = [
   },
   {
     id: 'forest',
-    category: AlbumCategory.CLIMATE,
+    category: AlbumCategory.BIODIVERSITY,
     title: 'Forests Hold Carbon',
     coverUrl: `${FOREST_COVERS}/cover.jpg`,
     coverCredit: 'Cover: SVS 4950, GEDI forest height · NASA Scientific Visualization Studio',
@@ -185,7 +185,7 @@ export const albums = [
   },
   {
     id: 'hot-oceans',
-    category: AlbumCategory.CLIMATE,
+    category: AlbumCategory.EXTREME_WEATHER,
     title: "The Hurricane's Heartbeat",
     coverUrl: `${HOT_OCEANS_COVERS}/katrina_2005.jpg`,
     coverCredit: 'NASA/GSFC MODIS Rapid Response, public domain, via Wikimedia Commons',
@@ -270,7 +270,7 @@ export const albums = [
   },
   {
     id: 'wildfire',
-    category: AlbumCategory.CLIMATE,
+    category: AlbumCategory.DISASTER,
     title: 'As the Season Burns',
     coverUrl: `${WILDFIRE_COVERS}/creek_fire_2020.jpg`,
     coverCredit: 'Photo: CAL FIRE, public domain, via Wikimedia Commons',

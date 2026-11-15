@@ -2,6 +2,15 @@ export const AlbumCategory = Object.freeze({
   BIODIVERSITY: 'biodiversity',
   CLIMATE: 'climate',
   EXTREME_WEATHER: 'extreme-weather',
+  DISASTER: 'disaster',
+});
+
+/** How each AlbumCategory is named on the sleeve and in the About dialog. */
+export const ALBUM_CATEGORY_LABEL = Object.freeze({
+  [AlbumCategory.BIODIVERSITY]: 'Biodiversity',
+  [AlbumCategory.CLIMATE]: 'Climate',
+  [AlbumCategory.EXTREME_WEATHER]: 'Extreme Weather',
+  [AlbumCategory.DISASTER]: 'Disaster',
 });
 
 /**

@@ -1,10 +1,4 @@
-import { AlbumCategory, trackCover } from '../domain/album.js';
-
-const CATEGORY_LABEL = Object.freeze({
-  [AlbumCategory.BIODIVERSITY]: 'Biodiversity',
-  [AlbumCategory.CLIMATE]: 'Climate',
-  [AlbumCategory.EXTREME_WEATHER]: 'Extreme Weather',
-});
+import { ALBUM_CATEGORY_LABEL, trackCover } from '../domain/album.js';
 
 // Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always
 // leans the same way and never stands straight.
@@ -107,7 +101,7 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
       return item;
     });
     list.append(...items);
-    body.replaceChildren(el('p', 'album-cover-category', CATEGORY_LABEL[album.category]), el('h1', 'album-cover-title', album.title), list);
+    body.replaceChildren(el('p', 'album-cover-category', ALBUM_CATEGORY_LABEL[album.category]), el('h1', 'album-cover-title', album.title), list);
   }
 
   /** @param {number} activeTrackIndex */
