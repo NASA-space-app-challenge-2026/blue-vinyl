@@ -6,9 +6,9 @@ const SCALE_MM = 100;
 // One wave of the surface (px). The water's top edge is cut to this shape, so the surface has no straight line.
 const WAVE = Object.freeze({ width: 160, height: 12, amplitude: 3.5 });
 const SWELL = Object.freeze({ width: 230, height: 16, amplitude: 5 });
-// The swell and the sky over the water are masked by one image this wide (px), whole waves, rather than by one wave
-// tiled: phones leave hairline cracks between the tiles. Wider than the widest label plus a wave.
-const UNTILED_MASK_PX = 4096;
+// The swell and the sky over the water are each masked by one image of whole waves, just wider than what it masks (the
+// label plus a wave), rather than by one wave tiled: phones leave hairline cracks between the tiles. Not wider, as
+// Safari leaves gaps in a mask image too large for it.
 
 /**
  * What the overlay shows at one moment.
@@ -39,18 +39,19 @@ function crest({ width, height, amplitude }, top = 0, periods = 1) {
   return points.join(' L');
 }
 
-// How many whole waves of `wave` the untiled masks hold, and how wide that is (px).
-function untiled(wave) {
-  const periods = Math.ceil(UNTILED_MASK_PX / wave.width);
+// How many whole waves of `wave` an untiled mask over a label `labelPx` wide holds, and how wide that is (px): the
+// label, the wave it moves along by, and one more for rounding.
+function untiled(wave, labelPx) {
+  const periods = Math.ceil(labelPx / wave.width) + 2;
   return { periods, width: periods * wave.width };
 }
 
 const svgImage = (svg) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg"${svg}</svg>`)}")`;
 
-// The waves, filled below the curve, as one CSS mask image (see UNTILED_MASK_PX).
-function waveMask(wave) {
+// The waves over a label `labelPx` wide, filled below the curve, as one CSS mask image (see untiled).
+function waveMask(wave, labelPx) {
   const { height } = wave;
-  const { periods, width } = untiled(wave);
+  const { periods, width } = untiled(wave, labelPx);
   return svgImage(` width="${width}" height="${height}"><path d="M0 ${height} L${crest(wave, 0, periods)} L${width} ${height} Z"/>`);
 }
 
@@ -64,10 +65,10 @@ function waterMask(wave) {
 }
 
 // Everything above the waves, from `top` px over them: where the swell may show without lying under the water. One
-// image, untiled (see UNTILED_MASK_PX).
-function aboveMask(wave, top) {
+// image over a label `labelPx` wide (see untiled).
+function aboveMask(wave, top, labelPx) {
   const { height } = wave;
-  const { periods, width } = untiled(wave);
+  const { periods, width } = untiled(wave, labelPx);
   return svgImage(` width="${width}" height="${top + height}"><path d="M0 0 L${crest(wave, top, periods)} L${width} 0 Z"/>`);
 }
 
@@ -111,15 +112,21 @@ export function createSeaLevelOverlay(container) {
     ['--wave-w', `${WAVE.width}px`],
     ['--wave-h', `${WAVE.height}px`],
     ['--swell-w', `${SWELL.width}px`],
-    ['--above-mask-w', `${untiled(WAVE).width}px`],
-    ['--swell-mask-w', `${untiled(SWELL).width}px`],
     ['--swell-h', `${SWELL.height}px`],
     ['--swell-top', `${swellTop}px`],
     ['--water-mask', waterMask(WAVE)],
-    ['--above-mask', aboveMask(WAVE, swellTop)],
-    ['--swell-mask', waveMask(SWELL)],
   ]) {
     root.style.setProperty(name, value);
+  }
+  // The label width the swell's masks are drawn for.
+  let maskedPx = null;
+  function setSwellMasks(labelPx) {
+    if (labelPx === maskedPx) return;
+    maskedPx = labelPx;
+    root.style.setProperty('--above-mask', aboveMask(WAVE, swellTop, labelPx));
+    root.style.setProperty('--above-mask-w', `${untiled(WAVE, labelPx).width}px`);
+    root.style.setProperty('--swell-mask', waveMask(SWELL, labelPx));
+    root.style.setProperty('--swell-mask-w', `${untiled(SWELL, labelPx).width}px`);
   }
   // The label's height in pixels, kept here so drawing a frame never has to measure the page.
   let labelPx = 0;
@@ -127,6 +134,7 @@ export function createSeaLevelOverlay(container) {
   let shownWater = null;
   new ResizeObserver(() => {
     labelPx = root.clientHeight;
+    setSwellMasks(root.clientWidth);
     if (waterShare !== null) placeWater(waterShare);
   }).observe(root);
 
