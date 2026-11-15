@@ -3,10 +3,10 @@
 // released; nothing is steered.
 
 /** The most particles a track draws; the notebook keeps to it and so does the loader. */
-export const MAX_PARTICLES = 10;
+export const MAX_PARTICLES = 100;
 
-/** How many steps of its path (3 hours each) a particle draws behind its head, and a track's lead particle (`hero`). */
-export const TAIL_STEPS = Object.freeze({ crowd: 24, hero: 48 });
+/** How many steps of its path (3 hours each) a particle draws brightly behind its head. */
+export const TAIL_STEPS = 24;
 
 /**
  * @typedef {'seaSalt' | 'dust' | 'smoke' | 'sulfate'} AerosolParticle
@@ -15,7 +15,7 @@ export const TAIL_STEPS = Object.freeze({ crowd: 24, hero: 48 });
 /**
  * @typedef {Object} AerosolParticlePath
  * @property {AerosolParticle} particle
- * @property {boolean} [hero] the lead particle of its type on the track: the one that travels farthest
+ * @property {boolean} [hero] the track's lead particle: the one the globe circles and the camera follows
  * @property {number} release the step the particle is released at (a step is a row of the track's CSV)
  * @property {[number, number][]} path latitude and longitude of every step from the release; the longitude does not
  *   jump across the date line
@@ -48,26 +48,6 @@ function pointAt(path, at) {
  */
 export function headOf({ release, path }, step) {
   return pointAt(path, Math.max(0, Math.min(step - release, path.length - 1)));
-}
-
-/**
- * The part of a particle's path to draw at a step of the track: from `tailSteps` behind its head to its head (all of it
- * with Infinity), or null while it is not yet released or once its tail has caught up with where its path ends.
- *
- * @param {AerosolParticlePath} particle
- * @param {number} step the track's time in steps, with a fraction between two of them
- * @param {number} [tailSteps]
- * @returns {[number, number][] | null}
- */
-export function visiblePath({ release, path, hero }, step, tailSteps = hero ? TAIL_STEPS.hero : TAIL_STEPS.crowd) {
-  const local = step - release;
-  const head = Math.min(local, path.length - 1);
-  const tail = Math.max(0, local - tailSteps);
-  if (local <= 0 || tail >= head) return null;
-  const points = [pointAt(path, tail)];
-  for (let i = Math.floor(tail) + 1; i <= Math.floor(head); i++) points.push(path[i]);
-  if (head > Math.floor(head)) points.push(pointAt(path, head));
-  return points.length > 1 ? points : null;
 }
 
 /** The view arc (degrees from the focus to the edge of the label) that keeps the lead particles in frame. */
