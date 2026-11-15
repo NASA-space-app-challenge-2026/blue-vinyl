@@ -16,6 +16,44 @@
   text-shadow: 0 1px 2px rgb(0 0 0 / 0.8), 0 0 8px rgb(0 0 0 / 0.6);
 }
 
+/* 3D Flipper Container for flipping front and back */
+.album-cover-flipper {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1);
+  /* In the 3D context the flipper is a plane of its own at z=0. The face leaning toward the mouse tips the part under
+     the pointer behind it, so the flipper would take that part's clicks; only its two sides take pointers. */
+  pointer-events: none;
+}
+
+.album-cover.is-flipped {
+  z-index: 5;
+}
+
+.album-cover.is-flipped .album-cover-flipper {
+  transform: rotateY(180deg);
+}
+
+/* The side turned away is hidden, so it takes no clicks and no focus. The sides swap when the sleeve stands edge on,
+   which the flipper's easing reaches about 0.2s into its turn; swapped at once, the front would vanish as the turn
+   began and leave nothing showing until the back came round. */
+.album-cover-flipper > * {
+  pointer-events: auto;
+  transition: visibility 0s linear 0.2s;
+}
+
+/* Turned over at once (see setAlbum in album-cover.js). */
+.album-cover.is-flipped-instantly .album-cover-flipper,
+.album-cover.is-flipped-instantly .album-cover-flipper > * {
+  transition: none;
+}
+
+.album-cover:not(.is-flipped) .album-cover-back,
+.album-cover.is-flipped .album-cover-face {
+  visibility: hidden;
+}
+
 /* Leans toward the mouse (--hover-x, --hover-y, set by album-cover.js) and eases back when it leaves. */
 .album-cover-face {
   position: absolute;
@@ -26,7 +64,9 @@
   box-shadow: 0 30px 60px rgb(0 0 0 / 0.45);
   overflow: hidden;
   transform: rotateX(var(--hover-x, 0deg)) rotateY(var(--hover-y, 0deg));
-  transition: transform 0.3s ease-out;
+  transition: transform 0.3s ease-out, visibility 0s linear 0.2s;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .album-cover-image {
@@ -51,6 +91,44 @@
   font-size: 2.6cqw;
   letter-spacing: 0.2em;
   color: color-mix(in srgb, var(--ink) 90%, transparent);
+}
+
+/* Liner notes text link: matches counter margin on the top-right corner */
+.album-cover-note-btn {
+  position: absolute;
+  top: 5cqw;
+  right: 6cqw;
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: 2.6cqw;
+  letter-spacing: 0.15em;
+  color: color-mix(in srgb, var(--ink) 90%, transparent);
+  background: none;
+  border: none;
+  box-shadow: none;
+  text-decoration: underline;
+  text-underline-offset: 0.35em;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--ink) 70%, transparent);
+  cursor: pointer;
+  /* Over the text block, which comes after it and may reach up this far on an album with many tracks. */
+  z-index: 1;
+  transition: color 0.2s ease, text-decoration-color 0.2s ease, opacity 0.2s ease;
+  text-shadow: inherit;
+}
+
+.album-cover-note-btn:hover {
+  color: #fff;
+  text-decoration-color: #fff;
+  opacity: 1;
+}
+
+/* Ensure comfortable touch/click hit area */
+.album-cover-note-btn::before {
+  content: '';
+  position: absolute;
+  inset: -12px -16px;
 }
 
 .album-cover-body {
@@ -102,6 +180,11 @@
   font: inherit;
   text-align: inherit;
   cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.album-cover-track-button:hover {
+  color: #fff;
 }
 
 .album-cover-track-button::before {
@@ -117,6 +200,155 @@
   margin-left: 0.9em;
   font-weight: 400;
   opacity: 0.8;
+}
+
+/* ==========================================================================
+   Album Sleeve Back (Liner Notes / Docent Guide)
+   ========================================================================== */
+
+.album-cover-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background: linear-gradient(165deg, #221a14 0%, #130f0c 100%);
+  border-radius: 2px;
+  box-shadow: 0 30px 60px rgb(0 0 0 / 0.55);
+  padding: 5cqw 5cqw 4cqw 6cqw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--ink);
+  box-sizing: border-box;
+}
+
+/* Subtle vintage card texture overlay on the back of the sleeve */
+.album-cover-back::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 80% 20%, rgb(255 255 255 / 0.05), transparent 60%);
+  pointer-events: none;
+}
+
+.album-cover-back-header {
+  position: relative;
+  flex: none;
+  margin-bottom: 2.5cqw;
+  border-bottom: 1px solid rgb(255 255 255 / 0.15);
+  padding-bottom: 2cqw;
+}
+
+.album-cover-back-title {
+  margin: 0.8cqw 0 0.5cqw;
+  font-size: 5cqw;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.album-cover-back-subtitle {
+  margin: 0;
+  font-size: 2.4cqw;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--ink) 82%, transparent);
+}
+
+.album-cover-flip-back-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6cqw;
+  padding: 0.7cqw 1.8cqw;
+  font-family: inherit;
+  font-size: 2cqw;
+  font-weight: 500;
+  color: var(--ink);
+  background: rgb(255 255 255 / 0.14);
+  border: 1px solid rgb(255 255 255 / 0.28);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: inherit;
+}
+
+.album-cover-flip-back-btn:hover {
+  background: rgb(255 255 255 / 0.25);
+  transform: translateY(-1px);
+}
+
+.album-cover-back-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 2cqw;
+  margin-right: -1cqw;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 255 255 / 0.25) transparent;
+}
+
+.album-cover-back-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.album-cover-back-scroll::-webkit-scrollbar-thumb {
+  background: rgb(255 255 255 / 0.25);
+  border-radius: 4px;
+}
+
+/* Highlighted Docent Card */
+.album-cover-note-card.docent-tip-card {
+  background: rgb(255 255 255 / 0.08);
+  border-left: 3px solid #f0b040;
+  border-radius: 4px;
+  padding: 2.2cqw 2.6cqw;
+  margin-bottom: 3cqw;
+}
+
+.album-cover-note-card .album-cover-note-section-title {
+  color: #f7cb6d;
+  margin-top: 0;
+}
+
+.album-cover-note-section {
+  margin-bottom: 2.8cqw;
+}
+
+.album-cover-note-section-title {
+  margin: 1.8cqw 0 0.7cqw;
+  font-size: 2.4cqw;
+  font-weight: 700;
+  color: #e8c078;
+  letter-spacing: 0.02em;
+}
+
+.album-cover-note-desc {
+  margin: 0;
+  font-size: 2.2cqw;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--ink) 90%, transparent);
+}
+
+.album-cover-note-track-list {
+  margin: 0.8cqw 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.album-cover-note-track-item {
+  margin-bottom: 1.4cqw;
+  font-size: 2.1cqw;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+}
+
+.album-cover-note-track-name {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 /* Neighbouring sleeves in the album column, placed by createAlbumColumn just off screen. */
