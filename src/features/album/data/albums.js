@@ -64,17 +64,10 @@ const FOREST_LINE_SEC = SOUND_STEPS * STEP_SEC;
 const AEROSOL_DATA = 'data/aerosol/tracks';
 const AEROSOL_COVERS = 'assets/albums/aerosol';
 const AEROSOL_FRAMES = 'data/aerosol/tracks/frames';
-// Two weeks, every 3 hours (112 steps), 0.4 s a step: a day is a bar of 3.2 s.
-const AEROSOL_TRACK_SEC = 44.8;
-// Where each event starts and the distant place it reaches, as in section 9.4 of notebooks/aerosol_album.ipynb.
-const SAHARA = { lat: 18.0, lon: 2.0 };
-const CARIBBEAN = { lat: 17.5, lon: -67.5 };
-const SOUTHERN_AFRICA = { lat: -12.0, lon: 22.0 };
-const ST_HELENA = { lat: -15.9, lon: -5.7 };
-const SPAIN = { lat: 42.0, lon: -6.0 };
-const BRITAIN = { lat: 52.5, lon: -1.5 };
-const ETNA = { lat: 37.75, lon: 15.0 };
-const GREECE = { lat: 38.5, lon: 22.5 };
+// Two weeks, every 3 hours (112 steps), 0.25 s a step.
+const AEROSOL_STEPS = 112;
+const AEROSOL_STEP_SEC = 0.25;
+const AEROSOL_TRACK_SEC = AEROSOL_STEPS * AEROSOL_STEP_SEC;
 
 const SMOG_TRACKS = 'data/smog/tracks';
 const SMOG_COVERS = 'assets/albums/smog';
@@ -374,19 +367,9 @@ export const albums = [
         coverAlt: 'Satellite image of Hurricane Erin on August 16 2025, a large white spiral north of the Caribbean islands',
         aerosol: {
           csvUrl: `${AEROSOL_DATA}/erin.csv`,
+          pathsUrl: `${AEROSOL_DATA}/paths/erin.json`,
           framesDir: AEROSOL_FRAMES,
-          lead: 'sea_salt',
-          trackEye: true,
-          // Close on the storm, so its salt can be seen spiralling.
-          arcDeg: 24,
-          // In A minor, a key of its own, so it does not sound like the Saharan Dust that follows in C minor.
-          tonic: 9,
-          // The lead is the salt Erin's winds churn up at its eye (EIC: "blue spirals"), its motif turning faster as
-          // the wind rises; the dust it pulls in from Africa is heard only as it arrives at the eye.
-          events: [
-            { id: 'erin', particle: 'seaSalt', source: 'eye', receptor: null, spin: true },
-            { id: 'sahara', particle: 'dust', source: SAHARA, receptor: 'eye', level: 0.5, heard: 'arrival' },
-          ],
+          sound: { lead: Lead.WHISTLE, baseMidi: 57 },
         },
       },
       {
@@ -394,13 +377,13 @@ export const albums = [
         durationSec: AEROSOL_TRACK_SEC,
         color: '#ff58a0',
         coverUrl: `${AEROSOL_COVERS}/saharan_dust.jpg`,
-        coverCredit: 'NASA MODIS / Terra, Saharan Dust over the Atlantic',
-        coverAlt: 'Satellite image of a tan haze of Saharan dust drifting west over the blue Atlantic among white clouds',
+        coverCredit: 'NASA Earth Observatory image by Joshua Stevens, MODIS / Terra, Jun 18 2020',
+        coverAlt: 'Satellite image of a thick tan sheet of Saharan dust sweeping west off the African coast over the Cape Verde islands, the blue Atlantic showing only at its edges',
         aerosol: {
           csvUrl: `${AEROSOL_DATA}/saharan_dust.csv`,
+          pathsUrl: `${AEROSOL_DATA}/paths/saharan_dust.json`,
           framesDir: AEROSOL_FRAMES,
-          lead: 'dust',
-          events: [{ id: 'sahara', particle: 'dust', source: SAHARA, receptor: CARIBBEAN }],
+          sound: { lead: Lead.BOWED, baseMidi: 48 },
           viewLat: 17.0,
           viewLon: -45.0,
         },
@@ -414,15 +397,15 @@ export const albums = [
         coverAlt: "Satellite image of southern Africa's dry brown land under a grey veil of wildfire smoke",
         aerosol: {
           csvUrl: `${AEROSOL_DATA}/southern_africa_smoke.csv`,
+          pathsUrl: `${AEROSOL_DATA}/paths/southern_africa_smoke.json`,
           framesDir: AEROSOL_FRAMES,
-          lead: 'smoke',
-          events: [{ id: 'southern-africa', particle: 'smoke', source: SOUTHERN_AFRICA, receptor: ST_HELENA }],
+          sound: { lead: Lead.VOCAL, baseMidi: 48 },
           viewLat: -12.0,
           viewLon: 5.0,
         },
       },
       {
-        title: 'Spain and Etna',
+        title: "Etna's Breath",
         durationSec: AEROSOL_TRACK_SEC,
         color: '#e0a030',
         coverUrl: `${AEROSOL_COVERS}/spain_and_etna.jpg`,
@@ -430,12 +413,9 @@ export const albums = [
         coverAlt: 'Satellite image of Sicily with a white plume trailing east over the sea from Mount Etna',
         aerosol: {
           csvUrl: `${AEROSOL_DATA}/spain_and_etna.csv`,
+          pathsUrl: `${AEROSOL_DATA}/paths/spain_and_etna.json`,
           framesDir: AEROSOL_FRAMES,
-          lead: 'smoke_and_sulfate',
-          events: [
-            { id: 'spain', particle: 'smoke', source: SPAIN, receptor: BRITAIN },
-            { id: 'etna', particle: 'sulfate', source: ETNA, receptor: GREECE },
-          ],
+          sound: { lead: Lead.BRASS, baseMidi: 48 },
           viewLat: 40.0,
           viewLon: 5.0,
         },

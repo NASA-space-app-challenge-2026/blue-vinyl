@@ -6,7 +6,7 @@ The album's story, data and mappings. It follows [album-guide.md](../album-guide
 
 > "This visualization still image highlights how our atmosphere connects distant parts of the world. What happens in one region—whether natural events or human activities—can affect weather patterns and air quality thousands of miles away." ([SVS 5669](https://svs.gsfc.nasa.gov/5669/), GEOS Aerosols (2025))
 
-EIC's still is one moment, Aug 19, 2025, 20:00 UTC, with four kinds of particles in four colours: sea salt (blue), dust (pink), smoke (orange) and sulfate (green). The album plays the two weeks around it, Aug 11–24, every 3 hours, and turns the message into what each track follows: **one event, small where it starts, reaching a distant place**. The challenge asks for this page as a multi-track sonification, each particle type with its own instrument ([mission.md](../mission.md)); here a particle type keeps its instruments across the album, and its toggle under the globe mutes it on the globe and in the music together.
+EIC's still is one moment, Aug 19, 2025, 20:00 UTC, with four kinds of particles in four colours: sea salt (blue), dust (pink), smoke (orange) and sulfate (green). The album plays the two weeks around it, Aug 11–24, every 3 hours, and turns the message into what each track follows: **one event, small where it starts, reaching a distant place**. The challenge asks for this page as a multi-track sonification, each particle type with its own instrument ([mission.md](../mission.md)); here a particle type keeps its instruments across the album, and its toggle, inside the globe at its bottom, mutes it on the globe and in the music together; the track's own type's toggle hides only its air on the globe, while the track's particles, their paths and the lead's voice go on.
 
 ## Tracks
 
@@ -15,7 +15,7 @@ EIC's still is one moment, Aug 19, 2025, 20:00 UTC, with four kinds of particles
 | 1 | Hurricane Erin | Erin's eye, from its birth west of Cape Verde (16.5° N, 23.1° W, Aug 11) | (spreads round the storm); the Sahara's dust arrives at the eye | sea salt | A minor | `#4080ff` |
 | 2 | Saharan Dust | the Sahara (18° N, 2° E) | the Caribbean (17.5° N, 67.5° W) | dust | C minor | `#ff58a0` |
 | 3 | Southern Africa Smoke | the fires of southern Africa (12° S, 22° E) | St Helena (15.9° S, 5.7° W) | smoke | C minor | `#ff7820` |
-| 4 | Spain and Etna | Spain's fires (42° N, 6° W); Etna (37.75° N, 15° E) | Britain (52.5° N, 1.5° W); Greece (38.5° N, 22.5° E) | smoke and sulfate | C minor | `#e0a030` |
+| 4 | Etna's Breath | Etna (37.75° N, 15° E) | Greece (38.5° N, 22.5° E) | sulfate | C minor | `#e0a030` |
 
 The receptors are ours; EIC names the Caribbean and the United States for the dust and the Atlantic for the smoke. Kilauea, in EIC's caption, has no track: GEOS-FP carries no stream west of it these weeks (as much sulfate downwind as upwind, near the clean-air floor; section 8 of the notebook).
 
@@ -34,47 +34,47 @@ Frames for the globe: `data/aerosol/tracks/frames/`, one PNG per step shared by 
 
 ## Time
 
-Two weeks, 112 steps of 3 hours, 0.4 s a step: 44.8 s a track. A day is a bar of 3.2 s, and every number the music uses is the day's mean of its 8 steps. The globe and the music read the same clock.
+Two weeks, 112 steps of 3 hours, 0.25 s a step: 28 s a track. 
 
 ## Sound
 
-FluidR3 SoundFont, played by `music-player.js`. Code: [`aerosol-score.js`](../../src/features/music/domain/aerosol-score.js). Every number is scaled between the track's lowest and highest day.
+120 BPM, a step a sixteenth note. Erin is in A minor, the other tracks in C minor. The lead sings on the analog synth (`src/features/music/data/analog-synth.js`, an exception to the album guide's SoundFont rule as in Mirror Storms); the air plays from the app's SoundFont. The whole mix rings in a large room (reverb send 0.4) and echoes three steps behind (send 0.18, feedback 0.4). Composer: `src/features/music/domain/composers/aerosol.js`.
 
-The listener stands where the event starts, facing north, and every note is placed around them by an HRTF panner, as the bird album places its flock: east to the right, further away the quieter. Headphones are needed to hear the directions.
+The lead is the track's lead particle (the one the globe circles), one held voice, as a storm's in [hemispheres.md](hemispheres.md):
 
-| Part | Data | Sound |
+| Data | Mapping |
+| --- | --- |
+| latitude | pitch, north higher, on the track's minor pentatonic over two octaves from the tonic, spread over the latitudes the particle covers (11 notes); it glides to each new note over 0.15 s |
+| degrees east of where it was released | place around the listener on an HRTF panner, fully to the side 20° of longitude away |
+| speed (km a step) | loudness (silent at the slowest to 1 at the fastest step) and brightness (the filter's cutoff 1 to 4 octaves above the note) |
+
+| Track | Lead | Sound |
 | --- | --- | --- |
-| Source (the event's motif) | AOD at the source | Loudness, right in front of the listener. Erin's motif turns one to three times a bar as its wind rises |
-| Journey (up to three echoes) | Plume area; reach; front's bearing and distance from the source; particle speed in view; front closing on or drawing back from the receptor | More echoes as the plume grows, wider apart as it reaches further, each further out towards the front; the speed's quartile sets 2, 3, 4 or 6 notes an echo; the run climbs while the front closes in (or the plume grows) and falls while it draws back. Erin's salt echoes circle the listener anticlockwise, as an Atlantic storm turns |
-| Arrival | AOD at the receptor | The motif on a second instrument from the receptor's direction, far away, once the AOD there is a fifth of the way up its range; louder the more arrives. On track 1 the dust arrives at the eye, close, from the east |
-| Erin's strings and timpani | Sea salt in view; NHC wind | A chord as loud as the salt round the eye, gaining its third once Erin is a hurricane (64 kt); timpani on its windiest day |
-| Bed (tracks 2–4) | none | A quiet open fifth every two days |
+| Hurricane Erin | Whistle | one sine, quick vibrato |
+| Saharan Dust | Bowed string | a sawtooth over a triangle an octave down |
+| Southern Africa Smoke | Vocal | two hollow squares, ringing filter, slow wide vibrato |
+| Etna's Breath | Brass | two sawtooths a little apart |
 
-| Particle | At the source | Where it arrives |
+The air is played as the sea under Mirror Storms' storms ([hemispheres.md](hemispheres.md)): two chords of the track's minor key, the tonic minor seventh and the minor seventh on the fourth, two bars each, in turn. Each of the three particle types other than the lead's plays its own part of the chord on an instrument of its own kind, so they are told apart. Its loudness is that type's AOD at the lead's head, read from the frame the globe draws, on a log scale from 0.01 (the thinnest air a frame holds) to 1.0 (the top of EIC's colours); EIC's own scale starts at 0.03, so air too thin to colour on the globe is already faintly heard. The SoundFont squares its expression, so the expression is the square root of the level. Its loudness never falls below 0.2 of full, so each instrument is always plainly heard while its toggle is on, even where its type is absent round the lead; it grows to 0.6 of full as the air thickens, so the thickest air stays under the lead. The instruments keep their usual channel volumes, which even them out against each other. The toggle inside the globe switches the particle type off on the globe and in the music together.
+
+| Particle type | Instrument | Part of the chord |
 | --- | --- | --- |
-| sea salt | violin | (none) |
-| dust | nylon guitar | harp |
-| smoke | cello | French horn |
-| sulfate | celesta | vibraphone |
-
-Pitch carries no data: each event has a fixed motif, so the same melody heard in two places tells the listener the two places share the air.
+| Sea salt | Harp | its notes an octave up, rising one a beat |
+| Dust | Halo pad | the whole chord, held through its two bars |
+| Smoke | Cello | its root an octave down, held |
+| Sulfate | Voice oohs | its top two notes an octave up, held |
 
 ## Globe
 
-- The four AODs are drawn as a shell over the globe in EIC's colours, two frames blended at a time; the track's lead particle is drawn brighter and the rest dimmer, so Erin's sea salt shows its spiral.
-- Grains leave the source with every motif, as many as it is loud, and drift on the frames' winds (the mean wind of all the particles, so a grain shows how the air carries, not where one measured particle went). The grains of each third of the plume light up with the echo that plays it.
-- Rings open at the source with each motif and at the receptor with each arrival.
-- The globe holds the view centre; on track 1 it follows Erin's eye, closer in.
+- The four AODs are drawn as a shell over the whole globe in EIC's colours and log scale, decoded to their real values and carried along the frames' flow between two frames; nothing is added to any particle type.
+- The globe holds still on the track's view centre, with no zoom.
 
 ## Credits
 
-- Cover: NASA Scientific Visualization Studio, SVS 5669; track covers: NASA MODIS and Earth Observatory (see `albums.js`)
+- Cover: NASA Scientific Visualization Studio, SVS 5669; track covers: NASA MODIS and Earth Observatory; Saharan Dust: [Dust Traverses the Atlantic Ocean](https://science.nasa.gov/earth/earth-observatory/dust-traverses-the-atlantic-ocean-146871), Jun 18 2020 (see `albums.js`)
 - Data: NASA GMAO GEOS-FP; NOAA National Hurricane Center
-- Instruments: FluidR3_GM SoundFont (CC BY 3.0)
 
 ## Not Done Yet
 
-- Listening on headphones and speakers to balance the mix; the levels are estimates, not measured.
 - Text for screen readers (the date, what arrives where) is not read out yet.
 - 5669 is not linked from the EIC gallery itself; it is in the challenge resources. Album guide Q4 asks for a gallery page.
-- The Saharan Dust cover is a MODIS swath with black gaps between orbits.
