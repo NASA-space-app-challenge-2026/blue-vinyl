@@ -29,7 +29,7 @@ export const TREE_KINDS = Object.freeze([
 // A tree for every `cellsPerTree` forest cells (0.25°) of a square, so a thick forest has more. Each starts to grow
 // `afterStep` steps after the noon line has crossed it, plus a random time inside a window that is `thinWindow` steps
 // long for a thin forest and `thickWindow` for a thick one, so a thick forest bursts and a thin one trickles.
-const TREE_PICK = Object.freeze({ cellsPerTree: 64, afterStep: 1, thinWindow: 9, thickWindow: 1 });
+const TREE_PICK = Object.freeze({ cellsPerTree: 124, afterStep: 1, thinWindow: 9, thickWindow: 1 });
 // Every tree shoots up at one pace: the smallest reaches its tips in `smallestSec`, a bigger one in proportion to its size.
 const TREE_GROWTH = Object.freeze({ smallestSec: 0.2 });
 const PICK_SEED = 58;
