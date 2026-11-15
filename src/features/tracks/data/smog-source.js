@@ -20,7 +20,7 @@ async function fetchOk(url) {
 
 /**
  * Loads one smog song from the album's tracks folder: its CSV holds a row per hour (`time` in UTC, then each cell's
- * PM2.5, south to north, west to east).
+ * aerosol optical depth, south to north, west to east).
  *
  * @param {{ tracksDir: string, file: string }} source
  * @returns {Promise<SmogSongData>}
@@ -38,9 +38,9 @@ export async function loadSmogTrack({ tracksDir, file }) {
   const lines = csv.trim().split('\n').slice(1).map((line) => line.split(','));
   const times = lines.map(([time]) => Date.parse(time));
   if (times.some((time, i) => time !== times[0] + i * HOUR_MS)) throw new Error(`${file}: hours missing or out of order`);
-  const pm25 = lines.map(([, ...cells]) => {
+  const aod = lines.map(([, ...cells]) => {
     if (cells.length !== rows * cols) throw new Error(`${file}: a row of ${cells.length} cells, not ${rows * cols}`);
     return Float32Array.from(cells, Number);
   });
-  return { track: buildSmogTrack(pm25, times[0], entry.grid), city: entry.city, timeZone: entry.timeZone };
+  return { track: buildSmogTrack(aod, times[0], entry.grid), city: entry.city, timeZone: entry.timeZone };
 }

@@ -292,21 +292,21 @@ export const albums = [
     id: 'smog',
     category: AlbumCategory.AIR_QUALITY,
     title: 'The Wind That Sweeps the Smog',
-    coverUrl: `${SMOG_COVERS}/new_delhi.jpg`,
-    coverCredit: 'Cover: Smog over Connaught Place, New Delhi (Photo: wili hybrid, CC BY 2.0)',
+    coverUrl: `${SMOG_COVERS}/jakarta.jpg`,
+    coverCredit: 'Cover: The sun setting in smog above Jakarta, Jun 16 2013 (Photo: Forbes Johnston, CC BY 2.0)',
     dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
     // Songs are timed in playback ms; each sets the pace of its own hours (see tracks/domain/smog.js).
     msPerSec: 1000,
-    // Three cities of three regions whose smog flows fastest across the map, rolling in and clearing one to three times
-    // (see notebooks/smog_album.ipynb and docs/albums/smog.md), in time order. Each plays nell-v2's loops in turn, heard
+    // Three cities of three regions whose smog flows across the map, rolling in and clearing one to three times (see
+    // notebooks/smog_album.ipynb and docs/albums/smog.md), in time order. Each plays nell-v2's loops in turn, heard
     // through the air over the city.
     tracks: [
-      smogTrack('Seattle', 'seattle_2020.csv', SmogLoop.SYNTH_POP, 'seattle.jpg',
-        'Cover: Smoky skyline of Downtown Seattle from the Rizal Bridge, Sep 11 2020 (Photo: SounderBruce, CC BY-SA 4.0)'),
-      smogTrack('New Delhi', 'new_delhi_2025.csv', SmogLoop.HOUSE, 'new_delhi.jpg',
-        'Cover: Smog over Connaught Place, New Delhi (Photo: wili hybrid, CC BY 2.0)'),
-      smogTrack('Pyongyang', 'pyongyang_2025.csv', SmogLoop.BREAKS, 'pyongyang.jpg',
-        'Cover: Haze over Pyongyang from the Juche Tower, May 2005 (Photo: ByeByeBaby, CC BY-SA 3.0)'),
+      smogTrack('Portland', 'portland_2020.csv', SmogLoop.SYNTH_POP, 'portland.jpg',
+        'Cover: Downtown Portland in wildfire smoke, Sep 10 2020 (Photo: Tedder, CC BY-SA 4.0)'),
+      smogTrack('Seoul', 'seoul_2025.csv', SmogLoop.HOUSE, 'seoul.jpg',
+        'Cover: Seoul in fine dust, May 7 2021 (Photo: Hyeonyoung Lee 21, CC BY-SA 4.0)'),
+      smogTrack('Jakarta', 'jakarta_2025.csv', SmogLoop.BREAKS, 'jakarta.jpg',
+        'Cover: The sun setting in smog above Jakarta, Jun 16 2013 (Photo: Forbes Johnston, CC BY 2.0)'),
     ],
   },
 ];

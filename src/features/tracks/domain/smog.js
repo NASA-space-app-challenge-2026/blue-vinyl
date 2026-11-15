@@ -1,5 +1,5 @@
 // The smog over a box of cells around a city, read the same way by the map and the music (see docs/albums/smog.md).
-// Each cell's PM2.5 becomes its pollution level (pollutionOf) and the fog it draws (fogOf); the haze is the fog over
+// Each cell's aerosol optical depth (AOD) becomes its pollution level (pollutionOf) and the fog it draws (fogOf); the haze is the fog over
 // the city's own cell, the box's middle (user, 2026-11-15: the air right over the city, what the label's middle shows).
 // The air clears when the haze falls below CLEAR_BELOW and is smothered when it rises above SMOTHERED_ABOVE; in
 // between it stays as it was.
@@ -19,13 +19,13 @@ export const STEP_MS = BAR_MS / STEPS_PER_BAR;
 /** About how long a song plays (ms); its bars round it (see paceOf). */
 const SONG_MS = 54000;
 
-/** A cell is clear below `from` and fully fogged from `full` (pollution levels: about 40 and 330 µg/m³). */
+/** A cell is clear below `from` and fully fogged from `full` (pollution levels: AOD about 0.27 and 2.8). */
 export const FOG = Object.freeze({ from: 0.33, full: 0.85 });
 /** The haze below which the air counts as cleared, and above which as smothered. */
 export const CLEAR_BELOW = 0.3;
 export const SMOTHERED_ABOVE = 0.5;
 /**
- * The pollution level at which a cell's fog is CLEAR_BELOW (about 88 µg/m³): the smoothstep in fogOf turned back,
+ * The pollution level at which a cell's fog is CLEAR_BELOW (AOD about 0.67): the smoothstep in fogOf turned back,
  * x = 1/2 − sin(asin(1 − 2y) / 3).
  */
 export const CLEAR_LEVEL = FOG.from + (FOG.full - FOG.from) * (0.5 - Math.sin(Math.asin(1 - 2 * CLEAR_BELOW) / 3));
@@ -66,15 +66,15 @@ export function gridAt(time) {
 }
 
 /**
- * From an hourly frame per row (each cell's PM2.5): each frame's pollution levels (0..255, for the map's textures),
+ * From an hourly frame per row (each cell's AOD): each frame's pollution levels (0..255, for the map's textures),
  * how much fog each cell loses by the next hour (0..255 of a whole fog), the pollution level and the haze (its fog)
  * over cell `city` each hour, and how much fog that cell loses each hour (0 to 1).
  *
- * @param {ArrayLike<number>[]} pm25
+ * @param {ArrayLike<number>[]} aod
  * @param {number} city the index of the city's cell in each frame
  */
-export function smogOf(pm25, city) {
-  const levels = pm25.map((frame) => Uint8Array.from(frame, (v) => Math.round(LEVEL_BYTE * pollutionOf(v))));
+export function smogOf(aod, city) {
+  const levels = aod.map((frame) => Uint8Array.from(frame, (v) => Math.round(LEVEL_BYTE * pollutionOf(v))));
   const fogs = levels.map((frame) => Float32Array.from(frame, (v) => fogOf(v / LEVEL_BYTE)));
   const clearing = fogs.map((fog, i) => {
     const next = fogs[Math.min(i + 1, fogs.length - 1)];
@@ -126,10 +126,20 @@ export function paceOf(haze, turns) {
   const free = stretches.filter((stretch) => stretch.bars === undefined);
   const setMs = stretches.reduce((sum, stretch) => sum + (stretch.bars ?? 0) * BAR_MS, 0);
   const unit = Math.max(0, SONG_MS - setMs) / free.reduce((sum, stretch) => sum + span(stretch), 0);
+  // The free stretches' bars: whole bars, at least one, the leftover bars going to the largest remainders so the song
+  // comes to SONG_MS (rounding each alone made one song 56 s).
+  const share = free.map((stretch) => (unit * span(stretch)) / BAR_MS);
+  const freeBars = share.map((bars) => Math.max(1, Math.floor(bars)));
+  const spare = Math.round(Math.max(0, SONG_MS - setMs) / BAR_MS) - freeBars.reduce((sum, bars) => sum + bars, 0);
+  share
+    .map((bars, i) => ({ i, rest: bars - Math.floor(bars) }))
+    .sort((a, b) => b.rest - a.rest)
+    .slice(0, Math.max(0, spare))
+    .forEach(({ i }) => freeBars[i]++);
   const times = new Float64Array(n);
   let start = 0;
   for (const stretch of stretches) {
-    const ms = (stretch.bars ?? Math.max(1, Math.round((unit * span(stretch)) / BAR_MS))) * BAR_MS;
+    const ms = (stretch.bars ?? freeBars[free.indexOf(stretch)]) * BAR_MS;
     for (let i = Math.ceil(stretch.from); i <= Math.floor(stretch.to); i++) {
       times[i] = start + (ms * (upTo(i) - upTo(stretch.from))) / span(stretch);
     }
@@ -171,13 +181,13 @@ export function hourlyAt(times, values, time) {
  */
 
 /**
- * @param {ArrayLike<number>[]} pm25 each hour's cells' PM2.5 (µg/m³), south to north, west to east
+ * @param {ArrayLike<number>[]} aod each hour's cells' aerosol optical depth, south to north, west to east
  * @param {number} startMs the first hour's real time (ms since the epoch)
  * @param {{ rows: number, cols: number, south: number, west: number, stepDeg: number }} box centred on the city's cell
  * @returns {SmogTrack}
  */
-export function buildSmogTrack(pm25, startMs, box) {
-  const { levels, clearing, level, haze, cleared } = smogOf(pm25, ((box.rows - 1) / 2) * box.cols + (box.cols - 1) / 2);
+export function buildSmogTrack(aod, startMs, box) {
+  const { levels, clearing, level, haze, cleared } = smogOf(aod, ((box.rows - 1) / 2) * box.cols + (box.cols - 1) / 2);
   const hourTurns = turnsOf(haze);
   const t = paceOf(haze, hourTurns);
   return {

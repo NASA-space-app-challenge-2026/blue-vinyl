@@ -1,7 +1,7 @@
 [
   {
-    "file": "seattle_2020.csv",
-    "title": "Seattle",
+    "file": "portland_2020.csv",
+    "title": "Portland",
     "pages": [
       {
         "svsId": 5151,
@@ -12,41 +12,41 @@
     "note": "Ours: smog blown over the city and swept out again, picked by the app's rules and how fast its fog flows (section 5); every hour of it.",
     "sources": [
       {
-        "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
+        "source": "GEOS-CF v1 (NASA GMAO), xgc_tavg_1hr_g1440x721_x1, the sum of aod550_bc, aod550_oc, aod550_sulfate, aod550_dust, aod550_sala, aod550_salc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[23512:23624][0][534:566][215:247]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[23552:23717][526:558][213:245],aod550_oc.aod550_oc[23552:23717][526:558][213:245],aod550_sulfate.aod550_sulfate[23552:23717][526:558][213:245],aod550_dust.aod550_dust[23552:23717][526:558][213:245],aod550_sala.aod550_sala[23552:23717][526:558][213:245],aod550_salc.aod550_salc[23552:23717][526:558][213:245]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
         "license": "NASA data, no restrictions on use",
         "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; v1 holds every song."
+        "substitute": "EIC 5151 shows surface PM2.5 from GEOS-CF v2 (from 2025-08-04); the album plays the same model's column AOD (v1 holds every song), as surface PM2.5 empties and refills in place each day."
       }
     ],
     "city": {
-      "name": "Seattle",
-      "lat": 47.61,
-      "lon": -122.33
+      "name": "Portland",
+      "lat": 45.52,
+      "lon": -122.68
     },
     "grid": {
-      "south": 43.5,
-      "west": -126.25,
+      "south": 41.5,
+      "west": -126.75,
       "stepDeg": 0.25,
       "rows": 33,
       "cols": 33
     },
     "timeZone": "America/Los_Angeles",
     "units": {
-      "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
+      "<lat>_<lon>": "aerosol optical depth at 550 nm, unitless (hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2020-09-06T16:30Z",
-      "2020-09-11T08:30Z"
+      "2020-09-08T08:30Z",
+      "2020-09-15T05:30Z"
     ]
   },
   {
-    "file": "new_delhi_2025.csv",
-    "title": "New Delhi",
+    "file": "seoul_2025.csv",
+    "title": "Seoul",
     "pages": [
       {
         "svsId": 5151,
@@ -57,41 +57,41 @@
     "note": "Ours: smog blown over the city and swept out again, picked by the app's rules and how fast its fog flows (section 5); every hour of it.",
     "sources": [
       {
-        "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
+        "source": "GEOS-CF v1 (NASA GMAO), xgc_tavg_1hr_g1440x721_x1, the sum of aod550_bc, aod550_oc, aod550_sulfate, aod550_dust, aod550_sala, aod550_salc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[67490:67596][0][458:490][1013:1045]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[63298:63447][494:526][1212:1244],aod550_oc.aod550_oc[63298:63447][494:526][1212:1244],aod550_sulfate.aod550_sulfate[63298:63447][494:526][1212:1244],aod550_dust.aod550_dust[63298:63447][494:526][1212:1244],aod550_sala.aod550_sala[63298:63447][494:526][1212:1244],aod550_salc.aod550_salc[63298:63447][494:526][1212:1244]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
         "license": "NASA data, no restrictions on use",
         "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; v1 holds every song."
+        "substitute": "EIC 5151 shows surface PM2.5 from GEOS-CF v2 (from 2025-08-04); the album plays the same model's column AOD (v1 holds every song), as surface PM2.5 empties and refills in place each day."
       }
     ],
     "city": {
-      "name": "New Delhi",
-      "lat": 28.600023,
-      "lon": 77.19998
+      "name": "Seoul",
+      "lat": 37.568295,
+      "lon": 126.997785
     },
     "grid": {
-      "south": 24.5,
-      "west": 73.25,
+      "south": 33.5,
+      "west": 123.0,
       "stepDeg": 0.25,
       "rows": 33,
       "cols": 33
     },
-    "timeZone": "Asia/Kolkata",
+    "timeZone": "Asia/Seoul",
     "units": {
-      "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
+      "<lat>_<lon>": "aerosol optical depth at 550 nm, unitless (hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2025-09-13T02:30Z",
-      "2025-09-17T12:30Z"
+      "2025-03-22T10:30Z",
+      "2025-03-28T15:30Z"
     ]
   },
   {
-    "file": "pyongyang_2025.csv",
-    "title": "Pyongyang",
+    "file": "jakarta_2025.csv",
+    "title": "Jakarta",
     "pages": [
       {
         "svsId": 5151,
@@ -102,36 +102,36 @@
     "note": "Ours: smog blown over the city and swept out again, picked by the app's rules and how fast its fog flows (section 5); every hour of it.",
     "sources": [
       {
-        "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
+        "source": "GEOS-CF v1 (NASA GMAO), xgc_tavg_1hr_g1440x721_x1, the sum of aod550_bc, aod550_oc, aod550_sulfate, aod550_dust, aod550_sala, aod550_salc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[69124:69287][0][500:532][1207:1239]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[65924:66092][319:351][1131:1163],aod550_oc.aod550_oc[65924:66092][319:351][1131:1163],aod550_sulfate.aod550_sulfate[65924:66092][319:351][1131:1163],aod550_dust.aod550_dust[65924:66092][319:351][1131:1163],aod550_sala.aod550_sala[65924:66092][319:351][1131:1163],aod550_salc.aod550_salc[65924:66092][319:351][1131:1163]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
         "license": "NASA data, no restrictions on use",
         "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; v1 holds every song."
+        "substitute": "EIC 5151 shows surface PM2.5 from GEOS-CF v2 (from 2025-08-04); the album plays the same model's column AOD (v1 holds every song), as surface PM2.5 empties and refills in place each day."
       }
     ],
     "city": {
-      "name": "Pyongyang",
-      "lat": 39.021385,
-      "lon": 125.752745
+      "name": "Jakarta",
+      "lat": -6.172472,
+      "lon": 106.827492
     },
     "grid": {
-      "south": 35.0,
-      "west": 121.75,
+      "south": -10.25,
+      "west": 102.75,
       "stepDeg": 0.25,
       "rows": 33,
       "cols": 33
     },
-    "timeZone": "Asia/Pyongyang",
+    "timeZone": "Asia/Jakarta",
     "units": {
-      "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
+      "<lat>_<lon>": "aerosol optical depth at 550 nm, unitless (hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2025-11-20T04:30Z",
-      "2025-11-26T23:30Z"
+      "2025-07-09T20:30Z",
+      "2025-07-16T20:30Z"
     ]
   }
 ]

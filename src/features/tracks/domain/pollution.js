@@ -13,15 +13,16 @@ export const AirBand = Object.freeze({
   HAZARDOUS: Object.freeze({ from: 225.5 }),
 });
 
-// WHO 2021 air quality guideline for 24-hour mean PM2.5, µg/m³.
-const WHO_24H_PM25 = 15;
-// The air counts as fully polluted at this PM2.5 (µg/m³).
-const FULL_SCALE_PM25 = 600;
+// The aerosol optical depth at 550 nm (the haze of the whole column of air, GEOS-CF's six aerosols summed) of about a
+// clear sky.
+const CLEAR_SKY_AOD = 0.1;
+// The air counts as fully polluted at this aerosol optical depth.
+const FULL_SCALE_AOD = 5;
 
 /**
- * How polluted air at `pm25` (µg/m³) is: 0 for clean air rising to 1 at full scale, on a log scale counted in WHO
- * guidelines, as smog reaches a hundred times a clear day and a linear scale would squash it into its bottom few percent.
+ * How polluted air at aerosol optical depth `aod` is: 0 for clean air rising to 1 at full scale, on a log scale counted
+ * in clear skies, as smog reaches fifty times a clear day and a linear scale would squash it into its bottom few percent.
  */
-export function pollutionOf(pm25) {
-  return Math.min(1, Math.max(0, Math.log1p(pm25 / WHO_24H_PM25) / Math.log1p(FULL_SCALE_PM25 / WHO_24H_PM25)));
+export function pollutionOf(aod) {
+  return Math.min(1, Math.max(0, Math.log1p(aod / CLEAR_SKY_AOD) / Math.log1p(FULL_SCALE_AOD / CLEAR_SKY_AOD)));
 }

@@ -3,7 +3,7 @@
 //
 // Each song plays its own four-bar loop (its `loop`, a SmogLoop) at 120 BPM, unchanged from start to end; the air only
 // changes how it comes through, the same way in every song:
-//   - The fog: clear air plays the loop crisp; the more smog over the city's cell (its PM2.5, as the map draws it), the
+//   - The fog: clear air plays the loop crisp; the more smog over the city's cell (its aerosol optical depth, as the map draws it), the
 //     more the whole mix is muffled, as if through a wall, and smeared into reverb and grit, rising and falling with
 //     the air hour by hour.
 //   - The clearing: while the fog on the map is thinning, a gust of wind blows on every beat, as loud as the city is
@@ -94,7 +94,7 @@ const Drum = Object.freeze({ KICK: 36, SNARE: 38, CLOSED_HAT: 42, CRASH: 49 });
 
 // The fog over the music follows the air over the city hour by hour (user, 2026-11-15: the change in concentration is
 // the point, and the smog as muffled as it can be): none while the air is clear (pollution level below CLEAR_LEVEL,
-// about 88 µg/m³), all of it at full scale (level 1, 600 µg/m³, where the map's fog is at its thickest and brownest),
+// about AOD 0.67), all of it at full scale (level 1, AOD 5, where the map's fog is at its thickest and brownest),
 // in between as the level goes. At none the mix is as it is; at all of it the low-pass is down to MUFFLED_HZ and the
 // reverb and grit are at their most.
 const OPEN_HZ = 18000;
