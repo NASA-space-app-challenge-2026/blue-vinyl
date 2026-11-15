@@ -3,7 +3,7 @@
 // released; nothing is steered.
 
 /** The most particles a track draws; the notebook keeps to it and so does the loader. */
-export const MAX_PARTICLES = 400;
+export const MAX_PARTICLES = 1;
 
 /** How many steps of its path (3 hours each) a particle draws brightly behind its head. */
 export const TAIL_STEPS = 24;
