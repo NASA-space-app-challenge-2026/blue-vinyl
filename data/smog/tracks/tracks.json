@@ -1,7 +1,7 @@
 [
   {
-    "file": "smog_2018_12_23.csv",
-    "title": "Morning, December 23",
+    "file": "portland_2020.csv",
+    "title": "Portland",
     "pages": [
       {
         "svsId": 5151,
@@ -9,39 +9,44 @@
         "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
       }
     ],
-    "note": "Ours (from nell-v2): the North China Plain in the winter of 2018-19, a stretch from clear air through smog building for days to a cold front sweeping it out, every hour of it.",
+    "note": "Ours: the city's box filling with smog and clearing again once, picked by the app's rules (section 5); every hour of it.",
     "sources": [
       {
         "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[8404:8554][0][496:528][1168:1204]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[23617:23713][0][526:558][213:245]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
         "license": "NASA data, no restrictions on use",
         "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; the winter of 2018-19 is only in v1."
+        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; v1 holds every song."
       }
     ],
+    "city": {
+      "name": "Portland",
+      "lat": 45.52,
+      "lon": -122.68
+    },
     "grid": {
-      "south": 34.0,
-      "west": 112.0,
+      "south": 41.5,
+      "west": -126.75,
       "stepDeg": 0.25,
       "rows": 33,
-      "cols": 37
+      "cols": 33
     },
-    "timeZone": "Asia/Shanghai",
+    "timeZone": "America/Los_Angeles",
     "units": {
       "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2018-12-17T04:30Z",
-      "2018-12-23T10:30Z"
+      "2020-09-11T01:30Z",
+      "2020-09-15T01:30Z"
     ]
   },
   {
-    "file": "smog_2019_01_15.csv",
-    "title": "Dawn, January 15",
+    "file": "beijing_2025.csv",
+    "title": "Beijing",
     "pages": [
       {
         "svsId": 5151,
@@ -49,39 +54,44 @@
         "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
       }
     ],
-    "note": "Ours (from nell-v2): the North China Plain in the winter of 2018-19, a stretch from clear air through smog building for days to a cold front sweeping it out, every hour of it.",
+    "note": "Ours: the city's box filling with smog and clearing again once, picked by the app's rules (section 5); every hour of it.",
     "sources": [
       {
         "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[8932:9104][0][496:528][1168:1204]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[62097:62145][0][504:536][1170:1202]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
         "license": "NASA data, no restrictions on use",
         "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; the winter of 2018-19 is only in v1."
+        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; v1 holds every song."
       }
     ],
+    "city": {
+      "name": "Beijing",
+      "lat": 39.930838,
+      "lon": 116.38634
+    },
     "grid": {
-      "south": 34.0,
-      "west": 112.0,
+      "south": 36.0,
+      "west": 112.5,
       "stepDeg": 0.25,
       "rows": 33,
-      "cols": 37
+      "cols": 33
     },
     "timeZone": "Asia/Shanghai",
     "units": {
       "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2019-01-08T04:30Z",
-      "2019-01-15T08:30Z"
+      "2025-01-31T09:30Z",
+      "2025-02-02T09:30Z"
     ]
   },
   {
-    "file": "smog_2019_01_20.csv",
-    "title": "Midday, January 20",
+    "file": "dakar_2025.csv",
+    "title": "Dakar",
     "pages": [
       {
         "svsId": 5151,
@@ -89,34 +99,39 @@
         "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
       }
     ],
-    "note": "Ours (from nell-v2): the North China Plain in the winter of 2018-19, a stretch from clear air through smog building for days to a cold front sweeping it out, every hour of it.",
+    "note": "Ours: the city's box filling with smog and clearing again once, picked by the app's rules (section 5); every hour of it.",
     "sources": [
       {
         "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[9124:9226][0][496:528][1168:1204]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[63332:63402][0][403:435][634:666]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
         "license": "NASA data, no restrictions on use",
         "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; the winter of 2018-19 is only in v1."
+        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; v1 holds every song."
       }
     ],
+    "city": {
+      "name": "Dakar",
+      "lat": 14.717778,
+      "lon": -17.475076
+    },
     "grid": {
-      "south": 34.0,
-      "west": 112.0,
+      "south": 10.75,
+      "west": -21.5,
       "stepDeg": 0.25,
       "rows": 33,
-      "cols": 37
+      "cols": 33
     },
-    "timeZone": "Asia/Shanghai",
+    "timeZone": "Africa/Dakar",
     "units": {
       "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2019-01-16T04:30Z",
-      "2019-01-20T10:30Z"
+      "2025-03-23T20:30Z",
+      "2025-03-26T18:30Z"
     ]
   }
 ]
