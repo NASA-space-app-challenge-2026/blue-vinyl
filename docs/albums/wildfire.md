@@ -15,7 +15,7 @@ Track 1 plays the national graph, with each year's large fires on the globe wher
 | # | Track | Data | Length |
 | --- | --- | --- | --- |
 | 1 | Burned Acres | NIFC annual acres 1983–2024 (42 years); MTBS large fires 1984–2024 on the globe | 0:30 |
-| 2 | 2020 Fire Season | FEDS large fires (`farea > 50` km²), daily Jun 1 – Dec 31 (214 days) | 0:29 |
+| 2 | 2020 Fire Season | FEDS large fires (`farea > 50` km²), daily Jun 1 – Nov 7 (160 days; no large fire burns after it) | 0:22 |
 
 Files: `data/wildfire/tracks/` (`tracks.json` for sources and credit). `mtbs_large_fires.csv` holds each year's MTBS large fires: ignition date, acres and a point inside the burned area. `feds_2020_fire_days.csv` holds each large fire per day: its area and the newly burning pixels FEDS saw. Every source: [data/wildfire/sources.md](../../data/wildfire/sources.md).
 
@@ -24,7 +24,7 @@ NIFC marks 2004 with a footnote (state lands in North Carolina are not included)
 ## Time
 
 - Track 1: one year a bar of 0.68 s, then a 1.3 s tail: 29.9 s (`WILDFIRE_YEAR_TIMELINE`).
-- Track 2: one day a beat of 0.13 s over the 2020 large-fire season, then a 1.2 s tail: 29.0 s (`WILDFIRE_DAY_TIMELINE`, read with the year timeline's functions).
+- Track 2: one day a beat of 0.13 s over the 2020 large-fire season, then a 1.2 s tail: 22.0 s (`WILDFIRE_DAY_TIMELINE`, read with the year timeline's functions).
 
 ## Sound
 
