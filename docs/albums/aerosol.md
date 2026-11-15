@@ -67,7 +67,7 @@ The air is played as the sea under Mirror Storms' storms ([hemispheres.md](hemis
 ## Globe
 
 - The four AODs are drawn as a shell over the whole globe in EIC's colours and log scale, decoded to their real values and carried along the frames' flow between two frames; nothing is added to any particle type.
-- The globe holds still on the track's view centre, with no zoom.
+- Until a track's music first plays (after the docent's introduction), the globe shows the whole Earth, centred on the track's view. Then it zooms in on the track's lead particle while turning to it, and follows it; it stays zoomed through pauses and track changes, until the album is shown again.
 
 ## Credits
 

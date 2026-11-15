@@ -159,3 +159,50 @@ export function parseFireDaysCsv(text, days) {
   }
   return [...fires.values()];
 }
+
+// Newly burning pixels a day at which a fire burns at full heat.
+const FULL_HEAT_PIXELS = 3000;
+
+/**
+ * How hot a fire burns on a day (0..1) from the VIIRS pixels newly burning in it: the globe draws its front, embers and
+ * smoke this bright, and the music plays the season's fire from the same number.
+ *
+ * @param {number} newPixels
+ */
+export function fireHeat(newPixels) {
+  return Math.min(1, Math.sqrt(newPixels / FULL_HEAT_PIXELS));
+}
+
+/**
+ * The season's fire as the globe shows it, day by day.
+ *
+ * @typedef {Object} WildfireSeasonDay
+ * @property {number} burning the heat of every fire burning that day, summed (how much fire the globe shows)
+ * @property {number} burnedKm2 every fire's scar so far, summed (never shrinks)
+ * @property {number} lon the burning fires' longitude, weighted by heat (0 when nothing burns)
+ * @property {{ lon: number, areaKm2: number }[]} ignitions the fires whose scar first shows that day
+ */
+
+/**
+ * @param {WildfireFire[]} fires
+ * @param {number} dayCount
+ * @returns {WildfireSeasonDay[]}
+ */
+export function seasonDays(fires, dayCount) {
+  return Array.from({ length: dayCount }, (_, d) => {
+    let burning = 0;
+    let burnedKm2 = 0;
+    let lonSum = 0;
+    const ignitions = [];
+    for (const fire of fires) {
+      const heat = fireHeat(fire.newPixels[d]);
+      burning += heat;
+      lonSum += heat * fire.lon;
+      burnedKm2 += fire.areaKm2[d];
+      if (fire.areaKm2[d] > 0 && (d === 0 || fire.areaKm2[d - 1] === 0)) {
+        ignitions.push({ lon: fire.lon, areaKm2: fire.areaKm2[d] });
+      }
+    }
+    return { burning, burnedKm2, lon: burning > 0 ? lonSum / burning : 0, ignitions };
+  });
+}

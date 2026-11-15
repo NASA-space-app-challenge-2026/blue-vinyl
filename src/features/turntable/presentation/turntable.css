@@ -108,14 +108,10 @@
   pointer-events: none;
 }
 
-/* The ring reached from the keyboard: a circle just outside it, as the svg box is round (border-radius above). */
+/* The ring reached from the keyboard shows its focus as a circle round the dot (.record-progress-focus), not round
+   the whole svg box. */
 .record-progress:focus {
   outline: none;
-}
-
-.record-progress:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
 }
 
 /* The current track's progress round the rim; only the band round the rail takes a click. */
@@ -136,4 +132,15 @@
 .record-progress-dot {
   fill: #fff;
   filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.6));
+}
+
+.record-progress-focus {
+  display: none;
+  stroke: var(--ink);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+
+.record-progress:focus-visible .record-progress-focus {
+  display: inline;
 }

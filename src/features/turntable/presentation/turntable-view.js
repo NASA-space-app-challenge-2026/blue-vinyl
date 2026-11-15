@@ -256,7 +256,7 @@ function layer(className, markup) {
 
 // The progress ring in the label's own units (radius 1 at its rim, where the globe's edge is): the rail runs centred
 // on that edge; how thick it is, and how wide a band round it takes a click.
-const RING = Object.freeze({ radius: 1, width: 0.014, dotRadius: 0.024, hitWidth: 0.09 });
+const RING = Object.freeze({ radius: 1, width: 0.014, dotRadius: 0.024, hitWidth: 0.09, focusRadius: 0.042 });
 // The ring's drawing reaches this far (label units) past the rim on every side, so the dot, its shadow and the click
 // band lie inside it: Safari clips what an SVG draws outside its own box, overflow: visible or not.
 const RING_BLEED = 0.1;
@@ -340,9 +340,11 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
     <circle class="record-progress-rail" r="${RING.radius}" fill="none" stroke-width="${RING.width}"/>
     <path class="record-progress-fill" fill="none" stroke-width="${RING.width}"/>
     <circle class="record-progress-hit" r="${RING.radius}" fill="none" stroke="transparent" stroke-width="${RING.hitWidth}"/>
-    <circle class="record-progress-dot" r="${RING.dotRadius}"/>`;
+    <circle class="record-progress-dot" r="${RING.dotRadius}"/>
+    <circle class="record-progress-focus" r="${RING.focusRadius}" fill="none"/>`;
   const fill = svg.querySelector('.record-progress-fill');
   const dot = svg.querySelector('.record-progress-dot');
+  const focusRing = svg.querySelector('.record-progress-focus');
   for (const shape of svg.children) shape.setAttribute('aria-hidden', 'true');
 
   svg.addEventListener('keydown', (event) => {
@@ -387,8 +389,10 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
     shown = share;
     const [x, y] = ringPoint(share);
     fill.setAttribute('d', arcFromTop(share));
-    dot.setAttribute('cx', String(x));
-    dot.setAttribute('cy', String(y));
+    for (const head of [dot, focusRing]) {
+      head.setAttribute('cx', String(x));
+      head.setAttribute('cy', String(y));
+    }
   }
 
   // Eases from where the glide began to the target, which may keep moving while the track plays.

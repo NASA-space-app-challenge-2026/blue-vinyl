@@ -66,7 +66,7 @@ import { boxFocus, hourlyAt, smogDurationSec } from '../features/tracks/domain/s
 import { STEP_SEC, levelAt, lineLonAt } from '../features/tracks/domain/noon-line.js';
 import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
-import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
+import { YEAR_TIMELINE, yearAt, yearStartSec } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 import { pointInScreen, rectInScreen } from '../shared/screen-space.js';
@@ -86,6 +86,9 @@ let totalMs;
 /** @type {(import('../features/tracks/data/track-repository.js').IceSeaTrackData | null)[]} */
 let trackData = [];
 let aerosolData = [];
+// Whether the aerosol globe has zoomed in on the lead particle: false from when the album is shown until a track's
+// music first plays (past the docent's introduction), so the whole Earth shows until then; it stays zoomed after.
+let aerosolZoomed = false;
 // The track whose particle toggles are set (see renderAerosol); null while none is shown.
 let togglesTrack = null;
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
@@ -417,6 +420,7 @@ function showAlbum(index) {
   music.load([]);
   loadAlbumData(album);
   aerosolData = album.tracks.map(() => null);
+  aerosolZoomed = false;
   loadAerosolData(album);
 }
 
@@ -467,7 +471,7 @@ async function loadAlbumData(loading) {
       }));
     }
     if (track.wildfire?.kind === 'season') {
-      return seasonScore(data[i].days, WILDFIRE_DAY_TIMELINE, track.durationSec).map((note) => ({
+      return seasonScore(data[i].days, data[i].fires, WILDFIRE_DAY_TIMELINE, track.durationSec).map((note) => ({
         ...note,
         timeSec: note.timeSec + offset,
       }));
@@ -995,7 +999,8 @@ function renderData(trackIndex) {
 
 /**
  * Draws the year or day of a wildfire track that plays at the clock, looking at the contiguous United States: the
- * year's large MTBS fires where they burned, lit through its bar in the order they started (Burned Acres), or each
+ * year's large MTBS fires where they burned, their scars in full on its first beat and flaring through its bar in the
+ * order they started (Burned Acres), or each
  * large fire's scar, front and smoke that day (2020 Fire Season). The globe and the read-out change only when the year or day does; the fires ease and flicker by themselves.
  *
  * @param {import('../features/tracks/data/track-repository.js').WildfireTrackData} data
@@ -1020,7 +1025,14 @@ function renderWildfire(data, trackIndex) {
   if (data.kind === 'annual') {
     const year = data.years[at];
     const fires = data.firesByYear[at];
-    globe.showFires({ mode: 'annual', year: year.year, fires, spanSec: WILDFIRE_YEAR_TIMELINE.beatSec });
+    globe.showFires({
+      mode: 'annual',
+      year: year.year,
+      fires,
+      startSec: yearStartSec(WILDFIRE_YEAR_TIMELINE, at),
+      spanSec: WILDFIRE_YEAR_TIMELINE.beatSec,
+      clock: () => elapsedMs / 1000 - trackStartSec(album, trackIndex),
+    });
     // The acres are NIFC's, all of the year's fires; the globe shows the large ones MTBS maps, none before 1984.
     const acresM = (year.acres / 1e6).toFixed(1);
     const mapped = fires.length ? ` · ${fires.length} large fires mapped` : ' · no fire map before 1984';
@@ -1033,7 +1045,7 @@ function renderWildfire(data, trackIndex) {
   }
 
   const day = data.days[at];
-  globe.showFires({ mode: 'season', day: at, fires: data.fires });
+  globe.showFires({ mode: 'season', day: at, fires: data.fires, beatSec: WILDFIRE_DAY_TIMELINE.beatSec });
   // The date itself is on the date label.
   wildfireOverlay.render({
     detail: `${Math.round(day.areaKm2).toLocaleString('en')} km² active · ${day.nFires} large fires`,
@@ -1100,12 +1112,14 @@ function renderAerosol(trackIndex) {
   const step = Math.min(1, trackSec / track.durationSec) * (data.records.length - 1);
   globe.aerosolPaths.render(data.paths, step);
 
-  // The camera follows the track's lead particle(s), zoomed in on them; until one is released it rests on the track's
-  // own view or where Erin's eye starts.
+  // Until a track's music first plays, the whole Earth shows, centred on the track's own view or where Erin's eye
+  // starts. Then the camera zooms in on the track's lead particle(s) and follows them; until one is released it rests
+  // on that view.
   const view = track.aerosol.viewLat !== undefined
     ? { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon }
     : { lat: data.records[0].viewLat, lon: data.records[0].viewLon };
-  focus = heroFocus(data.paths, step) ?? view;
+  if (state === PlaybackState.PLAYING && introMs === null) aerosolZoomed = true;
+  focus = (aerosolZoomed && heroFocus(data.paths, step)) || view;
 
   if (track.color) halo.setColor(track.color);
   if (state === PlaybackState.PLAYING) halo.wake();
