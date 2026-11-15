@@ -75,7 +75,7 @@ The city is marked with a dot and its name, the name white at 22 px with no outl
 
 ## Covers
 
-From Wikimedia Commons (credits in [`albums.js`](../../src/features/album/data/albums.js)): Manhattan in the orange haze of Canadian wildfire smoke, June 7 2023 (New York, also the album's cover); Seoul in smog and dust seen from Namsan Tower, April 25 2008; Lujiazui in the haze, Shanghai, May 28 2011. The photos are of other days than the songs, except New York's (four days after its song), from the same kind of air.
+From Wikimedia Commons (credits in [`albums.js`](../../src/features/album/data/albums.js)): the Empire State Building in the orange smoke of the Canadian wildfires, seen from the street, June 7 2023 (New York, also the album's cover); Seoul in smog and dust seen from Namsan Tower, April 25 2008; Lujiazui in the haze, Shanghai, May 28 2011. The photos are of other days than the songs, except New York's (four days after its song), from the same kind of air.
 
 ## Checks
 
