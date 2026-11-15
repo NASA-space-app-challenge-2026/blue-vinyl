@@ -25,9 +25,11 @@ const GROOVE_GLINT = Object.freeze({ minDeg: 20, spreadDeg: 70 });
 // Fixed reflections of a light at the upper left: two opposite wedges, a wide soft one and a narrow bright one.
 const SHEEN = Object.freeze({ angleDeg: -50, wide: { halfDeg: 16, opacity: 0.09 }, narrow: { halfDeg: 4, opacity: 0.14 }, blur: 0.03 });
 // The credits run round the record's rim, in the band outside the grooves, turning with the record: centred on
-// `radius`, read clockwise from 6 o'clock so they sit upright and centred at 12 at rest, at `fontSize` unless they need
-// less to fit `maxTurn` of the circle.
-const CREDIT = Object.freeze({ radius: (GROOVE.outerRadius + 1) / 2, fontSize: 0.026, maxTurn: 0.96 });
+// `radius`, halfway between the first track's groove and the rim, read clockwise from 6 o'clock so they sit upright and
+// centred at 12 at rest, at `fontSize` unless they need less to fit `maxTurn` of the circle. Their baseline runs
+// half their capitals' height (`capHeightEm`, of the font size) inside `radius`, so the letters are centred on it the
+// same in every browser, which place dominant-baseline along a path each their own way.
+const CREDIT = Object.freeze({ radius: (GROOVE.outerRadius + 1) / 2, fontSize: 0.026, maxTurn: 0.96, capHeightEm: 0.7 });
 const ARM_WIDTH = 0.018;
 // Invisible stroke along the tube that makes the thin arm easy to grab.
 const ARM_GRAB_WIDTH = 0.08;
@@ -134,9 +136,9 @@ function stops(colors) {
   return colors.map(([offset, color]) => `<stop offset="${offset}" stop-color="${color}"/>`).join('');
 }
 
-// The circle the credits run along: from 6 o'clock clockwise round and back, so its middle is at 12.
-function creditPath() {
-  const r = CREDIT.radius;
+// The circle of radius `r` the credits' baseline runs along: from 6 o'clock clockwise round and back, so its middle
+// is at 12.
+function creditPath(r) {
   return `M 0 ${r} A ${r} ${r} 0 1 1 0 ${-r} A ${r} ${r} 0 1 1 0 ${r}`;
 }
 
@@ -160,9 +162,9 @@ function vinylSpinSvg() {
     const length = GROOVE_GLINT.minDeg + ((i * 53) % GROOVE_GLINT.spreadDeg);
     glints.push(arc(g, start, start + length, COLOR.grooveGlint));
   }
-  return `<defs><path id="vinyl-credit-path" d="${creditPath()}"/></defs>
+  return `<defs><path id="vinyl-credit-path" d="${creditPath(CREDIT.radius)}"/></defs>
     ${glints.join('')}
-    <text class="vinyl-credit" fill="${COLOR.credit}" dominant-baseline="middle">
+    <text class="vinyl-credit" fill="${COLOR.credit}">
       <textPath href="#vinyl-credit-path" startOffset="50%" text-anchor="middle"></textPath>
     </text>`;
 }
@@ -406,6 +408,7 @@ export function createTurntableView(
   const trackGaps = vinylLayer.querySelector('.vinyl-track-gaps');
   const credit = spinner.querySelector('.vinyl-credit');
   const creditText = credit.querySelector('textPath');
+  const creditBaseline = spinner.querySelector('#vinyl-credit-path');
 
   // Label area, positioned over the label circle in percentages of the layers' view box.
   const label = document.createElement('div');
@@ -679,7 +682,9 @@ export function createTurntableView(
     credit.setAttribute('font-size', String(CREDIT.fontSize));
     const room = CREDIT.maxTurn * 2 * Math.PI * CREDIT.radius;
     const length = credit.getComputedTextLength();
-    if (length > room) credit.setAttribute('font-size', String((CREDIT.fontSize * room) / length));
+    const fontSize = length > room ? (CREDIT.fontSize * room) / length : CREDIT.fontSize;
+    credit.setAttribute('font-size', String(fontSize));
+    creditBaseline.setAttribute('d', creditPath(CREDIT.radius - (CREDIT.capHeightEm * fontSize) / 2));
   }
 
   /** @param {number[]} trackStarts progress (0..1) where each track after the first begins, drawn as brighter grooves */
