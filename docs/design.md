@@ -44,7 +44,7 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 - The sleeve's corners are rounded by 2px, just off sharp.
 - The sleeve's text is sized with the sleeve, as print on a sleeve is. It sits on a dark gradient at the bottom, and every line has a soft dark shadow, so the title and track list stay readable over any cover photo.
 - The sleeve shows the current track's cover when the track has one, else the album's; it fades from one to the next as the tracks change.
-- Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. The credits of the cover shown, the album's data, the instruments and the globe's map/imagery run round the record's rim, outside the grooves, turning with the record (centred at 12 o'clock at rest) and shrunk to fit if long.
+- Top left: the app title, the record icon (`assets/icon.svg`, also the favicon) beside **Blue Vinyl** in Gowun Batang bold. Top right: a glass capsule with the fullscreen and more (`⋯`) buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. The credits of the cover shown, the album's data, the instruments and the globe's map/imagery run round the record's rim, outside the grooves, turning with the record (centred at 12 o'clock at rest) and shrunk to fit if long.
 - Always landscape: the screen maintains the horizontal sleeve-and-turntable layout on all viewports without vertical stacking. In portrait orientation (e.g. mobile phones held vertically), the screen is rotated 90 degrees via CSS transform so it completely fills the viewport in a forced landscape layout.
 
 ## Record
@@ -88,7 +88,7 @@ The forest album draws the noon line instead (see [albums/forest.md](albums/fore
 
 ## Globe Themes
 
-Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/globe/domain/globe-theme.js`) and their sources in `src/features/globe/data/globe-themes.js`.
+The globe uses the default theme, Map; there is no theme picker in the UI. Themes are listed in `GlobeTheme` (`src/features/globe/domain/globe-theme.js`) and their sources in `src/features/globe/data/globe-themes.js`.
 
 | Theme | Source | Look |
 | --- | --- | --- |
@@ -124,7 +124,8 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | Volume button (bottom left) | First click expands it into a slider; while expanded, the speaker toggles mute. It folds back into one button after a short idle time without the mouse or keyboard focus on it |
 | Left / right chevrons (bottom left) | Previous / next album; wraps around at either end. Switching lifts the arm and resets the position to the start. Clicks during the change add more steps |
 | Fullscreen button (top right) | Enter / exit fullscreen; hidden where the browser has no fullscreen support |
-| Settings button (top right) | Open the settings menu; Escape or a click outside closes it |
+| More button `⋯` (top right) | Drop down a menu of About and License; up and down move between the items, Escape or a click outside closes it |
+| About, License (in the more menu) | Open a modal dialog: About introduces the project, its albums, the keys and the team; License lists the software, fonts, sound, map, photos and data used and their licenses. Escape, the close button or a click on the backdrop closes it. While a dialog is open, Space and the arrow keys stay with the dialog |
 
 Playback states (`PlaybackState`): `stopped` → `cueing` (arm eases on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position. Grabbing the arm enters `scrubbing` from any state. Holding the playing record enters `held`, where turning it moves the position; letting go returns to `playing`.
 
