@@ -66,18 +66,37 @@ export function createBackdrop(root) {
   // Color per cover URL, so a cover is counted once.
   const colors = new Map();
   let shownUrl = null;
+  // iOS 26 Safari ignores theme-color and tints its bars and the safe areas from the background color of the body, or
+  // of the html element. It follows that color live only when it is set on the elements themselves, not through a
+  // variable or a selector; the body's gradient hides it. The cover's rim color, or an overlay's while one is over the
+  // page.
+  let barsColor = null;
+  let overlayColor = null;
+
+  function paintBars() {
+    const color = overlayColor ?? barsColor;
+    for (const element of [root, document.body]) {
+      if (color) element.style.backgroundColor = color;
+      else element.style.removeProperty('background-color');
+    }
+  }
 
   function apply(color) {
     if (!color) {
       root.style.removeProperty('--bg');
       root.style.removeProperty('--bg-deep');
+      barsColor = null;
+      paintBars();
       return;
     }
     // Darkened by mixing with black, like the same color in shadow, so a pale tint stays a muted one.
     const l = lightness(color);
     const share = l > BACKDROP_MAX_LIGHTNESS ? BACKDROP_MAX_LIGHTNESS / l : 1;
+    const deep = shade(color, share * BACKDROP_DEEP_SHARE);
     root.style.setProperty('--bg', shade(color, share));
-    root.style.setProperty('--bg-deep', shade(color, share * BACKDROP_DEEP_SHARE));
+    root.style.setProperty('--bg-deep', deep);
+    barsColor = deep;
+    paintBars();
   }
 
   /** @param {string} url the cover image */
@@ -89,16 +108,24 @@ export function createBackdrop(root) {
       return;
     }
     const img = new Image();
-    img.addEventListener('load', () => {
-      colors.set(url, mainColor(img));
-      if (shownUrl === url) apply(colors.get(url));
-    });
-    img.addEventListener('error', () => {
-      colors.set(url, null);
-      if (shownUrl === url) apply(null);
-    });
     img.src = url;
+    // Decoded before it is drawn: iOS Safari fires load before a large image is decoded and then draws it blank, so its
+    // pixels read all black.
+    img
+      .decode()
+      .then(() => mainColor(img))
+      .catch(() => null)
+      .then((color) => {
+        colors.set(url, color);
+        if (shownUrl === url) apply(color);
+      });
   }
 
-  return { show };
+  /** @param {string | null} color an overlay's color for the bars while it is over the page; null when it has gone */
+  function overlay(color) {
+    overlayColor = color;
+    paintBars();
+  }
+
+  return { show, overlay };
 }

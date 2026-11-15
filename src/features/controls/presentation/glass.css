@@ -50,9 +50,12 @@
   display: none;
 }
 
-.glass-segment:hover {
-  color: var(--ink);
-  background: rgb(255 255 255 / 0.08);
+/* Only where something hovers: on touch screens :hover sticks after a tap, so the button would stay lit. */
+@media (hover: hover) {
+  .glass-segment:hover {
+    color: var(--ink);
+    background: rgb(255 255 255 / 0.08);
+  }
 }
 
 .glass-segment:focus-visible {
