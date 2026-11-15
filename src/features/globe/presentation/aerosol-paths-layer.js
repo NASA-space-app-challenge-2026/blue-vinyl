@@ -1,4 +1,5 @@
-// The particles of an aerosol track on the globe (see tracks/domain/aerosol-paths.js), drawn as the storms of Mirror
+// The lead particle(s) of an aerosol track on the globe (see tracks/domain/aerosol-paths.js); the track's other
+// particles are not drawn. Drawn as the storms of Mirror
 // Storms are: each one a comet tail behind it, wide and bright at its head and thinning to nothing, and the path it has
 // gone, faint, all in its particle type's own colour (EIC's, as the shell). The tails of all the track's particles are
 // one mesh and the paths another, so a hundred of them cost about as much as one. The lead particle (`hero`) has a
@@ -101,6 +102,8 @@ export function createAerosolPathsLayer(view) {
   const { globe } = view;
   /** @type {import('../../tracks/domain/aerosol-paths.js').AerosolParticlePath[] | null} */
   let shownPaths = null;
+  // The particles of `shownPaths` that are drawn: the lead particle(s).
+  let drawn = [];
   // Built for one set of paths: where each particle is at every step (x, y, z), the tail and path meshes, the marker, and
   // each particle's tail: the steps it covers and where its points start in the tail mesh.
   let xyz = [];
@@ -121,6 +124,7 @@ export function createAerosolPathsLayer(view) {
     xyz = [];
     tailOf = [];
     shownPaths = null;
+    drawn = [];
   }
 
   function build(paths) {
@@ -212,7 +216,9 @@ export function createAerosolPathsLayer(view) {
     if (paths !== shownPaths) {
       clear();
       shownPaths = paths;
-      build(paths);
+      // Only the lead particle(s) are drawn; the rest of the track's particles are not.
+      drawn = paths.filter((particle) => particle.hero);
+      build(drawn);
     }
     // The track's particles and paths are drawn whatever the particle toggles say: they switch only the air.
     marker.visible = false;
@@ -230,7 +236,7 @@ export function createAerosolPathsLayer(view) {
     const tailAlpha = tails.geometry.attributes.alpha;
     const tailHalf = tails.geometry.attributes.halfPx;
     let s = 0;
-    paths.forEach((particle, i) => {
+    drawn.forEach((particle, i) => {
       const local = Math.min(step - particle.release, particle.path.length - 1);
       const { steps, first, widthPx } = tailOf[i];
       if (local < 0) {
