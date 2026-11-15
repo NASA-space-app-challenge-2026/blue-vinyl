@@ -301,8 +301,8 @@ export function createSoundEngine() {
         },
       };
     },
-    noise(velocity, at, steps, fromHz, toHz) {
-      analog.noise(velocity, at, steps * stepSec, fromHz, toHz);
+    noise(velocity, at, steps, fromHz, toHz, shape) {
+      analog.noise(velocity, at, steps * stepSec, fromHz, toHz, shape);
     },
     effect(effect, value, at) {
       fx.set(effect, value, at);

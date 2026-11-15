@@ -8,9 +8,10 @@ One album is one LP record. The screen shows a single album at a time: the sleev
 
 ## Typography
 
-- Gowun Batang is the only typeface. Do not add another font family.
+- Gowun Batang is the typeface for everything except the app title and the onboarding's logo. Do not add another font family.
+- The app title alone is set in Yellowtail, a retro script like the name on a record label (`--font-title`, SIL Open Font License 1.1, loaded with Gowun Batang).
 - Loaded from Google Fonts (weights 400 and 700) in `index.html`. Licensed under the SIL Open Font License 1.1.
-- Referenced through the `--font` token in `src/app/app.css`. Every element inherits it from `body`; never set `font-family` elsewhere.
+- Referenced through the `--font` token in `src/app/app.css`. Every element inherits it from `body`; never set `font-family` elsewhere, except `.app-title` and `.onboarding-logo`.
 - Weights: 400 for body text, 700 for the album title and the active track.
 
 | Role | Style |
@@ -44,7 +45,7 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 - The sleeve's corners are rounded by 2px, just off sharp.
 - The sleeve's text is sized with the sleeve, as print on a sleeve is. It sits on a dark gradient at the bottom, and every line has a soft dark shadow, so the title and track list stay readable over any cover photo.
 - The sleeve shows the current track's cover when the track has one, else the album's; it fades from one to the next as the tracks change.
-- Top right: a glass capsule with the fullscreen and settings buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. The credits of the cover shown, the album's data, the instruments and the globe's map/imagery run round the record's rim, outside the grooves, turning with the record (centred at 12 o'clock at rest) and shrunk to fit if long.
+- Top left: the app title, **Blue Vinyl** in Yellowtail, cream fading to warm gold. The favicon is the 🌍 emoji, drawn in an inline SVG in `index.html`. Top right: a glass capsule with the fullscreen and more (`⋯`) buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. The credits of the cover shown, the album's data, the instruments and the globe's map/imagery run round the record's rim, outside the grooves, turning with the record (centred at 12 o'clock at rest) and shrunk to fit if long.
 - Always landscape: the screen maintains the horizontal sleeve-and-turntable layout on all viewports without vertical stacking. In portrait orientation (e.g. mobile phones held vertically), the screen is rotated 90 degrees via CSS transform so it completely fills the viewport in a forced landscape layout.
 
 ## Record
@@ -86,7 +87,7 @@ The forest album draws the noon line instead (see [albums/forest.md](albums/fore
 
 ## Globe Themes
 
-Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/globe/domain/globe-theme.js`) and their sources in `src/features/globe/data/globe-themes.js`.
+The globe uses the default theme, Map; there is no theme picker in the UI. Themes are listed in `GlobeTheme` (`src/features/globe/domain/globe-theme.js`) and their sources in `src/features/globe/data/globe-themes.js`.
 
 | Theme | Source | Look |
 | --- | --- | --- |
@@ -105,6 +106,15 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 - It eases (exponentially) between positions instead of jumping: onto the groove when cued, back to rest when lifted. While playing it follows the groove for the current position.
 - The listener can grab and drag it. While held, the clock stops and the needle position scrubs the album; released over the record, playback resumes from there; released off it, the arm returns to rest.
 
+## Onboarding
+
+Before the player, a short onboarding covers the whole screen (`src/features/info/presentation/onboarding.js`, its copy in `src/features/info/data/onboarding.js`). It is set in deep space (`--title-bg`), crossed by a slanting band of scattered sunlight, after Voyager 1's Pale Blue Dot photo.
+
+1. **Intro**: the Blue Vinyl text logo (Yellowtail, cream fading to gold, like the app title), a one-line promise and a short introduction, beside the Pale Blue Dot: one glowing blue speck in a ray of light, marked "You are here", with rings pulsing out of it like a beacon (still under reduced motion). The logo stands level.
+2. **Spatial audio**: recommends earphones and explains that the music is placed around the listener (HRTF panning), beside a head with gold headphones seen from above (shoulders behind, the nose ahead) and a blue dot circling it. "Hear it move" plays about twelve seconds of one warm, bright chord, G major with an added ninth: detuned saws under a soft filter that opens as it plays, so it grows brighter, in a long reverb, circling the head twice in time with the dot and drifting nearer and further. Pressed again while it plays, as Stop, it fades out quickly (`src/features/music/data/spatial-preview.js`).
+
+Next and Back (or the arrow keys) step through it, with dots for the steps; Skip or Start listening closes it. Browsers let audio start only from a tap, a click or a key, so these taps unlock the sound before anything can be played. While it is up, everything under it is inert and the cat waits out of sight. It is the only place besides the app title that uses Yellowtail.
+
 ## Interaction
 
 | Input | Action |
@@ -122,7 +132,8 @@ Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/gl
 | Volume button (bottom left) | First click expands it into a slider; while expanded, the speaker toggles mute. It folds back into one button after a short idle time without the mouse or keyboard focus on it |
 | Left / right chevrons (bottom left) | Previous / next album; wraps around at either end. Switching lifts the arm and resets the position to the start. Clicks during the change add more steps |
 | Fullscreen button (top right) | Enter / exit fullscreen; hidden where the browser has no fullscreen support |
-| Settings button (top right) | Open the settings menu; Escape or a click outside closes it |
+| More button `⋯` (top right) | Drop down a menu of About and License; up and down move between the items, Escape or a click outside closes it |
+| About, License (in the more menu) | Open a modal dialog: About introduces the project, its albums, the keys and the team; License lists the software, fonts, sound, map, photos and data used and their licenses. Escape, the close button or a click on the backdrop closes it. While a dialog is open, Space and the arrow keys stay with the dialog |
 
 Playback states (`PlaybackState`): `stopped` → `cueing` (arm eases on) → `playing` (record spins, arm tracks progress). Pausing lifts the arm back to rest and keeps the position. Grabbing the arm enters `scrubbing` from any state. Holding the playing record enters `held`, where turning it moves the position; letting go returns to `playing`.
 

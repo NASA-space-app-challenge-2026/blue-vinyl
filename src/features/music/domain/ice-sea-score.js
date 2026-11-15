@@ -47,6 +47,8 @@ export const Part = Object.freeze({
  * @property {number} attackSec
  * @property {number} releaseSec
  * @property {number} [pan] stereo position, -1 (left) to 1 (right); centre when left out
+ * @property {{ angle: number, gone: number }} [space] a place around the listener instead of `pan`: `angle` in radians
+ *   clockwise from straight ahead (north), `gone` from 0 (near) to 1 (far); see music-player.js
  */
 
 /** Pitch class of the album's key: C minor. */

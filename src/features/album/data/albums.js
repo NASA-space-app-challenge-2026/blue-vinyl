@@ -6,6 +6,7 @@ import { GlobeLens } from '../../globe/domain/globe-lens.js';
 import { Instrument } from '../../music/domain/instruments.js';
 import { Lead } from '../../music/domain/patches.js';
 import { NorthInstrument, SouthInstrument } from '../../music/domain/composers/lightning.js';
+import { SmogLoop } from '../../music/domain/composers/smog.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
 import { SOUND_STEPS, STEP_SEC } from '../../tracks/domain/noon-line.js';
 import { Hemisphere, seasonDurationSec, seasonSpan } from '../../tracks/domain/storm-season.js';
@@ -59,6 +60,39 @@ const FOREST_TRACKS = 'data/forest/tracks';
 const FOREST_COVERS = 'assets/albums/forest';
 // The Earth turns under the noon line from the first step, with the listening legend riding along, until the last note.
 const FOREST_LINE_SEC = SOUND_STEPS * STEP_SEC;
+
+const AEROSOL_DATA = 'data/aerosol/tracks';
+const AEROSOL_COVERS = 'assets/albums/aerosol';
+const AEROSOL_FRAMES = 'data/aerosol/tracks/frames';
+// Two weeks, every 3 hours (112 steps), 0.4 s a step: a day is a bar of 3.2 s.
+const AEROSOL_TRACK_SEC = 44.8;
+// Where each event starts and the distant place it reaches, as in section 9.4 of notebooks/aerosol_album.ipynb.
+const SAHARA = { lat: 18.0, lon: 2.0 };
+const CARIBBEAN = { lat: 17.5, lon: -67.5 };
+const SOUTHERN_AFRICA = { lat: -12.0, lon: 22.0 };
+const ST_HELENA = { lat: -15.9, lon: -5.7 };
+const SPAIN = { lat: 42.0, lon: -6.0 };
+const BRITAIN = { lat: 52.5, lon: -1.5 };
+const ETNA = { lat: 37.75, lon: 15.0 };
+const GREECE = { lat: 38.5, lon: 22.5 };
+
+const SMOG_TRACKS = 'data/smog/tracks';
+const SMOG_COVERS = 'assets/albums/smog';
+
+/**
+ * A smog song: the hours around its city, played on `loop` (one of SmogLoop) at 3 hours of the data a second, so it
+ * lasts `durationSec` (checked against the data when it loads; see tracks/domain/smog.js).
+ */
+function smogTrack(title, file, durationSec, loop, cover, coverCredit) {
+  return {
+    title,
+    durationSec,
+    color: '#bab8b6',
+    coverUrl: `${SMOG_COVERS}/${cover}`,
+    coverCredit,
+    smog: { tracksDir: SMOG_TRACKS, file, loop },
+  };
+}
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -159,7 +193,7 @@ export const albums = [
   },
   {
     id: 'forest',
-    category: AlbumCategory.CLIMATE,
+    category: AlbumCategory.BIODIVERSITY,
     title: 'Forests Hold Carbon',
     coverUrl: `${FOREST_COVERS}/cover.jpg`,
     coverCredit: 'Cover: SVS 4950, GEDI forest height · NASA Scientific Visualization Studio',
@@ -179,7 +213,7 @@ export const albums = [
   },
   {
     id: 'hot-oceans',
-    category: AlbumCategory.CLIMATE,
+    category: AlbumCategory.EXTREME_WEATHER,
     title: "The Hurricane's Heartbeat",
     coverUrl: `${HOT_OCEANS_COVERS}/katrina_2005.jpg`,
     coverCredit: 'NASA/GSFC MODIS Rapid Response, public domain, via Wikimedia Commons',
@@ -264,7 +298,7 @@ export const albums = [
   },
   {
     id: 'wildfire',
-    category: AlbumCategory.CLIMATE,
+    category: AlbumCategory.DISASTER,
     title: 'As the Season Burns',
     coverUrl: `${WILDFIRE_COVERS}/creek_fire_2020.jpg`,
     coverCredit: 'Photo: CAL FIRE, public domain, via Wikimedia Commons',
@@ -295,6 +329,108 @@ export const albums = [
           firesUrl: `${WILDFIRE_DATA}/feds_2020_fire_days.csv`,
         },
       },
+    ],
+  },
+  {
+    id: 'aerosol',
+    category: AlbumCategory.CLIMATE,
+    title: 'Connected by the Air',
+    coverUrl: `${AEROSOL_COVERS}/cover.jpg`,
+    coverCredit: 'NASA Scientific Visualization Studio · SVS 5669',
+    dataCredit: 'Data: NASA GMAO GEOS-FP · NOAA NHC',
+    tracks: [
+      {
+        title: 'Hurricane Erin',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#4080ff',
+        coverUrl: `${AEROSOL_COVERS}/erin.jpg`,
+        coverCredit: 'NASA MODIS Rapid Response, Aug 16 2025',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/erin.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'sea_salt',
+          trackEye: true,
+          // Close on the storm, so its salt can be seen spiralling.
+          arcDeg: 24,
+          // In A minor, a key of its own, so it does not sound like the Saharan Dust that follows in C minor.
+          tonic: 9,
+          // The lead is the salt Erin's winds churn up at its eye (EIC: "blue spirals"), its motif turning faster as
+          // the wind rises; the dust it pulls in from Africa is heard only as it arrives at the eye.
+          events: [
+            { id: 'erin', particle: 'seaSalt', source: 'eye', receptor: null, spin: true },
+            { id: 'sahara', particle: 'dust', source: SAHARA, receptor: 'eye', level: 0.5, heard: 'arrival' },
+          ],
+        },
+      },
+      {
+        title: 'Saharan Dust',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#ff58a0',
+        coverUrl: `${AEROSOL_COVERS}/saharan_dust.jpg`,
+        coverCredit: 'NASA MODIS / Terra, Saharan Dust over the Atlantic',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/saharan_dust.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'dust',
+          events: [{ id: 'sahara', particle: 'dust', source: SAHARA, receptor: CARIBBEAN }],
+          viewLat: 17.0,
+          viewLon: -45.0,
+        },
+      },
+      {
+        title: 'Southern Africa Smoke',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#ff7820',
+        coverUrl: `${AEROSOL_COVERS}/southern_africa_smoke.jpg`,
+        coverCredit: 'NASA Earth Observatory / Aqua MODIS, Fires and Smoke',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/southern_africa_smoke.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'smoke',
+          events: [{ id: 'southern-africa', particle: 'smoke', source: SOUTHERN_AFRICA, receptor: ST_HELENA }],
+          viewLat: -12.0,
+          viewLon: 5.0,
+        },
+      },
+      {
+        title: 'Spain and Etna',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#e0a030',
+        coverUrl: `${AEROSOL_COVERS}/spain_and_etna.jpg`,
+        coverCredit: 'NASA MODIS / Terra, Mt. Etna Eruption',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/spain_and_etna.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'smoke_and_sulfate',
+          events: [
+            { id: 'spain', particle: 'smoke', source: SPAIN, receptor: BRITAIN },
+            { id: 'etna', particle: 'sulfate', source: ETNA, receptor: GREECE },
+          ],
+          viewLat: 40.0,
+          viewLon: 5.0,
+        },
+      },
+    ],
+  },
+  {
+    id: 'smog',
+    category: AlbumCategory.AIR_QUALITY,
+    title: 'The Wind That Sweeps the Smog',
+    coverUrl: `${SMOG_COVERS}/new_york.jpg`,
+    coverCredit: 'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)',
+    dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
+    // Songs are timed in playback ms, one hour of the data a third of a second in all of them (see tracks/domain/smog.js).
+    msPerSec: 1000,
+    // Four cities whose smog flows in from outside the map, covers them and passes on, each a different length (see
+    // notebooks/smog_album.ipynb and docs/albums/smog.md), in time order. Each plays nell-v2's loops, heard through
+    // the air over the city.
+    tracks: [
+      smogTrack('New York 2023', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
+        'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)'),
+      smogTrack('Seoul 2025', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
+        'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)'),
+      smogTrack('Shanghai 2025', 'shanghai_2025.csv', 18, SmogLoop.HOUSE, 'shanghai.jpg',
+        'Cover: Lujiazui in the haze, May 28 2011 (Photo: Weixi Zeng, CC BY-SA 3.0)'),
     ],
   },
 ];
