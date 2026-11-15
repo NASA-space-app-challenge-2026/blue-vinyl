@@ -34,7 +34,7 @@ Frames for the globe: `data/aerosol/tracks/frames/`, one PNG per step shared by 
 
 ## Time
 
-Two weeks, 112 steps of 3 hours, 0.4 s a step: 44.8 s a track. 
+Two weeks, 112 steps of 3 hours, 0.25 s a step: 28 s a track. 
 
 ## Globe
 
