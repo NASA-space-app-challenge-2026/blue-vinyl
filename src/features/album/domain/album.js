@@ -3,6 +3,16 @@ export const AlbumCategory = Object.freeze({
   CLIMATE: 'climate',
   EXTREME_WEATHER: 'extreme-weather',
   AIR_QUALITY: 'air-quality',
+  DISASTER: 'disaster',
+});
+
+/** How each AlbumCategory is named on the sleeve and in the About dialog. */
+export const ALBUM_CATEGORY_LABEL = Object.freeze({
+  [AlbumCategory.BIODIVERSITY]: 'Biodiversity',
+  [AlbumCategory.CLIMATE]: 'Climate',
+  [AlbumCategory.EXTREME_WEATHER]: 'Extreme Weather',
+  [AlbumCategory.DISASTER]: 'Disaster',
+  [AlbumCategory.AIR_QUALITY]: 'Air Quality',
 });
 
 /**
@@ -14,6 +24,36 @@ export const AlbumCategory = Object.freeze({
  * @property {string} shapesUrl GeoJSON of each year's ice and the normal ice edge
  * @property {number} poleLat latitude the globe looks down on: 90 or -90
  * @property {import('../../music/domain/ice-sea-score.js').IceVoice} iceVoice the instrument the ice is played on
+ */
+
+/**
+ * A track that plays atmospheric aerosol optical depth and particle motion from GEOS-FP.
+ *
+ * @typedef {Object} AerosolSource
+ * @property {string} csvUrl the track's time series CSV
+ * @property {string} framesDir directory containing the visual PNG frames
+ * @property {string} lead particle type that leads the track ('sea_salt', 'dust', 'smoke', 'sulfate')
+ * @property {number} [viewLat] latitude of the track's view centre
+ * @property {number} [viewLon] longitude of the track's view centre
+ * @property {boolean} [trackEye] whether the view follows the eye of the storm
+ * @property {number} [arcDeg] degrees of arc from the view centre to the label's edge, closer than the whole globe
+ * @property {number} [tonic] pitch class of the track's minor key (0 for C, the album's key, when left out)
+ * @property {AerosolEvent[]} events what the track's music follows: an event leaving its source for a distant place
+ */
+
+/**
+ * One event of an aerosol track: a plume of one particle type leaving its source and reaching a distant receptor.
+ * Its numbers are the CSV's `<particle>_*` event columns.
+ *
+ * @typedef {Object} AerosolEvent
+ * @property {string} id the event, which picks its motif; the same event keeps its motif across tracks
+ * @property {import('../../tracks/domain/aerosol-track.js').Particle} particle
+ * @property {{ lat: number, lon: number } | 'eye'} source where it starts; 'eye' is the view centre (Erin's eye)
+ * @property {{ lat: number, lon: number } | 'eye' | null} receptor where it is heading; null for an event that only
+ *   spreads from its source
+ * @property {number} [level] how loud it is against the track's lead, 1 when left out
+ * @property {'arrival'} [heard] 'arrival' plays only its arrival, not its source or journey
+ * @property {boolean} [spin] its motif turns faster as the storm's wind rises (Erin)
  */
 
 /**
@@ -59,6 +99,7 @@ export const AlbumCategory = Object.freeze({
 
 /**
  * @typedef {Object} Track
+ * @property {AerosolSource} [aerosol] aerosol data and view
  * @property {string} title
  * @property {number} durationSec
  * @property {IceSeaSource} [iceSea] data, sound and view of a polar track
@@ -66,8 +107,10 @@ export const AlbumCategory = Object.freeze({
  * @property {StormSeasonSource} [season] data, sound and view of a storm season track
  * @property {LightningSource} [lightning] data and sound of a lightning track
  * @property {SmogSource} [smog] data, sound and view of a smog track
- * @property {{ kind: 'annual', csvUrl: string } | { kind: 'season', csvUrl: string, firesUrl: string }} [wildfire]
+ * @property {{ kind: 'annual' | 'season', csvUrl: string, firesUrl: string }} [wildfire]
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
+ * @property {{ lineUrl: string, mapUrl: string, airMapUrl: string, airUrl: string }} [forest] the noon line, canopy
+ *   map, and the CO₂ map and months of the same window the track plays (see tracks/domain/noon-line.js)
  * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
  * @property {string} [color] CSS color the track's data is drawn in
  * @property {string} [coverUrl] the track's own cover image, shown on the sleeve while it is the current track

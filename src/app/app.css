@@ -14,15 +14,51 @@
 :root {
   --bg: #4b3a24;
   --bg-deep: #3a2c1a;
+  --title-bg: #05070d;
   transition: --bg 1.2s ease, --bg-deep 1.2s ease;
   --ink: #f3ece1;
   --ink-muted: rgb(243 236 225 / 0.65);
   --gutter: clamp(16px, 2vw, 32px);
   --font: 'Gowun Batang', serif;
+  --font-title: 'Yellowtail', cursive;
+  /* The page is drawn under the notch and the home indicator too (viewport-fit=cover in index.html), so its colour
+     fills them; the stage and the controls stay inside these insets, along the layout's own sides. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+/* No pinch or double-tap zoom; the record and the arm take their own touches (touch-action: none). A plain colour
+   under the body's gradient, the backdrop's rim, which mobile browsers fill their bars and the safe areas with; they
+   do not take it from a gradient. */
+html {
+  touch-action: pan-x pan-y;
+  background-color: var(--bg-deep);
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Only text can be selected: nothing else takes part in a selection, so a drag or a long press never paints the globe,
+   the turntable, icons or images. Text held directly by a div opts back in where it is styled (globe-view.css). */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+p,
+h1,
+h2,
+h3,
+li,
+span,
+legend,
+label,
+svg text {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 body {
@@ -31,7 +67,8 @@ body {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
-  background: radial-gradient(ellipse at 60% 45%, var(--bg) 0%, var(--bg-deep) 100%);
+  background-color: var(--bg-deep);
+  background-image: radial-gradient(ellipse at 60% 45%, var(--bg) 0%, var(--bg-deep) 100%);
   color: var(--ink);
   font-family: var(--font);
 }
@@ -46,7 +83,7 @@ body {
 
 .stage {
   position: absolute;
-  inset: 0;
+  inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -58,33 +95,66 @@ body {
   z-index: 3;
 }
 
+#corner-top-left {
+  top: calc(var(--gutter) + var(--safe-top));
+  left: calc(var(--gutter) + var(--safe-left));
+}
+
 #corner-top-right {
-  top: var(--gutter);
-  right: var(--gutter);
+  top: calc(var(--gutter) + var(--safe-top));
+  right: calc(var(--gutter) + var(--safe-right));
 }
 
 #corner-bottom-left {
-  bottom: var(--gutter);
-  left: var(--gutter);
+  bottom: calc(var(--gutter) + var(--safe-bottom));
+  left: calc(var(--gutter) + var(--safe-left));
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 #bottom-center {
-  bottom: var(--gutter);
+  bottom: calc(var(--gutter) + var(--safe-bottom));
   left: 50%;
   transform: translateX(-50%);
+}
+
+/* The app's name in the top left corner, in a retro script like the name on a record label, warm cream lit from above.
+   The gradient only paints inside the box, so the padding leaves room for the script's swashes, which reach past the
+   letters (the last l's tail most of all). */
+.app-title {
+  margin: 0;
+  padding: 0.1em 0.5em 0.2em 0.15em;
+  font-family: var(--font-title);
+  font-size: clamp(26px, 2.4vw, 38px);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ink);
+  background: linear-gradient(180deg, #fff8ec 0%, #f3ece1 45%, #e2c79a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.45));
+  pointer-events: none;
+  user-select: none;
 }
 
 /* In portrait orientation, force a rotated landscape layout that completely fills the screen */
 @media screen and (orientation: portrait) {
   :root {
     --gutter: clamp(8px, 1.5vh, 16px);
+    /* The layout is turned a quarter turn clockwise: its top is the viewport's right, its left the viewport's top. */
+    --safe-top: env(safe-area-inset-right, 0px);
+    --safe-right: env(safe-area-inset-bottom, 0px);
+    --safe-bottom: env(safe-area-inset-left, 0px);
+    --safe-left: env(safe-area-inset-top, 0px);
   }
 
+  /* Absolute, not fixed: iOS 26 Safari tints its bars and the safe areas from a fixed element at the screen's edges in
+     place of the body, and this one has no background of its own, so they would keep the first color. The page does
+     not scroll, so it stays put all the same. */
   .screen {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 100vw;
     left: 100dvw;
@@ -109,6 +179,7 @@ body {
 
   .stage .album-cover-counter {
     font-size: clamp(12px, 1.8vh, 22px);
+    letter-spacing: 0.1em;
   }
 
   .stage .album-cover-category {
@@ -116,11 +187,21 @@ body {
   }
 
   .stage .album-cover-title {
-    font-size: clamp(18px, 3.8vh, 40px);
+    font-size: clamp(16px, 3.4vh, 36px);
   }
 
   .stage .album-cover-tracks {
     font-size: clamp(10px, 1.6vh, 20px);
+  }
+
+  /* Twice the bottom padding, so the last tracks sit clear of the buttons in the bottom corner. */
+  .stage .album-cover-body {
+    padding-bottom: 10cqw;
+  }
+
+  /* More room between tracks, so each is easier to tap. */
+  .stage .album-cover-track {
+    margin: 1.6cqw 0;
   }
 
   .stage .turntable {
@@ -141,6 +222,24 @@ body {
 
   .stage {
     padding: 3vh var(--gutter);
+  }
+
+  .stage .album-cover-counter {
+    letter-spacing: 0.1em;
+  }
+
+  .stage .album-cover-title {
+    font-size: 5.8cqw;
+  }
+
+  /* Twice the bottom padding, so the last tracks sit clear of the buttons in the bottom corner. */
+  .stage .album-cover-body {
+    padding-bottom: 10cqw;
+  }
+
+  /* More room between tracks, so each is easier to tap. */
+  .stage .album-cover-track {
+    margin: 1.6cqw 0;
   }
 
   #bottom-center {

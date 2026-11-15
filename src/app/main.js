@@ -1,56 +1,72 @@
+import { loadAerosolTrack } from '../features/tracks/data/aerosol-track-source.js';
+import { sampleAerosol } from '../features/tracks/domain/aerosol-track.js';
+import { aerosolCues, aerosolScore } from '../features/music/domain/aerosol-score.js';
+import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
 'use strict';
 
 // Composition root: wires the features together.
 
 import { albums, WILDFIRE_DAY_TIMELINE, WILDFIRE_YEAR_TIMELINE } from '../features/album/data/albums.js';
-import { albumDurationSec, trackBoundaries, trackCover, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
+import { ALBUM_CATEGORY_LABEL, albumDurationSec, trackBoundaries, trackCover, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
 import { createCatView } from '../features/cat/presentation/cat-view.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
+import { createMediaCenter } from '../features/controls/data/media-center.js';
 import { createAlbumSwitcher } from '../features/controls/presentation/album-switcher.js';
 import { createFullscreenButton } from '../features/controls/presentation/fullscreen-button.js';
 import { createGlassCapsule } from '../features/controls/presentation/glass-capsule.js';
+import { createMoreMenu } from '../features/controls/presentation/more-menu.js';
 import { createPlayButton } from '../features/controls/presentation/play-button.js';
 import { createPlayHint } from '../features/controls/presentation/play-hint.js';
-import { createSettingsMenu } from '../features/controls/presentation/settings-menu.js';
 import { createVolumeControl } from '../features/controls/presentation/volume-control.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
-import { DEFAULT_GLOBE_THEME, GlobeTheme } from '../features/globe/domain/globe-theme.js';
+import { DEFAULT_GLOBE_THEME } from '../features/globe/domain/globe-theme.js';
 import { createDateLabel } from '../features/globe/presentation/date-label.js';
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
 import { createHalo } from '../features/globe/presentation/halo.js';
 import { createSeaLevelOverlay } from '../features/globe/presentation/sea-level-overlay.js';
 import { smogColor } from '../features/globe/presentation/pollution-color.js';
 import { createWildfireOverlay } from '../features/globe/presentation/wildfire-overlay.js';
+import { ABOUT } from '../features/info/data/about.js';
+import { LICENSES } from '../features/info/data/licenses.js';
+import { ONBOARDING } from '../features/info/data/onboarding.js';
+import { createInfoDialog, renderAbout, renderLicenses } from '../features/info/presentation/info-dialog.js';
+import { createOnboarding } from '../features/info/presentation/onboarding.js';
 import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
+import { createSpatialPreview } from '../features/music/data/spatial-preview.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
 import { HurricaneComposer } from '../features/music/domain/composers/hurricane.js';
 import { LightningComposer } from '../features/music/domain/composers/lightning.js';
 import { SmogComposer } from '../features/music/domain/composers/smog.js';
+import { NoonComposer } from '../features/music/domain/composers/noon.js';
 import { seasonSong, StormSeasonComposer } from '../features/music/domain/composers/storm-season.js';
 import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
 import { annualBurnScore, seasonScore } from '../features/music/domain/wildfire-score.js';
 import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
 import { loadLightningTrack } from '../features/tracks/data/lightning-season-source.js';
 import { loadSmogTrack } from '../features/tracks/data/smog-source.js';
+import { loadNoonSong } from '../features/tracks/data/noon-line-source.js';
 import { loadStormSeason } from '../features/tracks/data/storm-season-source.js';
 import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack, loadWildfireTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
 import { boxFocus, hourlyAt, smogDurationSec } from '../features/tracks/domain/smog.js';
+import { STEP_SEC, airAt, lineLonAt } from '../features/tracks/domain/noon-line.js';
 import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
+import { pointInScreen, rectInScreen } from '../shared/screen-space.js';
+import { createTicker } from '../shared/ticker.js';
 
 // The contiguous United States, zoomed until the label's edge is 30 degrees of arc from its middle, so the West's fires
-// and the burn field read large.
+// read large.
 const CONUS_FOCUS = Object.freeze({ lat: 39, lon: -98, arcDeg: 30 });
 
 // Set by showAlbum().
@@ -60,19 +76,25 @@ let totalMs;
 // Data of each track of the album, by track index; null until loaded, and for tracks without data.
 /** @type {(import('../features/tracks/data/track-repository.js').IceSeaTrackData | null)[]} */
 let trackData = [];
+let aerosolData = [];
+let allAerosolNotes = [];
+// What the globe draws of each aerosol track's music, by track index (see aerosolCues).
+let aerosolTrackCues = [];
+let aerosolToggles = { salt: true, dust: true, smoke: true, sulfate: true };
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
 // The attribution of the globe's map and imagery, shown with the album's credits.
 let mapCredit = '';
 // What each track of the album plays, by track index, once its data has loaded (see the Song of sound-engine.js): its
-// birds (`tracks`, `lead`), its storm (`storm`), its year of lightning (`lightning`) or the smog around a city (`smog`),
-// or null for a track with none of them. Empty until then.
+// birds (`tracks`, `lead`), its storm (`storm`), its year of lightning (`lightning`) its forest under the noon line
+// (`forest`) or the smog around a city (`smog`), or null for a track with none of them. Empty until then.
 let songs = [];
 // The storm season each track of the album plays, by track index, once loaded (see seasonSong), or null for a track
 // without one; empty until then. The season the globe shows.
 let seasons = [];
 let shownSeason = null;
-// The song whose birds, storm or lightning the globe shows, and where they are now (the globe keeps them in the middle).
+// The song whose birds, storm, lightning or forest the globe shows, and where they are now (the globe keeps them in the
+// middle).
 let shownSong = null;
 let focus = null;
 // The pole the globe looks down on for an ice track, to glide there when it changes; null for other tracks.
@@ -84,7 +106,6 @@ let shownFireKey = null;
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
 let lastFrameTs = null;
-let tickFrame = null;
 // True while the records change; steps asked for meanwhile add up in pendingSteps.
 let swapping = false;
 let pendingSteps = 0;
@@ -95,9 +116,15 @@ const slot = (id) => document.getElementById(id);
 
 const backdrop = createBackdrop(document.documentElement);
 const playHint = createPlayHint(slot('bottom-center'));
-
 const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack });
+// Boxes and pointers in the layout's own pixels, which a portrait screen turned to show it landscape does not share
+// with the client's.
+const screenSpace = Object.freeze({
+  rectOf: (el) => rectInScreen(slot('screen'), el),
+  pointOf: (event) => pointInScreen(slot('screen'), event.clientX, event.clientY),
+});
 const turntable = createTurntableView(slot('stage'), {
+  space: screenSpace,
   onToggle: togglePlayback,
   onCued: () => {
     if (state === PlaybackState.CUEING) startPlaying();
@@ -140,8 +167,18 @@ const turntable = createTurntableView(slot('stage'), {
 });
 // The album's credits run round the record's rim.
 const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
+const particleToggles = createParticleToggles(turntable.label, (toggles) => {
+  aerosolToggles = toggles;
+  globe.aerosol.setToggles(toggles);
+  applyAerosolScore();
+});
 
-const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
+const recordSwap = createRecordSwap({
+  recordEl: turntable.recordEl,
+  recordGeometry: turntable.recordGeometry,
+  rectOf: screenSpace.rectOf,
+  column: albumColumn,
+});
 const globe = createGlobeView(turntable.labelSlot);
 const seaOverlay = createSeaLevelOverlay(turntable.labelSlot);
 const wildfireOverlay = createWildfireOverlay(turntable.labelSlot);
@@ -155,6 +192,23 @@ const flockComposer = new FlockComposer();
 const hurricaneComposer = new HurricaneComposer();
 const lightningComposer = new LightningComposer();
 const smogComposer = new SmogComposer();
+const ticker = createTicker(tick);
+// The system's media controls play and pause, and step through the tracks, on into the next or previous album.
+const mediaCenter = createMediaCenter({
+  onPlay: () => {
+    if (state === PlaybackState.STOPPED) togglePlayback();
+  },
+  onPause: () => {
+    if (state === PlaybackState.PLAYING || state === PlaybackState.CUEING) togglePlayback();
+  },
+  onPrevious: () => stepTrack(-1),
+  onNext: () => stepTrack(1),
+});
+const noonComposer = new NoonComposer();
+// The globe turns to keep the noon meridian in front, easing with this time constant; while playing, it aims this far
+// ahead of the line, so the eased camera settles on the line itself rather than trailing it.
+const FOREST_FOLLOW_TAU_SEC = 0.5;
+const MONTH_FORMAT = Object.freeze({ month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
@@ -171,13 +225,38 @@ createAlbumSwitcher(albumControls, {
 });
 const viewControls = createGlassCapsule(slot('corner-top-right'));
 createFullscreenButton(viewControls);
-createSettingsMenu(viewControls, {
-  globeThemes: Object.values(GlobeTheme).map((theme) => ({ value: theme, label: GLOBE_THEMES[theme].label })),
-  globeTheme: DEFAULT_GLOBE_THEME,
-  onGlobeThemeChange: applyGlobeTheme,
+const aboutDialog = createInfoDialog(slot('screen'), {
+  id: 'about',
+  title: 'Blue Vinyl',
+  subtitle: ABOUT.tagline,
+  body: renderAbout(ABOUT, albums.map(({ title, category }) => ({ title, category: ALBUM_CATEGORY_LABEL[category] }))),
+});
+const licenseDialog = createInfoDialog(slot('screen'), {
+  id: 'license',
+  title: 'Licenses',
+  subtitle: 'Software, sound, photos and data',
+  body: renderLicenses(LICENSES),
+});
+createMoreMenu(viewControls, {
+  items: [
+    { label: 'About', onSelect: () => aboutDialog.open() },
+    { label: 'License', onSelect: () => licenseDialog.open() },
+  ],
 });
 applyGlobeTheme(DEFAULT_GLOBE_THEME);
-createCatView();
+createCatView(slot('screen'));
+// A drag is no gesture audio may start from on a phone, so the onboarding's taps unlock the sound first.
+// The bars and the safe areas take the onboarding's color while it is up.
+backdrop.overlay(getComputedStyle(document.documentElement).getPropertyValue('--title-bg').trim());
+const onboarding = createOnboarding(slot('screen'), {
+  content: ONBOARDING,
+  stage: slot('stage'),
+  preview: createSpatialPreview(),
+  onStart: () => {
+    backdrop.overlay(null);
+    unlockSound();
+  },
+});
 
 // Album switch keys, as the previous and next chevrons.
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
@@ -189,7 +268,11 @@ const VOLUME_KEYS = Object.freeze({ ArrowUp: 1, ArrowDown: -1 });
 document.addEventListener(
   'keydown',
   (event) => {
-    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    // The onboarding keeps its keys while it is up: Space and Enter press its buttons, the arrows step through it.
+    if (event.altKey || event.ctrlKey || event.metaKey || onboarding.isOpen()) return;
+    // An open dialog or menu keeps its keys: Space and the arrows scroll the dialog or move through the menu.
+    if (document.querySelector('dialog[open]')) return;
+    if (event.target instanceof Element && event.target.closest('[role="menu"]')) return;
     if (event.code === 'Space') {
       event.preventDefault();
       releaseClickFocus();
@@ -199,7 +282,7 @@ document.addEventListener(
     const albumStep = ALBUM_KEYS[event.key];
     const volumeStep = VOLUME_KEYS[event.key];
     if (!albumStep && !volumeStep) return;
-    // The volume slider and the theme radios keep their arrows while used from the keyboard.
+    // The volume slider keeps its arrows while used from the keyboard.
     if (event.target instanceof HTMLInputElement && event.target !== clickFocused) return;
     event.preventDefault();
     releaseClickFocus();
@@ -222,11 +305,14 @@ function releaseClickFocus() {
   clickFocused = null;
 }
 
+// Safari ignores user-scalable=no (index.html) and touch-action for pinches, so its pinch gesture is cancelled here.
+document.addEventListener('gesturestart', (event) => event.preventDefault());
+
 // A focused button is pressed on Space's keyup, so that is held back too.
 document.addEventListener(
   'keyup',
   (event) => {
-    if (event.code === 'Space') event.preventDefault();
+    if (event.code === 'Space' && !onboarding.isOpen()) event.preventDefault();
   },
   { capture: true },
 );
@@ -254,6 +340,10 @@ function showAlbum(index) {
   musicCredits = [];
   music.load([]);
   loadAlbumData(album);
+  aerosolData = album.tracks.map(() => null);
+  allAerosolNotes = [];
+  aerosolTrackCues = [];
+  loadAerosolData(album);
 }
 
 /**
@@ -297,7 +387,7 @@ async function loadAlbumData(loading) {
       }));
     }
     if (track.wildfire?.kind === 'annual') {
-      return annualBurnScore(data[i].years, WILDFIRE_YEAR_TIMELINE, track.durationSec).map((note) => ({
+      return annualBurnScore(data[i].years, data[i].firesByYear, WILDFIRE_YEAR_TIMELINE, track.durationSec).map((note) => ({
         ...note,
         timeSec: note.timeSec + offset,
       }));
@@ -317,9 +407,10 @@ async function loadAlbumData(loading) {
   globe.glide();
 }
 
-// Loads the birds, the storm or the lightning of each of `target`'s tracks, unless another album is shown by then.
+// Loads the birds, the storm, the lightning or the forest of each of `target`'s tracks, unless another album is shown
+// by then.
 async function loadSongs(target) {
-  if (!target.tracks.some((track) => track.birdsUrl || track.storm || track.lightning || track.smog)) return;
+  if (!target.tracks.some((track) => track.birdsUrl || track.storm || track.lightning || track.forest || track.smog)) return;
   let perTrack;
   try {
     perTrack = await Promise.all(target.tracks.map((track) => loadSong(track, target)));
@@ -407,6 +498,22 @@ async function loadSong(track, target) {
       sampleAt: () => smogTrack,
     };
   }
+  if (track.forest) {
+    const forest = await loadNoonSong(track.forest);
+    return {
+      forest: true,
+      ...forest,
+      lead: track.lead,
+      // The album's first track opens with the listening legend.
+      legend: target.tracks.indexOf(track) === 0,
+      composer: noonComposer,
+      // Data time is the track's own time: the composer reads the step of the noon line from it.
+      startMs: 0,
+      msPerSec: 1000,
+      sampleAt: () => forest.line,
+      followTauSec: FOREST_FOLLOW_TAU_SEC,
+    };
+  }
   return null;
 }
 
@@ -437,21 +544,24 @@ function showSeason(song, color) {
 }
 
 // Puts `song`'s birds on the globe in `color`, and the glow in it; null takes them off. A storm's song clears the
-// birds and draws its storm instead (renderStorm).
+// birds and draws its storm instead (renderStorm); a forest's draws its canopy and noon line (renderForest).
 function showSong(song, color) {
   shownSong = song;
   focus = null;
   // A smog track looks at its city from close up.
   globe.setCloseUp(Boolean(song?.smog));
   globe.birds.reset(color);
+  globe.forest.reset(song?.forest ? song : null, color);
   globe.storm.show(null);
   halo.setSwirl(song?.storm ? () => globe.storm.swirl : null);
+  halo.setAir(0);
   dateLabel.show(null);
   if (color) halo.setColor(color);
 }
 
 // Audio may only start from a user gesture, so every gesture that can start playback unlocks it.
 function unlockSound() {
+  mediaCenter.unlock();
   music.unlock();
   soundEngine.unlock().catch((error) => console.error('sound engine failed to load', error));
 }
@@ -491,6 +601,28 @@ async function switchAlbum(step) {
   }
 }
 
+/**
+ * Plays the track `step` (-1 or 1) away from the current one. Past either end of the album it switches to the album
+ * next to it, as switchAlbum does, and plays its first track going forward or its last going back. A hidden page draws
+ * no frames for the records to change by, so there the album changes at once.
+ */
+async function stepTrack(step) {
+  if (swapping) return;
+  const next = trackIndexAt(album, elapsedMs / totalMs) + step;
+  if (next >= 0 && next < album.tracks.length) {
+    playFromTrack(next);
+    return;
+  }
+  if (document.hidden) {
+    elapsedMs = 0;
+    setState(PlaybackState.STOPPED);
+    showAlbum(wrapIndex(albumIndex + step, albums.length));
+  } else {
+    await switchAlbum(step);
+  }
+  playFromTrack(step > 0 ? 0 : album.tracks.length - 1);
+}
+
 // 0..1 through the track at `trackIndex`.
 function trackProgressAt(trackIndex) {
   return (elapsedMs / 1000 - trackStartSec(album, trackIndex)) / album.tracks[trackIndex].durationSec;
@@ -519,21 +651,32 @@ function seekTo(ms) {
     return;
   }
   unlockSound();
-  setState(PlaybackState.CUEING);
+  cue();
 }
 
 function togglePlayback() {
   if (swapping) return;
   unlockSound();
-  setState(state === PlaybackState.STOPPED ? PlaybackState.CUEING : PlaybackState.STOPPED);
+  if (state === PlaybackState.STOPPED) cue();
+  else setState(PlaybackState.STOPPED);
+}
+
+// A page hidden while the tonearm moves would wait for it until shown again, so it plays at once.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && state === PlaybackState.CUEING) startPlaying();
+});
+
+// Sets the tonearm down to play. A hidden page draws no frames, so the arm cannot move there: it plays at once.
+function cue() {
+  if (document.hidden) startPlaying();
+  else setState(PlaybackState.CUEING);
 }
 
 function startPlaying() {
   setState(PlaybackState.PLAYING);
   music.play(() => elapsedMs / 1000);
-  cancelAnimationFrame(tickFrame);
   lastFrameTs = null;
-  tickFrame = requestAnimationFrame(tick);
+  ticker.start();
 }
 
 function render() {
@@ -543,8 +686,15 @@ function render() {
   albumColumn.render(trackIndex);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
   backdrop.show(trackCover(album, trackIndex).url);
+  mediaCenter.setTrack({
+    key: `${album.id}:${trackIndex}`,
+    title: album.tracks[trackIndex].title,
+    album: album.title,
+    artworkUrl: trackCover(album, trackIndex).url,
+  });
   renderSong(trackIndex);
   renderData(trackIndex);
+  renderAerosol(trackIndex);
   renderSeason(trackIndex);
 }
 
@@ -629,8 +779,8 @@ function renderData(trackIndex) {
 
 /**
  * Draws the year or day of a wildfire track that plays at the clock, looking at the contiguous United States: the
- * year's burn field over the West (Burned Acres), or each large fire's scar, front and smoke that day (2020 Fire
- * Season). The globe and the read-out change only when the year or day does; the fires ease and flicker by themselves.
+ * year's large MTBS fires where they burned, lit through its bar in the order they started (Burned Acres), or each
+ * large fire's scar, front and smoke that day (2020 Fire Season). The globe and the read-out change only when the year or day does; the fires ease and flicker by themselves.
  *
  * @param {import('../features/tracks/data/track-repository.js').WildfireTrackData} data
  * @param {number} trackIndex
@@ -653,11 +803,14 @@ function renderWildfire(data, trackIndex) {
 
   if (data.kind === 'annual') {
     const year = data.years[at];
-    globe.showFires({ mode: 'annual', acres: year.acres, acresMax: data.acresMax });
+    const fires = data.firesByYear[at];
+    globe.showFires({ mode: 'annual', year: year.year, fires, spanSec: WILDFIRE_YEAR_TIMELINE.beatSec });
+    // The acres are NIFC's, all of the year's fires; the globe shows the large ones MTBS maps, none before 1984.
     const acresM = (year.acres / 1e6).toFixed(1);
+    const mapped = fires.length ? ` · ${fires.length} large fires mapped` : ' · no fire map before 1984';
     wildfireOverlay.render({
       title: String(year.year),
-      detail: year.isTop10 ? `${acresM} M acres · among the 10 largest` : `${acresM} M acres burned`,
+      detail: `${acresM} M acres${year.isTop10 ? ', among the 10 largest' : ' burned'}${mapped}`,
     });
     dateLabel.show(null);
     return;
@@ -670,6 +823,80 @@ function renderWildfire(data, trackIndex) {
     detail: `${Math.round(day.areaKm2).toLocaleString('en')} km² active · ${day.nFires} large fires`,
   });
   dateLabel.show(Date.parse(`${day.day}T12:00:00Z`));
+}
+
+async function loadAerosolData(loading) {
+  if (!loading.tracks.some((track) => track.aerosol)) return;
+  let data;
+  try {
+    data = await Promise.all(loading.tracks.map((track) => (track.aerosol ? loadAerosolTrack(track.aerosol) : null)));
+  } catch (error) {
+    console.warn('Aerosol data unavailable:', error);
+    return;
+  }
+  if (album !== loading) return;
+  aerosolData = data;
+  aerosolTrackCues = album.tracks.map((track, i) => (data[i] ? aerosolCues(data[i].records, track.durationSec, track) : []));
+  const starts = trackBoundaries(album).map((edge) => (edge * totalMs) / 1000);
+  allAerosolNotes = album.tracks.flatMap((track, i) => {
+    if (!data[i]) return [];
+    return aerosolScore(data[i].records, track.durationSec, track)
+      .map((note) => ({ ...note, timeSec: note.timeSec + starts[i] }));
+  });
+  applyAerosolScore();
+  musicCredits = [SOUNDFONT_CREDIT, 'Data: NASA GMAO GEOS-FP · NOAA NHC'];
+  if (state === PlaybackState.PLAYING) music.play(() => elapsedMs / 1000);
+  render();
+  globe.glide();
+}
+
+function applyAerosolScore() {
+  if (!album.tracks.some((track) => track.aerosol)) return;
+  const activeNotes = allAerosolNotes.filter((n) => {
+    if (n.part === 'salt') return aerosolToggles.salt;
+    if (n.part === 'dust') return aerosolToggles.dust;
+    if (n.part === 'smoke') return aerosolToggles.smoke;
+    if (n.part === 'sulfate') return aerosolToggles.sulfate;
+    return true;
+  });
+  music.load(activeNotes);
+  if (state === PlaybackState.PLAYING) {
+    music.play(() => elapsedMs / 1000);
+  }
+}
+
+function renderAerosol(trackIndex) {
+  const track = album.tracks[trackIndex];
+  const data = aerosolData[trackIndex];
+  if (album?.id !== 'aerosol' || !track?.aerosol || !data) {
+    globe.aerosol.hide();
+    globe.aerosolJourney.hide();
+    particleToggles.hide();
+    return;
+  }
+  particleToggles.show();
+  const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
+  globe.aerosol.setLead(track.aerosol.events.filter((e) => (e.level ?? 1) >= 1).map((e) => e.particle));
+  globe.aerosol.render(data.frames, trackSec, track.durationSec);
+  globe.aerosolJourney.render({
+    events: track.aerosol.events,
+    records: data.records,
+    frames: data.frames,
+    cues: aerosolTrackCues[trackIndex] ?? [],
+    trackSec,
+    durationSec: track.durationSec,
+    shown: aerosolToggles,
+  });
+
+  if (track.aerosol.trackEye) {
+    const s = sampleAerosol(data.records, trackSec / track.durationSec);
+    if (s) focus = { lat: s.current.viewLat, lon: s.current.viewLon, arcDeg: track.aerosol.arcDeg };
+  } else if (track.aerosol.viewLat !== undefined) {
+    focus = { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon, arcDeg: track.aerosol.arcDeg };
+  }
+
+  if (track.color) halo.setColor(track.color);
+  if (state === PlaybackState.PLAYING) halo.wake();
 }
 
 // Draws the birds, the date and the flock's place at the clock and, while playing, lets the music follow it.
@@ -691,6 +918,10 @@ function renderSong(trackIndex) {
   }
   if (song.smog) {
     renderSmog(trackIndex, song);
+    return;
+  }
+  if (song.forest) {
+    renderForest(trackIndex, song);
     return;
   }
   if (shownSong !== song) {
@@ -771,17 +1002,46 @@ function renderSmog(trackIndex, song) {
   halo.wake();
 }
 
+/**
+ * Draws the canopy and the noon meridian at the clock, the globe turned to keep the line facing the listener, and the
+ * month with its CO₂ thickening the air; while playing, lets the music follow it.
+ */
+function renderForest(trackIndex, song) {
+  if (shownSong !== song) {
+    showSong(song, album.tracks[trackIndex].color);
+    globe.glide();
+  }
+  const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  const step = Math.max(0, elapsedSec / STEP_SEC);
+  globe.forest.render(song, step, state === PlaybackState.PLAYING);
+  const air = airAt(song.air, step);
+  const month = new Date(`${air.month}-01T00:00:00Z`).toLocaleDateString('en', MONTH_FORMAT);
+  dateLabel.showText(`${month} · ${air.ppm.toFixed(1)} ppm`);
+  halo.setAir(air.thickness);
+  // The equator under the noon line, in the fitted view. Playing, the line moves west at a steady pace, and a camera
+  // easing after it with time constant τ trails it by τ of travel, so it aims τ ahead.
+  const lead = state === PlaybackState.PLAYING ? FOREST_FOLLOW_TAU_SEC / STEP_SEC : 0;
+  focus = { lat: 0, lon: lineLonAt(step + lead) };
+  if (state !== PlaybackState.PLAYING) return;
+  soundEngine.follow(song, elapsedSec);
+  halo.wake();
+}
+
 function setState(next) {
   if (next !== PlaybackState.PLAYING) music.stop();
   state = next;
   if (state !== PlaybackState.PLAYING) soundEngine.stop();
+  mediaCenter.setPlaying(state === PlaybackState.PLAYING || state === PlaybackState.CUEING);
   playHint.render(state);
   playButton.render(state);
   render();
 }
 
 function tick(ts) {
-  if (state !== PlaybackState.PLAYING) return;
+  if (state !== PlaybackState.PLAYING) {
+    ticker.stop();
+    return;
+  }
   const dtMs = lastFrameTs === null ? 0 : ts - lastFrameTs;
   // The ice and sea music sets the clock while it plays, so the globe follows what is heard; otherwise the frames do.
   const heardSec = music.positionSec();
@@ -794,8 +1054,7 @@ function tick(ts) {
     return;
   }
   render();
-  if (!globe.gliding) globe.follow(dtMs / 1000);
-  tickFrame = requestAnimationFrame(tick);
+  if (!globe.gliding) globe.follow(dtMs / 1000, shownSong?.followTauSec);
 }
 
 showAlbum(albumIndex);

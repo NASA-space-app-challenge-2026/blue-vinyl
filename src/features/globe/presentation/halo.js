@@ -3,6 +3,9 @@
 // in the air, a thin near-white band hugs the rim and a haze in the track's colour fades out beyond it; where a band
 // is loud the rim brightens and the haze reaches further. It fades away with the music. Given a swirl (setSwirl), the
 // haze streams out in spiral arms that turn with it, anticlockwise, as wind leaving a storm.
+//
+// An album can also thicken the air (setAir): the haze then reaches further and stronger all round, whatever the
+// music, like the blanket of CO₂ the forest album plays.
 
 // The same three.js revision globe.gl@2.46.2 bundles.
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
@@ -29,6 +32,8 @@ const COLOR_TAU_SEC = 0.4;
 // The swirl's spiral arms around the rim, and how fast they climb outward (radians of phase per globe radius); at full
 // strength the haze ranges from `floor` between arms to 1 + `lift` on them.
 const SWIRL = Object.freeze({ arms: 6, outward: 14, floor: 0.12, lift: 1.2 });
+// What a fully thick air (setAir(1)) adds to the haze's reach (globe radii) and strength.
+const AIR = Object.freeze({ reach: 0.16, gain: 0.45 });
 
 // A JS number as a GLSL float literal.
 const f = (v) => v.toFixed(4);
@@ -47,6 +52,7 @@ uniform float uRadius;
 uniform vec3 uColor;
 uniform float uSwirlPhase;
 uniform float uSwirlStrength;
+uniform float uAir;
 void main() {
   vec2 p = gl_FragCoord.xy - uCenter;
   // 0 at 6 o'clock to 1 at 12 on both sides, sampled between texel centres so the bands blend.
@@ -56,8 +62,9 @@ void main() {
   float h = length(p) / uRadius - 1.0;
   float x = h / ${f(RIM_WIDTH)};
   float rim = exp(-x * x) * mix(${f(RIM_GAIN.silent)}, ${f(RIM_GAIN.loud)}, level);
-  float haze = exp(-max(h, 0.0) / mix(${f(HAZE_REACH.silent)}, ${f(HAZE_REACH.loud)}, level)) * step(0.0, h)
-    * mix(${f(HAZE_GAIN.silent)}, ${f(HAZE_GAIN.loud)}, level);
+  float reach = mix(${f(HAZE_REACH.silent)}, ${f(HAZE_REACH.loud)}, level) + uAir * ${f(AIR.reach)};
+  float haze = exp(-max(h, 0.0) / reach) * step(0.0, h)
+    * (mix(${f(HAZE_GAIN.silent)}, ${f(HAZE_GAIN.loud)}, level) + uAir * ${f(AIR.gain)});
   // Arms turning anticlockwise with the phase (angles grow anticlockwise, y up) and so climbing outward: a crest sits
   // where the angle less the phase, times the arms, plus the climb is constant.
   float arm = 0.5 + 0.5 * sin(${f(SWIRL.arms)} * (atan(p.x, -p.y) - uSwirlPhase) + ${f(SWIRL.outward)} * max(h, 0.0));
@@ -93,6 +100,7 @@ export function createHalo(canvas, getAnalyser) {
       uColor: { value: color },
       uSwirlPhase: { value: 0 },
       uSwirlStrength: { value: 0 },
+      uAir: { value: 0 },
     },
     blending: THREE.NoBlending,
     depthTest: false,
@@ -128,6 +136,11 @@ export function createHalo(canvas, getAnalyser) {
    */
   function setSwirl(next) {
     getSwirl = next;
+  }
+
+  /** @param {number} thickness 0 (the music alone) to 1 (the thickest air) */
+  function setAir(thickness) {
+    material.uniforms.uAir.value = thickness;
   }
 
   /** Starts drawing frames, if not already; they stop by themselves once the music has fallen silent. */
@@ -182,5 +195,5 @@ export function createHalo(canvas, getAnalyser) {
     return levels.some((level) => level > 0) ? levels : null;
   }
 
-  return { place, setColor, setSwirl, wake };
+  return { place, setColor, setSwirl, setAir, wake };
 }

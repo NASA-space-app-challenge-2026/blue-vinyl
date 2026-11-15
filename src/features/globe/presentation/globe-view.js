@@ -1,3 +1,5 @@
+import { createAerosolJourney } from './aerosol-journey.js';
+import { createAerosolLayer } from './aerosol-layer.js';
 import { createIceFall } from './ice-fall.js';
 import { createIceFields, createIceMorph } from './ice-morph.js';
 
@@ -8,6 +10,7 @@ import { createSmogLayer } from './smog-layer.js';
 import { createStormLayer } from './storm-view.js';
 import { createStormsLayer } from './storms-layer.js';
 import { createFiresLayer } from './fires-layer.js';
+import { createNoonLayer } from './noon-layer.js';
 
 // globe.gl is loaded as a UMD bundle in index.html: it ships one copy of three.js,
 // while the ESM build pulls several three.js versions from the CDN.
@@ -17,6 +20,10 @@ const { Globe } = globalThis;
 const MAX_ZOOM = 9;
 // A globe allowed close up may be brought this close (camera altitude, in globe radii), closer than MAX_ZOOM.
 const CLOSE_UP_MIN_ALTITUDE = 0.01;
+// three.js's own near plane, and how far in front of the globe's centre (in radii) the near plane stays: well clear of
+// anything drawn above the surface.
+const DEFAULT_NEAR = 0.1;
+const NEAR_MARGIN = 1.5;
 // Edge of a map tile in texels.
 const TILE_PX = 256;
 // Pieces of ice that fall when a year loses ice: one per PIECE_CELLS cells of net loss (a cell is about 1,000 km²),
@@ -47,7 +54,7 @@ function altitudeForArc(camera, arcDeg) {
 /**
  * Interactive WebGL globe that fills its container. Drag to rotate, scroll to zoom in.
  * Zooming out stops at the fitted size, so the globe never shrinks away from the label edge.
- * It turns to keep a focus point (the flock, or the pole of a track's ice) at its centre; turned or zoomed by hand, it glides back a moment after release.
+ * It turns to keep a focus point (the flock, the noon line, or the pole of a track's ice) at its centre; turned or zoomed by hand, it glides back a moment after release.
  *
  * It can draw a track's sea ice, morphing from year to year. When a year loses ice, pieces of it fall from where it
  * was into the water at the bottom of the label. It can draw a hurricane (storm), and a year of lightning with the
@@ -87,6 +94,11 @@ export function createGlobeView(container) {
   function setDistanceLimits() {
     controls.minDistance = radius * (1 + (closeUp ? CLOSE_UP_MIN_ALTITUDE : fitAltitude / MAX_ZOOM));
     controls.maxDistance = radius * (1 + fitAltitude);
+    // The narrow lens puts the camera tens of radii away. With three.js's default near plane the depth buffer then
+    // cannot tell apart layers a few thousandths of a radius above the surface (the aerosol shell, the lightning sky,
+    // the ice), and they flicker against the globe; a near plane just short of the globe keeps them apart.
+    camera.near = Math.max(DEFAULT_NEAR, controls.minDistance - radius * NEAR_MARGIN);
+    camera.updateProjectionMatrix();
   }
 
   /**
@@ -248,7 +260,10 @@ export function createGlobeView(container) {
     }, RETURN_DELAY_MS);
   });
 
-  /** Eases the north-up globe so the focus moves toward its centre, and the zoom back to the fitted size, over `dt` seconds. */
+  /**
+   * Eases the north-up globe so the focus moves toward its centre, and the zoom toward the fitted size (or the share of
+   * it the focus asks for with `zoom`, closer below 1), over `dt` seconds.
+   */
   function follow(dt, tau = FOLLOW_TAU_SEC) {
     if (userTurning) return;
     const focus = getFocus();
@@ -300,12 +315,15 @@ export function createGlobeView(container) {
     return (2 * gap * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(1, container.clientHeight);
   }
 
-  // Birds, storms and the smog's cities are never on the globe together: each layer sets the globe's HTML elements
+  const aerosol = createAerosolLayer(globe);
+  const aerosolJourney = createAerosolJourney(globe);
+  // Birds, storms, the forest and the smog's cities are never on the globe together: each layer sets the globe's HTML elements
   // while it is shown.
   const layerView = { globe, unitsPerPx, setElements: (elements) => globe.htmlElementsData(elements) };
   const birds = createBirdsLayer(layerView);
   const storms = createStormsLayer(layerView);
   const fires = createFiresLayer({ globe });
+  const forest = createNoonLayer(layerView);
   globe.htmlElement('el').htmlTransitionDuration(0);
   const storm = createStormLayer({ globe, container });
 
@@ -320,10 +338,13 @@ export function createGlobeView(container) {
     showFires: fires.show,
     setWaterLine,
     birds,
+    aerosol,
+    aerosolJourney,
     lightning,
     smog,
     storm,
     storms,
+    forest,
     /** @param {() => ({ lat: number, lon: number, arcDeg?: number } | null)} next */
     setFocus(next) {
       getFocus = next;

@@ -25,12 +25,14 @@ const GROOVE_GLINT = Object.freeze({ minDeg: 20, spreadDeg: 70 });
 // Fixed reflections of a light at the upper left: two opposite wedges, a wide soft one and a narrow bright one.
 const SHEEN = Object.freeze({ angleDeg: -50, wide: { halfDeg: 16, opacity: 0.09 }, narrow: { halfDeg: 4, opacity: 0.14 }, blur: 0.03 });
 // The credits run round the record's rim, in the band outside the grooves, turning with the record: centred on
-// `radius`, read clockwise from 6 o'clock so they sit upright and centred at 12 at rest, at `fontSize` unless they need
-// less to fit `maxTurn` of the circle.
-const CREDIT = Object.freeze({ radius: (GROOVE.outerRadius + 1) / 2, fontSize: 0.026, maxTurn: 0.96 });
+// `radius`, halfway between the first track's groove and the rim, read clockwise from 6 o'clock so they sit upright and
+// centred at 12 at rest, at `fontSize` unless they need less to fit `maxTurn` of the circle. Their baseline runs
+// half their capitals' height (`capHeightEm`, of the font size) inside `radius`, so the letters are centred on it the
+// same in every browser, which place dominant-baseline along a path each their own way.
+const CREDIT = Object.freeze({ radius: (GROOVE.outerRadius + 1) / 2, fontSize: 0.026, maxTurn: 0.96, capHeightEm: 0.7 });
 const ARM_WIDTH = 0.018;
-// Invisible stroke along the tube that makes the thin arm easy to grab.
-const ARM_GRAB_WIDTH = 0.08;
+// Invisible stroke along the tube that makes the thin arm easy to grab; wider for a finger than for a mouse.
+const ARM_GRAB_WIDTH = Object.freeze({ fine: 0.08, coarse: 0.24 });
 const COUNTERWEIGHT = Object.freeze({ length: 0.2, width: 0.07, height: 0.09, rings: 5 });
 const BASE_RADIUS = 0.12;
 const BEARING_RADIUS = 0.065;
@@ -134,9 +136,9 @@ function stops(colors) {
   return colors.map(([offset, color]) => `<stop offset="${offset}" stop-color="${color}"/>`).join('');
 }
 
-// The circle the credits run along: from 6 o'clock clockwise round and back, so its middle is at 12.
-function creditPath() {
-  const r = CREDIT.radius;
+// The circle of radius `r` the credits' baseline runs along: from 6 o'clock clockwise round and back, so its middle
+// is at 12.
+function creditPath(r) {
   return `M 0 ${r} A ${r} ${r} 0 1 1 0 ${-r} A ${r} ${r} 0 1 1 0 ${r}`;
 }
 
@@ -160,9 +162,9 @@ function vinylSpinSvg() {
     const length = GROOVE_GLINT.minDeg + ((i * 53) % GROOVE_GLINT.spreadDeg);
     glints.push(arc(g, start, start + length, COLOR.grooveGlint));
   }
-  return `<defs><path id="vinyl-credit-path" d="${creditPath()}"/></defs>
+  return `<defs><path id="vinyl-credit-path" d="${creditPath(CREDIT.radius)}"/></defs>
     ${glints.join('')}
-    <text class="vinyl-credit" fill="${COLOR.credit}" dominant-baseline="middle">
+    <text class="vinyl-credit" fill="${COLOR.credit}">
       <textPath href="#vinyl-credit-path" startOffset="50%" text-anchor="middle"></textPath>
     </text>`;
 }
@@ -202,7 +204,7 @@ function tonearmSvg() {
   });
   const lift = FINGER_LIFT;
   return `
-    ${tubeStroke('transparent', ARM_GRAB_WIDTH)}
+    ${tubeStroke('transparent', matchMedia('(pointer: coarse)').matches ? ARM_GRAB_WIDTH.coarse : ARM_GRAB_WIDTH.fine)}
     ${body}
     <g filter="url(#arm-tube-soft)">${bands.join('')}</g>
     <rect x="${-weight.width / 2}" y="${weight.length - weight.height}" width="${weight.width}"
@@ -253,6 +255,9 @@ function layer(className, markup) {
 // The progress ring in the label's own units (radius 1 at its rim, where the globe's edge is): the rail runs centred
 // on that edge; how thick it is, and how wide a band round it takes a click.
 const RING = Object.freeze({ radius: 1, width: 0.014, dotRadius: 0.024, hitWidth: 0.09 });
+// The ring's drawing reaches this far (label units) past the rim on every side, so the dot, its shadow and the click
+// band lie inside it: Safari clips what an SVG draws outside its own box, overflow: visible or not.
+const RING_BLEED = 0.1;
 // A change of more than JUMP (share of a turn) within a track, such as a seek, glides there over GLIDE_MS instead of
 // jumping; playback itself moves far less than JUMP a frame.
 const RING_GLIDE = Object.freeze({ jump: 0.02, ms: 450 });
@@ -283,10 +288,19 @@ function arcFromTop(share) {
  *
  * @param {(trackProgress: number) => void} onSeek
  */
-function createProgressRing(onSeek) {
+function createProgressRing(onSeek, { rectOf, pointOf }) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'record-progress');
-  svg.setAttribute('viewBox', '-1 -1 2 2');
+  const side = 2 * (1 + RING_BLEED);
+  svg.setAttribute('viewBox', `${-side / 2} ${-side / 2} ${side} ${side}`);
+  // The label is 2 units across, so the bleed is RING_BLEED / 2 of its width on each side.
+  const bleedPercent = (RING_BLEED / 2) * 100;
+  Object.assign(svg.style, {
+    left: `${-bleedPercent}%`,
+    top: `${-bleedPercent}%`,
+    width: `${100 + 2 * bleedPercent}%`,
+    height: `${100 + 2 * bleedPercent}%`,
+  });
   svg.innerHTML = `
     <circle class="record-progress-rail" r="${RING.radius}" fill="none" stroke-width="${RING.width}"/>
     <path class="record-progress-fill" fill="none" stroke-width="${RING.width}"/>
@@ -296,9 +310,10 @@ function createProgressRing(onSeek) {
   const dot = svg.querySelector('.record-progress-dot');
 
   svg.querySelector('.record-progress-hit').addEventListener('click', (event) => {
-    const rect = svg.getBoundingClientRect();
-    const x = event.clientX - (rect.left + rect.width / 2);
-    const y = event.clientY - (rect.top + rect.height / 2);
+    const rect = rectOf(svg);
+    const pointer = pointOf(event);
+    const x = pointer.x - (rect.left + rect.width / 2);
+    const y = pointer.y - (rect.top + rect.height / 2);
     // Clockwise from 12 o'clock, 0..1.
     const turn = (Math.atan2(x, -y) / (2 * Math.PI) + 1) % 1;
     onSeek(turn);
@@ -386,14 +401,18 @@ function createProgressRing(onSeek) {
  *   onHandHold: () => void,
  *   onHandTurn: (sec: number) => void,
  *   onHandRelease: () => void,
+ *   space: { rectOf: (el: Element) => DOMRectReadOnly, pointOf: (event: PointerEvent) => { x: number, y: number } },
  * }} options
  *   onToggle: called when the record is clicked off the grooves.
  *   onCued: called when the arm, swung on by render(CUEING), has reached its groove.
+ *   space: an element's box and a pointer's place in the pixels of the layout the turntable is drawn in, which a
+ *     turned screen does not share with the client's (see shared/screen-space.js); pointers are read in them.
  */
 export function createTurntableView(
   parent,
-  { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek, onSelectGroove, onHandHold, onHandTurn, onHandRelease },
+  { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek, onSelectGroove, onHandHold, onHandTurn, onHandRelease, space },
 ) {
+  const { rectOf, pointOf } = space;
   const root = document.createElement('div');
   root.className = 'turntable';
   root.style.aspectRatio = `${BOUNDS.width} / ${BOUNDS.height}`;
@@ -406,6 +425,7 @@ export function createTurntableView(
   const trackGaps = vinylLayer.querySelector('.vinyl-track-gaps');
   const credit = spinner.querySelector('.vinyl-credit');
   const creditText = credit.querySelector('textPath');
+  const creditBaseline = spinner.querySelector('#vinyl-credit-path');
 
   // Label area, positioned over the label circle in percentages of the layers' view box.
   const label = document.createElement('div');
@@ -420,7 +440,7 @@ export function createTurntableView(
   labelSlot.className = 'record-label-slot';
   const rim = document.createElement('div');
   rim.className = 'record-label-rim';
-  const progressRing = createProgressRing(onSeek);
+  const progressRing = createProgressRing(onSeek, space);
   label.append(labelSlot, rim, progressRing.el);
 
   const armLayer = layer('turntable-arm-layer', armLayerSvg());
@@ -437,8 +457,12 @@ export function createTurntableView(
 
   root.append(record, armLayer);
   vinylTop.addEventListener('click', (event) => {
-    // A press that held or turned the record is not a click on it.
-    if (!clicked) return;
+    // A press that held or turned the record is not a click on it, nor is a tap that began on the arm: a phone sends
+    // its click to what is under the finger once the lifted arm has moved off, the record.
+    const pressed = clicked;
+    clicked = false;
+    // A tap on the record while the other hand holds the arm would cue or stop under it.
+    if (!pressed || dragging) return;
     const progress = grooveProgress(pointerRadius(event));
     if (progress >= 0 && progress <= 1) onSelectGroove(progress);
     else onToggle();
@@ -457,7 +481,7 @@ export function createTurntableView(
   let angle = 0;
   // Whether a hand holds the record, and whether the last press on it was a click (short, and didn't turn it).
   let held = false;
-  let clicked = true;
+  let clicked = false;
 
   function placeArm() {
     arm.setAttribute('transform', `translate(${PIVOT.x} ${PIVOT.y}) rotate(${bearing})`);
@@ -551,21 +575,24 @@ export function createTurntableView(
 
   // Distance (vinyl radii) from the record centre to a pointer event; the grooves are round, so the spin doesn't matter.
   function pointerRadius(event) {
-    const { x, y, r } = recordGeometry();
-    return Math.hypot(event.clientX - x, event.clientY - y) / r;
+    const { x, y, r } = recordGeometry(rectOf);
+    const pointer = pointOf(event);
+    return Math.hypot(pointer.x - x, pointer.y - y) / r;
   }
 
   // Angle (degrees clockwise from up) of a pointer event round the record centre.
   function pointerAngle(event) {
-    const { x, y } = recordGeometry();
-    return Math.atan2(event.clientX - x, -(event.clientY - y)) / RAD;
+    const { x, y } = recordGeometry(rectOf);
+    const pointer = pointOf(event);
+    return Math.atan2(pointer.x - x, -(pointer.y - y)) / RAD;
   }
 
   // Bearing (degrees clockwise from up, 0..360) from the pivot to a pointer event.
   function pointerBearing(event) {
-    const rect = armLayer.getBoundingClientRect();
-    const x = BOUNDS.left + ((event.clientX - rect.left) / rect.width) * BOUNDS.width;
-    const y = BOUNDS.top + ((event.clientY - rect.top) / rect.height) * BOUNDS.height;
+    const rect = rectOf(armLayer);
+    const pointer = pointOf(event);
+    const x = BOUNDS.left + ((pointer.x - rect.left) / rect.width) * BOUNDS.width;
+    const y = BOUNDS.top + ((pointer.y - rect.top) / rect.height) * BOUNDS.height;
     return (Math.atan2(x - PIVOT.x, -(y - PIVOT.y)) / RAD + 360) % 360;
   }
 
@@ -659,9 +686,13 @@ export function createTurntableView(
 
   placeArm();
 
-  /** Record centre and radius in client pixels, at rest on the platter. */
-  function recordGeometry() {
-    const rect = root.getBoundingClientRect();
+  /**
+   * Record centre and radius in client pixels, at rest on the platter; or in the pixels `rectOf` measures boxes in.
+   *
+   * @param {(el: Element) => DOMRectReadOnly} [rectOf]
+   */
+  function recordGeometry(rectOf = (el) => el.getBoundingClientRect()) {
+    const rect = rectOf(root);
     return {
       x: rect.left + (-BOUNDS.left / BOUNDS.width) * rect.width,
       y: rect.top + (-BOUNDS.top / BOUNDS.height) * rect.height,
@@ -675,7 +706,9 @@ export function createTurntableView(
     credit.setAttribute('font-size', String(CREDIT.fontSize));
     const room = CREDIT.maxTurn * 2 * Math.PI * CREDIT.radius;
     const length = credit.getComputedTextLength();
-    if (length > room) credit.setAttribute('font-size', String((CREDIT.fontSize * room) / length));
+    const fontSize = length > room ? (CREDIT.fontSize * room) / length : CREDIT.fontSize;
+    credit.setAttribute('font-size', String(fontSize));
+    creditBaseline.setAttribute('d', creditPath(CREDIT.radius - (CREDIT.capHeightEm * fontSize) / 2));
   }
 
   /** @param {number[]} trackStarts progress (0..1) where each track after the first begins, drawn as brighter grooves */
@@ -697,7 +730,9 @@ export function createTurntableView(
       if (!onRecord) drop();
       setProgress(progress);
     } else if (state === PlaybackState.PLAYING || state === PlaybackState.HELD) {
-      // A record held by hand keeps the needle on it, following where the hand turns it.
+      // A record held by hand keeps the needle on it, following where the hand turns it. Playback started while the
+      // page was hidden skipped the cue, so the arm sets down now.
+      if (!onRecord) drop();
       setProgress(progress);
     }
   }
@@ -708,5 +743,5 @@ export function createTurntableView(
     return { x: label.offsetLeft + r, y: label.offsetTop + r, r };
   }
 
-  return { labelSlot, haloCanvas, labelDisc, recordEl: record, recordGeometry, setCredit, setTrackStarts, render };
+  return { label, labelSlot, haloCanvas, labelDisc, recordEl: record, recordGeometry, setCredit, setTrackStarts, render };
 }

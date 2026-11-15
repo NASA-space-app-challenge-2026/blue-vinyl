@@ -52,6 +52,28 @@ function panned(context, destination, pan) {
   return byPan.get(pan);
 }
 
+// A note placed in space (see NoteEvent.space) goes through an HRTF panner, as the bird album places its flock (see
+// sound-engine.js): the listener faces north (-z), east is +x, and the note sits `gone` of the way from `near` to
+// `far`, its level falling to near/far with the inverse model. One panner per place, rounded to these steps.
+const SPACE = Object.freeze({ near: 1, far: 3, angleStepDeg: 5, goneStep: 0.05 });
+const PANNER = Object.freeze({ panningModel: 'HRTF', distanceModel: 'inverse', refDistance: SPACE.near, rolloffFactor: 1 });
+const placers = new WeakMap();
+function placed(context, destination, { angle, gone }) {
+  if (!placers.has(destination)) placers.set(destination, new Map());
+  const byPlace = placers.get(destination);
+  const a = Math.round((((angle * 180) / Math.PI) % 360) / SPACE.angleStepDeg) * SPACE.angleStepDeg;
+  const g = Math.round(Math.max(0, Math.min(1, gone)) / SPACE.goneStep) * SPACE.goneStep;
+  const key = `${a}:${g.toFixed(2)}`;
+  if (!byPlace.has(key)) {
+    const radius = SPACE.near + g * (SPACE.far - SPACE.near);
+    const rad = (a * Math.PI) / 180;
+    const panner = new PannerNode(context, { ...PANNER, positionX: radius * Math.sin(rad), positionY: 0, positionZ: -radius * Math.cos(rad) });
+    panner.connect(destination);
+    byPlace.set(key, panner);
+  }
+  return byPlace.get(key);
+}
+
 // One copy of a sample, faded in at `fadeIn` and out at `fadeOut` (context times), starting `offsetSec` into it.
 function voice(context, destination, buffer, { at, offsetSec, gain, attackSec, fadeOutAt, releaseSec }) {
   const source = context.createBufferSource();
@@ -86,7 +108,7 @@ export function scheduleNotes(context, destination, notes, samples, fromSec, sta
     if (end + note.releaseSec <= fromSec) continue;
     const buffer = samples.get(sampleKey(note.instrument, note.midi));
     if (!buffer) continue;
-    const out = panned(context, destination, note.pan);
+    const out = note.space ? placed(context, destination, note.space) : panned(context, destination, note.pan);
     if (note.durationSec <= buffer.duration - note.releaseSec) {
       const offsetSec = Math.max(0, fromSec - note.timeSec);
       if (offsetSec >= buffer.duration) continue;
