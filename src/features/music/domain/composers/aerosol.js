@@ -7,8 +7,7 @@
 //     speed -> loudness and brightness
 //   the air: one sustained instrument for each of the other three particle types, held on a chord tone, never quieter than
 //     AIR_LOUDNESS's low end and louder the thicker that type's AOD at the lead's head, on a log scale (EIC's, down to the
-//     thinnest air a frame holds); a type whose toggle is off is silent, as it is on
-//     the globe
+//     thinnest air a frame holds); a type whose toggle is off is silent, as it is on the globe
 
 import { Effect } from '../effects.js';
 import { CC, Instrument } from '../instruments.js';
@@ -44,8 +43,6 @@ const AIR_PARTICLES = Object.freeze(Object.keys(AIR));
 // How loud a particle type's instrument is, as a share of full, from the thinnest air (still plainly heard) to the
 // thickest.
 const AIR_LOUDNESS = Object.freeze([0.35, 1]);
-// The SoundFont's expression (CC 11) scales the level by (expression/127)², so the loudness follows the AOD's level
-// when the expression is the level's square root.
 const SPACE = Object.freeze({ reverb: 0.4, echo: 0.18, echoSteps: 3, feedback: 0.4 });
 
 const lerp = ([from, to], amount) => from + (to - from) * amount;
@@ -120,7 +117,8 @@ export class AerosolComposer {
     this.voice = music.voice(lead, { ...this.soundOf({ lat: this.song.hero.lat.min, east: 0, speedKm: 0 }), gain: 0 }, at);
   }
 
-  // Sets how loud a particle type sounds: its AOD at the lead's head, none when its toggle is off.
+  // Sets how loud a particle type sounds: its AOD at the lead's head, none when its toggle is off. The SoundFont's
+  // expression (CC 11) scales the level by (expression/127)², so the expression is the loudness's square root.
   mixAir(music, particle, { aods, on }, at) {
     const expression = on[PARTICLE_TOGGLE[particle]] ? Math.round(127 * Math.sqrt(lerp(AIR_LOUDNESS, levelOf(aods[particle], SOUND_AOD)))) : 0;
     if (this.expression[particle] === expression) return;
