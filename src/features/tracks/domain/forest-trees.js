@@ -26,10 +26,10 @@ export const TREE_KINDS = Object.freeze([
   { kind: TreeKind.SILVER, fromM: 20 },
   { kind: TreeKind.GOLD, fromM: 28 },
 ]);
-// A tree for every `cellsPerTree` forest cells (0.25°) of a square, so a thick forest has many. Each starts to grow
+// A tree for every `cellsPerTree` forest cells (0.25°) of a square, so a thick forest has more. Each starts to grow
 // `afterStep` steps after the noon line has crossed it, plus a random time inside a window that is `thinWindow` steps
 // long for a thin forest and `thickWindow` for a thick one, so a thick forest bursts and a thin one trickles.
-const TREE_PICK = Object.freeze({ cellsPerTree: 32, afterStep: 1, thinWindow: 9, thickWindow: 1 });
+const TREE_PICK = Object.freeze({ cellsPerTree: 64, afterStep: 1, thinWindow: 9, thickWindow: 1 });
 // Every tree shoots up at one pace: the smallest reaches its tips in `smallestSec`, a bigger one in proportion to its size.
 const TREE_GROWTH = Object.freeze({ smallestSec: 0.2 });
 const PICK_SEED = 58;
@@ -100,7 +100,11 @@ export function pickTrees(map) {
         const j = Math.floor(random() * (i + 1));
         [forest[i], forest[j]] = [forest[j], forest[i]];
       }
-      const count = Math.max(1, Math.round(forest.length / TREE_PICK.cellsPerTree));
+      // A square's trees: its forest cells over `cellsPerTree`, the whole trees and then, by chance, one more for the rest,
+      // so a thin square often stands empty and a thick one always has its tree.
+      const wanted = forest.length / TREE_PICK.cellsPerTree;
+      const count = Math.floor(wanted) + (random() < wanted - Math.floor(wanted) ? 1 : 0);
+      if (!count) continue;
       for (let t = 0; t < count; t++) {
         const run = forest.slice(Math.floor((t * forest.length) / count), Math.floor(((t + 1) * forest.length) / count));
         const heights = run.map((cell) => cell.metres).sort((a, b) => a - b);
