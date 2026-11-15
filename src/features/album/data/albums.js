@@ -50,10 +50,10 @@ const WILDFIRE_COVERS = 'assets/albums/wildfire';
 export const WILDFIRE_YEAR_TIMELINE = Object.freeze({ introSec: 0, beatSec: 0.68, tailSec: 1.3 });
 const WILDFIRE_YEARS = 42;
 const WILDFIRE_ANNUAL_SEC = trackDurationSec(WILDFIRE_YEAR_TIMELINE, WILDFIRE_YEARS);
-// 214 days of the 2020 large-fire season (Jun 1 – Dec 31), a day a beat of 0.13 s, then a tail: 29.0 s. The year
-// timeline's functions read it the same way, one beat a day instead of a year.
+// 160 days of the 2020 large-fire season (Jun 1 – Nov 7, the last day a large fire still burns), a day a beat of
+// 0.13 s, then a tail: 22.0 s. The year timeline's functions read it the same way, one beat a day instead of a year.
 export const WILDFIRE_DAY_TIMELINE = Object.freeze({ introSec: 0, beatSec: 0.13, tailSec: 1.2 });
-const WILDFIRE_DAYS = 214;
+const WILDFIRE_DAYS = 160;
 const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAYS);
 
 const FOREST_TRACKS = 'data/forest/tracks';

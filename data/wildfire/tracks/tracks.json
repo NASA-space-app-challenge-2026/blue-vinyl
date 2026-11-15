@@ -39,7 +39,7 @@
     "title": "2020 Fire Season",
     "file": "feds_2020_daily_large_fires.csv",
     "globe_file": "feds_2020_fire_days.csv",
-    "duration_hint_s": 29,
+    "duration_hint_s": 22,
     "message": "In 2020, one of 5453's peak years, large FEDS fires spread across the CONUS; active large-fire area peaked in mid-September.",
     "eic": [
       {
