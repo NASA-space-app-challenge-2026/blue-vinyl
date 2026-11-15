@@ -8,7 +8,7 @@
     "dev": "npm start",
     "watch": "npm start",
     "serve": "npx --yes serve@14.2.6 . -l $(node scripts/port.mjs)",
-    "notebook": "uvx --with pandas --with matplotlib --with requests --with geopandas --with scipy jupyter lab notebooks",
+    "notebook": "uvx --with pandas --with matplotlib --with requests --with geopandas --with h5py --with scipy --with lxml jupyter lab notebooks",
     "soundfont": "node scripts/build-soundfont.mjs"
   },
   "devDependencies": {

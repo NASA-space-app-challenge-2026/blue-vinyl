@@ -75,6 +75,17 @@ An album whose tracks have data draws each year of the playing track on the glob
 
 Before a track plays, the globe shows its first year. The text and water never take pointer events, so the globe stays draggable.
 
+The forest album draws the noon line instead (see [albums/forest.md](albums/forest.md)):
+
+| Element | Look | Changes |
+| --- | --- | --- |
+| Camera | Keeps the noon meridian facing the listener on the equator (fitted view) | Turns with a time constant of 0.5 s, aiming 0.5 s of travel ahead while playing so it settles on the line instead of trailing it; turned by hand, it glides back a moment after release |
+| Noon meridian | A bright ribbon from 52° S to 52° N in the track's colour | Moves west a degree (0.125 s) at a time from step 0 (the legend does not hold it) |
+| Notes of light | Soft round lights with a warm heart, in the colour of the voice that plays: north (flute) sky blue `#7fd0ff`, tropics (lead) gold `#ffc94d`, south (pizzicato) rose `#ff8fb1` | Each forest note lights as it sounds (only while playing), at the height-weighted heart of the forest its band plays in the degree just crossed: a glow, bigger the higher the note, that dies away in 0.9 s, and 2–5 motes of pollen that rise from that forest's cells and fade over 2–3 s. They stay where they were struck |
+| Forest | Columns on 0.25° cells of the canopy map (52° S–52° N), mild relief (~5 units at 45 m), coloured after SVS 4950: bare ground tan, scrub olive, forest green to deep pine, the tallest bright leaf with pale tips; tops lighter than sides | The full map stands from the start, lit by the noon sun over the line: full light under it, dimming toward dusk a quarter of the way round. Columns under the meridian catch warm noon light |
+| CO₂ field | A faint veil of soft additive tiles of the window's mean XCO2 (1°, April 2019 to March 2023), cool blue thin to warm rose thick, lifted above the surface | Whole globe; higher where ppm is higher, warming and thickening as the month's global CO₂ rises over the turn, always thin enough to see the forest through. The rim halo thickens with it |
+| Month and CO₂ | At 6 o'clock, such as `Aug 2020 · 411.3 ppm` | Every month (7.5 steps) |
+
 ## Globe Themes
 
 Chosen in the settings menu. Themes are listed in `GlobeTheme` (`src/features/globe/domain/globe-theme.js`) and their sources in `src/features/globe/data/globe-themes.js`.
