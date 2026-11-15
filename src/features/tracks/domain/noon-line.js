@@ -15,6 +15,8 @@ export const LINE_STEPS = 360;
  * and the line; measure it again if either changes.
  */
 export const SOUND_STEPS = 312;
+/** How much louder the forest track plays than the sound font's levels give it, in dB: measured against the other albums, its median level was about 3 dB lower. */
+export const TRACK_GAIN_DB = 3;
 /** Seconds the track fades in over at its start and out over at its end. */
 export const FADE_SEC = Object.freeze({ in: 2, out: 4 });
 /** Steps the listening legend takes before the line starts, on a track that opens with it (10 bars of 3/4). */
@@ -140,7 +142,7 @@ export function barLevelAt(line, lineStep) {
   return Math.min(1, sum / (STEPS_PER_BAR * BANDS.length) / LEVEL_FULL_AT);
 }
 
-/** The loudness of the forest track `sec` seconds in, 0..1: faded in at its start and out at its end. */
-export function fadeAt(sec) {
-  return Math.max(0, Math.min(1, sec / FADE_SEC.in, (SOUND_STEPS * STEP_SEC - sec) / FADE_SEC.out));
+/** The gain of the forest track `sec` seconds in: its level, faded in at its start and out at its end. */
+export function levelAt(sec) {
+  return 10 ** (TRACK_GAIN_DB / 20) * Math.max(0, Math.min(1, sec / FADE_SEC.in, (SOUND_STEPS * STEP_SEC - sec) / FADE_SEC.out));
 }

@@ -9,7 +9,7 @@
 // Space: the whole mix sits where the sample is, as seen from where the song starts (north ahead, east to the
 // right), further away the further it has gone; a song without a path stays straight ahead.
 //
-// Mix: synths -> effects (see master-fx.js) -> fade (a song's own fade in and out) -> gate -> analyser -> panner -> volume. Besides the sound font, a composer
+// Mix: synths -> effects (see master-fx.js) -> fade (a song's own level and fade) -> gate -> analyser -> panner -> volume. Besides the sound font, a composer
 // may play the analog synth (see analog-synth.js), notes, noise hits and held voices; all start over with the music.
 // The gate closes when the music stops and opens when it starts again.
 
@@ -38,7 +38,7 @@ const RESTART_GAP_SEC = 0.01;
 const NOTE_GAP_SEC = 0.02;
 // Volume changes ease in with this time constant, so dragging the slider does not click.
 const VOLUME_RAMP_SEC = 0.02;
-// A song's fade is set every step; the gain glides to each with this time constant, so it does not step.
+// A song's level is set every step; the gain glides to each with this time constant, so it does not step.
 const FADE_STEP_TAU_SEC = 0.05;
 // The analyser the visuals read; it sits before the volume, so they show the music even when it is turned down.
 const ANALYSER = Object.freeze({ fftSize: 4096, smoothingTimeConstant: 0.8, minDecibels: -90, maxDecibels: -40 });
@@ -65,8 +65,8 @@ const VOICE_STOP_SEC = 0.05;
  * @property {number} msPerSec  ms of data time that pass in a second of the track
  * @property {(time: number) => (Object | null)} sampleAt  the data at a data time, null where there is none (nothing
  *   plays there); with a `path`, it has the `lat` and `lon` the mix is placed at
- * @property {(time: number) => number} [fadeAt]  the loudness (0..1) at a data time, to fade the song in and out; without
- *   it the song plays at full level
+ * @property {(time: number) => number} [levelAt]  the song's gain at a data time (1 leaves it as it is), to set its level
+ *   and fade it in and out; without it the song plays as it is
  * @property {{ lat: number, lon: number }[]} [path]  where the song goes, for its place in space; without it the mix
  *   stays straight ahead
  */
@@ -221,9 +221,9 @@ export function createSoundEngine() {
       gate.gain.cancelScheduledValues(start);
       gate.gain.setTargetAtTime(1, start, STOP_FADE_SEC);
       anchor = { audioSec: start, elapsedSec: elapsedSec + (start - now) };
-      // Opens at the song's level there, so a note at the start is not heard before the fade glides down to it.
+      // Opens at the song's level there, so a note at the start is not heard before the gain glides to it.
       fade.gain.cancelScheduledValues(now);
-      fade.gain.setValueAtTime(song.fadeAt?.(song.startMs + anchor.elapsedSec * song.msPerSec) ?? 1, start);
+      fade.gain.setValueAtTime(song.levelAt?.(song.startMs + anchor.elapsedSec * song.msPerSec) ?? 1, start);
       nextStepAt = start;
       step = 0;
       bar = 0;
@@ -232,7 +232,7 @@ export function createSoundEngine() {
     while (nextStepAt < now + LOOKAHEAD_SEC) {
       const time = song.startMs + (anchor.elapsedSec + (nextStepAt - anchor.audioSec)) * song.msPerSec;
       const sample = song.sampleAt(time);
-      if (song.fadeAt) fade.gain.setTargetAtTime(song.fadeAt(time), nextStepAt, FADE_STEP_TAU_SEC);
+      if (song.levelAt) fade.gain.setTargetAtTime(song.levelAt(time), nextStepAt, FADE_STEP_TAU_SEC);
       if (step % (composer.stepsPerTempo ?? composer.stepsPerBar) === 0) {
         stepSec = (sample && composer.stepSecAt?.(sample)) ?? composer.stepSec;
       }
