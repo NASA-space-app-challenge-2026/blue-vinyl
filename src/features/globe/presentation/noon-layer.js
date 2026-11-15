@@ -6,28 +6,34 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
 import { BAND_LATS, Band, LINE_STEPS, airAt, lineLonAt } from '../../tracks/domain/noon-line.js';
 import { forestNotesAt } from '../../music/domain/composers/noon.js';
+import { drawTreeAtlas } from './tree-sprites.js';
 
 // Canopy PNG is 0.25°.
 const MAP_CELL_DEG = 0.25;
-// The forest stands as one tree on each 2° square of the map (several pixels wide on the label, so it holds still
-// as the globe turns), where at least a quarter of the square is forest. The tree is as tall as the square's tall
-// canopy (90th percentile of its forest cells).
+// The forest stands as one tree on each 2° square of the map where at least a quarter of the square is forest. The
+// tree is as tall as the square's tall canopy (90th percentile of its forest cells).
 const TREE = Object.freeze({ cellDeg: 2, minForestShare: 0.25, percentile: 0.9 });
-// Tree size in globe units (radius 100): from 4 m to 40 m and over it grows from 40% to 100% of the tallest tree.
-const TREE_SIZE = Object.freeze({ fromM: 4, fullM: 40, minShare: 0.4, tallestU: 5, heightPerWidth: 1.6 });
-// Big tree, small tree: each height class its own colour and shape, from a small snowy tree of one tier to a tall
-// gold one of four with a star, so the height reads from the colour alone. Colours are sRGB, as picked.
+// Big tree, small tree: a tree's size on the map (globe units, radius 100) grows with its height from 4 m to 40 m and
+// over, so the tallest forests stand out over several squares before the noon line reaches them.
+const TREE_SIZE = Object.freeze({ fromM: 4, fullM: 40, smallestU: 2.6, tallestU: 10 });
+// Each height class its own colour and shape. The commonest, the lowest, is plain green; each class up is brighter
+// and more decorated, up to gold with a star. Colours are sRGB, as picked. Shapes as tree-sprites.js draws them.
 const TreeKind = Object.freeze({
-  SNOW: Object.freeze({ fromM: 4, color: '#eef3f7', tiers: 1, star: false }),
-  ICE: Object.freeze({ fromM: 8, color: '#9fd4f0', tiers: 2, star: false }),
-  BLUE: Object.freeze({ fromM: 14, color: '#3f7fd6', tiers: 3, star: false }),
-  GREEN: Object.freeze({ fromM: 20, color: '#2f9e4f', tiers: 3, star: false }),
-  GOLD: Object.freeze({ fromM: 28, color: '#f2c14e', tiers: 4, star: true }),
+  GREEN: Object.freeze({ fromM: 4, color: '#2f8f46', whorls: 5, twigs: 1, ornaments: 0, star: false }),
+  TEAL: Object.freeze({ fromM: 8, color: '#22a99a', whorls: 7, twigs: 1, ornaments: 0, star: false }),
+  SKY: Object.freeze({ fromM: 14, color: '#79c7ee', whorls: 9, twigs: 2, ornaments: 6, star: false }),
+  SILVER: Object.freeze({ fromM: 20, color: '#e6edf5', whorls: 11, twigs: 2, ornaments: 12, star: false }),
+  GOLD: Object.freeze({ fromM: 28, color: '#f4c34a', whorls: 13, twigs: 2, ornaments: 18, star: true }),
 });
 const TREE_KINDS = Object.values(TreeKind);
+const TREE_ATLAS_CELL_PX = 256;
 const TRUNK_COLOR = '#6b4a2f';
-const STAR_COLOR = '#fff4c2';
-const HIGHLIGHT_DEG = 0.75;
+const TREE_LIGHT_COLOR = '#fff1c4';
+// Growing when the album opens: each tree starts within `stagger` seconds and takes from `shortest` (smallest) to
+// `longest` (tallest) to reach its size.
+const TREE_GROWTH = Object.freeze({ stagger: 1.5, shortest: 1.5, longest: 4 });
+// The tree's base sits this far below the sprite's centre (share of its size), as tree-sprites.js draws it.
+const TREE_BASE_BELOW = 0.46;
 const MAP_NORTH = 52;
 const MAP_SOUTH = -52;
 const MERIDIAN_SAMPLES = 96;
@@ -58,39 +64,66 @@ const AIR_PPM = Object.freeze({ low: 409, high: 418 });
 const AIR_ALT = Object.freeze({ low: 0.014, high: 0.04 });
 const AIR_FOOTPRINT = 0.92;
 
-const vertexShader = `
+// Trees as sprites standing upright on the screen, each reading its own cell of the atlas (tree-sprites.js).
+const treeVertex = `
 attribute vec3 aColor;
+attribute float aKind;
+attribute float aSize;
+attribute vec2 aGrowth; // starts (s), takes (s)
 attribute float aLon;
 attribute float aLat;
+uniform float uTime;
+uniform float uPxPerUnit;
+uniform float uBufferHeight;
 uniform float uLineLon;
 uniform float uHighlight;
 varying vec3 vColor;
-varying float vShade;
+varying float vKind;
+varying float vGrown;
 varying float vSun;
 varying float vLit;
 void main() {
   vColor = aColor;
-  // Smooth cones: the more a surface faces up, the more light it catches, with no hard step between faces.
-  vShade = 0.72 + 0.28 * max(normal.z, 0.0);
+  vKind = aKind;
+  vGrown = clamp((uTime - aGrowth.x) / aGrowth.y, 0.0, 1.0);
   float d = abs(mod(aLon - uLineLon + 540.0, 360.0) - 180.0);
   // The noon sun stands over the line at the equator: full light there, falling to dusk a quarter of the way round.
   float sun = cos(radians(aLat)) * cos(radians(min(d, 90.0)));
   vSun = 0.32 + 0.68 * pow(max(sun, 0.0), 0.8);
-  vLit = uHighlight * (1.0 - smoothstep(0.0, ${HIGHLIGHT_DEG.toFixed(2)}, d));
-  gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+  // A tree is caught in warm noon light while the line crosses it, longer the wider it is.
+  float halfDeg = aSize * 0.3 / (${(Math.PI / 180).toFixed(6)} * 100.0) / max(cos(radians(aLat)), 0.2);
+  vLit = uHighlight * (1.0 - smoothstep(halfDeg * 0.5, halfDeg, d));
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  gl_Position = projectionMatrix * mv;
+  float grow = 1.0 - (1.0 - vGrown) * (1.0 - vGrown);
+  float px = aSize * mix(0.6, 1.0, grow) * uPxPerUnit / -mv.z;
+  gl_PointSize = px;
+  // Stand the tree on its place: lift the sprite so its base, not its centre, is there.
+  gl_Position.y += 2.0 * ${TREE_BASE_BELOW.toFixed(2)} * px / uBufferHeight * gl_Position.w;
 }`;
 
-const fragmentShader = `
+const treeFragment = `
+uniform sampler2D uAtlas;
+uniform vec3 uTrunk;
+uniform vec3 uLight;
 varying vec3 vColor;
-varying float vShade;
+varying float vKind;
+varying float vGrown;
 varying float vSun;
 varying float vLit;
 void main() {
-  // vColor is already linear (THREE.Color converts the sRGB picks).
-  vec3 color = vColor * vShade * vSun;
+  vec2 uv = vec2((vKind + gl_PointCoord.x) / ${TREE_KINDS.length.toFixed(1)}, 1.0 - gl_PointCoord.y);
+  vec4 tree = texture2D(uAtlas, uv);
+  // A stroke shows once the growing has reached its time (green channel).
+  float shown = smoothstep(tree.g, tree.g + 0.04, vGrown);
+  float alpha = tree.a * shown;
+  if (alpha < 0.02) discard;
+  float lightness = tree.r;
+  vec3 color = tree.b > 0.75 ? uLight * 1.4 : (tree.b > 0.25 ? uTrunk * lightness * 1.4 : vColor * mix(0.55, 1.15, lightness));
+  if (tree.b <= 0.75) color *= vSun;
   // Under the line itself the trees are caught in warm noon light (sRGB, as picked; the shader works in linear light).
   color = mix(color, pow(vec3(1.0, 0.93, 0.70), vec3(2.2)), vLit * 0.45);
-  gl_FragColor = vec4(color, 1.0);
+  gl_FragColor = vec4(color, alpha);
   #include <colorspace_fragment>
 }`;
 
@@ -223,52 +256,27 @@ function bandForest(map, band, lineStep) {
 
 const between = ([low, high], share = Math.random()) => low + share * (high - low);
 
-/** How tall (globe units) a tree of `metres` stands; the notes of light sit on its top. */
-function treeHeightU(metres) {
+/** A tree's size on the map (globe units) for its height in metres. */
+function treeSizeU(metres) {
   const share = Math.min(1, Math.max(0, (metres - TREE_SIZE.fromM) / (TREE_SIZE.fullM - TREE_SIZE.fromM)));
-  return TREE_SIZE.tallestU * (TREE_SIZE.minShare + (1 - TREE_SIZE.minShare) * share);
+  return TREE_SIZE.smallestU + share * (TREE_SIZE.tallestU - TREE_SIZE.smallestU);
 }
 
 /** The TreeKind of a tree `metres` tall: the tallest class it reaches. */
 function treeKindOf(metres) {
-  return TREE_KINDS.findLast((kind) => metres >= kind.fromM) ?? TreeKind.SNOW;
+  return TREE_KINDS.findLast((kind) => metres >= kind.fromM) ?? TREE_KINDS[0];
 }
 
-/**
- * One tree of `kind` in a unit box (1 across, standing 0 to 1 along z): a trunk, `kind.tiers` stacked cones, and a
- * star on top if it has one. Non-indexed, with each part's colour (linear) in `aColor`.
- */
-function treeGeometry(kind) {
-  const base = 0.1;
-  const top = kind.star ? 0.92 : 1;
-  const step = (top - base) / (kind.tiers + 1);
-  const parts = [{ geometry: new THREE.CylinderGeometry(0.06, 0.08, base + 0.02, 6).translate(0, (base + 0.02) / 2, 0), color: TRUNK_COLOR }];
-  for (let i = 0; i < kind.tiers; i++) {
-    // Each tier overlaps the one below by half, narrower the higher it is; the last one ends at the top.
-    const radius = 0.5 * (1 - i / (kind.tiers + 0.5));
-    const bottom = base + i * step;
-    parts.push({ geometry: new THREE.ConeGeometry(radius, 2 * step, 12).translate(0, bottom + step, 0), color: kind.color });
-  }
-  if (kind.star) parts.push({ geometry: new THREE.OctahedronGeometry(0.09).translate(0, top + 0.03, 0), color: STAR_COLOR });
-
-  const positions = [];
-  const normals = [];
-  const colors = [];
-  for (const { geometry, color } of parts) {
-    const flat = geometry.toNonIndexed();
-    const { r, g, b } = new THREE.Color(color);
-    positions.push(...flat.attributes.position.array);
-    normals.push(...flat.attributes.normal.array);
-    for (let v = 0; v < flat.attributes.position.count; v++) colors.push(r, g, b);
-    geometry.dispose();
-    flat.dispose();
-  }
-  const tree = new THREE.BufferGeometry();
-  tree.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  tree.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-  tree.setAttribute('aColor', new THREE.Float32BufferAttribute(colors, 3));
-  // Built standing on y; the instance basis stands it on z (up from the globe).
-  return tree.rotateX(Math.PI / 2);
+// The atlas of every TreeKind's tree, drawn once and kept for as long as the page is open.
+let treeAtlas = null;
+function getTreeAtlas() {
+  if (treeAtlas) return treeAtlas;
+  treeAtlas = new THREE.CanvasTexture(drawTreeAtlas(TREE_KINDS, TREE_ATLAS_CELL_PX));
+  // Mipmapped, so a tree a few pixels wide is drawn smooth instead of flickering as the globe turns.
+  treeAtlas.generateMipmaps = true;
+  treeAtlas.minFilter = THREE.LinearMipmapLinearFilter;
+  treeAtlas.magFilter = THREE.LinearFilter;
+  return treeAtlas;
 }
 
 /** The trees of the canopy map: one per TREE.cellDeg square that is forest enough, as { lat, lon, metres }. */
@@ -308,14 +316,13 @@ export function createNoonLayer(view) {
   let lights = null;
   let nextLight = 0;
   let lastNoteStep = null;
+  let growFrame = 0;
 
   function disposeMesh(m) {
     if (!m) return;
     view.globe.scene().remove(m);
-    m.traverse((part) => {
-      part.geometry?.dispose();
-      part.material?.dispose();
-    });
+    m.geometry.dispose();
+    m.material.dispose();
   }
 
   /** Takes the forest and air off the globe and, for `song`, puts them and the noon meridian on. */
@@ -331,8 +338,9 @@ export function createNoonLayer(view) {
     view.setElements([]);
     if (!song) return;
     canopyMap = song.map;
-    mesh = buildTrees(song.map);
+    mesh = buildTrees(song.map, performance.now() / 1000);
     view.globe.scene().add(mesh);
+    grow();
     airMesh = buildAir(song.airMap);
     view.globe.scene().add(airMesh);
     meridian = buildMeridian(color);
@@ -372,12 +380,11 @@ export function createNoonLayer(view) {
   }
 
   /**
-   * Lights one point on top of the canopy at `lat`, `lon`, `heightM` tall: a glow where it stands still (`rises`
-   * false), or a mote of pollen drifting up.
+   * Lights one point over the forest at `lat`, `lon`: a glow where it stands still (`rises` false), or a mote of pollen
+   * drifting up.
    */
-  function light({ lat, lon, heightM, color, now, life, size, grow, attack, rises }) {
-    const globeR = view.globe.getGlobeRadius();
-    const { x, y, z } = view.globe.getCoords(lat, lon, MERIDIAN_ALTITUDE + treeHeightU(heightM) / globeR);
+  function light({ lat, lon, color, now, life, size, grow, attack, rises }) {
+    const { x, y, z } = view.globe.getCoords(lat, lon, MERIDIAN_ALTITUDE);
     const i = nextLight;
     nextLight = (nextLight + 1) % LIGHT_POOL;
     const { attributes } = lights.geometry;
@@ -411,7 +418,7 @@ export function createNoonLayer(view) {
       const color = voiceColors[note.band];
       // The note: a glow at the heart of the forest it plays, as big as it is high and loud.
       light({
-        lat: forest.lat, lon: forest.lon, heightM: note.height, color, now,
+        lat: forest.lat, lon: forest.lon, color, now,
         life: NOTE_GLOW.life, size: between(NOTE_GLOW.size, note.share), grow: NOTE_GLOW.grow, attack: 0.06, rises: false,
       });
       // Pollen from the forest itself, the taller cells likelier.
@@ -420,7 +427,7 @@ export function createNoonLayer(view) {
         const cell = forest.cells[Math.floor(Math.random() * forest.cells.length)];
         if (Math.random() > cell.height / 35) continue;
         light({
-          lat: cell.lat, lon: cell.lon, heightM: cell.height, color, now,
+          lat: cell.lat, lon: cell.lon, color, now,
           life: between(MOTE.life), size: between(MOTE.size), grow: MOTE.grow, attack: 0.15, rises: true,
         });
         made++;
@@ -428,55 +435,88 @@ export function createNoonLayer(view) {
     }
   }
 
-  function updateLightScale() {
+  /** Sizes the lights and the trees, given in globe units, in the drawing buffer's pixels. */
+  function updateScale() {
     const camera = view.globe.camera();
     const height = view.globe.renderer().getDrawingBufferSize(new THREE.Vector2()).y;
-    lights.material.uniforms.uPxPerUnit.value = height / (2 * Math.tan((camera.fov * Math.PI) / 360));
+    const pxPerUnit = height / (2 * Math.tan((camera.fov * Math.PI) / 360));
+    if (lights) lights.material.uniforms.uPxPerUnit.value = pxPerUnit;
+    if (mesh) {
+      mesh.material.uniforms.uPxPerUnit.value = pxPerUnit;
+      mesh.material.uniforms.uBufferHeight.value = height;
+    }
   }
 
-  /** The forest as trees: one InstancedMesh per TreeKind, all sharing one material (in `userData.material`). */
-  function buildTrees(map) {
-    const material = new THREE.ShaderMaterial({
-      vertexShader,
-      fragmentShader,
-      uniforms: { uLineLon: { value: 180 }, uHighlight: { value: 0 } },
-    });
-    const group = new THREE.Group();
-    group.userData.material = material;
-    const trees = mapTrees(map);
-    const pole = new THREE.Vector3(0, 1, 0);
-    const up = new THREE.Vector3();
-    const east = new THREE.Vector3();
-    const north = new THREE.Vector3();
-    const matrix = new THREE.Matrix4();
-    for (const kind of TREE_KINDS) {
-      const ofKind = trees.filter((tree) => treeKindOf(tree.metres) === kind);
-      if (!ofKind.length) continue;
-      const geometry = treeGeometry(kind);
-      const n = ofKind.length;
-      const lons = new Float32Array(n);
-      const lats = new Float32Array(n);
-      const kindTrees = new THREE.InstancedMesh(geometry, material, n);
-      for (let i = 0; i < n; i++) {
-        const { lat, lon, metres } = ofKind[i];
-        const { x, y, z } = view.globe.getCoords(lat, lon, 0);
-        const tall = treeHeightU(metres);
-        const wide = tall / TREE_SIZE.heightPerWidth;
-        up.set(x, y, z).normalize();
-        east.crossVectors(pole, up).normalize();
-        north.crossVectors(up, east);
-        matrix.makeBasis(east.multiplyScalar(wide), north.multiplyScalar(wide), up.multiplyScalar(tall));
-        matrix.setPosition(x, y, z);
-        kindTrees.setMatrixAt(i, matrix);
-        lons[i] = lon;
-        lats[i] = lat;
-      }
-      geometry.setAttribute('aLon', new THREE.InstancedBufferAttribute(lons, 1));
-      geometry.setAttribute('aLat', new THREE.InstancedBufferAttribute(lats, 1));
-      kindTrees.frustumCulled = false;
-      group.add(kindTrees);
+  /**
+   * The forest as trees: one sprite per tree, smallest first so the big ones stand in front, growing from `now`
+   * (seconds, performance clock).
+   */
+  function buildTrees(map, now) {
+    const trees = mapTrees(map).sort((a, b) => a.metres - b.metres);
+    const n = trees.length;
+    const positions = new Float32Array(n * 3);
+    const colors = new Float32Array(n * 3);
+    const kinds = new Float32Array(n);
+    const sizes = new Float32Array(n);
+    const growth = new Float32Array(n * 2);
+    const lons = new Float32Array(n);
+    const lats = new Float32Array(n);
+    const kindColors = TREE_KINDS.map((kind) => new THREE.Color(kind.color));
+    for (let i = 0; i < n; i++) {
+      const { lat, lon, metres } = trees[i];
+      const { x, y, z } = view.globe.getCoords(lat, lon, MERIDIAN_ALTITUDE);
+      const kind = TREE_KINDS.indexOf(treeKindOf(metres));
+      const share = (treeSizeU(metres) - TREE_SIZE.smallestU) / (TREE_SIZE.tallestU - TREE_SIZE.smallestU);
+      positions.set([x, y, z], i * 3);
+      colors.set(kindColors[kind].toArray(), i * 3);
+      kinds[i] = kind;
+      sizes[i] = treeSizeU(metres);
+      growth.set([now + Math.random() * TREE_GROWTH.stagger, between([TREE_GROWTH.shortest, TREE_GROWTH.longest], share)], i * 2);
+      lons[i] = lon;
+      lats[i] = lat;
     }
-    return group;
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('aKind', new THREE.BufferAttribute(kinds, 1));
+    geometry.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+    geometry.setAttribute('aGrowth', new THREE.BufferAttribute(growth, 2));
+    geometry.setAttribute('aLon', new THREE.BufferAttribute(lons, 1));
+    geometry.setAttribute('aLat', new THREE.BufferAttribute(lats, 1));
+    const material = new THREE.ShaderMaterial({
+      vertexShader: treeVertex,
+      fragmentShader: treeFragment,
+      uniforms: {
+        uAtlas: { value: getTreeAtlas() },
+        uTime: { value: now },
+        uPxPerUnit: { value: 1 },
+        uBufferHeight: { value: 1 },
+        uLineLon: { value: 180 },
+        uHighlight: { value: 0 },
+        uTrunk: { value: new THREE.Color(TRUNK_COLOR) },
+        uLight: { value: new THREE.Color(TREE_LIGHT_COLOR) },
+      },
+      transparent: true,
+      depthWrite: false,
+    });
+    const points = new THREE.Points(geometry, material);
+    points.frustumCulled = false;
+    points.renderOrder = 1;
+    points.userData.grownAt = now + TREE_GROWTH.stagger + TREE_GROWTH.longest;
+    return points;
+  }
+
+  /** Keeps the trees growing frame by frame until all are grown, played or not. */
+  function grow() {
+    cancelAnimationFrame(growFrame);
+    const frame = () => {
+      if (!mesh) return;
+      const now = performance.now() / 1000;
+      updateScale();
+      mesh.material.uniforms.uTime.value = now;
+      growFrame = now < mesh.userData.grownAt ? requestAnimationFrame(frame) : 0;
+    };
+    growFrame = requestAnimationFrame(frame);
   }
 
   function buildAir(airMap) {
@@ -598,8 +638,8 @@ export function createNoonLayer(view) {
     // The noon line moves from the first step; the listening legend does not hold it back.
     const lineStep = Math.max(0, Math.min(LINE_STEPS, step));
     const headLon = lineLonAt(lineStep);
-    mesh.userData.material.uniforms.uLineLon.value = headLon;
-    mesh.userData.material.uniforms.uHighlight.value = 1;
+    mesh.material.uniforms.uLineLon.value = headLon;
+    mesh.material.uniforms.uHighlight.value = 1;
     if (airMesh) airMesh.material.uniforms.uAirThick.value = airAt(song.air, lineStep).thickness;
     placeMeridian(headLon);
     meridian.visible = true;
@@ -615,7 +655,8 @@ export function createNoonLayer(view) {
       lastNoteStep = stepInt;
     }
     lights.material.uniforms.uTime.value = now;
-    updateLightScale();
+    mesh.material.uniforms.uTime.value = now;
+    updateScale();
   }
 
   return { reset, render };

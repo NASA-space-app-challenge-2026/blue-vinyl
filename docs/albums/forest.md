@@ -48,7 +48,7 @@ Three voices play the forest under the noon line, made to be followed by ear alo
 
 ## Globe
 
-See [design.md](../design.md#data-on-the-globe): big and small trees stand on the globe, one per 2° square of forest, their size, colour and shape set by the canopy height (white, ice blue, blue, green, gold with a star); a CO₂ haze floats above them, warmer and higher where the air is thicker; the trees are lit by the noon sun over the line; a noon meridian ribbon moves west, and each forest note lights where it is played, in its voice's colour; the camera follows the meridian; the halo and the month label follow the air.
+See [design.md](../design.md#data-on-the-globe): Christmas trees, grown by recursive branching as the album opens, stand on the globe, one per 2° square of forest; the taller the canopy, the bigger the tree on the map and the brighter its colour (green, teal, sky, silver, gold with a star); a CO₂ haze floats above them, warmer and higher where the air is thicker; the trees are lit by the noon sun over the line; a noon meridian ribbon moves west, and each forest note lights where it is played, in its voice's colour; the camera follows the meridian; the halo and the month label follow the air.
 
 ## Credits
 
