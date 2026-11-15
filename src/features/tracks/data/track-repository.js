@@ -1,5 +1,5 @@
 import { parseIceSeaCsv } from '../domain/ice-sea-series.js';
-import { parseAnnualCsv, parseDailyCsv, parseFireDaysCsv } from '../domain/wildfire-series.js';
+import { parseAnnualCsv, parseDailyCsv, parseFireDaysCsv, parseYearFiresCsv } from '../domain/wildfire-series.js';
 
 /**
  * A polar track's data, ready to play and draw.
@@ -14,7 +14,7 @@ import { parseAnnualCsv, parseDailyCsv, parseFireDaysCsv } from '../domain/wildf
  * @typedef {Object} WildfireAnnualData
  * @property {'annual'} kind
  * @property {import('../domain/wildfire-series.js').WildfireYear[]} years
- * @property {number} acresMax the largest year's acres
+ * @property {import('../domain/wildfire-series.js').WildfireYearFire[][]} firesByYear each year's MTBS large fires
  */
 
 /**
@@ -59,19 +59,24 @@ export function loadIceSeaTrack({ csvUrl, shapesUrl }) {
 }
 
 /**
- * Loads a wildfire track: either the national annual series, or a peak-year daily series with fire points.
+ * Loads a wildfire track: either the national annual series with each year's large fires, or a peak-year daily series
+ * with fire points.
  *
- * @param {{ kind: 'annual', csvUrl: string } | { kind: 'season', csvUrl: string, firesUrl: string }} source
+ * @param {{ kind: 'annual' | 'season', csvUrl: string, firesUrl: string }} source
  * @returns {Promise<WildfireTrackData>}
  */
 export function loadWildfireTrack(source) {
-  const key = source.kind === 'annual' ? source.csvUrl : `${source.csvUrl}|${source.firesUrl}`;
+  const key = `${source.csvUrl}|${source.firesUrl}`;
   if (!cache.has(key)) {
     const loading =
       source.kind === 'annual'
-        ? fetchText(source.csvUrl).then((csv) => {
+        ? Promise.all([fetchText(source.csvUrl), fetchText(source.firesUrl)]).then(([csv, firesCsv]) => {
             const years = parseAnnualCsv(csv);
-            return { kind: 'annual', years, acresMax: Math.max(...years.map((y) => y.acres)) };
+            return {
+              kind: 'annual',
+              years,
+              firesByYear: parseYearFiresCsv(firesCsv, years),
+            };
           })
         : Promise.all([fetchText(source.csvUrl), fetchText(source.firesUrl)]).then(([csv, firesCsv]) => {
             const days = parseDailyCsv(csv);
