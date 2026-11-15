@@ -86,6 +86,9 @@ let totalMs;
 /** @type {(import('../features/tracks/data/track-repository.js').IceSeaTrackData | null)[]} */
 let trackData = [];
 let aerosolData = [];
+// Whether the aerosol globe has zoomed in on the lead particle: false from when the album is shown until a track's
+// music first plays (past the docent's introduction), so the whole Earth shows until then; it stays zoomed after.
+let aerosolZoomed = false;
 // The track whose particle toggles are set (see renderAerosol); null while none is shown.
 let togglesTrack = null;
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
@@ -417,6 +420,7 @@ function showAlbum(index) {
   music.load([]);
   loadAlbumData(album);
   aerosolData = album.tracks.map(() => null);
+  aerosolZoomed = false;
   loadAerosolData(album);
 }
 
@@ -1100,12 +1104,14 @@ function renderAerosol(trackIndex) {
   const step = Math.min(1, trackSec / track.durationSec) * (data.records.length - 1);
   globe.aerosolPaths.render(data.paths, step);
 
-  // The camera follows the track's lead particle(s), zoomed in on them; until one is released it rests on the track's
-  // own view or where Erin's eye starts.
+  // Until a track's music first plays, the whole Earth shows, centred on the track's own view or where Erin's eye
+  // starts. Then the camera zooms in on the track's lead particle(s) and follows them; until one is released it rests
+  // on that view.
   const view = track.aerosol.viewLat !== undefined
     ? { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon }
     : { lat: data.records[0].viewLat, lon: data.records[0].viewLon };
-  focus = heroFocus(data.paths, step) ?? view;
+  if (state === PlaybackState.PLAYING && introMs === null) aerosolZoomed = true;
+  focus = (aerosolZoomed && heroFocus(data.paths, step)) || view;
 
   if (track.color) halo.setColor(track.color);
   if (state === PlaybackState.PLAYING) halo.wake();
