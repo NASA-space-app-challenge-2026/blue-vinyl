@@ -114,7 +114,7 @@ export function createParticleToggles(parent, onChange) {
   function paint(id) {
     const { btn, dot, label, color } = buttons.get(id);
     btn.classList.toggle('active', states[id]);
-    label.style.opacity = states[id] ? '0.9' : '0.4';
+    label.style.opacity = states[id] ? '1' : '0.4';
     dot.style.opacity = states[id] ? '1.0' : '0.2';
     dot.style.transform = states[id] ? 'scale(1.0)' : 'scale(0.7)';
     dot.style.filter = states[id] ? `drop-shadow(0 0 4px ${color})` : 'none';
@@ -147,6 +147,7 @@ export function createParticleToggles(parent, onChange) {
     label.className = 'particle-name';
     label.textContent = name;
     label.style.cssText = `
+      color: #ffffff;
       font-size: 10px;
       line-height: 1;
       white-space: nowrap;
