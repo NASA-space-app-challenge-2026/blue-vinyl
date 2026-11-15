@@ -11,7 +11,7 @@
   bottom: calc(var(--gutter) + var(--safe-bottom));
   z-index: 3;
   width: max-content;
-  max-width: min(420px, 34%);
+  max-width: min(320px, 34%);
   margin: 0;
   padding: 12px 18px;
   border-radius: 20px;
@@ -22,36 +22,66 @@
   filter: drop-shadow(0 10px 14px rgb(0 0 0 / 0.3)) drop-shadow(0 2px 3px rgb(0 0 0 / 0.16));
   color: var(--paper-ink);
   text-shadow: none;
-  /* It pops out from its tail, as if from the cat's mouth. */
-  transform-origin: right var(--tail-y, 30px);
+  /* It pops out from its tail's tip, as if from the cat's mouth, and goes back into it (docent-bubble.js). */
+  transform-origin: calc(100% + 22px) var(--tail-y, 30px);
   animation: docent-bubble-float 4s ease-in-out infinite alternate;
+  /* Its tail follows the cat's mouth when the card grows or shrinks to the next sentence. */
+  transition:
+    --tail-y 340ms cubic-bezier(0.22, 1, 0.36, 1),
+    --tail-turn 340ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Registered, so the tail's place and turn can move smoothly rather than jump. */
+@property --tail-y {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 30px;
+}
+
+@property --tail-turn {
+  syntax: '<angle>';
+  inherits: true;
+  initial-value: 0deg;
 }
 
 .docent-bubble[hidden] {
   display: none;
 }
 
-/* The tail, out of the card's right side toward the cat's cheek: tucked a little into the card, so it joins it
-   cleanly, and reaching 22 px past it (TAIL_REACH in docent-bubble.js), turned toward the cat (--tail-turn) round
-   where it leaves the card when the card cannot be level with it. Its colour is the card's (--paper), written into
-   the drawing. */
+/* The tail, out of the card's right side toward the cat's cheek, reaching 22 px past it (TAIL_REACH in
+   docent-bubble.js), turned toward the cat (--tail-turn) round where it leaves the card when the card cannot be level
+   with it. Its root runs to a point 22 px inside the card, past the card's rounded corners, so on a one-line card,
+   whose side is almost all corner, it joins the card inside its curve. Where it leaves the card it flares into it in a
+   small curve above and below, so the card's corners run on into the tail with no notch; turned further than those
+   curves allow (data-tail="turned", set by docent-bubble.js), one of them would stand out past the card's corner, so
+   it is drawn without them, narrow where it leaves the card. Its colour is the card's (--paper), written into the
+   drawing. */
 .docent-bubble::after {
   content: '';
   position: absolute;
   top: var(--tail-y, 30px);
   right: -22px;
-  width: 30px;
-  height: 24px;
+  width: 44px;
+  height: 40px;
   translate: 0 -50%;
   rotate: var(--tail-turn, 0deg);
-  transform-origin: 8px 50%;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 24'%3E%3Cpath fill='%23fbf4e6' d='M0 2H8C13 7 20 10 30 12C20 14 13 17 8 22H0Z'/%3E%3C/svg%3E") no-repeat center / 100% 100%;
+  transform-origin: 22px 50%;
+  /* Behind the words its root runs under. */
+  z-index: -1;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 40'%3E%3Cpath fill='%23fbf4e6' d='M0 20L6 11C15 11 21 14 27 16.6C32 18.8 38 19.6 44 20C38 20.4 32 21.2 27 23.4C21 26 15 29 6 29Z'/%3E%3C/svg%3E") no-repeat center / 100% 100%;
+}
+
+.docent-bubble[data-tail='turned']::after {
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 24'%3E%3Cpath fill='%23fbf4e6' d='M0 12L22 6C29 8 35 10.5 44 12C35 13.5 29 16 22 18Z'/%3E%3C/svg%3E");
 }
 
 .docent-bubble-text {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
+  /* No last line left holding a single word. */
+  text-wrap: pretty;
 }
 
 /* A slow breath up and down while the bubble is out, as if the cat were still talking. */
@@ -68,6 +98,7 @@
 @media (prefers-reduced-motion: reduce) {
   .docent-bubble {
     animation: none;
+    transition: none;
   }
 }
 
@@ -79,6 +110,15 @@
     max-width: 230px;
     padding: 9px 12px;
     border-radius: 16px;
+  }
+
+  /* A thinner tail, as a one-line card here is almost all corner on its side. */
+  .docent-bubble::after {
+    height: 30px;
+  }
+
+  .docent-bubble[data-tail='turned']::after {
+    height: 18px;
   }
 
   .docent-bubble-text {

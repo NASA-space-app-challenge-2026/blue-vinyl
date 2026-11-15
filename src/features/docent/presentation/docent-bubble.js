@@ -1,6 +1,15 @@
-// How long a bubble stays after the docent's last words (ms), and how long it takes to go (ms).
+// How long a bubble stays after the docent's last words (ms); how long it takes to pop out of the cat's mouth, to go
+// back into it, and to grow or shrink to the next sentence (ms); and how long the next sentence's words wait for it
+// before they rise into place, as it appears and as it changes size (ms).
 const LINGER_MS = 1600;
-const LEAVE_MS = 280;
+const APPEAR_MS = 520;
+const LEAVE_MS = 320;
+const RESIZE_MS = 340;
+const WORDS_DELAY_MS = 120;
+const RESIZED_WORDS_DELAY_MS = 180;
+// A quick start that eases off; and a slow start that hurries away.
+const EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)';
+const EASE_IN = 'cubic-bezier(0.55, 0, 0.75, 0.2)';
 
 // Room kept between the bubble and the globe (px), and how a long sentence is fitted beside it: made narrower a step at
 // a time down to MIN_WIDTH (so it reaches less far toward the globe), else let down from the cat's mouth a step at a
@@ -14,12 +23,14 @@ const SMALLER_FONTS = Object.freeze([13, 12, 11]);
 // How far the tail reaches out past the card's side toward the cat (px, as drawn in docent.css), the room left between
 // its tip and the cat's cheek (px), how far below the card's top it sits when the card can hang from it, how near the
 // card's corners it may come, the most it turns from straight out to keep pointing at the cat when the card cannot be
-// level with it (deg), and the room kept at the screen's top and bottom edges (px).
+// level with it (deg), the most it turns still drawn flaring into the card (deg; past it, docent.css draws it plain, as
+// a flare would stand out past the card's corner), and the room kept at the screen's top and bottom edges (px).
 const TAIL_REACH = 22;
-const CAT_GAP = 10;
+const CAT_GAP = 20;
 const TAIL_FROM_TOP = 30;
 const TAIL_CORNER_ROOM = 24;
 const TAIL_MAX_TURN = 55;
+const TAIL_FLARE_TURN = 15;
 const SCREEN_EDGE = 16;
 
 const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -58,6 +69,7 @@ export function createDocentBubble(parent, { avoid, speaker } = {}) {
   let on = false;
   let lingering = null;
   let leaving = null;
+  let resizing = null;
 
   // Whether the bubble, as laid out (its offsets: the screen's pixels, before any animation's transform), touches the
   // globe's disc.
@@ -90,7 +102,9 @@ export function createDocentBubble(parent, { avoid, speaker } = {}) {
     bubble.style.setProperty('--tail-y', `${tailY}px`);
     // Turned from straight out toward the cheek, round where it leaves the card.
     const turn = (Math.atan2(cheek.y - (top + tailY), cheek.x - edge) * 180) / Math.PI;
-    bubble.style.setProperty('--tail-turn', `${clamp(turn, -TAIL_MAX_TURN, TAIL_MAX_TURN)}deg`);
+    const tailTurn = clamp(turn, -TAIL_MAX_TURN, TAIL_MAX_TURN);
+    bubble.style.setProperty('--tail-turn', `${tailTurn}deg`);
+    bubble.dataset.tail = Math.abs(tailTurn) > TAIL_FLARE_TURN ? 'turned' : 'level';
   }
 
   // Fits the sentence shown so the bubble keeps clear of the globe (see the class comment), aimed at the cat at each
@@ -127,9 +141,29 @@ export function createDocentBubble(parent, { avoid, speaker } = {}) {
     }
   }
 
+  // The words come in a moment after the card, rising a little into place as they show.
+  function riseWords(delay) {
+    text.animate(
+      [
+        { opacity: 0, translate: '0 5px' },
+        { opacity: 1, translate: '0 0' },
+      ],
+      { duration: 300, delay, easing: EASE_OUT, fill: 'backwards' },
+    );
+  }
+
+  // Stops the card growing or shrinking to the sentence shown, leaving it at that sentence's size.
+  function stopResizing() {
+    resizing?.cancel();
+    resizing = null;
+    text.style.width = '';
+  }
+
   // The screen's size changed while a sentence is shown: fit it again where the cat now is.
   addEventListener('resize', () => {
-    if (!bubble.hidden) fit();
+    if (bubble.hidden) return;
+    stopResizing();
+    fit();
   });
 
   function stopLeaving() {
@@ -146,10 +180,16 @@ export function createDocentBubble(parent, { avoid, speaker } = {}) {
       bubble.hidden = true;
       return;
     }
-    leaving = bubble.animate([{ opacity: 1, scale: '1' }, { opacity: 0, scale: '0.92' }], {
-      duration: LEAVE_MS,
-      easing: 'ease-in',
-    });
+    // Back into the cat's mouth: it draws in toward its tail's tip, a little swell first as if taking a breath, and
+    // fades as it goes.
+    leaving = bubble.animate(
+      [
+        { opacity: 1, scale: '1' },
+        { opacity: 1, scale: '1.03', offset: 0.25 },
+        { opacity: 0, scale: '0.2' },
+      ],
+      { duration: LEAVE_MS, easing: EASE_IN },
+    );
     leaving.onfinish = () => {
       bubble.hidden = true;
       leaving = null;
@@ -175,21 +215,42 @@ export function createDocentBubble(parent, { avoid, speaker } = {}) {
       stopLeaving();
       const changing = !bubble.hidden && text.textContent !== line;
       const appearing = bubble.hidden;
+      // Where the card is now, part way through growing to the sentence before, if it is: what it grows from.
+      const from = { width: bubble.offsetWidth, height: bubble.offsetHeight, top: bubble.offsetTop };
+      stopResizing();
       text.textContent = line;
       bubble.hidden = false;
       fit();
-      if (changing && !reduceMotion()) {
-        text.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, easing: 'ease-out' });
-      }
-      if (appearing && !reduceMotion()) {
+      if (reduceMotion()) return;
+      if (appearing) {
+        // Out of the cat's mouth: from a speck at its tail's tip, springing a little past its size and settling.
         bubble.animate(
           [
-            { opacity: 0, scale: '0.6' },
-            { opacity: 1, scale: '1.04', offset: 0.7 },
+            { opacity: 0, scale: '0.2' },
+            { opacity: 1, scale: '1.06', offset: 0.55 },
+            { opacity: 1, scale: '0.985', offset: 0.8 },
             { opacity: 1, scale: '1' },
           ],
-          { duration: 380, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+          { duration: APPEAR_MS, easing: EASE_OUT },
         );
+        riseWords(WORDS_DELAY_MS);
+      } else if (changing) {
+        // From the last sentence's size to this one's, its words waiting till it has made room for them, and set at
+        // the width they will have, so they do not wrap anew as it goes.
+        const to = { width: bubble.offsetWidth, height: bubble.offsetHeight, top: bubble.offsetTop };
+        if (to.width !== from.width || to.height !== from.height || to.top !== from.top) {
+          const box = (size) => ({
+            width: `${size.width}px`,
+            height: `${size.height}px`,
+            top: `${size.top}px`,
+            maxWidth: 'none',
+          });
+          // Its exact width: offsetWidth rounds, and a hair narrower would wrap the last word.
+          text.style.width = getComputedStyle(text).width;
+          resizing = bubble.animate([box(from), box(to)], { duration: RESIZE_MS, easing: EASE_OUT });
+          resizing.onfinish = stopResizing;
+        }
+        riseWords(resizing ? RESIZED_WORDS_DELAY_MS : 0);
       }
     },
     /** Goes a moment after the docent's last words. */
