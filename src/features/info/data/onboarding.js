@@ -31,5 +31,5 @@ export const ONBOARDING = Object.freeze({
   start: 'Start listening',
   skip: 'Skip',
   preview: 'Hear it move',
-  previewPlaying: 'Listen…',
+  previewStop: 'Stop',
 });

@@ -17,11 +17,15 @@ const RADIUS = 1.6;
 // The panner's position is updated this often along the circle.
 const PATH_STEP_SEC = 1 / 30;
 
-/** @returns {{ turnSec: number, play: () => Promise<void>, stop: () => void }} */
+/**
+ * @returns {{ turnSec: number, play: () => Promise<void>, stop: () => void }}
+ *   play: starts the preview, resolving when it ends or is stopped; stop: silences it at once
+ */
 export function createSpatialPreview() {
   let playing = null;
-  // The context the preview plays in, while it plays.
+  // The context the preview plays in, while it plays, and what ends its wait when it is stopped early.
   let active = null;
+  let end = null;
 
   function play() {
     if (playing) return playing;
@@ -49,7 +53,10 @@ export function createSpatialPreview() {
         }
         const count = Math.floor(durationSec / NOTE_SEC);
         for (let i = 0; i < count; i++) bell(context, panner, NOTES[i % NOTES.length], start + i * NOTE_SEC);
-        return new Promise((resolve) => setTimeout(resolve, (durationSec + DECAY_SEC) * 1000));
+        return new Promise((resolve) => {
+          end = resolve;
+          setTimeout(resolve, (durationSec + DECAY_SEC) * 1000);
+        });
       })
       .catch((error) => console.error('spatial preview failed', error))
       .finally(() => {
@@ -59,10 +66,12 @@ export function createSpatialPreview() {
     return playing;
   }
 
-  /** Silences the preview at once, if it plays. */
+  /** Silences the preview at once, if it plays; the promise play() gave then resolves. */
   function stop() {
     if (active && active.state !== 'closed') active.close().catch(() => {});
     active = null;
+    end?.();
+    end = null;
   }
 
   return { turnSec: TURN_SEC, play, stop };

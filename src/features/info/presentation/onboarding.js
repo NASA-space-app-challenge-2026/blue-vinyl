@@ -13,7 +13,7 @@ const ENTER_EASING = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const STEP_SHIFT = '3cqw';
 const STEP_MS = 480;
 // The earphones' picture: a head seen from above in a 200 × 200 box, facing up, and the dot's circle round it.
-const HEAD = Object.freeze({ cx: 100, cy: 100, r: 30, orbit: 74 });
+const HEAD = Object.freeze({ cx: 100, cy: 100, orbit: 74 });
 // The faint dots trailing the circling one, in degrees behind it.
 const TRAIL_DEG = Object.freeze([10, 20, 30, 42, 56]);
 
@@ -160,22 +160,33 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
   show(0);
   return { isOpen: () => open };
 
+  // Plays the preview, or stops it while it plays.
   function previewButton() {
     const label = el('span', '', [content.preview]);
-    const play = button('onboarding-preview', '');
-    play.append(soundIcon(), label);
-    play.addEventListener('click', () => {
-      if (play.classList.contains('is-playing')) return;
-      play.classList.add('is-playing');
-      label.textContent = content.previewPlaying;
+    const icon = el('span', 'onboarding-preview-icon', [headphonesIcon(), stopIcon()]);
+    const toggle = button('onboarding-preview', '');
+    toggle.setAttribute('aria-pressed', 'false');
+    toggle.append(icon, label);
+    let playing = false;
+    function set(on) {
+      playing = on;
+      toggle.classList.toggle('is-playing', on);
+      toggle.setAttribute('aria-pressed', String(on));
+      label.textContent = on ? content.previewStop : content.preview;
+    }
+    toggle.addEventListener('click', () => {
+      if (playing) {
+        preview.stop();
+        return;
+      }
+      set(true);
       startOrbit();
       preview.play().then(() => {
-        play.classList.remove('is-playing');
-        label.textContent = content.preview;
+        set(false);
         if (reduce()) spin?.cancel();
       });
     });
-    return play;
+    return toggle;
   }
 }
 
@@ -198,9 +209,11 @@ function paleBlueDot() {
   return node;
 }
 
-// A head with headphones seen from above, facing up, and a pale blue dot circling it with a fading trail.
+// A head with headphones seen from above, facing up: shoulders behind, the nose's tip ahead, hair with a sheen, and
+// the headphones' band across the top of the head between two cushioned cups. A pale blue dot circles it with a
+// fading trail.
 function earphones() {
-  const { cx, cy, r, orbit: o } = HEAD;
+  const { cx, cy, orbit: o } = HEAD;
   const trail = TRAIL_DEG.map((deg, i) => {
     const a = (-deg * Math.PI) / 180;
     return svg('circle', {
@@ -216,6 +229,10 @@ function earphones() {
     svg('circle', { cx, cy: cy - o, r: 11, class: 'earphones-glow' }),
     svg('circle', { cx, cy: cy - o, r: 5, class: 'earphones-dot' }),
   ]);
+  const cup = (x) => svg('g', { class: 'earphones-cup' }, [
+    svg('rect', { x, y: cy - 13, width: 11, height: 26, rx: 5.5, class: 'earphones-cup-shell' }),
+    svg('rect', { x: x + (x < cx ? 6 : 0), y: cy - 10, width: 5, height: 20, rx: 2.5, class: 'earphones-cup-pad' }),
+  ]);
   const node = svg('svg', { viewBox: '0 0 200 200', class: 'earphones', role: 'img' }, [
     svg('title', {}, []),
     svg('defs', {}, [
@@ -223,15 +240,36 @@ function earphones() {
         svg('stop', { offset: '0', 'stop-color': '#bfe0ff', 'stop-opacity': '0.9' }),
         svg('stop', { offset: '1', 'stop-color': '#bfe0ff', 'stop-opacity': '0' }),
       ]),
+      // Hair lit from the upper left, as the record's sheen is.
+      svg('radialGradient', { id: 'earphones-hair', cx: '0.38', cy: '0.32', r: '0.75' }, [
+        svg('stop', { offset: '0', 'stop-color': '#5a4a40' }),
+        svg('stop', { offset: '0.6', 'stop-color': '#3a2e28' }),
+        svg('stop', { offset: '1', 'stop-color': '#231b17' }),
+      ]),
+      svg('linearGradient', { id: 'earphones-shoulders', x1: '0', y1: '0', x2: '0', y2: '1' }, [
+        svg('stop', { offset: '0', 'stop-color': '#f3ece1', 'stop-opacity': '0.2' }),
+        svg('stop', { offset: '1', 'stop-color': '#f3ece1', 'stop-opacity': '0.06' }),
+      ]),
+      svg('linearGradient', { id: 'earphones-gold', x1: '0', y1: '0', x2: '0', y2: '1' }, [
+        svg('stop', { offset: '0', 'stop-color': '#fff3dc' }),
+        svg('stop', { offset: '1', 'stop-color': '#c9a46c' }),
+      ]),
     ]),
     svg('circle', { cx, cy, r: o, class: 'earphones-path' }),
-    svg('circle', { cx, cy, r, class: 'earphones-head' }),
-    svg('path', { d: `M${cx - r - 2} ${cy} C${cx - r} ${cy - r * 1.5} ${cx + r} ${cy - r * 1.5} ${cx + r + 2} ${cy}`, class: 'earphones-band' }),
-    svg('path', { d: `M${cx} ${cy - r - 9} l-6 10 h12 z`, class: 'earphones-nose' }),
-    svg('rect', { x: cx - r - 9, y: cy - 11, width: 12, height: 22, rx: 5, class: 'earphones-cup' }),
-    svg('rect', { x: cx + r - 3, y: cy - 11, width: 12, height: 22, rx: 5, class: 'earphones-cup' }),
-    svg('text', { x: cx - r - 22, y: cy + 4, class: 'earphones-side' }, []),
-    svg('text', { x: cx + r + 22, y: cy + 4, class: 'earphones-side' }, []),
+    // The shoulders, a soft rounded bar a little behind the head.
+    svg('rect', { x: cx - 44, y: cy + 1, width: 88, height: 24, rx: 12, class: 'earphones-shoulders' }),
+    // The nose's tip, peeking out ahead of the head.
+    svg('ellipse', { cx, cy: cy - 27, rx: 4.5, ry: 5, class: 'earphones-nose' }),
+    svg('ellipse', { cx, cy: cy - 1, rx: 22, ry: 25, class: 'earphones-head' }),
+    // A sheen on the hair, lit from the upper left.
+    svg('ellipse', { cx: cx - 7, cy: cy - 12, rx: 9, ry: 6, class: 'earphones-sheen' }),
+    // The band, over the crown from ear to ear, with a highlight along it.
+    svg('path', { d: `M${cx - 23} ${cy - 2} C${cx - 20} ${cy - 10} ${cx + 20} ${cy - 10} ${cx + 23} ${cy - 2}`, class: 'earphones-band' }),
+    svg('path', { d: `M${cx - 19} ${cy - 6.5} C${cx - 12} ${cy - 10} ${cx + 12} ${cy - 10} ${cx + 19} ${cy - 6.5}`, class: 'earphones-band-light' }),
+    cup(cx - 31),
+    cup(cx + 20),
+    svg('text', { x: cx - 56, y: cy + 4, class: 'earphones-side' }, []),
+    svg('text', { x: cx + 56, y: cy + 4, class: 'earphones-side' }, []),
     orbit,
   ]);
   node.querySelector('title').textContent = 'A head with headphones, seen from above, and a sound circling it';
@@ -241,11 +279,17 @@ function earphones() {
   return { node, orbit };
 }
 
-function soundIcon() {
-  return svg('svg', { viewBox: '0 0 24 24', class: 'onboarding-preview-icon', 'aria-hidden': 'true' }, [
+function headphonesIcon() {
+  return svg('svg', { viewBox: '0 0 24 24', class: 'onboarding-preview-play', 'aria-hidden': 'true' }, [
     svg('path', { d: 'M4 14v-4a8 8 0 0 1 16 0v4' }),
     svg('rect', { x: 3, y: 13, width: 4, height: 7, rx: 1.5 }),
     svg('rect', { x: 17, y: 13, width: 4, height: 7, rx: 1.5 }),
+  ]);
+}
+
+function stopIcon() {
+  return svg('svg', { viewBox: '0 0 24 24', class: 'onboarding-preview-stop', 'aria-hidden': 'true' }, [
+    svg('rect', { x: 6, y: 6, width: 12, height: 12, rx: 2 }),
   ]);
 }
 

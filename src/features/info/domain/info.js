@@ -59,5 +59,5 @@ export {};
  * @property {string} start the last step's button, which starts the player
  * @property {string} skip the button that starts the player at once
  * @property {string} preview the button that plays the spatial audio preview
- * @property {string} previewPlaying the same button while the preview plays
+ * @property {string} previewStop the same button while the preview plays, which stops it
  */
