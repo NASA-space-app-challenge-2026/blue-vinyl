@@ -99,7 +99,7 @@ export function createParticleToggles(parent, onChange) {
     align-items: center;
     background:
       linear-gradient(180deg, rgb(255 255 255 / 0.14) 0%, rgb(255 255 255 / 0.04) 100%),
-      rgb(15 23 42 / 0.35);
+      rgb(15 23 42 / 0.4);
   `;
 
   const states = {
