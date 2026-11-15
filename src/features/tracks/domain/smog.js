@@ -18,8 +18,12 @@ export const HOURS_PER_BAR = 6;
 
 /** A cell is clear below `from` and fully fogged from `full` (pollution levels: AOD about 0.27 and 2.8). */
 export const FOG = Object.freeze({ from: 0.33, full: 0.85 });
-/** The haze below which the air counts as clear: the muffling starts above it. */
+/** The haze below which the air over the city counts as clear. */
 export const CLEAR_BELOW = 0.3;
+/** How long a song stays in clear air at its start and its end (s); the rest of the clear days are cut away. */
+export const CLEAR_SEC = 5;
+/** The music and the fog fade in over a song's first moments and out over its last (playback ms). */
+export const FADE_MS = 1500;
 /**
  * The pollution level at which a cell's fog is CLEAR_BELOW (AOD about 0.67): the smoothstep in fogOf turned back,
  * x = 1/2 − sin(asin(1 − 2y) / 3).
@@ -34,6 +38,8 @@ export const FOG_EDGE = Object.freeze({ from: 0.45, to: 0.85, ragged: 0.25 });
 // The pollution levels the map's textures hold, 0..LEVEL_BYTE.
 const LEVEL_BYTE = 255;
 const HOUR_MS = 60 * 60 * 1000;
+
+const HOURS_PER_SEC = (HOURS_PER_BAR * 1000) / BAR_MS;
 
 const smooth = (x) => x * x * (3 - 2 * x);
 
@@ -84,11 +90,32 @@ export function hourlyAt(times, values, time) {
  * @property {Float64Array} t each hour's playback time (ms from the song's start), BAR_MS / HOURS_PER_BAR apart
  * @property {Float32Array} level the pollution level over the city's cell each hour (pollutionOf, 0 to 1)
  * @property {Float32Array} haze the fog over the city's cell each hour (0 clear to 1 all fog)
+ * @property {{ min: number, max: number }} levelRange the song's own cleanest and thickest pollution level over the city
  * @property {{ levels: Uint8Array[], clearing: Uint8Array[], rows: number, cols: number, south: number, west: number,
  *   stepDeg: number }} field each hour's cells (row 0 the box's south edge, column 0 its west; see smogOf), and the
  *   box: its south-west cell's centre and the cells' spacing (°)
  * @property {Float64Array} clock each hour's real time (ms since the epoch)
  */
+
+/**
+ * Only the hours where the air changes play (user, 2026-11-15): from CLEAR_SEC of clear air before the city's pollution
+ * level first reaches CLEAR_LEVEL to CLEAR_SEC after it last does, the length rounded up to whole seconds.
+ *
+ * @param {ArrayLike<number>} level the pollution level over the city each hour
+ * @returns {[number, number]} the first hour to play, and one past the last
+ */
+function playedHours(level) {
+  const hours = CLEAR_SEC * HOURS_PER_SEC;
+  const first = level.findIndex((v) => v >= CLEAR_LEVEL);
+  const last = Array.prototype.findLastIndex.call(level, (v) => v >= CLEAR_LEVEL);
+  const from = Math.max(0, first - hours);
+  const to = Math.min(level.length, last + 1 + hours);
+  // The song lasts from its first hour to its last: round those intervals up to whole seconds, at the end of the data
+  // if there is room, else at the start.
+  const extra = (HOURS_PER_SEC - ((to - from - 1) % HOURS_PER_SEC)) % HOURS_PER_SEC;
+  const room = level.length - to;
+  return [Math.max(0, from - Math.max(0, extra - room)), to + Math.min(extra, room)];
+}
 
 /**
  * @param {ArrayLike<number>[]} aod each hour's cells' aerosol optical depth, south to north, west to east
@@ -97,13 +124,21 @@ export function hourlyAt(times, values, time) {
  * @returns {SmogTrack}
  */
 export function buildSmogTrack(aod, startMs, box) {
-  const { levels, clearing, level, haze } = smogOf(aod, ((box.rows - 1) / 2) * box.cols + (box.cols - 1) / 2);
+  const all = smogOf(aod, ((box.rows - 1) / 2) * box.cols + (box.cols - 1) / 2);
+  const [from, to] = playedHours(all.level);
+  const { levels, clearing, level, haze } = {
+    levels: all.levels.slice(from, to),
+    clearing: all.clearing.slice(from, to),
+    level: all.level.slice(from, to),
+    haze: all.haze.slice(from, to),
+  };
   return {
-    t: Float64Array.from(aod, (_, i) => (i * BAR_MS) / HOURS_PER_BAR),
+    t: Float64Array.from(level, (_, i) => (i * BAR_MS) / HOURS_PER_BAR),
     level,
     haze,
+    levelRange: { min: Math.min(...level), max: Math.max(...level) },
     field: { levels, clearing, ...box },
-    clock: Float64Array.from(aod, (_, i) => startMs + i * HOUR_MS),
+    clock: Float64Array.from(level, (_, i) => startMs + (from + i) * HOUR_MS),
   };
 }
 

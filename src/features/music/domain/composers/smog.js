@@ -11,7 +11,7 @@
 import { Effect } from '../effects.js';
 import { CC, Instrument } from '../instruments.js';
 import { Patch } from '../patches.js';
-import { CLEAR_LEVEL, STEPS_PER_BAR, STEP_MS, gridAt, hourlyAt } from '../../../tracks/domain/smog.js';
+import { FADE_MS, STEPS_PER_BAR, STEP_MS, gridAt, hourlyAt } from '../../../tracks/domain/smog.js';
 
 // A chord: its four notes, low to high, that the parts above the bass play (the pad and stabs its lowest three, the
 // pad an octave down), and the bass's root (MIDI).
@@ -87,13 +87,14 @@ const SOUND_FONT_REVERB = 40;
 // The standard kit's keys.
 const Drum = Object.freeze({ KICK: 36, SNARE: 38, CLOSED_HAT: 42 });
 
-// The fog over the music follows the air over the city hour by hour (user, 2026-11-15: the change in concentration is
-// the point, and the smog as muffled as it can be): none while the air is clear (pollution level below CLEAR_LEVEL,
-// about AOD 0.67), all of it at full scale (level 1, AOD 5, where the map's fog is at its thickest and brownest),
-// in between as the level goes. At none the mix is open; at all of it the low-pass is down to MUFFLED_HZ. The reverb
-// and grit stay as they are in clear air.
+// The fog over the music follows the air over the city hour by hour, against the song's own air (user, 2026-11-15: not
+// absolute concentrations; each song goes from its own cleanest air to its own thickest): none at the cleanest, all of
+// it at the thickest, in between as the level goes. At none the mix is open and full; at all of it the low-pass is down
+// to MUFFLED_HZ and the volume to QUIET, so the music can barely be heard. The reverb and grit stay as they are in
+// clear air. The mix also fades in over the song's first FADE_MS and out over its last, so songs run into each other.
 const OPEN_HZ = 18000;
 const MUFFLED_HZ = 220;
+const QUIET = 0.03;
 const REVERB = 0.12;
 const DRIVE = 0;
 
@@ -129,19 +130,27 @@ export class SmogComposer {
     const grid = gridAt(time);
     if (grid.index === this.lastIndex) return;
     this.lastIndex = grid.index;
-    this.hear(music, this.fogAt(time), at);
+    this.hear(music, this.fogAt(time), this.fadeAt(time), at);
     this.playLoop(music, grid, at);
   }
 
   // The air the loop is heard through.
-  // How much of the fog is over the music at playback `time`, 0 to 1.
+  // How much of the fog is over the music at playback `time`, 0 to 1: where the air over the city is between the
+  // song's cleanest and its thickest.
   fogAt(time) {
+    const { min, max } = this.track.levelRange;
     const level = hourlyAt(this.track.t, this.track.level, time);
-    return Math.min(1, Math.max(0, (level - CLEAR_LEVEL) / (1 - CLEAR_LEVEL)));
+    return Math.min(1, Math.max(0, (level - min) / (max - min)));
   }
 
-  hear(music, fog, at) {
+  // How far the song has faded in at `time` and not yet out, 0 to 1.
+  fadeAt(time) {
+    return Math.max(0, Math.min(1, time / FADE_MS, (this.track.t.at(-1) - time) / FADE_MS));
+  }
+
+  hear(music, fog, fade, at) {
     music.effect(Effect.LOWPASS, OPEN_HZ * (MUFFLED_HZ / OPEN_HZ) ** fog, at);
+    music.effect(Effect.VOLUME, fade * (1 - (1 - QUIET) * fog), at);
     music.effect(Effect.REVERB, REVERB, at);
     music.effect(Effect.DRIVE, DRIVE, at);
   }

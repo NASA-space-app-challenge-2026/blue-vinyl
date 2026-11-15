@@ -15,10 +15,10 @@ Smoke from fires, dust from the desert and winter smog all arrive with the weath
 
 | # | Track | Region | Smog | Stretch (local time) | Length |
 | --- | --- | --- | --- | --- | --- |
-| 1 | New York | Northern America | Canadian wildfire smoke | 2023-06-03 01:30 to 06-08 19:30 (138 h) | 0:46 |
-| 2 | Seoul | Eastern Asia | Early summer haze | 2025-06-12 05:30 to 06-17 17:30 (132 h) | 0:44 |
-| 3 | Pyongyang | Eastern Asia | Late autumn smog | 2025-11-22 10:30 to 11-28 10:30 (144 h) | 0:48 |
-| 4 | Shanghai | Eastern Asia | Winter smog | 2025-12-25 04:30 to 12-31 10:30 (150 h) | 0:50 |
+| 1 | New York | Northern America | Canadian wildfire smoke | 2023-06-05 04:30 to 06-08 19:30 (87 h) | 0:29 |
+| 2 | Seoul | Eastern Asia | Early summer haze | 2025-06-15 02:30 to 06-17 17:30 (63 h) | 0:21 |
+| 3 | Pyongyang | Eastern Asia | Late autumn smog | 2025-11-22 11:30 to 11-28 08:30 (141 h) | 0:47 |
+| 4 | Shanghai | Eastern Asia | Winter smog | 2025-12-28 23:30 to 12-31 05:30 (54 h) | 0:18 |
 
 The air the music hears is the air right over the city: the city's own 0.25° cell, the middle of the label (user, 2026-11-15). nell-v2 heard the mean over its whole plain.
 
@@ -40,9 +40,9 @@ Data files: `data/smog/tracks/` (see `tracks.json` for the source, version, cred
 
 ## Time
 
-Time runs at one fixed speed in every song (user, 2026-11-15): 3 hours of the data a second, 6 hours a bar at 120 BPM (a bar is 2 s, a step a sixteenth note, 0.125 s). A song is as long as its hours divided by 3: at most 50 s (150 hours), and the four songs differ by 2 to 4 s (50, 48, 46 and 44 s). The data's hours are never stretched or squeezed; `buildSmogTrack` in [`tracks/domain/smog.js`](../../src/features/tracks/domain/smog.js) places hour *i* at *i* / 3 s, and the app checks each song's length when it loads. The speed is the one number that sets how fast the air moves in the song (`HOURS_PER_BAR`).
+Time runs at one fixed speed in every song (user, 2026-11-15): 3 hours of the data a second, 6 hours a bar at 120 BPM (a bar is 2 s, a step a sixteenth note, 0.125 s). A song is as long as its hours divided by 3. Only the hours where the air changes play (user, 2026-11-15): 5 s of clear air (15 hours) before the city's fog first reaches 0.3 and after it last does, the clear days beyond cut away (the CSVs keep every hour; `buildSmogTrack` cuts them), the length rounded up to whole seconds: 29, 21, 47 and 18 s. The data's hours are never stretched or squeezed; `buildSmogTrack` in [`tracks/domain/smog.js`](../../src/features/tracks/domain/smog.js) places hour *i* at *i* / 3 s, and the app checks each song's length when it loads. The speed is the one number that sets how fast the air moves in the song (`HOURS_PER_BAR`).
 
-The date on the label is the city's local time by the hour. Nothing marks the moment the smog arrives or leaves: the music goes on the same, and only its muffling follows.
+The date on the label is the city's local time by the hour. Nothing marks the moment the smog arrives or leaves: the music goes on the same, and only its muffling follows. The label's hour is two digits (24 h) so the text keeps its width.
 
 ## Sound
 
@@ -62,18 +62,18 @@ Shared: the bass is the analog synth's `CAVE`, the drums the standard kit. Four 
 | Data | Screen | Sound | Updated |
 | --- | --- | --- | --- |
 | Each cell's pollution (`pollutionOf`: AOD in multiples of a clear sky's 0.1 on a log scale to 5, 0 to 1) | The fog (`fogOf`): clear below an AOD of about 0.27, so the map shows; thicker and browner as it rises. Smooth between cells (bicubic) and between hours, billowing and drifting | (screen only) | Frame |
-| The air over the city (its cell's pollution level) | The colour of the glow round the globe (from its fog) | The whole mix's low-pass, following the air hour by hour: 18 kHz while it is clear (below an AOD of about 0.67, where the city's fog is 0.3), down to 220 Hz at an AOD of 5 (the map's thickest, brownest fog), exponential between. nell-v2 ran it on its plain's haze from 0.05 to 0.8 | Sixteenth note |
+| The air over the city (its cell's pollution level) | The colour of the glow round the globe (from its fog); the colour of the city's dot and name by health band: the level's AOD taken as PM2.5 at 50 µg/m³ per unit (a rough middle value) and read on the EPA bands, blue, yellow, orange, red, purple, maroon | The whole mix, against the song's own air (user, 2026-11-15: not absolute): from its cleanest hour (18 kHz, full volume) to its thickest (low-pass 220 Hz and volume 0.03, barely audible), exponential low-pass and linear volume between. It also fades in and out over the song's first and last 1.5 s | Sixteenth note |
 | How fast the fog thins (the fog each cell loses by the next hour) | A cold sheen where it thins | (screen only) | Frame |
 
 ## Globe
 
 The globe keeps the city's cell in the middle, close enough that the fog fills the label: the label's edge is where the fog has faded out (0.85 of the way to the box's nearer sides on the ground), 2.5° to 3.5° of arc (user, 2026-11-15). It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
 
-The fog is one patch of the globe over the box, drawn by nell-v2's shader in [`smog-layer.js`](../../src/features/globe/presentation/smog-layer.js); the textures are uploaded only when the hour changes. It fades in over the song's first 1.5 s and out over its last.
+The fog is one patch of the globe over the box, drawn by nell-v2's shader in [`smog-layer.js`](../../src/features/globe/presentation/smog-layer.js); the textures are uploaded only when the hour changes. It fades in over the song's first 1.5 s and out over its last, as does the music.
 
 Where the data ends, the fog fades out instead of being cut (user, 2026-11-15): by distance from the box's middle on the ground, 1 at its nearer sides, the fog is whole up to 0.45 and gone by 0.85, that distance pushed in and out by the billows (±0.125), so the fog's edge is round and ragged and nothing is left at the box's sides. Turned away, the rest of the globe is clear.
 
-The city is marked with a dot and its name.
+The city is marked with a dot and its name, both in the colour of the air's health band over it.
 
 ## Covers
 
@@ -83,7 +83,7 @@ From Wikimedia Commons (credits in [`albums.js`](../../src/features/album/data/a
 
 | Check | Result |
 | --- | --- |
-| Length | 46, 44, 48 and 50 s: each song's hours divided by 3 (the app checks it when a song loads) |
-| Muffling | From the city's peak AOD: New York reaches 220 Hz (AOD 6.1), Pyongyang about 290 Hz (4.4), Shanghai about 1.2 kHz (2.3), Seoul about 1.9 kHz (1.9) |
+| Length | 29, 21, 47 and 18 s: each song's played hours divided by 3 (the app checks it when a song loads) |
+| Muffling | Each song's cleanest hour opens, its thickest hour is barely audible, whatever the AOD (peaks: New York 5, Pyongyang 4.4, Shanghai 2.3, Seoul 1.9; cleanest hours AOD 0.1 to 0.3) |
 | Pops | New York 1, Seoul 20, Pyongyang 0, Shanghai 0 (cell-hours, notebook section 5) |
 | Listening, screen | Not yet done: needs the user |

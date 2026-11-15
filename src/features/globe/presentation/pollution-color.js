@@ -22,3 +22,8 @@ export const smogColor = colorRamp([
   [0.5, BAND_COLOR.get(AirBand.UNHEALTHY)],
   [1, BAND_COLOR.get(AirBand.VERY_UNHEALTHY)],
 ]);
+
+/** The CSS colour of an air band (AirBand): good air's blue through the EPA's yellow, orange, red, purple and maroon. */
+export function airBandColor(band) {
+  return `rgb(${BAND_COLOR.get(band).join(' ')})`;
+}

@@ -397,7 +397,7 @@ async function loadSong(track, target) {
       track: smogTrack,
       city,
       // The local clock by the hour.
-      dateFormat: { month: 'short', day: '2-digit', hour: 'numeric', timeZone },
+      dateFormat: { month: 'short', day: '2-digit', hour: '2-digit', hourCycle: 'h23', timeZone },
       focus: boxFocus(smogTrack),
       loop: track.smog.loop,
       composer: smogComposer,

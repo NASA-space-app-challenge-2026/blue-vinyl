@@ -1,5 +1,5 @@
 // The effects a composer turns on the whole mix (see domain/effects.js), as Web Audio nodes:
-//   input -> low-pass -> clean and overdriven blend -> output
+//   input (volume) -> low-pass -> clean and overdriven blend -> output
 //                               \-> echo (feeding back on itself) -> output
 //                               \-> reverb -> output
 // The echo and the reverb tap the mix after the low-pass, so a muffled mix rings on muffled.
@@ -55,6 +55,7 @@ export function createMasterFx(context) {
     [Effect.ECHO_TIME, [[echo.delayTime, (v) => Math.min(MAX_ECHO_SEC, v)]]],
     [Effect.FEEDBACK, [[feedback.gain, (v) => v]]],
     [Effect.LOWPASS, [[lowpass.frequency, (v) => v]]],
+    [Effect.VOLUME, [[input.gain, (v) => v]]],
     [
       Effect.DRIVE,
       [

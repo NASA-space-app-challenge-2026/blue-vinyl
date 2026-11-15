@@ -14,14 +14,14 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
 import { svg } from '../../../shared/svg.js';
 import { lastIndexAtOrBefore } from '../../tracks/domain/bird-track.js';
-import { FOG, FOG_EDGE } from '../../tracks/domain/smog.js';
+import { airBandOf } from '../../tracks/domain/pollution.js';
+import { FADE_MS, FOG, FOG_EDGE, hourlyAt } from '../../tracks/domain/smog.js';
+import { airBandColor } from './pollution-color.js';
 
 // Lifted above the map so the fog lies over it.
 const ALTITUDE = 0.004;
 // Vertices of the patch along each side: enough for the globe's curve under it.
 const SEGMENTS = 48;
-// The fog fades in over its song's first moments and out over its last (playback ms).
-const FADE_MS = 1500;
 // A city's dot radius and where its name sits above it (px).
 const CITY = Object.freeze({ r: 2.5, nameDy: -7 });
 
@@ -209,8 +209,12 @@ export function createSmogLayer({ globe, setElements }) {
     uniforms.uSize.value.set(cols, rows);
     uniforms.uSpan.value.set(lonSpan, latSpan);
     uniforms.uGround.value.set(lonSpan * Math.cos(((s + latSpan / 2) * Math.PI) / 180), latSpan);
-    setElements([cityElement(city)]);
+    cityEl = cityElement(city);
+    setElements([cityEl]);
   }
+
+  // The city's dot and name, coloured by the health band of the air over it.
+  let cityEl = null;
 
   // Loads hour `i` and the next into the textures.
   function upload(i) {
@@ -239,6 +243,7 @@ export function createSmogLayer({ globe, setElements }) {
       if (!track) return;
       track = null;
       mesh.visible = false;
+      cityEl = null;
       setElements([]);
       return;
     }
@@ -248,6 +253,7 @@ export function createSmogLayer({ globe, setElements }) {
     if (i !== hour) upload(i);
     uniforms.uMix.value = Math.min(1, Math.max(0, (time - t[i]) / (t[i + 1] - t[i])));
     uniforms.uTime.value = performance.now() / 1000;
+    cityEl.el.style.setProperty('--air', airBandColor(airBandOf(hourlyAt(t, next.level, time))));
     uniforms.uFade.value = Math.max(0, Math.min(1, (time - t[0]) / FADE_MS, (t.at(-1) - time) / FADE_MS));
     mesh.visible = true;
   }

@@ -301,13 +301,13 @@ export const albums = [
     // notebooks/smog_album.ipynb and docs/albums/smog.md), in time order. Each plays nell-v2's loops, heard through
     // the air over the city.
     tracks: [
-      smogTrack('New York', 'new_york_2023.csv', 46, SmogLoop.SYNTH_POP, 'new_york.jpg',
+      smogTrack('New York', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
         'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)'),
-      smogTrack('Seoul', 'seoul_2025.csv', 44, SmogLoop.HOUSE, 'seoul.jpg',
+      smogTrack('Seoul', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
         'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)'),
-      smogTrack('Pyongyang', 'pyongyang_2025.csv', 48, SmogLoop.BREAKS, 'pyongyang.jpg',
+      smogTrack('Pyongyang', 'pyongyang_2025.csv', 47, SmogLoop.BREAKS, 'pyongyang.jpg',
         'Cover: The sun setting through haze in Pyongyang, Apr 4 2013 (Photo: Kristoferb, CC BY-SA 4.0)'),
-      smogTrack('Shanghai', 'shanghai_2025.csv', 50, SmogLoop.HOUSE, 'shanghai.jpg',
+      smogTrack('Shanghai', 'shanghai_2025.csv', 18, SmogLoop.HOUSE, 'shanghai.jpg',
         'Cover: Lujiazui in the haze, May 28 2011 (Photo: Weixi Zeng, CC BY-SA 3.0)'),
     ],
   },
