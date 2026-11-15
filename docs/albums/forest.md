@@ -26,7 +26,7 @@ Data files: `data/forest/tracks/` (see `tracks.json` for every source, version a
 
 ## Time
 
-A step is a sixteenth note of 0.125 s at 120 bpm in 3/4 (12 steps a bar). One step is one degree of longitude. 360 steps take the line once round the Earth (45 s); the listening legend plays over its first 120 steps (10 bars) while the line already moves. The globe and the music read the same step.
+A step is a sixteenth note of 0.125 s at 120 bpm in 3/4 (12 steps a bar). One step is one degree of longitude. The track ends at step 312 (39 s), where the last tree's note and the last bar of the drone end over North America; the silent Pacific after it is left out. The volume fades in over the first 2 s and out over the last 4 s. The listening legend plays over its first 120 steps (10 bars) while the line already moves. The globe and the music read the same step.
 
 ## Sound
 

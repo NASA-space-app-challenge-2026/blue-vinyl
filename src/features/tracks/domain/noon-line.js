@@ -9,6 +9,14 @@ export const STEP_SEC = 0.125;
 export const STEPS_PER_BAR = 12;
 /** Steps the line takes to go once round the Earth: a degree of longitude each. */
 export const LINE_STEPS = 360;
+/**
+ * Steps of the line that have sound: the last tree's note and the last bar of the drone end here (step 312, over North
+ * America), and the Pacific after it is silent, so the track ends here. Measured from the picked trees (forest-trees.js)
+ * and the line; measure it again if either changes.
+ */
+export const SOUND_STEPS = 312;
+/** Seconds the track fades in over at its start and out over at its end. */
+export const FADE_SEC = Object.freeze({ in: 2, out: 4 });
 /** Steps the listening legend takes before the line starts, on a track that opens with it (10 bars of 3/4). */
 export const LEGEND_STEPS = 120;
 /** The line starts at the date line and moves west. */
@@ -130,4 +138,9 @@ export function barLevelAt(line, lineStep) {
     for (const band of BANDS) sum += bandAt(line, band, step)?.density ?? 0;
   }
   return Math.min(1, sum / (STEPS_PER_BAR * BANDS.length) / LEVEL_FULL_AT);
+}
+
+/** The loudness of the forest track `sec` seconds in, 0..1: faded in at its start and out at its end. */
+export function fadeAt(sec) {
+  return Math.max(0, Math.min(1, sec / FADE_SEC.in, (SOUND_STEPS * STEP_SEC - sec) / FADE_SEC.out));
 }

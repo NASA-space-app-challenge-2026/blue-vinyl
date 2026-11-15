@@ -13,7 +13,7 @@
 // D dorian in 3/4 at 120 beats a minute: a step is a sixteenth (noon-line.js STEP_SEC) and a degree of longitude.
 
 import { Instrument } from '../instruments.js';
-import { LEGEND_STEPS, LINE_STEPS, REGIONS, STEPS_PER_BAR, STEP_SEC, barLevelAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
+import { LEGEND_STEPS, REGIONS, SOUND_STEPS, STEPS_PER_BAR, STEP_SEC, barLevelAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
 import { TREE_KINDS, TreeKind, kindOf } from '../../../tracks/domain/forest-trees.js';
 
 const SCALE = [0, 2, 3, 5, 7, 9, 10]; // D dorian, above D
@@ -106,7 +106,7 @@ export class NoonComposer {
    */
   playStep(music, { time, at }) {
     const step = Math.round(time / 1000 / STEP_SEC);
-    if (step < 0 || step >= LINE_STEPS) return;
+    if (step < 0 || step >= SOUND_STEPS) return;
     // The noon line and the globe move from step 0; the legend (if any) only explains on top.
     if (this.song.legend && step < LEGEND_STEPS) this.playLegend(music, step, at);
     this.playLine(music, step, at);

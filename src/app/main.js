@@ -43,7 +43,7 @@ import { loadStormSeason } from '../features/tracks/data/storm-season-source.js'
 import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack, loadWildfireTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
-import { STEP_SEC, lineLonAt } from '../features/tracks/domain/noon-line.js';
+import { STEP_SEC, fadeAt, lineLonAt } from '../features/tracks/domain/noon-line.js';
 import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
@@ -444,6 +444,7 @@ async function loadSong(track, target) {
       startMs: 0,
       msPerSec: 1000,
       sampleAt: () => forest.line,
+      fadeAt: (ms) => fadeAt(ms / 1000),
       followTauSec: FOREST_FOLLOW_TAU_SEC,
     };
   }

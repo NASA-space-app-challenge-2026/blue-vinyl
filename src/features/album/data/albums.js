@@ -7,7 +7,7 @@ import { Instrument } from '../../music/domain/instruments.js';
 import { Lead } from '../../music/domain/patches.js';
 import { NorthInstrument, SouthInstrument } from '../../music/domain/composers/lightning.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
-import { LINE_STEPS, STEP_SEC } from '../../tracks/domain/noon-line.js';
+import { SOUND_STEPS, STEP_SEC } from '../../tracks/domain/noon-line.js';
 import { Hemisphere, seasonDurationSec, seasonSpan } from '../../tracks/domain/storm-season.js';
 
 const ARCTIC_BIRD_TRACKS = 'data/arctic_bird/tracks';
@@ -57,8 +57,8 @@ const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAY
 
 const FOREST_TRACKS = 'data/forest/tracks';
 const FOREST_COVERS = 'assets/albums/forest';
-// The Earth turns once under the noon line from the first step, with the listening legend riding along.
-const FOREST_LINE_SEC = LINE_STEPS * STEP_SEC;
+// The Earth turns under the noon line from the first step, with the listening legend riding along, until the last note.
+const FOREST_LINE_SEC = SOUND_STEPS * STEP_SEC;
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
