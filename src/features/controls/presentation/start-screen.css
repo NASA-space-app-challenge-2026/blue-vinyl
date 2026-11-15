@@ -13,7 +13,7 @@
   margin: 0;
   padding: var(--gutter);
   border: 0;
-  background: #0e67ae;
+  background: var(--title-bg);
   color: var(--ink);
   font: inherit;
   text-align: center;

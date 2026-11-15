@@ -14,6 +14,7 @@
 :root {
   --bg: #4b3a24;
   --bg-deep: #3a2c1a;
+  --title-bg: #0e67ae;
   transition: --bg 1.2s ease, --bg-deep 1.2s ease;
   --ink: #f3ece1;
   --ink-muted: rgb(243 236 225 / 0.65);
@@ -71,12 +72,17 @@ body {
 
 /* The backdrop, on a fixed layer over the whole viewport: iOS 26 Safari ignores theme-color and tints its bars and the
    safe areas from the background colour of a fixed element at the screen's edges, following it as it changes, but
-   not a change of the page's own background. The colour sits under the gradient (backdrop.js sets it per cover). */
+   not a change of the page's own background. The colour sits under the gradient: the cover's (--bg-bars, set by
+   backdrop.js), or the title screen's while it is up. */
 .backdrop {
   position: fixed;
   inset: 0;
-  background-color: var(--bg-deep);
+  background-color: var(--bg-bars, var(--bg-deep));
   background-image: radial-gradient(ellipse at 60% 45%, var(--bg) 0%, var(--bg-deep) 100%);
+}
+
+body:has(.start-screen) .backdrop {
+  background-color: var(--title-bg);
 }
 
 .screen {

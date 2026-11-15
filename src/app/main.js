@@ -92,7 +92,7 @@ let handHeld = false;
 
 const slot = (id) => document.getElementById(id);
 
-const backdrop = createBackdrop(document.documentElement, slot('backdrop'));
+const backdrop = createBackdrop(document.documentElement);
 const playHint = createPlayHint(slot('bottom-center'));
 
 const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack });

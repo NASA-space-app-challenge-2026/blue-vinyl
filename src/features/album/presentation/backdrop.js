@@ -61,9 +61,8 @@ const shade = ({ r, g, b }, share) => `rgb(${[r, g, b].map((v) => Math.round(v *
  * cover that fails to load leaves the default backdrop of app.css.
  *
  * @param {HTMLElement} root element the backdrop tokens are set on
- * @param {HTMLElement} fill the fixed layer under the page that iOS Safari takes its bars' and safe areas' color from
  */
-export function createBackdrop(root, fill) {
+export function createBackdrop(root) {
   // Color per cover URL, so a cover is counted once.
   const colors = new Map();
   let shownUrl = null;
@@ -75,7 +74,7 @@ export function createBackdrop(root, fill) {
     if (!color) {
       root.style.removeProperty('--bg');
       root.style.removeProperty('--bg-deep');
-      fill.style.removeProperty('background-color');
+      root.style.removeProperty('--bg-bars');
       themeColor?.remove();
       themeColor = null;
       return;
@@ -86,8 +85,8 @@ export function createBackdrop(root, fill) {
     const deep = shade(color, share * BACKDROP_DEEP_SHARE);
     root.style.setProperty('--bg', shade(color, share));
     root.style.setProperty('--bg-deep', deep);
-    // Set as the color itself, not var(--bg-deep), so the bars and the safe areas take it at once while the page fades.
-    fill.style.setProperty('background-color', deep);
+    // Not registered like --bg-deep, so it does not fade: the bars and the safe areas take it at once.
+    root.style.setProperty('--bg-bars', deep);
     themeColor?.remove();
     themeColor = document.createElement('meta');
     themeColor.name = 'theme-color';
