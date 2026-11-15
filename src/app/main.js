@@ -219,7 +219,7 @@ const volumeControl = createVolumeControl(transportControls, {
   },
 });
 const albumControls = createGlassCapsule(slot('corner-bottom-left'), { label: 'Album' });
-createAlbumSwitcher(albumControls, {
+const albumSwitcher = createAlbumSwitcher(albumControls, {
   onPrevious: () => switchAlbum(-1),
   onNext: () => switchAlbum(1),
 });
@@ -303,8 +303,9 @@ document.addEventListener(
     if (!albumStep && !volumeStep) return;
     // A toolbar or the track list reached from the keyboard keeps the arrows that move between its items.
     if (event.target !== clickFocused && isRovingKey(event.target, event.key)) return;
-    // The volume slider keeps its arrows while used from the keyboard.
-    if (event.target instanceof HTMLInputElement && event.target !== clickFocused) return;
+    // The volume slider and the progress ring keep their arrows while used from the keyboard.
+    const slider = event.target instanceof HTMLInputElement || (event.target instanceof Element && event.target.closest('[role="slider"]'));
+    if (slider && event.target !== clickFocused) return;
     event.preventDefault();
     releaseClickFocus();
     // Holding an up or down key keeps turning the volume; holding left or right switches albums once.
@@ -349,6 +350,7 @@ function showAlbum(index) {
   album = albums[albumIndex];
   totalMs = albumDurationSec(album) * 1000;
   albumColumn.setAlbum(albumIndex);
+  albumSwitcher.render(albums[wrapIndex(index - 1, albums.length)].title, albums[wrapIndex(index + 1, albums.length)].title);
   globe.setLens(album.globeLens ?? DEFAULT_GLOBE_LENS);
   turntable.setTrackStarts(trackBoundaries(album).slice(1, -1));
   songs = [];

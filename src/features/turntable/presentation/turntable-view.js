@@ -1,3 +1,4 @@
+import { spokenDuration } from '../../../shared/spoken-duration.js';
 import { PlaybackState } from '../../controls/domain/playback-state.js';
 import {
   GROOVE,
@@ -261,6 +262,33 @@ const RING_BLEED = 0.1;
 // A change of more than JUMP (share of a turn) within a track, such as a seek, glides there over GLIDE_MS instead of
 // jumping; playback itself moves far less than JUMP a frame.
 const RING_GLIDE = Object.freeze({ jump: 0.02, ms: 450 });
+// Keys on the focused ring, as on a slider: the arrows move by `stepSec`, Page Up and Down by `pageShare` of the
+// track, Home and End to its start and end.
+const SEEK_KEYS = Object.freeze({ stepSec: 5, pageShare: 0.1 });
+// End stops this far (s) short of the track's end, which is where the next track starts.
+const SEEK_END_MARGIN_SEC = 0.5;
+
+/** Where a key on the ring moves the track to (s), from `nowSec` of `durationSec`; null for any other key. */
+function seekKeySec(key, nowSec, durationSec) {
+  switch (key) {
+    case 'ArrowRight':
+    case 'ArrowUp':
+      return nowSec + SEEK_KEYS.stepSec;
+    case 'ArrowLeft':
+    case 'ArrowDown':
+      return nowSec - SEEK_KEYS.stepSec;
+    case 'PageUp':
+      return nowSec + SEEK_KEYS.pageShare * durationSec;
+    case 'PageDown':
+      return nowSec - SEEK_KEYS.pageShare * durationSec;
+    case 'Home':
+      return 0;
+    case 'End':
+      return durationSec;
+    default:
+      return null;
+  }
+}
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
@@ -285,12 +313,18 @@ function arcFromTop(share) {
 /**
  * The current track's progress round the label's rim: a faint rail, filled clockwise from 12 o'clock as far as the
  * track has played, with a dot at the head. Clicking the rail calls `onSeek` with the point of the track there.
+ * It is a slider over the track's time for the keyboard and screen readers (see SEEK_KEYS).
  *
  * @param {(trackProgress: number) => void} onSeek
  */
 function createProgressRing(onSeek, { rectOf, pointOf }) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'record-progress');
+  svg.setAttribute('role', 'slider');
+  svg.setAttribute('tabindex', '0');
+  svg.setAttribute('aria-label', 'Track position');
+  svg.setAttribute('aria-valuemin', '0');
+  svg.setAttribute('focusable', 'true');
   const side = 2 * (1 + RING_BLEED);
   svg.setAttribute('viewBox', `${-side / 2} ${-side / 2} ${side} ${side}`);
   // The label is 2 units across, so the bleed is RING_BLEED / 2 of its width on each side.
@@ -308,6 +342,16 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
     <circle class="record-progress-dot" r="${RING.dotRadius}"/>`;
   const fill = svg.querySelector('.record-progress-fill');
   const dot = svg.querySelector('.record-progress-dot');
+  for (const shape of svg.children) shape.setAttribute('aria-hidden', 'true');
+
+  svg.addEventListener('keydown', (event) => {
+    if (event.altKey || event.ctrlKey || event.metaKey || !track) return;
+    const sec = seekKeySec(event.key, target * track.durationSec, track.durationSec);
+    if (sec === null) return;
+    event.preventDefault();
+    // Short of the very end, which would be the next track's start.
+    onSeek(Math.min(Math.max(0, sec), track.durationSec - SEEK_END_MARGIN_SEC) / track.durationSec);
+  });
 
   svg.querySelector('.record-progress-hit').addEventListener('click', (event) => {
     const rect = rectOf(svg);
@@ -322,8 +366,20 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
   // The share the ring shows, the one it is headed for, the track they belong to, and the glide under way, if any.
   let shown = 0;
   let target = 0;
+  /** @type {{ title: string, durationSec: number } | null} */
   let track = null;
   let glide = null;
+  // The whole second the slider last told a screen reader, so its value changes once a second, not every frame.
+  let toldSec = null;
+
+  function tell() {
+    const sec = Math.floor(target * track.durationSec);
+    if (sec === toldSec) return;
+    toldSec = sec;
+    svg.setAttribute('aria-valuemax', String(Math.round(track.durationSec)));
+    svg.setAttribute('aria-valuenow', String(sec));
+    svg.setAttribute('aria-valuetext', `${spokenDuration(sec)} of ${spokenDuration(track.durationSec)}, ${track.title}`);
+  }
 
   function draw(share) {
     shown = share;
@@ -344,14 +400,16 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
 
   /**
    * @param {number} trackProgress 0..1
-   * @param {unknown} trackKey which track it is; another track starts the ring from its place at once
+   * @param {{ title: string, durationSec: number }} trackNow which track it is; another track starts the ring from its
+   *   place at once
    */
-  function render(trackProgress, trackKey) {
+  function render(trackProgress, trackNow) {
     const next = Math.min(1, Math.max(0, trackProgress));
     const jumped = Math.abs(next - target) > RING_GLIDE.jump;
     target = next;
-    if (trackKey !== track) {
-      track = trackKey;
+    if (trackNow !== track) {
+      track = trackNow;
+      toldSec = null;
       if (glide) cancelAnimationFrame(glide.frame);
       glide = null;
       draw(target);
@@ -361,6 +419,7 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
     } else if (!glide) {
       draw(target);
     }
+    tell();
   }
 
   return { el: svg, render };
@@ -455,6 +514,9 @@ export function createTurntableView(
   haloCanvas.className = 'record-halo';
   record.append(vinylLayer, spinner, vinylTop, haloCanvas, label);
 
+  // Drawn only: the record and arm take the pointer, and the play button, the track list and the progress ring do
+  // all they do for the keyboard and screen readers. The credits are listed in the License dialog.
+  for (const drawn of [vinylLayer, spinner, vinylTop, haloCanvas, armLayer]) drawn.setAttribute('aria-hidden', 'true');
   root.append(record, armLayer);
   vinylTop.addEventListener('click', (event) => {
     // A press that held or turned the record is not a click on it, nor is a tap that began on the arm: a phone sends
@@ -720,10 +782,10 @@ export function createTurntableView(
    * @param {string} state one of PlaybackState
    * @param {number} progress 0..1 through the album
    * @param {number} trackProgress 0..1 through the current track
-   * @param {unknown} trackKey the current track, to tell when it changes
+   * @param {{ title: string, durationSec: number }} track the current track, read out with the progress ring
    */
-  function render(state, progress, trackProgress, trackKey) {
-    progressRing.render(trackProgress, trackKey);
+  function render(state, progress, trackProgress, track) {
+    progressRing.render(trackProgress, track);
     if (state === PlaybackState.STOPPED) {
       if (onRecord) lift();
     } else if (state === PlaybackState.CUEING) {

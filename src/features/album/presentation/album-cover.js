@@ -1,5 +1,6 @@
 import { createRovingFocus } from '../../../shared/roving-focus.js';
-import { ALBUM_CATEGORY_LABEL, formatDuration, spokenDuration, trackCover } from '../domain/album.js';
+import { spokenDuration } from '../../../shared/spoken-duration.js';
+import { ALBUM_CATEGORY_LABEL, formatDuration, trackCover } from '../domain/album.js';
 
 // Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always
 // leans the same way and never stands straight.
