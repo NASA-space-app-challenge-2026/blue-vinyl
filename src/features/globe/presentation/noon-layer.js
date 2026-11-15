@@ -83,6 +83,7 @@ attribute vec4 aLife; // born (s), life (s), size (units), grow (size at the end
 attribute vec2 aLook; // attack (share of the life it takes to come up), seed
 uniform float uTime;
 uniform float uPxPerUnit;
+uniform vec2 uLimb;
 varying float vAlpha;
 varying vec3 vColor;
 void main() {
@@ -101,6 +102,9 @@ void main() {
   gl_PointSize = aLife.z * mix(1.0, aLife.w, ease) * uPxPerUnit / -mv.z;
   // Struck: up fast, then dies away like the note.
   vAlpha = smoothstep(0.0, aLook.x, u) * (1.0 - u) * (1.0 - u);
+  // Drawn without a depth test (the map tiles bulge above the sphere and cut the glow into boxes), so it fades out toward
+  // the globe's edge instead of showing through from the far side.
+  vAlpha *= smoothstep(uLimb.x, uLimb.y, dot(normalize(p), normalize(cameraPosition - p)));
   vColor = aColor;
 }`;
 
@@ -191,8 +195,10 @@ export function createNoonLayer(view) {
         uTime: { value: 0 },
         uPxPerUnit: { value: 1 },
         uHeart: { value: new THREE.Color(LIGHT_HEART) },
+        uLimb: { value: new THREE.Vector2(TREE_LIMB.hiddenAt, TREE_LIMB.shownFrom) },
       },
       transparent: true,
+      depthTest: false,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
