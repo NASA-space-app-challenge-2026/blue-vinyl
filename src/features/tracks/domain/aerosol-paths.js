@@ -15,6 +15,17 @@ export const TAIL_STEPS = Object.freeze({ crowd: 24, hero: 48 });
 /** The particle toggle under the globe (see controls/presentation/particle-toggles.js) that switches each particle type. */
 export const PARTICLE_TOGGLE = Object.freeze({ seaSalt: 'salt', dust: 'dust', smoke: 'smoke', sulfate: 'sulfate' });
 
+/** The shapes a particle type is marked with (see globe/presentation/particle-shape.js); none is a circle. */
+export const ParticleShape = Object.freeze({ SQUARE: 'square', TRIANGLE: 'triangle', DIAMOND: 'diamond', STAR: 'star' });
+
+/** Each particle type's shape, on the globe and on its toggle. */
+export const PARTICLE_SHAPE = Object.freeze({
+  seaSalt: ParticleShape.SQUARE,
+  dust: ParticleShape.TRIANGLE,
+  smoke: ParticleShape.DIAMOND,
+  sulfate: ParticleShape.STAR,
+});
+
 /**
  * @typedef {Object} AerosolParticlePath
  * @property {AerosolParticle} particle

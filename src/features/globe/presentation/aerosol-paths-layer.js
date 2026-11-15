@@ -2,10 +2,12 @@
 // Storms are: each one a comet tail behind it, wide and bright at its head and thinning to nothing, and the path it has
 // gone, faint, all in its particle type's own colour (EIC's, as the shell). The tails of all the track's particles are
 // one mesh and the paths another, so a hundred of them cost about as much as one. The lead particle (`hero`) has a
-// wider, longer tail and is marked: a disc in its colour with a white edge.
+// wider, longer tail, its path is white, and it is marked: its type's shape (PARTICLE_SHAPE) in its colour with a white
+// edge.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
-import { PARTICLE_TOGGLE, TAIL_STEPS } from '../../tracks/domain/aerosol-paths.js';
+import { PARTICLE_SHAPE, TAIL_STEPS } from '../../tracks/domain/aerosol-paths.js';
+import { traceShape } from './particle-shape.js';
 
 // EIC's colours of the four particle types (COLOR of notebooks/aerosol_album.ipynb).
 const COLOR = Object.freeze({ seaSalt: '#408cff', dust: '#ff59bf', smoke: '#ff731a', sulfate: '#4cff59' });
@@ -14,7 +16,7 @@ const ALTITUDE = 0.003;
 // The lead particle's marker, in pixels across.
 const MARKER_PX = 15;
 // The opacity of a path, and of a tail at its head.
-const ALPHA = Object.freeze({ path: 0.15, head: 0.9 });
+const ALPHA = Object.freeze({ path: 0.15, heroPath: 0.6, head: 0.9 });
 // A tail's width at its head in pixels. From the head it thins as t^widthPow and fades as t^alphaPow, t = 1 at the head
 // and 0 at the tail's end (as comet-trail.js).
 const TAIL_WIDTH_PX = Object.freeze({ crowd: 4, hero: 8 });
@@ -22,16 +24,20 @@ const TAIL_SHAPE = Object.freeze({ widthPow: 0.6, alphaPow: 1.6 });
 
 const lineVertex = `
 attribute float alpha;
+attribute float white;
 varying float vAlpha;
+varying float vWhite;
 void main() {
   vAlpha = alpha;
+  vWhite = white;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }`;
 const lineFragment = `
 uniform vec3 color;
 varying float vAlpha;
+varying float vWhite;
 void main() {
-  gl_FragColor = vec4(color, vAlpha);
+  gl_FragColor = vec4(mix(color, vec3(1.0), vWhite), vAlpha);
   #include <colorspace_fragment>
 }`;
 // A tail is a ribbon across the path, its width held in pixels by the shader whatever the camera's distance: the vertex
@@ -64,21 +70,21 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
-/** A disc filled with `color` and edged in white, with a thin dark halo, so it reads on dark and on bright air. */
-function markerTexture(color) {
+/**
+ * The particle type's shape filled with `color` and edged in white, with a thin dark halo, so it reads on dark and on
+ * bright air.
+ */
+function markerTexture(color, shape) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 64;
   const ctx = canvas.getContext('2d');
-  const halo = ctx.createRadialGradient(32, 32, 24, 32, 32, 32);
-  halo.addColorStop(0, 'rgba(0,0,0,0.5)');
-  halo.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = halo;
-  ctx.fillRect(0, 0, 64, 64);
-  for (const [r, fill] of [[27, '#ffffff'], [19, color]]) {
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 5;
+  for (const [r, fill] of [[27, '#ffffff'], [17, color]]) {
     ctx.fillStyle = fill;
-    ctx.beginPath();
-    ctx.arc(32, 32, r, 0, 2 * Math.PI);
+    traceShape(ctx, shape, 32, 32, r);
     ctx.fill();
+    ctx.shadowColor = 'transparent';
   }
   return new THREE.CanvasTexture(canvas);
 }
@@ -90,8 +96,6 @@ export function createAerosolPathsLayer(view) {
   const { globe } = view;
   /** @type {import('../../tracks/domain/aerosol-paths.js').AerosolParticlePath[] | null} */
   let shownPaths = null;
-  let shownStep = 0;
-  let toggles = { salt: true, dust: true, smoke: true, sulfate: true };
   // Built for one set of paths: where each particle is at every step (x, y, z), the tail and path meshes, the marker, and
   // each particle's tail: the steps it covers and where its points start in the tail mesh.
   let xyz = [];
@@ -128,6 +132,7 @@ export function createAerosolPathsLayer(view) {
     const lineGeometry = new THREE.BufferGeometry();
     lineGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(maxSegments * 6), 3));
     lineGeometry.setAttribute('alpha', new THREE.BufferAttribute(new Float32Array(maxSegments * 2), 1));
+    lineGeometry.setAttribute('white', new THREE.BufferAttribute(new Float32Array(maxSegments * 2), 1));
     segments = new THREE.LineSegments(
       lineGeometry,
       new THREE.ShaderMaterial({ uniforms: { color: { value: new THREE.Color(color) } }, vertexShader: lineVertex, fragmentShader: lineFragment, transparent: true, depthWrite: false }),
@@ -171,7 +176,7 @@ export function createAerosolPathsLayer(view) {
       }),
     );
     tails.frustumCulled = false;
-    marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTexture(color), depthWrite: false, depthTest: false, transparent: true, sizeAttenuation: false }));
+    marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTexture(color, PARTICLE_SHAPE[paths[0].particle]), depthWrite: false, depthTest: false, transparent: true, sizeAttenuation: false }));
     marker.renderOrder = 4;
     marker.visible = false;
     globe.scene().add(tails, segments, marker);
@@ -197,14 +202,12 @@ export function createAerosolPathsLayer(view) {
       shownPaths = paths;
       build(paths);
     }
-    shownStep = step;
-    const on = toggles[PARTICLE_TOGGLE[paths[0].particle]];
-    tails.visible = segments.visible = on;
+    // The track's particles and paths are drawn whatever the particle toggles say: they switch only the air.
     marker.visible = false;
-    if (!on) return;
 
     const segPos = segments.geometry.attributes.position;
     const segAlpha = segments.geometry.attributes.alpha;
+    const segWhite = segments.geometry.attributes.white;
     const head = [0, 0, 0];
     const { fov } = globe.camera();
     const viewHeightPx = globe.renderer().domElement.clientHeight;
@@ -268,8 +271,13 @@ export function createAerosolPathsLayer(view) {
         if (k === whole && local === whole) break;
         segPos.setXYZ(2 * s, points[3 * k], points[3 * k + 1], points[3 * k + 2]);
         segPos.setXYZ(2 * s + 1, end[0], end[1], end[2]);
-        segAlpha.setX(2 * s, ALPHA.path);
-        segAlpha.setX(2 * s + 1, ALPHA.path);
+        // The lead's path is white, so it stands apart from the crowd's.
+        const alpha = particle.hero ? ALPHA.heroPath : ALPHA.path;
+        const white = particle.hero ? 1 : 0;
+        segAlpha.setX(2 * s, alpha);
+        segAlpha.setX(2 * s + 1, alpha);
+        segWhite.setX(2 * s, white);
+        segWhite.setX(2 * s + 1, white);
         s++;
       }
       if (particle.hero) {
@@ -282,15 +290,9 @@ export function createAerosolPathsLayer(view) {
       }
     });
     segments.geometry.setDrawRange(0, 2 * s);
-    segPos.needsUpdate = segAlpha.needsUpdate = true;
+    segPos.needsUpdate = segAlpha.needsUpdate = segWhite.needsUpdate = true;
     tailPos.needsUpdate = tailSide.needsUpdate = tailAlpha.needsUpdate = tailHalf.needsUpdate = true;
   }
 
-  /** @param {{ salt: boolean, dust: boolean, smoke: boolean, sulfate: boolean }} next */
-  function setToggles(next) {
-    toggles = next;
-    render(shownPaths, shownStep);
-  }
-
-  return { render, setToggles, hide: clear };
+  return { render, hide: clear };
 }

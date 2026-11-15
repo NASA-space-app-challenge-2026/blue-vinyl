@@ -1,5 +1,12 @@
 // Glass capsule buttons to toggle visibility and sound of the four aerosol particle stems.
-// Shows an informative tooltip caption on hover explaining each particle type and its sound stem.
+// Shows an informative tooltip caption on hover explaining each particle type and its sound stem. Each is marked with its
+// particle type's shape (PARTICLE_SHAPE). Every toggle can be switched off, the track's own type's too: that hides the
+// type's air on the globe, while the track's particles, their paths and the lead's voice go on.
+
+import { PARTICLE_SHAPE } from '../../tracks/domain/aerosol-paths.js';
+import { svgPoints } from '../../globe/presentation/particle-shape.js';
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
 
 const PARTICLES = [
   {
@@ -7,40 +14,44 @@ const PARTICLES = [
     name: 'Sea Salt',
     desc: "Ocean spray churned up by Erin's winds (blue)",
     color: '#4080ff',
+    shape: PARTICLE_SHAPE.seaSalt,
   },
   {
     id: 'dust',
     name: 'Dust',
     desc: 'Desert sand crossing the Atlantic (pink)',
     color: '#ff58a0',
+    shape: PARTICLE_SHAPE.dust,
   },
   {
     id: 'smoke',
     name: 'Smoke',
     desc: 'Wildfire smoke (orange)',
     color: '#ff7820',
+    shape: PARTICLE_SHAPE.smoke,
   },
   {
     id: 'sulfate',
     name: 'Sulfate',
     desc: 'Volcanic and pollution sulfate (green)',
     color: '#50d060',
+    shape: PARTICLE_SHAPE.sulfate,
   },
 ];
 
 /**
- * Creates the 4 particle toggles with floating hover captions attached below the globe.
+ * Creates the 4 particle toggles with floating hover captions, inside the globe at its bottom.
  *
  * @param {HTMLElement} parent
  * @param {(toggles: { salt: boolean, dust: boolean, smoke: boolean, sulfate: boolean }) => void} onChange
  */
 export function createParticleToggles(parent, onChange) {
-  // Wrapper container holding both the tooltip caption and the capsule, anchored below the globe
+  // Wrapper container holding both the tooltip caption and the capsule, anchored inside the globe at its bottom
   const wrapper = document.createElement('div');
   wrapper.className = 'particle-toggles-wrapper';
   wrapper.style.cssText = `
     position: absolute;
-    top: calc(100% + 14px);
+    bottom: 10%;
     left: 50%;
     transform: translateX(-50%);
     display: none;
@@ -95,36 +106,36 @@ export function createParticleToggles(parent, onChange) {
   };
 
   const buttons = new Map();
-  // The track's lead particle type: always on, its toggle cannot be switched off.
-  let lead = null;
 
   function paint(id) {
     const { btn, dot, color } = buttons.get(id);
     btn.classList.toggle('active', states[id]);
-    btn.setAttribute('aria-disabled', String(id === lead));
-    btn.style.cursor = id === lead ? 'not-allowed' : '';
     dot.style.opacity = states[id] ? '1.0' : '0.2';
     dot.style.transform = states[id] ? 'scale(1.0)' : 'scale(0.7)';
-    dot.style.boxShadow = states[id] ? `0 0 8px ${color}` : 'none';
+    dot.style.filter = states[id] ? `drop-shadow(0 0 4px ${color})` : 'none';
   }
 
-  for (const { id, name, desc, color } of PARTICLES) {
+  for (const { id, name, desc, color, shape } of PARTICLES) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'glass-segment particle-toggle active';
     btn.setAttribute('aria-label', `Toggle ${name}`);
 
-    // Glowing indicator dot
-    const dot = document.createElement('span');
-    dot.className = 'particle-dot';
+    // Glowing indicator in the particle type's shape
+    const dot = document.createElementNS(SVG_NS, 'svg');
+    dot.classList.add('particle-dot');
+    dot.setAttribute('viewBox', '-1 -1 2 2');
+    dot.setAttribute('width', '14');
+    dot.setAttribute('height', '14');
     dot.style.cssText = `
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background-color: ${color};
-      box-shadow: 0 0 8px ${color};
+      overflow: visible;
+      filter: drop-shadow(0 0 4px ${color});
       transition: opacity 0.2s, transform 0.2s;
     `;
+    const outline = document.createElementNS(SVG_NS, 'polygon');
+    outline.setAttribute('points', svgPoints(shape));
+    outline.setAttribute('fill', color);
+    dot.append(outline);
     btn.append(dot);
 
     // Hover caption handlers
@@ -142,7 +153,6 @@ export function createParticleToggles(parent, onChange) {
     // Click toggle handler
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (id === lead) return;
       states[id] = !states[id];
       paint(id);
       onChange({ ...states });
@@ -165,9 +175,8 @@ export function createParticleToggles(parent, onChange) {
       container.hidden = true;
       caption.style.opacity = '0';
     },
-    /** Starts a track: every particle type on, its lead one locked on. */
-    setLead(id) {
-      lead = id;
+    /** Starts a track: every particle type on. */
+    reset() {
       for (const key of buttons.keys()) {
         states[key] = true;
         paint(key);

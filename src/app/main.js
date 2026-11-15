@@ -1,4 +1,4 @@
-import { heroFocus, PARTICLE_TOGGLE } from '../features/tracks/domain/aerosol-paths.js';
+import { heroFocus } from '../features/tracks/domain/aerosol-paths.js';
 import { loadAerosolTrack, loadHeroAods } from '../features/tracks/data/aerosol-track-source.js';
 import { heroAt, heroSeries } from '../features/tracks/domain/aerosol-hero.js';
 import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
@@ -168,7 +168,6 @@ const turntable = createTurntableView(slot('stage'), {
 const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
 const particleToggles = createParticleToggles(turntable.label, (toggles) => {
   globe.aerosol.setToggles(toggles);
-  globe.aerosolPaths.setToggles(toggles);
 });
 
 const recordSwap = createRecordSwap({
@@ -917,10 +916,10 @@ function renderAerosol(trackIndex) {
     return;
   }
   particleToggles.show();
-  // Each track starts with every particle type on, its lead one locked on.
+  // Each track starts with every particle type on.
   if (togglesTrack !== trackIndex) {
     togglesTrack = trackIndex;
-    particleToggles.setLead(PARTICLE_TOGGLE[data.paths[0].particle]);
+    particleToggles.reset();
   }
   const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
   globe.aerosol.render(data.frames, trackSec, track.durationSec);
