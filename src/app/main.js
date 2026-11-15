@@ -1,5 +1,4 @@
 import { loadAerosolTrack } from '../features/tracks/data/aerosol-track-source.js';
-import { sampleAerosol } from '../features/tracks/domain/aerosol-track.js';
 import { aerosolCues, aerosolScore } from '../features/music/domain/aerosol-score.js';
 import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
 'use strict';
@@ -925,12 +924,11 @@ function renderAerosol(trackIndex) {
   globe.aerosol.render(data.frames, trackSec, track.durationSec);
   globe.aerosolJourney.hide(); // TEMP(#63): the music's cues are not drawn while the data is redrawn plainly
 
-  if (track.aerosol.trackEye) {
-    const s = sampleAerosol(data.records, trackSec / track.durationSec);
-    if (s) focus = { lat: s.current.viewLat, lon: s.current.viewLon, arcDeg: track.aerosol.arcDeg };
-  } else if (track.aerosol.viewLat !== undefined) {
-    focus = { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon, arcDeg: track.aerosol.arcDeg };
-  }
+  // TEMP(#63): the whole globe, still, with no zoom: on the track's own view, or where Erin's eye starts.
+  const view = track.aerosol.viewLat !== undefined
+    ? { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon }
+    : { lat: data.records[0].viewLat, lon: data.records[0].viewLon };
+  focus = view;
 
   if (track.color) halo.setColor(track.color);
   if (state === PlaybackState.PLAYING) halo.wake();
