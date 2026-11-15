@@ -212,7 +212,7 @@ export function createSmogLayer({ globe, setElements }) {
     setElements([cityEl]);
   }
 
-  // The city's dot and name, coloured as the glow round the globe is, by the haze over the city.
+  // The city's dot and name, the name white, both shadowed in the colour of the glow round the globe, by the haze over the city.
   let cityEl = null;
 
   // Loads hour `i` and the next into the textures.
