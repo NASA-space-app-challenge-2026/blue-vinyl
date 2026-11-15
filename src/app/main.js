@@ -63,6 +63,7 @@ import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.j
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 import { pointInScreen, rectInScreen } from '../shared/screen-space.js';
+import { isRovingKey } from '../shared/roving-focus.js';
 import { createTicker } from '../shared/ticker.js';
 
 // The contiguous United States, zoomed until the label's edge is 30 degrees of arc from its middle, so the West's fires
@@ -209,7 +210,7 @@ const noonComposer = new NoonComposer();
 // ahead of the line, so the eased camera settles on the line itself rather than trailing it.
 const FOREST_FOLLOW_TAU_SEC = 0.5;
 
-const transportControls = createGlassCapsule(slot('corner-bottom-left'));
+const transportControls = createGlassCapsule(slot('corner-bottom-left'), { label: 'Playback' });
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
 const volumeControl = createVolumeControl(transportControls, {
   onChange: (level) => {
@@ -217,12 +218,12 @@ const volumeControl = createVolumeControl(transportControls, {
     soundEngine.setVolume(level);
   },
 });
-const albumControls = createGlassCapsule(slot('corner-bottom-left'));
+const albumControls = createGlassCapsule(slot('corner-bottom-left'), { label: 'Album' });
 createAlbumSwitcher(albumControls, {
   onPrevious: () => switchAlbum(-1),
   onNext: () => switchAlbum(1),
 });
-const viewControls = createGlassCapsule(slot('corner-top-right'));
+const viewControls = createGlassCapsule(slot('corner-top-right'), { label: 'View' });
 createFullscreenButton(viewControls);
 const aboutDialog = createInfoDialog(slot('screen'), {
   id: 'about',
@@ -300,6 +301,8 @@ document.addEventListener(
     const albumStep = ALBUM_KEYS[event.key];
     const volumeStep = VOLUME_KEYS[event.key];
     if (!albumStep && !volumeStep) return;
+    // A toolbar or the track list reached from the keyboard keeps the arrows that move between its items.
+    if (event.target !== clickFocused && isRovingKey(event.target, event.key)) return;
     // The volume slider keeps its arrows while used from the keyboard.
     if (event.target instanceof HTMLInputElement && event.target !== clickFocused) return;
     event.preventDefault();
@@ -614,6 +617,8 @@ async function switchAlbum(step, target = null, resume = isPlaying()) {
     return;
   }
   swapping = true;
+  // A track list reached from the keyboard gets the focus back on the new sleeve, as the inert stage drops it.
+  const focusedTracks = document.activeElement !== clickFocused && document.activeElement?.closest('.album-cover-tracks');
   // Nothing on the stage can be touched while the records change.
   slot('stage').inert = true;
   elapsedMs = 0;
@@ -630,6 +635,7 @@ async function switchAlbum(step, target = null, resume = isPlaying()) {
     slot('stage').inert = false;
     swapping = false;
   }
+  if (focusedTracks) albumColumn.focusTracks();
   if (resume) cue();
 }
 

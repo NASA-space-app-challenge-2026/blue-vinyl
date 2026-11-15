@@ -1,4 +1,5 @@
-import { ALBUM_CATEGORY_LABEL, formatDuration, trackCover } from '../domain/album.js';
+import { createRovingFocus } from '../../../shared/roving-focus.js';
+import { ALBUM_CATEGORY_LABEL, formatDuration, spokenDuration, trackCover } from '../domain/album.js';
 
 // Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always
 // leans the same way and never stands straight.
@@ -23,6 +24,7 @@ function el(tag, className, text) {
 /**
  * Album sleeve with title and track list. It shows the current track's cover (see trackCover), fading from one to the
  * next, and falls back to a plain backdrop while the cover image is missing.
+ * The track list takes one Tab stop, the up and down arrow keys moving between its tracks; the playing one is marked.
  * The face leans in 3D toward the mouse like a card held in the hand. Clicking a track calls `onSelectTrack` with its
  * index.
  *
@@ -37,6 +39,8 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
   let album = null;
   let image = null;
   let items = [];
+  let buttons = [];
+  const tracks = createRovingFocus(body, { selector: '.album-cover-track-button', orientation: 'vertical' });
 
   face.append(counter, body);
   cover.append(face);
@@ -103,31 +107,46 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
     cover.style.setProperty('--tilt', `${tiltDeg(index)}deg`);
 
     counter.textContent = `${index + 1} / ${count}`;
+    counter.setAttribute('aria-label', `Album ${index + 1} of ${count}`);
 
     const list = el('ol', 'album-cover-tracks');
+    list.setAttribute('aria-label', 'Tracks');
+    buttons = [];
     items = album.tracks.map((track, i) => {
       const item = el('li', 'album-cover-track');
       const button = el('button', 'album-cover-track-button');
       button.type = 'button';
+      // "1:20" would be read out as "1 colon 20".
+      button.setAttribute('aria-label', `${track.title}, ${spokenDuration(track.durationSec)}`);
       button.append(el('span', 'album-cover-track-title', track.title), el('span', 'album-cover-track-duration', formatDuration(track.durationSec)));
       button.addEventListener('click', () => onSelectTrack?.(i));
       item.append(button);
+      buttons.push(button);
       return item;
     });
     list.append(...items);
-    body.replaceChildren(el('p', 'album-cover-category', ALBUM_CATEGORY_LABEL[album.category]), el('h1', 'album-cover-title', album.title), list);
+    // The app's name is the page's one h1.
+    body.replaceChildren(el('p', 'album-cover-category', ALBUM_CATEGORY_LABEL[album.category]), el('h2', 'album-cover-title', album.title), list);
   }
 
   /** @param {number} activeTrackIndex */
   function render(activeTrackIndex) {
     showCover(trackCover(album, activeTrackIndex).url, true);
     items.forEach((item, i) => item.classList.toggle('is-active', i === activeTrackIndex));
+    buttons.forEach((button, i) => {
+      if (i === activeTrackIndex) button.setAttribute('aria-current', 'true');
+      else button.removeAttribute('aria-current');
+    });
+    // Tabbing into the list lands on the playing track.
+    if (buttons[activeTrackIndex]) tracks.setCurrent(buttons[activeTrackIndex]);
   }
 
   return {
     el: cover,
     setAlbum,
     render,
+    /** Focuses the track the list's Tab stop is on. */
+    focusTracks: tracks.focus,
     /** The cover image shown, or null. */
     get image() {
       return image?.parentNode === face ? image : null;

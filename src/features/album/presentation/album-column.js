@@ -128,5 +128,5 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
   }
 
   settle();
-  return { setAlbum, setNeighbour, render: sleeve.render, place, setTucked, moves, settle };
+  return { setAlbum, setNeighbour, render: sleeve.render, focusTracks: sleeve.focusTracks, place, setTucked, moves, settle };
 }
