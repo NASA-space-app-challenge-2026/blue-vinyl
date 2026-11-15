@@ -2,7 +2,7 @@
 
 Every source the album uses, whether it comes from EIC or elsewhere. Written from [smog_album.ipynb](../../notebooks/smog_album.ipynb), which does the downloads. Rules: [data-guide.md](../../docs/data-guide.md#sources-file).
 
-The album plays nell-v2's "The Wind That Sweeps the Smog" over four cities whose smog flows in from outside the map, covers them and passes on (user, 2026-11-15): New York (June 2023), Seoul (June 2025), Pyongyang (November 2025) and Shanghai (December 2025), the air right over each city, as its aerosol optical depth. The notebook screens the whole world of 2025 at a coarse grid, picks each song's hours at the app's grid and exports them to `data/smog/tracks/` (see `tracks.json` there).
+The album plays nell-v2's "The Wind That Sweeps the Smog" over three cities whose smog flows in from outside the map, covers them and passes on (user, 2026-11-15): New York (June 2023), Seoul (June 2025) and Shanghai (December 2025), the air right over each city, as its aerosol optical depth. The notebook screens the whole world of 2025 at a coarse grid, picks each song's hours at the app's grid and exports them to `data/smog/tracks/` (see `tracks.json` there).
 
 ## EIC Visualizations
 

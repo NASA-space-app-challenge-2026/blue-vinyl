@@ -55,7 +55,6 @@ export const AlbumCategory = Object.freeze({
  * @property {string} tracksDir the album's tracks folder, holding the track's CSVs and tracks.json
  * @property {string} file the track's CSV
  * @property {Object} loop the loop it plays (one of SmogLoop in music/domain/composers/smog.js)
- * @property {number} [arcDeg] the arc to the edge of the view (°), if not where the city's box ends; the city stays in the middle
  */
 
 /**

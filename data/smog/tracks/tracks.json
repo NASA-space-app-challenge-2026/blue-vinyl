@@ -90,51 +90,6 @@
     ]
   },
   {
-    "file": "pyongyang_2025.csv",
-    "title": "Pyongyang",
-    "pages": [
-      {
-        "svsId": 5151,
-        "svsUrl": "https://svs.gsfc.nasa.gov/5151/",
-        "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
-      }
-    ],
-    "note": "Ours: smog blown in from outside the map, over the city and on, picked by the rules of section 5; every hour of it is here; the app plays the hours of change, with 5 s of clear air either side, at 3 hours a second (47 s).",
-    "sources": [
-      {
-        "source": "GEOS-CF v1 (NASA GMAO), xgc_tavg_1hr_g1440x721_x1, the sum of aod550_bc, aod550_oc, aod550_sulfate, aod550_dust, aod550_sala, aod550_salc",
-        "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/xgc_tavg_1hr_g1440x721_x1.dods?aod550_bc.aod550_bc[69169:69313][500:532][1207:1239],aod550_oc.aod550_oc[69169:69313][500:532][1207:1239],aod550_sulfate.aod550_sulfate[69169:69313][500:532][1207:1239],aod550_dust.aod550_dust[69169:69313][500:532][1207:1239],aod550_sala.aod550_sala[69169:69313][500:532][1207:1239],aod550_salc.aod550_salc[69169:69313][500:532][1207:1239]",
-        "version": "v1",
-        "doi": "https://doi.org/10.1029/2020MS002413",
-        "downloaded": "2026-11-15",
-        "license": "NASA data, no restrictions on use",
-        "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 shows surface PM2.5 from GEOS-CF v2 (from 2025-08-04); the album plays the same model's column AOD (v1 holds every song), as surface PM2.5 empties and refills in place each day."
-      }
-    ],
-    "city": {
-      "name": "Pyongyang",
-      "lat": 39.021385,
-      "lon": 125.752745
-    },
-    "grid": {
-      "south": 35.0,
-      "west": 121.75,
-      "stepDeg": 0.25,
-      "rows": 33,
-      "cols": 33
-    },
-    "timeZone": "Asia/Pyongyang",
-    "units": {
-      "<lat>_<lon>": "aerosol optical depth at 550 nm, unitless (hourly mean, the cell centred there)"
-    },
-    "timeRange": [
-      "2025-11-22T01:30Z",
-      "2025-11-28T01:30Z"
-    ]
-  },
-  {
     "file": "shanghai_2025.csv",
     "title": "Shanghai",
     "pages": [

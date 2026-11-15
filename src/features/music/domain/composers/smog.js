@@ -56,24 +56,6 @@ export const SmogLoop = Object.freeze({
     stabs: Object.freeze({ patch: Patch.STAB, steps: new Map([[0, 2], [3, 2], [6, 1], [10, 2], [13, 2]]) }),
     melody: null,
   }),
-  // Breakbeat in E minor: a broken beat under a dulcimer hook, a held bass and a warm pad.
-  BREAKS: Object.freeze({
-    chords: Object.freeze([
-      chord([76, 79, 83, 88], 40),
-      chord([76, 79, 84, 88], 36),
-      chord([74, 79, 83, 86], 43),
-      chord([74, 78, 81, 86], 38),
-    ]),
-    drums: Object.freeze({ kick: [0, 7, 10], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], ghost: [3, 5, 9, 11, 13, 15] }),
-    bass: new Map([[0, 6], [7, 3], [10, 6]]),
-    pad: Instrument.PAD,
-    arpeggio: null,
-    stabs: null,
-    melody: Object.freeze({
-      instrument: Instrument.DULCIMER,
-      notes: [[0, 3, 2], [2, 2, 2], [4, 1, 1], [6, 2, 2], [8, 3, 2], [11, 1, 1], [12, 2, 4]],
-    }),
-  }),
 });
 const SOUND_FONTS = Object.freeze([
   ...new Set(Object.values(SmogLoop).flatMap((loop) => [loop.pad, loop.melody?.instrument].filter(Boolean))),

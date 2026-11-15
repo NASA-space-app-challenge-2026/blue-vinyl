@@ -58,22 +58,18 @@ const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAY
 const SMOG_TRACKS = 'data/smog/tracks';
 const SMOG_COVERS = 'assets/albums/smog';
 
-// The arc to the edge of the square view that holds all of South Korea round Seoul, which stays in the middle: Jeju, its
-// farthest point, is 4.4° south of it.
-const SOUTH_KOREA_ARC_DEG = 4.8;
-
 /**
  * A smog song: the hours around its city, played on `loop` (one of SmogLoop) at 3 hours of the data a second, so it
  * lasts `durationSec` (checked against the data when it loads; see tracks/domain/smog.js).
  */
-function smogTrack(title, file, durationSec, loop, cover, coverCredit, arcDeg) {
+function smogTrack(title, file, durationSec, loop, cover, coverCredit) {
   return {
     title,
     durationSec,
     color: '#bab8b6',
     coverUrl: `${SMOG_COVERS}/${cover}`,
     coverCredit,
-    smog: { tracksDir: SMOG_TRACKS, file, loop, arcDeg },
+    smog: { tracksDir: SMOG_TRACKS, file, loop },
   };
 }
 
@@ -308,10 +304,7 @@ export const albums = [
       smogTrack('New York', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
         'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)'),
       smogTrack('Seoul', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
-        'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)',
-        SOUTH_KOREA_ARC_DEG),
-      smogTrack('Pyongyang', 'pyongyang_2025.csv', 47, SmogLoop.BREAKS, 'pyongyang.jpg',
-        'Cover: The sun setting through haze in Pyongyang, Apr 4 2013 (Photo: Kristoferb, CC BY-SA 4.0)'),
+        'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)'),
       smogTrack('Shanghai', 'shanghai_2025.csv', 18, SmogLoop.HOUSE, 'shanghai.jpg',
         'Cover: Lujiazui in the haze, May 28 2011 (Photo: Weixi Zeng, CC BY-SA 3.0)'),
     ],
