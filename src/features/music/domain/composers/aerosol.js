@@ -45,7 +45,7 @@ const AIR = Object.freeze({
 const AIR_PARTICLES = Object.freeze(Object.keys(AIR));
 // How loud a particle type's instrument is, as a share of full, from the thinnest air (still plainly heard) to the
 // thickest.
-const AIR_LOUDNESS = Object.freeze([0.35, 1]);
+const AIR_LOUDNESS = Object.freeze([0.2, 1]);
 const SPACE = Object.freeze({ reverb: 0.4, echo: 0.18, echoSteps: 3, feedback: 0.4 });
 
 const lerp = ([from, to], amount) => from + (to - from) * amount;
