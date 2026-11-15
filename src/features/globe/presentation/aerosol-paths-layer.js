@@ -19,7 +19,7 @@ const MARKER_PX = 19.5;
 const ALPHA = Object.freeze({ path: 0.15, heroPath: 0.6, head: 0.9 });
 // A tail's width at its head in pixels. From the head it thins as t^widthPow and fades as t^alphaPow, t = 1 at the head
 // and 0 at the tail's end (as comet-trail.js).
-const TAIL_WIDTH_PX = Object.freeze({ crowd: 4, hero: 8 });
+const TAIL_WIDTH_PX = Object.freeze({ crowd: 4, hero: 12 });
 const TAIL_SHAPE = Object.freeze({ widthPow: 0.6, alphaPow: 1.6 });
 
 const lineVertex = `
