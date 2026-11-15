@@ -3,9 +3,9 @@
 //
 // Each song plays its own four-bar loop (its `loop`, a SmogLoop) at 120 BPM, unchanged from start to end; the air only
 // changes how it comes through, the same way in every song:
-//   - The fog: clear air plays the loop crisp; as the smog gathers over the city (the haze, the fog the map draws
-//     over the city's cell) the whole mix is muffled more and more, and from the moment it rolls in until the air clears it is
-//     heard through a wall, smeared into reverb and grit.
+//   - The fog: clear air plays the loop crisp; the more smog over the city's cell (its PM2.5, as the map draws it), the
+//     more the whole mix is muffled, as if through a wall, and smeared into reverb and grit, rising and falling with
+//     the air hour by hour.
 //   - The clearing: while the fog on the map is thinning, a gust of wind blows on every beat, as loud as the city is
 //     losing fog.
 //   - The turns (see tracks/domain/smog.js): as the smog rolls in, a deep boom as the map darkens; as the front sweeps
@@ -16,16 +16,7 @@
 import { Effect } from '../effects.js';
 import { CC, Instrument } from '../instruments.js';
 import { NoiseShape, Patch } from '../patches.js';
-import {
-  CLEAR_BELOW,
-  SMOTHERED_ABOVE,
-  STEPS_PER_BAR,
-  STEPS_PER_BEAT,
-  STEP_MS,
-  gridAt,
-  hourlyAt,
-  smotheredAt,
-} from '../../../tracks/domain/smog.js';
+import { CLEAR_LEVEL, STEPS_PER_BAR, STEPS_PER_BEAT, STEP_MS, gridAt, hourlyAt } from '../../../tracks/domain/smog.js';
 
 // A chord: its four notes, low to high, that the parts above the bass play (the pad and stabs its lowest three, the
 // pad an octave down), and the bass's root (MIDI).
@@ -101,10 +92,11 @@ const SOUND_FONT_REVERB = 40;
 // The standard kit's keys.
 const Drum = Object.freeze({ KICK: 36, SNARE: 38, CLOSED_HAT: 42, CRASH: 49 });
 
-// The fog over the music, at its widest (user, 2026-11-15: as muffled as it can be): none while the air is clear
-// (haze below CLEAR_BELOW), rising as the smog gathers to all of it as it rolls in (SMOTHERED_ABOVE), and all of it
-// for as long as the air stays smothered, until it clears. At none the mix is as it is; at all of it the low-pass is
-// down to MUFFLED_HZ and the reverb and grit are at their most.
+// The fog over the music follows the air over the city hour by hour (user, 2026-11-15: the change in concentration is
+// the point, and the smog as muffled as it can be): none while the air is clear (pollution level below CLEAR_LEVEL,
+// about 88 µg/m³), all of it at full scale (level 1, 600 µg/m³, where the map's fog is at its thickest and brownest),
+// in between as the level goes. At none the mix is as it is; at all of it the low-pass is down to MUFFLED_HZ and the
+// reverb and grit are at their most.
 const OPEN_HZ = 18000;
 const MUFFLED_HZ = 220;
 const REVERB = Object.freeze([0.12, 0.6]);
@@ -167,9 +159,8 @@ export class SmogComposer {
   // The air the loop is heard through.
   // How much of the fog is over the music at playback `time`, 0 to 1.
   fogAt(time) {
-    if (smotheredAt(this.track, time)) return 1;
-    const haze = hourlyAt(this.track.t, this.track.haze, time);
-    return Math.min(1, Math.max(0, (haze - CLEAR_BELOW) / (SMOTHERED_ABOVE - CLEAR_BELOW)));
+    const level = hourlyAt(this.track.t, this.track.level, time);
+    return Math.min(1, Math.max(0, (level - CLEAR_LEVEL) / (1 - CLEAR_LEVEL)));
   }
 
   hear(music, fog, at) {

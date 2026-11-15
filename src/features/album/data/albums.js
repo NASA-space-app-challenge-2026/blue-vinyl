@@ -57,9 +57,9 @@ const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAY
 
 const SMOG_TRACKS = 'data/smog/tracks';
 const SMOG_COVERS = 'assets/albums/smog';
-// How long each smog song plays: its pace aims at 54 s and rounds each stretch to whole bars, which comes to 56 s for
+// How long each smog song plays: its pace aims at 54 s and rounds each stretch to whole bars, which comes to 54 s for
 // every song (see paceOf in tracks/domain/smog.js; checked against the data when a song loads).
-const SMOG_SONG_SEC = 56;
+const SMOG_SONG_SEC = 54;
 
 /** A smog song: the hours around its city, played on `loop` (one of SmogLoop) (see tracks/domain/smog.js). */
 function smogTrack(title, file, loop, cover, coverCredit) {
@@ -297,16 +297,16 @@ export const albums = [
     dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
     // Songs are timed in playback ms; each sets the pace of its own hours (see tracks/domain/smog.js).
     msPerSec: 1000,
-    // Three cities of three regions whose air filled with smog and cleared again once (see notebooks/smog_album.ipynb
-    // and docs/albums/smog.md): wildfire smoke, and the winter smog of two cities. Each plays nell-v2's loops in turn,
-    // heard through the smog.
+    // Three cities of three regions whose air changed the most, smog rolling in and clearing one to three times (see
+    // notebooks/smog_album.ipynb and docs/albums/smog.md), in time order: bushfire and wildfire smoke, and autumn smog.
+    // Each plays nell-v2's loops in turn, heard through the air over the city.
     tracks: [
-      smogTrack('Portland', 'portland_2020.csv', SmogLoop.SYNTH_POP, 'portland.jpg',
-        'Cover: Downtown Portland from SE Portland during the 2020 wildfires, Sep 10 2020 (Photo: Tedder, CC BY-SA 4.0)'),
-      smogTrack('Beijing', 'beijing_2025.csv', SmogLoop.HOUSE, 'beijing.jpg',
+      smogTrack('Canberra', 'canberra_2019.csv', SmogLoop.SYNTH_POP, 'canberra.jpg',
+        'Cover: Bushfire smoke over Lyneham, Canberra, Jan 1 2020 (Photo: Jennifer Forest, CC BY 2.0)'),
+      smogTrack('Seattle', 'seattle_2020.csv', SmogLoop.HOUSE, 'seattle.jpg',
+        'Cover: Smoky skyline of Downtown Seattle from the Rizal Bridge, Sep 11 2020 (Photo: SounderBruce, CC BY-SA 4.0)'),
+      smogTrack('Beijing', 'beijing_2025.csv', SmogLoop.BREAKS, 'beijing.jpg',
         'Cover: Jade Peak Pagoda in smog from Longevity Hill, Beijing (Photo: Daniel Case, CC BY-SA 3.0)'),
-      smogTrack('Lahore', 'lahore_2024.csv', SmogLoop.BREAKS, 'lahore.jpg',
-        'Cover: The sun dimmed by smog over Lahore, Jun 2008 (Photo: Tore Urnes, CC BY 2.0)'),
     ],
   },
 ];

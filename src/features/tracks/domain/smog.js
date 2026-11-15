@@ -25,14 +25,20 @@ export const FOG = Object.freeze({ from: 0.33, full: 0.85 });
 export const CLEAR_BELOW = 0.3;
 export const SMOTHERED_ABOVE = 0.5;
 /**
+ * The pollution level at which a cell's fog is CLEAR_BELOW (about 88 µg/m³): the smoothstep in fogOf turned back,
+ * x = 1/2 − sin(asin(1 − 2y) / 3).
+ */
+export const CLEAR_LEVEL = FOG.from + (FOG.full - FOG.from) * (0.5 - Math.sin(Math.asin(1 - 2 * CLEAR_BELOW) / 3));
+/**
  * The fog's fade toward its box's edge, by distance from the box's middle on the ground, 1 where the box's nearer
  * sides are: whole up to `from` and gone by `to`, that distance pushed in and out by up to ±`ragged`/2 with the
  * billows (see globe/presentation/smog-layer.js). `to` + `ragged`/2 stays below 1, so nothing is left at the sides.
  */
 export const FOG_EDGE = Object.freeze({ from: 0.45, to: 0.85, ragged: 0.25 });
-// The pace: the hours leading into a turn play for a set number of bars (`clear`: the front sweeping the smog out,
-// `smothered`: the smog rolling in), and the clear air after the last clearing for OUTRO_BARS; the rest of the song
-// shares out what is left of SONG_MS. Within each stretch an hour plays for 1 + SLOW · |change in haze| / CHANGE of a
+// The pace: the hours leading into a turn play for a set number of bars (`clear`: the air clearing, `smothered`: the
+// smog rolling in), shared among the song's rounds of smog when it has more than one (ours, 2026-11-15: up to three
+// rounds, so the song keeps its length), and the clear air after the last clearing for OUTRO_BARS; the rest of the
+// song shares out what is left of SONG_MS. Within each stretch an hour plays for 1 + SLOW · |change in haze| / CHANGE of a
 // unit, so the air changing fast is drawn out.
 const LEAD = Object.freeze({
   clear: Object.freeze({ hours: 12, bars: 8 }),
@@ -61,8 +67,8 @@ export function gridAt(time) {
 
 /**
  * From an hourly frame per row (each cell's PM2.5): each frame's pollution levels (0..255, for the map's textures),
- * how much fog each cell loses by the next hour (0..255 of a whole fog), the haze each hour (the fog over cell `city`),
- * and how much fog that cell loses each hour (0 to 1).
+ * how much fog each cell loses by the next hour (0..255 of a whole fog), the pollution level and the haze (its fog)
+ * over cell `city` each hour, and how much fog that cell loses each hour (0 to 1).
  *
  * @param {ArrayLike<number>[]} pm25
  * @param {number} city the index of the city's cell in each frame
@@ -74,9 +80,10 @@ export function smogOf(pm25, city) {
     const next = fogs[Math.min(i + 1, fogs.length - 1)];
     return Uint8Array.from(fog, (v, k) => Math.round(LEVEL_BYTE * Math.max(0, v - next[k])));
   });
+  const level = Float32Array.from(levels, (frame) => frame[city] / LEVEL_BYTE);
   const haze = Float32Array.from(fogs, (fog) => fog[city]);
   const cleared = Float32Array.from(clearing, (frame) => frame[city] / LEVEL_BYTE);
-  return { levels, clearing, haze, cleared };
+  return { levels, clearing, level, haze, cleared };
 }
 
 /** When the air turns, each { hour (fractional, as the haze crosses), clear }, from its haze each hour. */
@@ -105,12 +112,13 @@ export function paceOf(haze, turns) {
   };
   // The song's stretches, each { from, to } in hours, and `bars` when its length is set.
   const stretches = [];
+  const rounds = Math.max(1, turns.filter((turn) => !turn.clear).length);
   let from = 0;
   for (const turn of turns) {
     const lead = turn.clear ? LEAD.clear : LEAD.smothered;
     const leadFrom = Math.max(from, turn.hour - lead.hours);
     if (leadFrom > from) stretches.push({ from, to: leadFrom });
-    stretches.push({ from: leadFrom, to: turn.hour, bars: lead.bars });
+    stretches.push({ from: leadFrom, to: turn.hour, bars: Math.max(1, Math.round(lead.bars / rounds)) });
     from = turn.hour;
   }
   stretches.push({ from, to: n - 1, bars: turns.at(-1)?.clear ? OUTRO_BARS : undefined });
@@ -152,6 +160,7 @@ export function hourlyAt(times, values, time) {
  *
  * @typedef {Object} SmogTrack
  * @property {Float64Array} t each hour's playback time (ms from the song's start)
+ * @property {Float32Array} level the pollution level over the city's cell each hour (pollutionOf, 0 to 1)
  * @property {Float32Array} haze the fog over the city's cell each hour (0 clear to 1 all fog)
  * @property {Float32Array} cleared how much fog the city's cell loses each hour (0 to 1)
  * @property {{ at: number, clear: boolean }[]} turns when the air clears or is smothered (playback ms, on a downbeat)
@@ -168,11 +177,12 @@ export function hourlyAt(times, values, time) {
  * @returns {SmogTrack}
  */
 export function buildSmogTrack(pm25, startMs, box) {
-  const { levels, clearing, haze, cleared } = smogOf(pm25, ((box.rows - 1) / 2) * box.cols + (box.cols - 1) / 2);
+  const { levels, clearing, level, haze, cleared } = smogOf(pm25, ((box.rows - 1) / 2) * box.cols + (box.cols - 1) / 2);
   const hourTurns = turnsOf(haze);
   const t = paceOf(haze, hourTurns);
   return {
     t,
+    level,
     haze,
     cleared,
     turns: turnTimes(t, hourTurns),
@@ -190,11 +200,6 @@ export function boxFocus({ field: { rows, cols, south, west, stepDeg } }) {
   const lat = south + ((rows - 1) * stepDeg) / 2;
   const halfGround = (stepDeg / 2) * Math.min(rows, cols * Math.cos((lat * Math.PI) / 180));
   return { lat, lon: west + ((cols - 1) * stepDeg) / 2, arcDeg: FOG_EDGE.to * halfGround };
-}
-
-/** Whether the air over `track` is smothered at playback `time`: past a turn into smog and not yet cleared. */
-export function smotheredAt(track, time) {
-  return track.turns.findLast((turn) => turn.at <= time)?.clear === false;
 }
 
 /** How long `track` plays (s): to its last hour. */
