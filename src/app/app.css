@@ -128,6 +128,7 @@ body {
 
   .stage .album-cover-counter {
     font-size: clamp(12px, 1.8vh, 22px);
+    letter-spacing: 0.1em;
   }
 
   .stage .album-cover-category {
@@ -170,6 +171,10 @@ body {
 
   .stage {
     padding: 3vh var(--gutter);
+  }
+
+  .stage .album-cover-counter {
+    letter-spacing: 0.1em;
   }
 
   .stage .album-cover-title {
