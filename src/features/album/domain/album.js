@@ -149,6 +149,14 @@ export function albumDurationSec(album) {
   return album.tracks.reduce((sum, track) => sum + track.durationSec, 0);
 }
 
+/** @param {number} sec a length of time @returns {string} as minutes:seconds, such as 3:05 */
+export function formatDuration(sec) {
+  const whole = Math.round(sec);
+  const minutes = Math.floor(whole / 60);
+  const seconds = String(whole % 60).padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
+
 /**
  * Playback progress (0..1) at every track edge: the start of each track, then the album end.
  *

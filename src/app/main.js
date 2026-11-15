@@ -7,7 +7,7 @@ import { createParticleToggles } from '../features/controls/presentation/particl
 // Composition root: wires the features together.
 
 import { albums, WILDFIRE_DAY_TIMELINE, WILDFIRE_YEAR_TIMELINE } from '../features/album/data/albums.js';
-import { ALBUM_CATEGORY_LABEL, albumDurationSec, trackBoundaries, trackCover, trackFadeAt, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
+import { albumDurationSec, formatDuration, trackBoundaries, trackCover, trackFadeAt, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
@@ -228,7 +228,14 @@ const aboutDialog = createInfoDialog(slot('screen'), {
   id: 'about',
   title: 'Blue Vinyl',
   subtitle: ABOUT.tagline,
-  body: renderAbout(ABOUT, albums.map(({ title, category }) => ({ title, category: ALBUM_CATEGORY_LABEL[category] }))),
+  body: renderAbout(ABOUT, albums.map((album) => ({
+      title: album.title,
+      duration: formatDuration(albumDurationSec(album)),
+    })),
+    (index) => {
+      aboutDialog.close();
+      goToAlbum(index);
+    }),
 });
 const licenseDialog = createInfoDialog(slot('screen'), {
   id: 'license',

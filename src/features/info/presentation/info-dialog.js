@@ -36,11 +36,26 @@ function createCloseIcon() {
  *
  * @param {HTMLElement} parent
  * @param {{ id: string, title: string, subtitle?: string, body: Node[] }} options
- * @returns {{ open: () => void }}
+ * @returns {{ open: () => void, close: () => void }}
  */
 export function createInfoDialog(parent, { id, title, subtitle, body }) {
   const dialog = el('dialog', 'info-dialog');
   dialog.id = id;
+
+  /** Plays the closing animation, then closes; closes at once when motion is reduced. */
+  function requestClose() {
+    if (!dialog.open || dialog.classList.contains('is-closing')) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      dialog.close();
+      return;
+    }
+    dialog.classList.add('is-closing');
+    dialog.addEventListener('animationend', () => {
+      dialog.classList.remove('is-closing');
+      dialog.close();
+    }, { once: true });
+  }
+
   dialog.setAttribute('aria-labelledby', `${id}-title`);
 
   const heading = el('h2', 'info-title', [title]);
@@ -51,7 +66,7 @@ export function createInfoDialog(parent, { id, title, subtitle, body }) {
   const close = el('button', 'info-close', [createCloseIcon()]);
   close.type = 'button';
   close.setAttribute('aria-label', 'Close');
-  close.addEventListener('click', () => dialog.close());
+  close.addEventListener('click', requestClose);
 
   const content = el('div', 'info-body', body);
   dialog.append(el('header', 'info-header', [headingGroup, close]), content);
@@ -62,7 +77,13 @@ export function createInfoDialog(parent, { id, title, subtitle, body }) {
     const box = dialog.getBoundingClientRect();
     const inside = event.clientX >= box.left && event.clientX <= box.right
       && event.clientY >= box.top && event.clientY <= box.bottom;
-    if (!inside) dialog.close();
+    if (!inside) requestClose();
+  });
+
+  // Escape would close the dialog at once, so it is held back until the closing animation has played.
+  dialog.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    requestClose();
   });
 
   parent.append(dialog);
@@ -72,6 +93,7 @@ export function createInfoDialog(parent, { id, title, subtitle, body }) {
       dialog.showModal();
       close.focus();
     },
+    close: requestClose,
   };
 }
 
@@ -79,10 +101,11 @@ export function createInfoDialog(parent, { id, title, subtitle, body }) {
  * The About dialog's body.
  *
  * @param {import('../domain/info.js').AboutContent} about
- * @param {{ title: string, category: string }[]} albums each album's title and category label
+ * @param {{ title: string, duration: string }[]} albums each album's title and total length of time
+ * @param {(index: number) => void} onSelectAlbum called with the index of the album that was clicked
  * @returns {Node[]}
  */
-export function renderAbout(about, albums) {
+export function renderAbout(about, albums, onSelectAlbum) {
   const intro = about.intro.map((text) => el('p', 'info-lead', [text]));
 
   const how = el('dl', 'info-grid', about.howItWorks.flatMap(({ title, body }) => [
@@ -90,31 +113,46 @@ export function renderAbout(about, albums) {
     el('dd', '', [body]),
   ]));
 
-  const albumList = el('ol', 'info-albums', albums.map(({ title, category }) => el('li', '', [
-    el('span', 'info-album-title', [title]),
-    el('span', 'info-album-category', [category]),
-  ])));
+  const albumList = el('ol', 'info-rows info-albums', albums.map(({ title, duration }, index) => {
+    const row = el('button', 'info-row', [
+      el('span', 'info-row-title', [title]),
+      el('span', 'info-row-duration', [duration]),
+    ]);
+    row.type = 'button';
+    row.addEventListener('click', () => onSelectAlbum(index));
+    return el('li', '', [row]);
+  }));
 
   const shortcuts = el('dl', 'info-keys', about.shortcuts.flatMap(({ keys, action }) => [
     el('dt', '', [el('kbd', '', [keys])]),
     el('dd', '', [action]),
   ]));
 
-  const team = el('ul', 'info-team', about.team.map(({ name, role, github }) => {
-    const item = el('li', '', [el('span', 'info-team-name', [name])]);
-    if (role) item.append(el('span', 'info-team-role', [role]));
-    if (github) item.append(link(`@${github}`, `https://github.com/${github}`));
-    return item;
+  const team = el('ul', 'info-rows', about.team.map(({ name, role, github }) => {
+    const row = el(github ? 'a' : 'div', 'info-row', [el('span', 'info-row-title', [name])]);
+    if (role) row.append(el('span', 'info-row-note', [role]));
+    if (github) {
+      row.href = `https://github.com/${github}`;
+      row.target = '_blank';
+      row.rel = 'noopener noreferrer';
+      row.append(el('span', 'info-row-note', [`@${github}`]));
+    }
+    return el('li', '', [row]);
   }));
+
+  const version = el('ul', 'info-rows', [el('li', '', [el('div', 'info-row', [
+    el('span', 'info-row-title', ['Version']),
+    el('span', 'info-row-note', [about.version]),
+  ])])]);
 
   return [
     ...intro,
     el('p', 'info-challenge', ['Made for ', link(about.challenge.label, about.challenge.url), '.']),
     section('How it works', [how]),
     section('Albums', [albumList]),
-    section('Listening', [shortcuts]),
-    section(about.teamName, [team]),
-    el('p', 'info-fineprint', [about.disclaimer]),
+    section('Shortcuts', [shortcuts]),
+    section('Made by', [team]),
+    el('section', 'info-section', [version]),
   ];
 }
 

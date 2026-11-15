@@ -23,6 +23,15 @@
   background: rgb(10 8 5 / 0.55);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
+  animation: info-backdrop-in 0.22s ease-out;
+}
+
+.info-dialog.is-closing {
+  animation: info-out 0.18s ease-in forwards;
+}
+
+.info-dialog.is-closing::backdrop {
+  animation: info-backdrop-out 0.18s ease-in forwards;
 }
 
 @keyframes info-in {
@@ -32,8 +41,28 @@
   }
 }
 
+@keyframes info-out {
+  to {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes info-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes info-backdrop-out {
+  to {
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .info-dialog[open] {
+  .info-dialog[open],
+  .info-dialog::backdrop {
     animation: none;
   }
 }
@@ -113,14 +142,8 @@
 }
 
 .info-challenge,
-.info-note,
-.info-fineprint {
+.info-note {
   color: var(--ink-muted);
-}
-
-.info-fineprint {
-  margin-top: 24px !important;
-  font-size: 12px;
 }
 
 .info-link {
@@ -189,8 +212,7 @@ kbd {
   text-align: center;
 }
 
-.info-albums,
-.info-team,
+.info-rows,
 .info-works {
   margin: 0;
   padding: 0;
@@ -202,58 +224,65 @@ kbd {
 }
 
 .info-albums li {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  padding: 6px 0;
   counter-increment: album;
 }
 
-.info-albums li::before {
+.info-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  box-sizing: border-box;
+  width: calc(100% + 16px);
+  margin: 0 -8px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+button.info-row,
+a.info-row {
+  cursor: pointer;
+}
+
+button.info-row:hover,
+a.info-row:hover {
+  background: rgb(255 255 255 / 0.07);
+}
+
+button.info-row:focus-visible,
+a.info-row:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: -2px;
+}
+
+.info-albums .info-row::before {
   content: counter(album);
   width: 1.4em;
   color: var(--ink-muted);
   font-size: 13px;
 }
 
-.info-album-title {
+.info-row-title {
   flex: 1;
 }
 
-.info-album-category {
+.info-row-duration {
+  min-width: 3.2em;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.info-row-note {
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--ink-muted);
-}
-
-.info-team {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.info-team li {
-  display: flex;
-  flex-direction: column;
-  min-width: 140px;
-  padding: 12px 16px;
-  border: 1px solid rgb(243 236 225 / 0.14);
-  border-radius: 12px;
-  background: rgb(255 255 255 / 0.04);
-}
-
-.info-team-name {
-  font-weight: 700;
-}
-
-.info-team-role {
-  color: var(--ink-muted);
-  font-size: 13px;
-}
-
-.info-team .info-link {
-  font-size: 13px;
   color: var(--ink-muted);
 }
 
