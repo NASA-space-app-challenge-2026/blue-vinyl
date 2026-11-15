@@ -2,11 +2,13 @@
 #live2dcanvas {
   filter: drop-shadow(0 18px 24px rgb(0 0 0 / 0.45));
   cursor: pointer;
+  pointer-events: auto !important;
   transform-origin: bottom center;
 }
 
 #live2d-widget {
   cursor: pointer;
+  pointer-events: auto !important;
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
@@ -42,5 +44,5 @@
   height: 8%;
   border-radius: 50%;
   background: radial-gradient(closest-side, rgb(0 0 0 / 0.45), transparent);
-  pointer-events: none;
+  pointer-events: none !important;
 }

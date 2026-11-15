@@ -28,11 +28,11 @@ export function createCatView(screen) {
     mobile: { show: true, scale: 1.0 },
     react: { opacityDefault: 0.7, opacityOnHover: 0.2 },
   });
-  // The widget adds its element to the body once its model code has loaded; it is moved into the screen from there.
-  const observer = new MutationObserver(() => {
-    const widget = document.getElementById(WIDGET_ID);
-    if (!widget) return;
-    observer.disconnect();
+
+  const setupWidget = (widget) => {
+    // live2d-widget sets pointer-events: none inline on the widget container.
+    // We override it to allow clicking/tapping the cat.
+    widget.style.setProperty('pointer-events', 'auto', 'important');
     screen.append(widget);
 
     const onMeow = (event) => {
@@ -40,6 +40,7 @@ export function createCatView(screen) {
       catSound.play();
       const canvas = document.getElementById('live2dcanvas');
       if (canvas) {
+        canvas.style.setProperty('pointer-events', 'auto', 'important');
         canvas.classList.remove('meowing');
         void canvas.offsetWidth;
         canvas.classList.add('meowing');
@@ -52,6 +53,20 @@ export function createCatView(screen) {
     };
 
     widget.addEventListener('pointerdown', onMeow);
+  };
+
+  const existingWidget = document.getElementById(WIDGET_ID);
+  if (existingWidget) {
+    setupWidget(existingWidget);
+    return;
+  }
+
+  // The widget adds its element to the body once its model code has loaded; it is moved into the screen from there.
+  const observer = new MutationObserver(() => {
+    const widget = document.getElementById(WIDGET_ID);
+    if (!widget) return;
+    observer.disconnect();
+    setupWidget(widget);
   });
   observer.observe(document.body, { childList: true });
 }

@@ -4,66 +4,64 @@ const MEOW_URL = new URL('../assets/meow.mp3', import.meta.url).href;
 
 /**
  * Loads and plays the cat's meow sound.
- * Uses Web Audio API for zero-latency, overlapping playback, with an HTMLAudio fallback.
+ * Guarantees synchronous playback trigger during user gesture to comply with browser autoplay policies.
  */
 export function createCatSound() {
   let audioContext = null;
   let audioBuffer = null;
-  let loadingPromise = null;
 
-  async function loadBuffer() {
-    if (audioBuffer) return audioBuffer;
-    if (loadingPromise) return loadingPromise;
+  // Pre-load via HTML Audio for instant availability
+  const preloadedAudio = new Audio(MEOW_URL);
+  preloadedAudio.preload = 'auto';
+  preloadedAudio.load();
 
-    loadingPromise = (async () => {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return null;
-        if (!audioContext) {
-          audioContext = new AudioCtx();
-        }
-        const response = await fetch(MEOW_URL);
-        const arrayBuffer = await response.arrayBuffer();
-        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        return audioBuffer;
-      } catch (error) {
-        console.warn('Could not decode meow audio via Web Audio API, falling back to HTMLAudio:', error);
-        return null;
-      }
-    })();
-
-    return loadingPromise;
+  // Also pre-fetch and decode into Web Audio buffer for smooth overlapping meows
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      audioContext = new AudioCtx();
+      fetch(MEOW_URL)
+        .then((res) => res.arrayBuffer())
+        .then((buf) => audioContext.decodeAudioData(buf))
+        .then((decoded) => {
+          audioBuffer = decoded;
+        })
+        .catch(() => {});
+    }
+  } catch {
+    // AudioContext not supported or blocked
   }
 
-  // Preload sound buffer quietly
-  loadBuffer().catch(() => {});
+  function play() {
+    const pitch = 0.96 + Math.random() * 0.08;
 
-  async function play() {
-    try {
-      const buffer = await loadBuffer();
-      if (buffer && audioContext) {
+    // If Web Audio buffer is ready and context can run, use it for zero-latency polyphony
+    if (audioContext && audioBuffer) {
+      try {
         if (audioContext.state === 'suspended') {
-          await audioContext.resume();
+          audioContext.resume().catch(() => {});
         }
         const source = audioContext.createBufferSource();
-        source.buffer = buffer;
-        // Subtle pitch variation for lively, natural meows on repeated taps
-        const pitchVariation = 0.96 + Math.random() * 0.08;
-        source.playbackRate.value = pitchVariation;
+        source.buffer = audioBuffer;
+        source.playbackRate.value = pitch;
         source.connect(audioContext.destination);
         source.start(0);
         return;
+      } catch (err) {
+        console.warn('Web Audio meow failed, falling back to HTML Audio:', err);
       }
-    } catch {
-      // Fall through to HTML Audio fallback
     }
 
+    // Synchronous HTML Audio fallback (always preserves User Gesture)
     try {
       const audio = new Audio(MEOW_URL);
-      audio.playbackRate = 0.96 + Math.random() * 0.08;
-      audio.play().catch(() => {});
-    } catch (error) {
-      console.warn('Meow audio playback failed:', error);
+      audio.playbackRate = pitch;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => console.warn('HTML Audio meow failed:', err));
+      }
+    } catch (err) {
+      console.warn('Failed to play meow sound:', err);
     }
   }
 
