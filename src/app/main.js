@@ -1,5 +1,4 @@
 import { loadAerosolTrack } from '../features/tracks/data/aerosol-track-source.js';
-import { aerosolCues, aerosolScore } from '../features/music/domain/aerosol-score.js';
 import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
 'use strict';
 
@@ -76,10 +75,6 @@ let totalMs;
 /** @type {(import('../features/tracks/data/track-repository.js').IceSeaTrackData | null)[]} */
 let trackData = [];
 let aerosolData = [];
-let allAerosolNotes = [];
-// What the globe draws of each aerosol track's music, by track index (see aerosolCues).
-let aerosolTrackCues = [];
-let aerosolToggles = { salt: true, dust: true, smoke: true, sulfate: true };
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
 // The attribution of the globe's map and imagery, shown with the album's credits.
@@ -167,9 +162,7 @@ const turntable = createTurntableView(slot('stage'), {
 // The album's credits run round the record's rim.
 const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
 const particleToggles = createParticleToggles(turntable.label, (toggles) => {
-  aerosolToggles = toggles;
   globe.aerosol.setToggles(toggles);
-  applyAerosolScore();
 });
 
 const recordSwap = createRecordSwap({
@@ -350,8 +343,6 @@ function showAlbum(index) {
   music.load([]);
   loadAlbumData(album);
   aerosolData = album.tracks.map(() => null);
-  allAerosolNotes = [];
-  aerosolTrackCues = [];
   loadAerosolData(album);
 }
 
@@ -881,33 +872,9 @@ async function loadAerosolData(loading) {
   }
   if (album !== loading) return;
   aerosolData = data;
-  aerosolTrackCues = album.tracks.map((track, i) => (data[i] ? aerosolCues(data[i].records, track.durationSec, track) : []));
-  const starts = trackBoundaries(album).map((edge) => (edge * totalMs) / 1000);
-  allAerosolNotes = album.tracks.flatMap((track, i) => {
-    if (!data[i]) return [];
-    return aerosolScore(data[i].records, track.durationSec, track)
-      .map((note) => ({ ...note, timeSec: note.timeSec + starts[i] }));
-  });
-  applyAerosolScore();
-  musicCredits = [SOUNDFONT_CREDIT, 'Data: NASA GMAO GEOS-FP · NOAA NHC'];
-  if (state === PlaybackState.PLAYING) music.play(() => elapsedMs / 1000);
+  musicCredits = ['Data: NASA GMAO GEOS-FP · NOAA NHC'];
   render();
   globe.glide();
-}
-
-function applyAerosolScore() {
-  if (!album.tracks.some((track) => track.aerosol)) return;
-  const activeNotes = allAerosolNotes.filter((n) => {
-    if (n.part === 'salt') return aerosolToggles.salt;
-    if (n.part === 'dust') return aerosolToggles.dust;
-    if (n.part === 'smoke') return aerosolToggles.smoke;
-    if (n.part === 'sulfate') return aerosolToggles.sulfate;
-    return true;
-  });
-  music.load(activeNotes);
-  if (state === PlaybackState.PLAYING) {
-    music.play(() => elapsedMs / 1000);
-  }
 }
 
 function renderAerosol(trackIndex) {
@@ -915,14 +882,12 @@ function renderAerosol(trackIndex) {
   const data = aerosolData[trackIndex];
   if (album?.id !== 'aerosol' || !track?.aerosol || !data) {
     globe.aerosol.hide();
-    globe.aerosolJourney.hide();
     particleToggles.hide();
     return;
   }
   particleToggles.show();
   const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
   globe.aerosol.render(data.frames, trackSec, track.durationSec);
-  globe.aerosolJourney.hide(); // TEMP(#63): the music's cues are not drawn while the data is redrawn plainly
 
   // TEMP(#63): the whole globe, still, with no zoom: on the track's own view, or where Erin's eye starts.
   const view = track.aerosol.viewLat !== undefined

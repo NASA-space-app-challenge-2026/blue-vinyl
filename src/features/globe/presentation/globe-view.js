@@ -1,4 +1,3 @@
-import { createAerosolJourney } from './aerosol-journey.js';
 import { createAerosolLayer } from './aerosol-layer.js';
 import { createIceFall } from './ice-fall.js';
 import { createIceFields, createIceMorph } from './ice-morph.js';
@@ -316,7 +315,6 @@ export function createGlobeView(container) {
   }
 
   const aerosol = createAerosolLayer(globe);
-  const aerosolJourney = createAerosolJourney(globe);
   // Birds, storms, the forest and the smog's cities are never on the globe together: each layer sets the globe's HTML elements
   // while it is shown.
   const layerView = { globe, unitsPerPx, setElements: (elements) => globe.htmlElementsData(elements) };
@@ -339,7 +337,6 @@ export function createGlobeView(container) {
     setWaterLine,
     birds,
     aerosol,
-    aerosolJourney,
     lightning,
     smog,
     storm,

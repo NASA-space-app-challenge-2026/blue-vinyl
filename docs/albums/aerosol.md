@@ -34,47 +34,20 @@ Frames for the globe: `data/aerosol/tracks/frames/`, one PNG per step shared by 
 
 ## Time
 
-Two weeks, 112 steps of 3 hours, 0.4 s a step: 44.8 s a track. A day is a bar of 3.2 s, and every number the music uses is the day's mean of its 8 steps. The globe and the music read the same clock.
-
-## Sound
-
-FluidR3 SoundFont, played by `music-player.js`. Code: [`aerosol-score.js`](../../src/features/music/domain/aerosol-score.js). Every number is scaled between the track's lowest and highest day.
-
-The listener stands where the event starts, facing north, and every note is placed around them by an HRTF panner, as the bird album places its flock: east to the right, further away the quieter. Headphones are needed to hear the directions.
-
-| Part | Data | Sound |
-| --- | --- | --- |
-| Source (the event's motif) | AOD at the source | Loudness, right in front of the listener. Erin's motif turns one to three times a bar as its wind rises |
-| Journey (up to three echoes) | Plume area; reach; front's bearing and distance from the source; particle speed in view; front closing on or drawing back from the receptor | More echoes as the plume grows, wider apart as it reaches further, each further out towards the front; the speed's quartile sets 2, 3, 4 or 6 notes an echo; the run climbs while the front closes in (or the plume grows) and falls while it draws back. Erin's salt echoes circle the listener anticlockwise, as an Atlantic storm turns |
-| Arrival | AOD at the receptor | The motif on a second instrument from the receptor's direction, far away, once the AOD there is a fifth of the way up its range; louder the more arrives. On track 1 the dust arrives at the eye, close, from the east |
-| Erin's strings and timpani | Sea salt in view; NHC wind | A chord as loud as the salt round the eye, gaining its third once Erin is a hurricane (64 kt); timpani on its windiest day |
-| Bed (tracks 2–4) | none | A quiet open fifth every two days |
-
-| Particle | At the source | Where it arrives |
-| --- | --- | --- |
-| sea salt | violin | (none) |
-| dust | nylon guitar | harp |
-| smoke | cello | French horn |
-| sulfate | celesta | vibraphone |
-
-Pitch carries no data: each event has a fixed motif, so the same melody heard in two places tells the listener the two places share the air.
+Two weeks, 112 steps of 3 hours, 0.4 s a step: 44.8 s a track. 
 
 ## Globe
 
-- The four AODs are drawn as a shell over the globe in EIC's colours, two frames blended at a time; the track's lead particle is drawn brighter and the rest dimmer, so Erin's sea salt shows its spiral.
-- Grains leave the source with every motif, as many as it is loud, and drift on the frames' winds (the mean wind of all the particles, so a grain shows how the air carries, not where one measured particle went). The grains of each third of the plume light up with the echo that plays it.
-- Rings open at the source with each motif and at the receptor with each arrival.
-- The globe holds the view centre; on track 1 it follows Erin's eye, closer in.
+- The four AODs are drawn as a shell over the whole globe in EIC's colours and log scale, decoded to their real values and carried along the frames' flow between two frames; nothing is added to any particle type.
+- The globe holds still on the track's view centre, with no zoom.
 
 ## Credits
 
 - Cover: NASA Scientific Visualization Studio, SVS 5669; track covers: NASA MODIS and Earth Observatory (see `albums.js`)
 - Data: NASA GMAO GEOS-FP; NOAA National Hurricane Center
-- Instruments: FluidR3_GM SoundFont (CC BY 3.0)
 
 ## Not Done Yet
 
-- Listening on headphones and speakers to balance the mix; the levels are estimates, not measured.
 - Text for screen readers (the date, what arrives where) is not read out yet.
 - 5669 is not linked from the EIC gallery itself; it is in the challenge resources. Album guide Q4 asks for a gallery page.
 - The Saharan Dust cover is a MODIS swath with black gaps between orbits.

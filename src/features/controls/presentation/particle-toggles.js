@@ -5,25 +5,25 @@ const PARTICLES = [
   {
     id: 'salt',
     name: 'Sea Salt',
-    desc: "Ocean spray churned up by Erin's winds (blue) · Violin at the eye, strings and timpani with its winds",
+    desc: "Ocean spray churned up by Erin's winds (blue)",
     color: '#4080ff',
   },
   {
     id: 'dust',
     name: 'Dust',
-    desc: 'Desert sand crossing the Atlantic (pink) · Guitar at the Sahara, harp where it lands',
+    desc: 'Desert sand crossing the Atlantic (pink)',
     color: '#ff58a0',
   },
   {
     id: 'smoke',
     name: 'Smoke',
-    desc: 'Wildfire smoke (orange) · Cello at the fire, horn where it drifts',
+    desc: 'Wildfire smoke (orange)',
     color: '#ff7820',
   },
   {
     id: 'sulfate',
     name: 'Sulfate',
-    desc: 'Volcanic and pollution sulfate (green) · Celesta at Etna, vibraphone where it drifts',
+    desc: 'Volcanic and pollution sulfate (green)',
     color: '#50d060',
   },
 ];
