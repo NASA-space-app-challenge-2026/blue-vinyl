@@ -115,6 +115,7 @@ export function renderAbout(about, albums) {
     section('Listening', [shortcuts]),
     section(about.teamName, [team]),
     el('p', 'info-fineprint', [about.disclaimer]),
+    el('p', 'info-version', [`Version ${about.version}`]),
   ];
 }
 

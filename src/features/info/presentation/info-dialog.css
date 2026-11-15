@@ -114,7 +114,8 @@
 
 .info-challenge,
 .info-note,
-.info-fineprint {
+.info-fineprint,
+.info-version {
   color: var(--ink-muted);
 }
 
@@ -307,4 +308,9 @@ kbd {
     max-height: calc(100vw - 32px);
     max-height: calc(100dvw - 32px);
   }
+}
+
+.info-version {
+  margin-top: 4px !important;
+  font-size: 12px;
 }
