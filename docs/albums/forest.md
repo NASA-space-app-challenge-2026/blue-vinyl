@@ -16,7 +16,7 @@ Pages and datasets (album guide Q4): 14696 is in the EIC gallery and its sources
 | --- | --- | --- | --- |
 | 1 | Under the Noon Sun · 2019–2023 | April 2019 to March 2023 (opens with the legend) | `#8ecf7a` |
 
-The line runs from 52° S to 52° N and moves west a degree a step. It is read in three bands (north, tropics, south) only to decide where the sea sounds.
+The line runs from 52° S to 52° N and moves west a degree a step. It is read in three bands (north, tropics, south) for the forest's density, which the cello drone and the meridian follow.
 
 Data files: `data/forest/tracks/` (see `tracks.json` for every source, version and credit): `forest_noon_line.csv` (a row per degree: land share, mean height and density in each band), `canopy_height_quarter_degree.png` (the forest on the globe), and the XCO2 files, which the album no longer reads.
 
@@ -44,7 +44,6 @@ Every tree on the globe is one note: it starts when the tree starts to grow and 
 | Cello drone | Forest density under the line | A low fifth (D2, A2) held each bar, louder the thicker the bar's forest; silent over sea and desert. The noon meridian shines with the same level |
 | Tubular bells | Land regions | A bell as the line reaches each continent |
 | Woodblock | Longitude | A tick every 30° |
-| Seashore | Sea / no forest | A wave each bar where no band is sounding |
 
 ## Globe
 

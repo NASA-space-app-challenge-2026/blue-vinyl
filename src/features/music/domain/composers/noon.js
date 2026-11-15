@@ -7,13 +7,13 @@
 //     gold ones, a vibraphone that rings on so the tallest are heard as their own, each class
 //     in a higher register. Inside its class a taller tree plays a higher note; the taller the tree, the louder. A tree is
 //     one strike, held from the step the tree starts to the moment it is grown. A dense forest is many trees, so many notes.
-//   landmarks: the sea is a wave; a bell marks each continent; a woodblock ticks every 30°.
+//   landmarks: a bell marks each continent; a woodblock ticks every 30°.
 //   legend (the first track): ten bars that explain the mappings while the line is already moving.
 //
 // D dorian in 3/4 at 120 beats a minute: a step is a sixteenth (noon-line.js STEP_SEC) and a degree of longitude.
 
 import { Instrument } from '../instruments.js';
-import { BANDS, LEGEND_STEPS, LINE_STEPS, REGIONS, STEPS_PER_BAR, STEP_SEC, bandAt, barLevelAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
+import { LEGEND_STEPS, LINE_STEPS, REGIONS, STEPS_PER_BAR, STEP_SEC, barLevelAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
 import { TREE_KINDS, TreeKind, kindOf } from '../../../tracks/domain/forest-trees.js';
 
 const SCALE = [0, 2, 3, 5, 7, 9, 10]; // D dorian, above D
@@ -43,7 +43,6 @@ const VELOCITY = Object.freeze({ low: 50, high: 115 });
 
 // The drone: a fifth, D2 and A2, from this level of forest on, from soft to strong with the level (0..1).
 const DRONE = Object.freeze({ notes: [38, 45], fromLevel: 0.02, velocity: { low: 35, high: 105 } });
-const SEA = Object.freeze({ note: 60, velocity: 45 });
 const TICK = Object.freeze({ everyDeg: 30, note: 76, velocity: 50, loudAtStart: 80 });
 const BELL_NOTES = Object.freeze([62, 69, 65, 72, 67]);
 const BELL_VELOCITY = 85;
@@ -67,7 +66,6 @@ export class NoonComposer {
   instruments = Object.freeze([
     ...new Set(TREE_KINDS.map(({ kind }) => KIND_VOICES[kind].instrument)),
     Instrument.CELLO,
-    Instrument.SEASHORE,
     Instrument.TUBULAR_BELLS,
     Instrument.WOODBLOCK,
   ]);
@@ -110,8 +108,6 @@ export class NoonComposer {
     for (const tree of trees) {
       this.playTree(music, tree.metres, at, tree.growSec / STEP_SEC, null, crowd[tree.kind].length);
     }
-    const sounding = BANDS.some((band) => bandAt(this.song.line, band, lineStep));
-    if (!sounding && lineStep % STEPS_PER_BAR === 0) music.note(Instrument.SEASHORE, SEA.note, SEA.velocity, at, STEPS_PER_BAR);
   }
 
   /**
@@ -146,8 +142,6 @@ export class NoonComposer {
       // A forest thickening: one tree, then two, up to five growing at once.
       const count = 1 + Math.floor((step - 60) / 6);
       if (step % 2 === 0) for (let i = 0; i < count; i++) this.playTree(music, TREE_KINDS[1].fromM, at, 2, i);
-    } else if (step === 90) {
-      music.note(Instrument.SEASHORE, SEA.note, SEA.velocity + 15, at, STEPS_PER_BAR);
     } else if (step === 100) {
       music.note(Instrument.TUBULAR_BELLS, BELL_NOTES[0], BELL_VELOCITY, at, STEPS_PER_BAR);
     } else if (step === 110) {
