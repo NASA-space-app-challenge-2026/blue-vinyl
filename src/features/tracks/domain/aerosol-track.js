@@ -9,6 +9,24 @@
  */
 
 /**
+ * One event of a track in one timestep: the plume of one particle type connected to its source, and how near it
+ * comes to a distant receptor (see section 9.4 of notebooks/aerosol_album.ipynb).
+ *
+ * @typedef {Object} AerosolPlume
+ * @property {number} sourceAod AOD near the source: how strong the event is
+ * @property {number} receptorAod AOD at the receptor: what arrives there
+ * @property {number} reachKm how far the plume has spread from the source, in any direction
+ * @property {number} areaMillionKm2 the plume's area
+ * @property {number} frontLat latitude of the plume's point nearest the receptor
+ * @property {number} frontLon longitude of that point
+ * @property {number} frontToReceptorKm from that point to the receptor
+ */
+
+/**
+ * @typedef {'seaSalt' | 'dust' | 'smoke' | 'sulfate'} Particle
+ */
+
+/**
  * @typedef {Object} AerosolRecord
  * @property {string} time ISO UTC timestamp
  * @property {number} viewLat latitude of the view centre
@@ -17,8 +35,22 @@
  * @property {AerosolStem} dust
  * @property {AerosolStem} smoke
  * @property {AerosolStem} sulfate
+ * @property {Partial<Record<Particle, AerosolPlume>>} plumes the track's events, by particle type
  * @property {number|null} erinWindKt Erin's max sustained wind in knots (if present)
  */
+
+// CSV column prefix of each particle type.
+const PARTICLE_COLUMNS = Object.freeze({ seaSalt: 'sea_salt', dust: 'dust', smoke: 'smoke', sulfate: 'sulfate' });
+
+const PLUME_COLUMNS = Object.freeze({
+  sourceAod: 'source_aod',
+  receptorAod: 'receptor_aod',
+  reachKm: 'reach_km',
+  areaMillionKm2: 'area_million_km2',
+  frontLat: 'front_lat',
+  frontLon: 'front_lon',
+  frontToReceptorKm: 'front_to_receptor_km',
+});
 
 /**
  * Parses an exported aerosol CSV file into structured records.
@@ -28,66 +60,32 @@
  */
 export function parseAerosolCsv(text) {
   const [header, ...lines] = text.trim().split(/\r?\n/);
-  const cols = header.split(",");
-  const colIdx = (name) => cols.indexOf(name);
-
-  const idxTime = colIdx("time");
-  const idxViewLat = colIdx("view_lat");
-  const idxViewLon = colIdx("view_lon");
-
-  const idxSaltAod = colIdx("sea_salt_aod");
-  const idxSaltN = colIdx("sea_salt_north_deg");
-  const idxSaltE = colIdx("sea_salt_east_deg");
-  const idxSaltV = colIdx("sea_salt_speed_m_s");
-
-  const idxDustAod = colIdx("dust_aod");
-  const idxDustN = colIdx("dust_north_deg");
-  const idxDustE = colIdx("dust_east_deg");
-  const idxDustV = colIdx("dust_speed_m_s");
-
-  const idxSmokeAod = colIdx("smoke_aod");
-  const idxSmokeN = colIdx("smoke_north_deg");
-  const idxSmokeE = colIdx("smoke_east_deg");
-  const idxSmokeV = colIdx("smoke_speed_m_s");
-
-  const idxSulfAod = colIdx("sulfate_aod");
-  const idxSulfN = colIdx("sulfate_north_deg");
-  const idxSulfE = colIdx("sulfate_east_deg");
-  const idxSulfV = colIdx("sulfate_speed_m_s");
-
-  const idxWind = colIdx("erin_wind_kt");
+  const index = new Map(header.split(',').map((name, i) => [name, i]));
+  const plumeParticles = Object.entries(PARTICLE_COLUMNS).filter(([, p]) => index.has(`${p}_reach_km`));
 
   return lines.map((line) => {
-    const c = line.split(",");
+    const c = line.split(',');
+    const num = (name) => Number(c[index.get(name)]);
+    const stem = (p) => ({
+      aod: num(`${p}_aod`),
+      northDeg: num(`${p}_north_deg`),
+      eastDeg: num(`${p}_east_deg`),
+      speed: num(`${p}_speed_m_s`),
+    });
+    const plumes = {};
+    for (const [particle, p] of plumeParticles) {
+      plumes[particle] = Object.fromEntries(Object.entries(PLUME_COLUMNS).map(([key, col]) => [key, num(`${p}_${col}`)]));
+    }
     return {
-      time: c[idxTime],
-      viewLat: Number(c[idxViewLat]),
-      viewLon: Number(c[idxViewLon]),
-      seaSalt: {
-        aod: Number(c[idxSaltAod]),
-        northDeg: Number(c[idxSaltN]),
-        eastDeg: Number(c[idxSaltE]),
-        speed: Number(c[idxSaltV]),
-      },
-      dust: {
-        aod: Number(c[idxDustAod]),
-        northDeg: Number(c[idxDustN]),
-        eastDeg: Number(c[idxDustE]),
-        speed: Number(c[idxDustV]),
-      },
-      smoke: {
-        aod: Number(c[idxSmokeAod]),
-        northDeg: Number(c[idxSmokeN]),
-        eastDeg: Number(c[idxSmokeE]),
-        speed: Number(c[idxSmokeV]),
-      },
-      sulfate: {
-        aod: Number(c[idxSulfAod]),
-        northDeg: Number(c[idxSulfN]),
-        eastDeg: Number(c[idxSulfE]),
-        speed: Number(c[idxSulfV]),
-      },
-      erinWindKt: idxWind >= 0 && c[idxWind] !== undefined ? Number(c[idxWind]) : null,
+      time: c[index.get('time')],
+      viewLat: num('view_lat'),
+      viewLon: num('view_lon'),
+      seaSalt: stem(PARTICLE_COLUMNS.seaSalt),
+      dust: stem(PARTICLE_COLUMNS.dust),
+      smoke: stem(PARTICLE_COLUMNS.smoke),
+      sulfate: stem(PARTICLE_COLUMNS.sulfate),
+      plumes,
+      erinWindKt: index.has('erin_wind_kt') ? num('erin_wind_kt') : null,
     };
   });
 }
@@ -97,7 +95,7 @@ export function parseAerosolCsv(text) {
  *
  * @param {AerosolRecord[]} records
  * @param {number} progress 0..1
- * @returns {{ current: AerosolRecord, next: AerosolRecord, alpha: number, index: number }}
+ * @returns {{ current: AerosolRecord, next: AerosolRecord, alpha: number, index: number } | null}
  */
 export function sampleAerosol(records, progress) {
   if (!records || records.length === 0) return null;

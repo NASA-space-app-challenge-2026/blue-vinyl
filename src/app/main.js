@@ -200,6 +200,7 @@ function showAlbum(index) {
   music.load([]);
   loadAlbumData(album);
   aerosolData = album.tracks.map(() => null);
+  allAerosolNotes = [];
   loadAerosolData(album);
 }
 
@@ -428,6 +429,7 @@ async function loadAerosolData(loading) {
 }
 
 function applyAerosolScore() {
+  if (!album.tracks.some((track) => track.aerosol)) return;
   const activeNotes = allAerosolNotes.filter((n) => {
     if (n.part === 'salt') return aerosolToggles.salt;
     if (n.part === 'dust') return aerosolToggles.dust;

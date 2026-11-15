@@ -16,12 +16,22 @@ const GLACIER_COVERS = 'assets/albums/glacier';
 const POLAR_YEARS = 32;
 const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
 
-/** @type {import('../domain/album.js').Album[]} */
 const AEROSOL_DATA = 'data/aerosol/tracks';
 const AEROSOL_COVERS = 'assets/albums/aerosol';
 const AEROSOL_FRAMES = 'data/aerosol/tracks/frames';
+// Two weeks, every 3 hours (112 steps), 0.4 s a step: a day is a bar of 3.2 s.
 const AEROSOL_TRACK_SEC = 44.8;
+// Where each event starts and the distant place it reaches, as in section 9.4 of notebooks/aerosol_album.ipynb.
+const SAHARA = { lat: 18.0, lon: 2.0 };
+const CARIBBEAN = { lat: 17.5, lon: -67.5 };
+const SOUTHERN_AFRICA = { lat: -12.0, lon: 22.0 };
+const ST_HELENA = { lat: -15.9, lon: -5.7 };
+const SPAIN = { lat: 42.0, lon: -6.0 };
+const BRITAIN = { lat: 52.5, lon: -1.5 };
+const ETNA = { lat: 37.75, lon: 15.0 };
+const GREECE = { lat: 38.5, lon: 22.5 };
 
+/** @type {import('../domain/album.js').Album[]} */
 export const albums = [
   {
     id: 'aerosol',
@@ -42,6 +52,8 @@ export const albums = [
           framesDir: AEROSOL_FRAMES,
           lead: 'sea_salt',
           trackEye: true,
+          // The receptor is the eye itself, the view centre.
+          events: [{ id: 'sahara', particle: 'dust', source: SAHARA, receptor: null }],
         },
       },
       {
@@ -54,6 +66,7 @@ export const albums = [
           csvUrl: `${AEROSOL_DATA}/saharan_dust.csv`,
           framesDir: AEROSOL_FRAMES,
           lead: 'dust',
+          events: [{ id: 'sahara', particle: 'dust', source: SAHARA, receptor: CARIBBEAN }],
           viewLat: 17.0,
           viewLon: -45.0,
         },
@@ -68,6 +81,7 @@ export const albums = [
           csvUrl: `${AEROSOL_DATA}/southern_africa_smoke.csv`,
           framesDir: AEROSOL_FRAMES,
           lead: 'smoke',
+          events: [{ id: 'southern-africa', particle: 'smoke', source: SOUTHERN_AFRICA, receptor: ST_HELENA }],
           viewLat: -12.0,
           viewLon: 5.0,
         },
@@ -82,6 +96,10 @@ export const albums = [
           csvUrl: `${AEROSOL_DATA}/spain_and_etna.csv`,
           framesDir: AEROSOL_FRAMES,
           lead: 'smoke_and_sulfate',
+          events: [
+            { id: 'spain', particle: 'smoke', source: SPAIN, receptor: BRITAIN },
+            { id: 'etna', particle: 'sulfate', source: ETNA, receptor: GREECE },
+          ],
           viewLat: 40.0,
           viewLon: 5.0,
         },

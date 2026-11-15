@@ -24,6 +24,18 @@ export const AlbumCategory = Object.freeze({
  * @property {number} [viewLat] latitude of the track's view centre
  * @property {number} [viewLon] longitude of the track's view centre
  * @property {boolean} [trackEye] whether the view follows the eye of the storm
+ * @property {AerosolEvent[]} events what the track's music follows: an event leaving its source for a distant place
+ */
+
+/**
+ * One event of an aerosol track: a plume of one particle type leaving its source and reaching a distant receptor.
+ * Its numbers are the CSV's `<particle>_*` event columns.
+ *
+ * @typedef {Object} AerosolEvent
+ * @property {string} id the event, which picks its motif; the same event keeps its motif across tracks
+ * @property {import('../../tracks/domain/aerosol-track.js').Particle} particle
+ * @property {{ lat: number, lon: number }} source
+ * @property {{ lat: number, lon: number } | null} receptor null when the receptor is the view centre (Erin's eye)
  */
 
 /**
