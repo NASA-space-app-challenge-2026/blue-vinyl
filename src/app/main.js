@@ -1,3 +1,7 @@
+import { loadAerosolTrack } from '../features/tracks/data/aerosol-track-source.js';
+import { sampleAerosol } from '../features/tracks/domain/aerosol-track.js';
+import { aerosolCues, aerosolScore } from '../features/music/domain/aerosol-score.js';
+import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
 'use strict';
 
 // Composition root: wires the features together.
@@ -66,6 +70,11 @@ let totalMs;
 // Data of each track of the album, by track index; null until loaded, and for tracks without data.
 /** @type {(import('../features/tracks/data/track-repository.js').IceSeaTrackData | null)[]} */
 let trackData = [];
+let aerosolData = [];
+let allAerosolNotes = [];
+// What the globe draws of each aerosol track's music, by track index (see aerosolCues).
+let aerosolTrackCues = [];
+let aerosolToggles = { salt: true, dust: true, smoke: true, sulfate: true };
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
 // The attribution of the globe's map and imagery, shown with the album's credits.
@@ -101,7 +110,6 @@ const slot = (id) => document.getElementById(id);
 
 const backdrop = createBackdrop(document.documentElement);
 const playHint = createPlayHint(slot('bottom-center'));
-
 const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack });
 // Boxes and pointers in the layout's own pixels, which a portrait screen turned to show it landscape does not share
 // with the client's.
@@ -153,6 +161,11 @@ const turntable = createTurntableView(slot('stage'), {
 });
 // The album's credits run round the record's rim.
 const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
+const particleToggles = createParticleToggles(turntable.label, (toggles) => {
+  aerosolToggles = toggles;
+  globe.aerosol.setToggles(toggles);
+  applyAerosolScore();
+});
 
 const recordSwap = createRecordSwap({
   recordEl: turntable.recordEl,
@@ -318,6 +331,10 @@ function showAlbum(index) {
   musicCredits = [];
   music.load([]);
   loadAlbumData(album);
+  aerosolData = album.tracks.map(() => null);
+  allAerosolNotes = [];
+  aerosolTrackCues = [];
+  loadAerosolData(album);
 }
 
 /**
@@ -646,6 +663,7 @@ function render() {
   });
   renderSong(trackIndex);
   renderData(trackIndex);
+  renderAerosol(trackIndex);
   renderSeason(trackIndex);
 }
 
@@ -774,6 +792,80 @@ function renderWildfire(data, trackIndex) {
     detail: `${Math.round(day.areaKm2).toLocaleString('en')} km² active · ${day.nFires} large fires`,
   });
   dateLabel.show(Date.parse(`${day.day}T12:00:00Z`));
+}
+
+async function loadAerosolData(loading) {
+  if (!loading.tracks.some((track) => track.aerosol)) return;
+  let data;
+  try {
+    data = await Promise.all(loading.tracks.map((track) => (track.aerosol ? loadAerosolTrack(track.aerosol) : null)));
+  } catch (error) {
+    console.warn('Aerosol data unavailable:', error);
+    return;
+  }
+  if (album !== loading) return;
+  aerosolData = data;
+  aerosolTrackCues = album.tracks.map((track, i) => (data[i] ? aerosolCues(data[i].records, track.durationSec, track) : []));
+  const starts = trackBoundaries(album).map((edge) => (edge * totalMs) / 1000);
+  allAerosolNotes = album.tracks.flatMap((track, i) => {
+    if (!data[i]) return [];
+    return aerosolScore(data[i].records, track.durationSec, track)
+      .map((note) => ({ ...note, timeSec: note.timeSec + starts[i] }));
+  });
+  applyAerosolScore();
+  musicCredits = [SOUNDFONT_CREDIT, 'Data: NASA GMAO GEOS-FP · NOAA NHC'];
+  if (state === PlaybackState.PLAYING) music.play(() => elapsedMs / 1000);
+  render();
+  globe.glide();
+}
+
+function applyAerosolScore() {
+  if (!album.tracks.some((track) => track.aerosol)) return;
+  const activeNotes = allAerosolNotes.filter((n) => {
+    if (n.part === 'salt') return aerosolToggles.salt;
+    if (n.part === 'dust') return aerosolToggles.dust;
+    if (n.part === 'smoke') return aerosolToggles.smoke;
+    if (n.part === 'sulfate') return aerosolToggles.sulfate;
+    return true;
+  });
+  music.load(activeNotes);
+  if (state === PlaybackState.PLAYING) {
+    music.play(() => elapsedMs / 1000);
+  }
+}
+
+function renderAerosol(trackIndex) {
+  const track = album.tracks[trackIndex];
+  const data = aerosolData[trackIndex];
+  if (album?.id !== 'aerosol' || !track?.aerosol || !data) {
+    globe.aerosol.hide();
+    globe.aerosolJourney.hide();
+    particleToggles.hide();
+    return;
+  }
+  particleToggles.show();
+  const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
+  globe.aerosol.setLead(track.aerosol.events.filter((e) => (e.level ?? 1) >= 1).map((e) => e.particle));
+  globe.aerosol.render(data.frames, trackSec, track.durationSec);
+  globe.aerosolJourney.render({
+    events: track.aerosol.events,
+    records: data.records,
+    frames: data.frames,
+    cues: aerosolTrackCues[trackIndex] ?? [],
+    trackSec,
+    durationSec: track.durationSec,
+    shown: aerosolToggles,
+  });
+
+  if (track.aerosol.trackEye) {
+    const s = sampleAerosol(data.records, trackSec / track.durationSec);
+    if (s) focus = { lat: s.current.viewLat, lon: s.current.viewLon, arcDeg: track.aerosol.arcDeg };
+  } else if (track.aerosol.viewLat !== undefined) {
+    focus = { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon, arcDeg: track.aerosol.arcDeg };
+  }
+
+  if (track.color) halo.setColor(track.color);
+  if (state === PlaybackState.PLAYING) halo.wake();
 }
 
 // Draws the birds, the date and the flock's place at the clock and, while playing, lets the music follow it.

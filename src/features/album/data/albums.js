@@ -62,6 +62,21 @@ const FOREST_LINE_SEC = LINE_STEPS * STEP_SEC;
 // GEDI's canopy map is one composite of April 2019 to March 2023; the air is read over the same window.
 const GEDI_WINDOW = '201904-202303';
 
+const AEROSOL_DATA = 'data/aerosol/tracks';
+const AEROSOL_COVERS = 'assets/albums/aerosol';
+const AEROSOL_FRAMES = 'data/aerosol/tracks/frames';
+// Two weeks, every 3 hours (112 steps), 0.4 s a step: a day is a bar of 3.2 s.
+const AEROSOL_TRACK_SEC = 44.8;
+// Where each event starts and the distant place it reaches, as in section 9.4 of notebooks/aerosol_album.ipynb.
+const SAHARA = { lat: 18.0, lon: 2.0 };
+const CARIBBEAN = { lat: 17.5, lon: -67.5 };
+const SOUTHERN_AFRICA = { lat: -12.0, lon: 22.0 };
+const ST_HELENA = { lat: -15.9, lon: -5.7 };
+const SPAIN = { lat: 42.0, lon: -6.0 };
+const BRITAIN = { lat: 52.5, lon: -1.5 };
+const ETNA = { lat: 37.75, lon: 15.0 };
+const GREECE = { lat: 38.5, lon: 22.5 };
+
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
   {
@@ -299,6 +314,88 @@ export const albums = [
           kind: 'season',
           csvUrl: `${WILDFIRE_DATA}/feds_2020_daily_large_fires.csv`,
           firesUrl: `${WILDFIRE_DATA}/feds_2020_fire_days.csv`,
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'aerosol',
+    category: AlbumCategory.CLIMATE,
+    title: 'Connected by the Air',
+    coverUrl: `${AEROSOL_COVERS}/cover.jpg`,
+    coverCredit: 'NASA Scientific Visualization Studio · SVS 5669',
+    dataCredit: 'Data: NASA GMAO GEOS-FP · NOAA NHC',
+    tracks: [
+      {
+        title: 'Hurricane Erin',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#4080ff',
+        coverUrl: `${AEROSOL_COVERS}/erin.jpg`,
+        coverCredit: 'NASA MODIS Rapid Response, Aug 16 2025',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/erin.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'sea_salt',
+          trackEye: true,
+          // Close on the storm, so its salt can be seen spiralling.
+          arcDeg: 24,
+          // In A minor, a key of its own, so it does not sound like the Saharan Dust that follows in C minor.
+          tonic: 9,
+          // The lead is the salt Erin's winds churn up at its eye (EIC: "blue spirals"), its motif turning faster as
+          // the wind rises; the dust it pulls in from Africa is heard only as it arrives at the eye.
+          events: [
+            { id: 'erin', particle: 'seaSalt', source: 'eye', receptor: null, spin: true },
+            { id: 'sahara', particle: 'dust', source: SAHARA, receptor: 'eye', level: 0.5, heard: 'arrival' },
+          ],
+        },
+      },
+      {
+        title: 'Saharan Dust',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#ff58a0',
+        coverUrl: `${AEROSOL_COVERS}/saharan_dust.jpg`,
+        coverCredit: 'NASA MODIS / Terra, Saharan Dust over the Atlantic',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/saharan_dust.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'dust',
+          events: [{ id: 'sahara', particle: 'dust', source: SAHARA, receptor: CARIBBEAN }],
+          viewLat: 17.0,
+          viewLon: -45.0,
+        },
+      },
+      {
+        title: 'Southern Africa Smoke',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#ff7820',
+        coverUrl: `${AEROSOL_COVERS}/southern_africa_smoke.jpg`,
+        coverCredit: 'NASA Earth Observatory / Aqua MODIS, Fires and Smoke',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/southern_africa_smoke.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'smoke',
+          events: [{ id: 'southern-africa', particle: 'smoke', source: SOUTHERN_AFRICA, receptor: ST_HELENA }],
+          viewLat: -12.0,
+          viewLon: 5.0,
+        },
+      },
+      {
+        title: 'Spain and Etna',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#e0a030',
+        coverUrl: `${AEROSOL_COVERS}/spain_and_etna.jpg`,
+        coverCredit: 'NASA MODIS / Terra, Mt. Etna Eruption',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/spain_and_etna.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'smoke_and_sulfate',
+          events: [
+            { id: 'spain', particle: 'smoke', source: SPAIN, receptor: BRITAIN },
+            { id: 'etna', particle: 'sulfate', source: ETNA, receptor: GREECE },
+          ],
+          viewLat: 40.0,
+          viewLon: 5.0,
         },
       },
     ],

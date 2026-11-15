@@ -46,6 +46,10 @@
   transition: color 0.2s, background 0.2s;
 }
 
+.glass-capsule[hidden] {
+  display: none !important;
+}
+
 .glass-segment[hidden] {
   display: none;
 }

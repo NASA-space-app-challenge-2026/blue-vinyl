@@ -1,3 +1,5 @@
+import { createAerosolJourney } from './aerosol-journey.js';
+import { createAerosolLayer } from './aerosol-layer.js';
 import { createIceFall } from './ice-fall.js';
 import { createIceFields, createIceMorph } from './ice-morph.js';
 
@@ -15,6 +17,10 @@ const { Globe } = globalThis;
 
 // Zooming in by hand stops at this many times the fitted size.
 const MAX_ZOOM = 9;
+// three.js's own near plane, and how far in front of the globe's centre (in radii) the near plane stays: well clear of
+// anything drawn above the surface.
+const DEFAULT_NEAR = 0.1;
+const NEAR_MARGIN = 1.5;
 // Edge of a map tile in texels.
 const TILE_PX = 256;
 // Pieces of ice that fall when a year loses ice: one per PIECE_CELLS cells of net loss (a cell is about 1,000 km²),
@@ -76,6 +82,11 @@ export function createGlobeView(container) {
     fitAltitude = fittedAltitude(camera);
     controls.minDistance = radius * (1 + fitAltitude / MAX_ZOOM);
     controls.maxDistance = radius * (1 + fitAltitude);
+    // The narrow lens puts the camera tens of radii away. With three.js's default near plane the depth buffer then
+    // cannot tell apart layers a few thousandths of a radius above the surface (the aerosol shell, the lightning sky,
+    // the ice), and they flicker against the globe; a near plane just short of the globe keeps them apart.
+    camera.near = Math.max(DEFAULT_NEAR, controls.minDistance - radius * NEAR_MARGIN);
+    camera.updateProjectionMatrix();
     globe.pointOfView({ altitude: fitAltitude });
     keepGrabSpeed();
   }
@@ -282,6 +293,8 @@ export function createGlobeView(container) {
     return (2 * gap * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(1, container.clientHeight);
   }
 
+  const aerosol = createAerosolLayer(globe);
+  const aerosolJourney = createAerosolJourney(globe);
   // Birds, storms and the forest are never on the globe together: each layer sets the globe's HTML elements while it is shown.
   const layerView = { globe, unitsPerPx, setElements: (elements) => globe.htmlElementsData(elements) };
   const birds = createBirdsLayer(layerView);
@@ -301,6 +314,8 @@ export function createGlobeView(container) {
     showFires: fires.show,
     setWaterLine,
     birds,
+    aerosol,
+    aerosolJourney,
     lightning,
     storm,
     storms,

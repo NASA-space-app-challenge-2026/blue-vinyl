@@ -743,5 +743,5 @@ export function createTurntableView(
     return { x: label.offsetLeft + r, y: label.offsetTop + r, r };
   }
 
-  return { labelSlot, haloCanvas, labelDisc, recordEl: record, recordGeometry, setCredit, setTrackStarts, render };
+  return { label, labelSlot, haloCanvas, labelDisc, recordEl: record, recordGeometry, setCredit, setTrackStarts, render };
 }
