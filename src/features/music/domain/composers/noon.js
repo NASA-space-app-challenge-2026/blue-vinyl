@@ -12,10 +12,9 @@
 // D dorian in 3/4 at 120 beats a minute: a step is a sixteenth (noon-line.js STEP_SEC) and a degree of longitude.
 
 import { Instrument } from '../instruments.js';
-import { BANDS, LEGEND_STEPS, LINE_STEPS, REGIONS, STEP_SEC, bandAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
-import { TREE_KINDS, TreeKind, kindOf, startOffsetSec } from '../../../tracks/domain/forest-trees.js';
+import { BANDS, LEGEND_STEPS, LINE_STEPS, REGIONS, STEPS_PER_BAR, STEP_SEC, bandAt, barLevelAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
+import { TREE_KINDS, TreeKind, kindOf } from '../../../tracks/domain/forest-trees.js';
 
-const STEPS_PER_BAR = 12;
 const SCALE = [0, 2, 3, 5, 7, 9, 10]; // D dorian, above D
 
 // Each kind of tree its instrument and the note it plays at the bottom of its class: the classes climb the scale together.
@@ -32,6 +31,8 @@ const HEIGHT_RANGE_M = Object.freeze({ low: 4, high: 24 });
 const KIND_DEGREES = 4;
 const VELOCITY = Object.freeze({ low: 50, high: 115 });
 
+// The drone: a fifth, D2 and A2, from this level of forest on, from soft to strong with the level (0..1).
+const DRONE = Object.freeze({ notes: [38, 45], fromLevel: 0.02, velocity: { low: 35, high: 105 } });
 const SEA = Object.freeze({ note: 60, velocity: 45 });
 const TICK = Object.freeze({ everyDeg: 30, note: 76, velocity: 50, loudAtStart: 80 });
 const BELL_NOTES = Object.freeze([62, 69, 65, 72, 67]);
@@ -55,6 +56,7 @@ const REGION_STARTS = new Map(REGIONS.map((region) => [Math.round(lineLonAt(0) -
 export class NoonComposer {
   instruments = Object.freeze([
     ...new Set(TREE_KINDS.map(({ kind }) => KIND_VOICES[kind].instrument)),
+    Instrument.CELLO,
     Instrument.SEASHORE,
     Instrument.TUBULAR_BELLS,
     Instrument.WOODBLOCK,
@@ -91,12 +93,24 @@ export class NoonComposer {
     if (lineStep % TICK.everyDeg === 0) {
       music.note(Instrument.WOODBLOCK, TICK.note, lineStep === 0 ? TICK.loudAtStart : TICK.velocity, at, 1);
     }
+    if (lineStep % STEPS_PER_BAR === 0) this.playDrone(music, lineStep, at);
     // Each tree that starts to grow in this step plays where it starts, for as long as it grows.
     for (const tree of this.song.treesByStep.get(lineStep) ?? []) {
-      this.playTree(music, tree.metres, at + startOffsetSec(tree), tree.growSec / STEP_SEC);
+      this.playTree(music, tree.metres, at, tree.growSec / STEP_SEC);
     }
     const sounding = BANDS.some((band) => bandAt(this.song.line, band, lineStep));
     if (!sounding && lineStep % STEPS_PER_BAR === 0) music.note(Instrument.SEASHORE, SEA.note, SEA.velocity, at, STEPS_PER_BAR);
+  }
+
+  /**
+   * The drone under the bar: a low fifth on cello, held the whole bar and louder the thicker the forest under the line
+   * is (noon-line.js barLevelAt, which the globe's meridian brightens with). Silent where there is none.
+   */
+  playDrone(music, lineStep, at) {
+    const level = barLevelAt(this.song.line, lineStep);
+    if (level < DRONE.fromLevel) return;
+    const velocity = DRONE.velocity.low + level * (DRONE.velocity.high - DRONE.velocity.low);
+    for (const note of DRONE.notes) music.note(Instrument.CELLO, note, velocity, at, STEPS_PER_BAR);
   }
 
   /** A tree `heightM` tall: its class's instrument, a note up its class with its height, held for `steps` (as long as it grows). */

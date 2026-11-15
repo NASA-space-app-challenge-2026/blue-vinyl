@@ -3,7 +3,7 @@
 // composers/noon.js); the light is in its voice's colour and lets a few motes of pollen rise from the tree.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
-import { LINE_STEPS, lineLonAt } from '../../tracks/domain/noon-line.js';
+import { LINE_STEPS, barLevelAt, lineLonAt } from '../../tracks/domain/noon-line.js';
 import { TREE_KINDS, TREE_SIZE, TreeKind, treeSizeU } from '../../tracks/domain/forest-trees.js';
 import { createGrowingTree } from './tree-sprites.js';
 
@@ -32,6 +32,9 @@ const MAP_SOUTH = -52;
 const MERIDIAN_SAMPLES = 96;
 const MERIDIAN_ALTITUDE = 0.006;
 const MERIDIAN_HALF_DEG = 0.7;
+// The noon meridian shines with the forest under it (noon-line.js barLevelAt, as the drone plays it): `thin` over the sea,
+// full over the thickest forest, easing at `easePerFrame` of the way to its mark.
+const MERIDIAN_STRENGTH = Object.freeze({ thin: 0.35, easePerFrame: 0.12 });
 // Notes of light: points drawn on the GPU from one fixed pool, each fading out where it was struck (it does not slide
 // along with the meridian). Sizes and speeds in globe units (radius 100).
 const LIGHT_POOL = 2048;
@@ -54,13 +57,14 @@ void main() {
 
 const meridianFragment = `
 uniform vec3 uColor;
+uniform float uStrength;
 varying float vAlong;
 varying float vAcross;
 void main() {
   float edge = 1.0 - abs(vAcross);
   float core = pow(edge, 6.0);
   float fade = smoothstep(0.0, 0.08, vAlong) * smoothstep(1.0, 0.92, vAlong);
-  float alpha = fade * (0.35 * edge * edge + 0.65 * core);
+  float alpha = uStrength * fade * (0.35 * edge * edge + 0.65 * core);
   gl_FragColor = vec4(mix(uColor, vec3(1.0), core * 0.7), alpha);
   #include <colorspace_fragment>
 }`;
@@ -347,7 +351,7 @@ export function createNoonLayer(view) {
     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
     geometry.setIndex(new THREE.BufferAttribute(index, 1));
     const material = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: new THREE.Color(color) } },
+      uniforms: { uColor: { value: new THREE.Color(color) }, uStrength: { value: MERIDIAN_STRENGTH.thin } },
       vertexShader: meridianVertex,
       fragmentShader: meridianFragment,
       transparent: true,
@@ -409,6 +413,9 @@ export function createNoonLayer(view) {
     }
     placeMeridian(headLon);
     meridian.visible = true;
+    const level = barLevelAt(song.line, Math.min(LINE_STEPS - 1, Math.floor(lineStep)));
+    const strength = meridian.material.uniforms.uStrength;
+    strength.value += (MERIDIAN_STRENGTH.thin + (1 - MERIDIAN_STRENGTH.thin) * level - strength.value) * MERIDIAN_STRENGTH.easePerFrame;
 
     lights.material.uniforms.uTime.value = now;
     updateLightScale();

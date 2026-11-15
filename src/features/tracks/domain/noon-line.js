@@ -5,6 +5,8 @@
 
 /** Seconds a step lasts: a sixteenth note at 120 beats a minute. */
 export const STEP_SEC = 0.125;
+/** Steps in a bar: 3/4 in sixteenths. */
+export const STEPS_PER_BAR = 12;
 /** Steps the line takes to go once round the Earth: a degree of longitude each. */
 export const LINE_STEPS = 360;
 /** Steps the listening legend takes before the line starts, on a track that opens with it (10 bars of 3/4). */
@@ -21,6 +23,9 @@ export const BAND_LATS = Object.freeze({
   [Band.TROPICS]: Object.freeze([-23, 23]),
   [Band.SOUTH]: Object.freeze([-52, -23]),
 });
+
+// A bar's mean forest density (see barLevelAt) that counts as the thickest the line meets.
+const LEVEL_FULL_AT = 0.4;
 
 // A band takes part where at least this share of it is land and its forest is this tall on average (m).
 const PLAYS_FROM = Object.freeze({ land: 0.2, heightM: 4 });
@@ -107,4 +112,22 @@ export function bandAt(line, band, lineStep) {
   const height = series.height[lineStep];
   if (!(series.land[lineStep] >= PLAYS_FROM.land) || !(height >= PLAYS_FROM.heightM)) return null;
   return { height, density: series.density[lineStep] || 0 };
+}
+
+/**
+ * How thick the forest under the line is over the bar a step is in, 0..1: each band's forest density where it sounds
+ * (see bandAt), added up and shared over the bands, averaged over the bar's steps and counted full from `LEVEL_FULL_AT`. The drone under the music and the
+ * brightness of the noon meridian both follow it, a bar at a time.
+ *
+ * @param {NoonLine} line
+ * @param {number} lineStep
+ */
+export function barLevelAt(line, lineStep) {
+  const first = Math.floor(lineStep / STEPS_PER_BAR) * STEPS_PER_BAR;
+  let sum = 0;
+  for (let step = first; step < first + STEPS_PER_BAR; step++) {
+    if (step >= LINE_STEPS) break;
+    for (const band of BANDS) sum += bandAt(line, band, step)?.density ?? 0;
+  }
+  return Math.min(1, sum / (STEPS_PER_BAR * BANDS.length) / LEVEL_FULL_AT);
 }

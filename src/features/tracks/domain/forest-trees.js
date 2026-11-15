@@ -2,7 +2,7 @@
 // growing and played as one note, from the step it starts at for as long as it takes to grow. Picked with a seeded random
 // sequence, so a tree is the same for the eye and the ear and on every play.
 
-import { LINE_STEPS, STEP_SEC, lineStepAt } from './noon-line.js';
+import { LINE_STEPS, lineStepAt } from './noon-line.js';
 
 // Canopy PNG is 0.25°.
 const MAP_CELL_DEG = 0.25;
@@ -66,7 +66,7 @@ export function kindOf(metres) {
 
 /**
  * The trees that grow on the globe, picked from the map, each as { lat, lon, metres, kind, startStep, growSec, seed }:
- * the step (fractional) it starts growing at and how long it takes (s). Each 2° square that is forest enough grows one
+ * the whole step (a sixteenth) it starts growing at and how long it takes (s). Each 2° square that is forest enough grows one
  * tree for every `cellsPerTree` of its forest cells, so a thick forest stands thick, and its trees start growing
  * close together, a thin one stands apart and starts one by one.
  *
@@ -109,12 +109,15 @@ export function pickTrees(map) {
         const run = forest.slice(Math.floor((t * forest.length) / count), Math.floor(((t + 1) * forest.length) / count));
         const heights = run.map((cell) => cell.metres).sort((a, b) => a - b);
         const tall = heights[Math.min(heights.length - 1, Math.floor(TREE.percentile * heights.length))];
+        const startStep = Math.round(lineStepAt(run[0].lon) + afterFrom + random() * window);
+        // A tree that would start after the line has gone once round is never grown.
+        if (startStep >= LINE_STEPS) continue;
         picked.push({
           lat: run[0].lat,
           lon: run[0].lon,
           metres: tall,
           kind: kindOf(tall).kind,
-          startStep: lineStepAt(run[0].lon) + afterFrom + random() * window,
+          startStep,
           growSec: growSecOf(tall),
           seed: Math.floor(random() * 1e9),
         });
@@ -124,19 +127,13 @@ export function pickTrees(map) {
   return picked;
 }
 
-/** The trees by the whole step they start in, as a Map of step to trees; a tree that starts after the last step is left out. */
+/** The trees by the step they start in, as a Map of step to trees. */
 export function treesByStep(trees) {
   const byStep = new Map();
   for (const tree of trees) {
-    const step = Math.floor(tree.startStep);
-    if (step >= LINE_STEPS) continue;
-    if (!byStep.has(step)) byStep.set(step, []);
-    byStep.get(step).push(tree);
+    if (!byStep.has(tree.startStep)) byStep.set(tree.startStep, []);
+    byStep.get(tree.startStep).push(tree);
   }
   return byStep;
 }
 
-/** Seconds into the step a tree starts at, so the note can start where the tree does. */
-export function startOffsetSec(tree) {
-  return (tree.startStep - Math.floor(tree.startStep)) * STEP_SEC;
-}
