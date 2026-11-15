@@ -20,6 +20,7 @@
   --ink-muted: rgb(243 236 225 / 0.65);
   --gutter: clamp(16px, 2vw, 32px);
   --font: 'Gowun Batang', serif;
+  --font-title: 'Yellowtail', cursive;
   /* The page is drawn under the notch and the home indicator too (viewport-fit=cover in index.html), so its colour
      fills them; the stage and the controls stay inside these insets, along the layout's own sides. */
   --safe-top: env(safe-area-inset-top, 0px);
@@ -94,6 +95,11 @@ body {
   z-index: 3;
 }
 
+#corner-top-left {
+  top: calc(var(--gutter) + var(--safe-top));
+  left: calc(var(--gutter) + var(--safe-left));
+}
+
 #corner-top-right {
   top: calc(var(--gutter) + var(--safe-top));
   right: calc(var(--gutter) + var(--safe-right));
@@ -111,6 +117,26 @@ body {
   bottom: calc(var(--gutter) + var(--safe-bottom));
   left: 50%;
   transform: translateX(-50%);
+}
+
+/* The app's name in the top left corner, in a retro script like the name on a record label, warm cream lit from above.
+   The gradient only paints inside the box, so the padding leaves room for the script's swashes, which reach past the
+   letters (the last l's tail most of all). */
+.app-title {
+  margin: 0;
+  padding: 0.1em 0.5em 0.2em 0.15em;
+  font-family: var(--font-title);
+  font-size: clamp(26px, 2.4vw, 38px);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--ink);
+  background: linear-gradient(180deg, #fff8ec 0%, #f3ece1 45%, #e2c79a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.45));
+  pointer-events: none;
+  user-select: none;
 }
 
 /* In portrait orientation, force a rotated landscape layout that completely fills the screen */
