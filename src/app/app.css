@@ -123,6 +123,11 @@ body {
     font-size: clamp(10px, 1.6vh, 20px);
   }
 
+  /* Twice the bottom padding, so the last tracks sit clear of the buttons in the bottom corner. */
+  .stage .album-cover-body {
+    padding-bottom: 10cqw;
+  }
+
   .stage .turntable {
     width: min(52vh, 90vw);
   }
@@ -141,6 +146,11 @@ body {
 
   .stage {
     padding: 3vh var(--gutter);
+  }
+
+  /* Twice the bottom padding, so the last tracks sit clear of the buttons in the bottom corner. */
+  .stage .album-cover-body {
+    padding-bottom: 10cqw;
   }
 
   #bottom-center {

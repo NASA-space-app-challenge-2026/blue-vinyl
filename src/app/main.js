@@ -185,7 +185,7 @@ createSettingsMenu(viewControls, {
   onGlobeThemeChange: applyGlobeTheme,
 });
 applyGlobeTheme(DEFAULT_GLOBE_THEME);
-createCatView();
+createCatView(slot('screen'));
 
 // Album switch keys, as the previous and next chevrons.
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
