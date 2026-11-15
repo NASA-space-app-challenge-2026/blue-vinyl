@@ -6,6 +6,8 @@ import { GlobeLens } from '../../globe/domain/globe-lens.js';
 import { Instrument } from '../../music/domain/instruments.js';
 import { Lead } from '../../music/domain/patches.js';
 import { NorthInstrument, SouthInstrument } from '../../music/domain/composers/lightning.js';
+import { SmogLead, SmogLoop } from '../../music/domain/composers/smog.js';
+import { SMOG_MS_PER_SEC, smogDurationSec } from '../../tracks/domain/smog.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
 import { Hemisphere, seasonDurationSec, seasonSpan } from '../../tracks/domain/storm-season.js';
 
@@ -53,6 +55,12 @@ const WILDFIRE_ANNUAL_SEC = trackDurationSec(WILDFIRE_YEAR_TIMELINE, WILDFIRE_YE
 export const WILDFIRE_DAY_TIMELINE = Object.freeze({ introSec: 0, beatSec: 0.13, tailSec: 1.2 });
 const WILDFIRE_DAYS = 214;
 const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAYS);
+
+const SMOG_TRACKS = 'data/smog/tracks';
+const SMOG_COVERS = 'assets/albums/smog';
+// Each city's 2025, a day a sixteenth note: 40.3 s.
+const SMOG_DAYS = 365;
+const SMOG_TRACK_SEC = smogDurationSec(SMOG_DAYS);
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -266,6 +274,40 @@ export const albums = [
           csvUrl: `${WILDFIRE_DATA}/feds_2020_daily_large_fires.csv`,
           firesUrl: `${WILDFIRE_DATA}/feds_2020_fire_days.csv`,
         },
+      },
+    ],
+  },
+  {
+    id: 'smog',
+    category: AlbumCategory.AIR_QUALITY,
+    title: 'The Wind That Sweeps the Smog',
+    coverUrl: `${SMOG_COVERS}/seoul.jpg`,
+    coverCredit: 'Via Wikimedia Commons',
+    dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
+    msPerSec: SMOG_MS_PER_SEC,
+    // Seoul, and the three cities of other regions whose PM2.5 swung most often between their own cleanest and dirtiest
+    // days in 2025 (see notebooks/smog_album.ipynb and docs/albums/smog.md). Each plays its own deep house loop, its
+    // hook on keys or mallets, heard through the city's air. Covers: each city in haze, from Wikimedia Commons.
+    tracks: [
+      {
+        title: 'Seoul', durationSec: SMOG_TRACK_SEC, color: '#bab8b6',
+        coverUrl: `${SMOG_COVERS}/seoul.jpg`, coverCredit: 'Cover: Seoul with lots of fine dust, May 2021 (Photo: Hyeonyoung Lee 21, CC BY-SA 4.0)',
+        smog: { tracksDir: SMOG_TRACKS, file: 'seoul_2025.csv', lead: SmogLead.CELESTA, loop: SmogLoop.D_MINOR },
+      },
+      {
+        title: 'Pretoria', durationSec: SMOG_TRACK_SEC, color: '#908365',
+        coverUrl: `${SMOG_COVERS}/pretoria.jpg`, coverCredit: 'Cover: Pretoria from Fort Wonderboompoort (Photo: M J Hurter, CC BY 4.0)',
+        smog: { tracksDir: SMOG_TRACKS, file: 'pretoria_2025.csv', lead: SmogLead.MARIMBA, loop: SmogLoop.A_MINOR },
+      },
+      {
+        title: 'New York', durationSec: SMOG_TRACK_SEC, color: '#cdab73',
+        coverUrl: `${SMOG_COVERS}/new_york.jpg`, coverCredit: 'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)',
+        smog: { tracksDir: SMOG_TRACKS, file: 'new_york_2025.csv', lead: SmogLead.ELECTRIC_PIANO, loop: SmogLoop.F_MINOR },
+      },
+      {
+        title: 'Lisbon', durationSec: SMOG_TRACK_SEC, color: '#9e9ea1',
+        coverUrl: `${SMOG_COVERS}/lisbon.jpg`, coverCredit: 'Cover: Summer haze over Lisbon (Photo: Bosc d\'Anjou, CC BY 2.0)',
+        smog: { tracksDir: SMOG_TRACKS, file: 'lisbon_2025.csv', lead: SmogLead.VIBRAPHONE, loop: SmogLoop.E_MINOR },
       },
     ],
   },

@@ -2,6 +2,7 @@ export const AlbumCategory = Object.freeze({
   BIODIVERSITY: 'biodiversity',
   CLIMATE: 'climate',
   EXTREME_WEATHER: 'extreme-weather',
+  AIR_QUALITY: 'air-quality',
 });
 
 /**
@@ -48,6 +49,16 @@ export const AlbumCategory = Object.freeze({
  */
 
 /**
+ * A track that plays a city's year of smog, from the files the album notebook exports (see docs/data-guide.md).
+ *
+ * @typedef {Object} SmogSource
+ * @property {string} tracksDir the album's tracks folder, holding the track's CSVs and tracks.json
+ * @property {string} file the track's CSV
+ * @property {Object} lead the Instrument its hook is played on (one of SmogLead in music/domain/composers/smog.js)
+ * @property {Object} loop the loop it plays (one of SmogLoop)
+ */
+
+/**
  * @typedef {Object} Track
  * @property {string} title
  * @property {number} durationSec
@@ -55,6 +66,7 @@ export const AlbumCategory = Object.freeze({
  * @property {StormSource} [storm] data, sound and view of a hurricane track
  * @property {StormSeasonSource} [season] data, sound and view of a storm season track
  * @property {LightningSource} [lightning] data and sound of a lightning track
+ * @property {SmogSource} [smog] data, sound and view of a smog track
  * @property {{ kind: 'annual', csvUrl: string } | { kind: 'season', csvUrl: string, firesUrl: string }} [wildfire]
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
  * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)

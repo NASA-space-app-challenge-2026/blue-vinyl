@@ -4,6 +4,7 @@ const CATEGORY_LABEL = Object.freeze({
   [AlbumCategory.BIODIVERSITY]: 'Biodiversity',
   [AlbumCategory.CLIMATE]: 'Climate',
   [AlbumCategory.EXTREME_WEATHER]: 'Extreme Weather',
+  [AlbumCategory.AIR_QUALITY]: 'Air Quality',
 });
 
 // Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always
