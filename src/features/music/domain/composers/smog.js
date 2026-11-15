@@ -1,85 +1,108 @@
-// Composer for the smog album (see docs/albums/smog.md): a dark deep house loop, heard through the air the map shows.
-// After nell-v2's "The Wind That Sweeps the Smog".
+// Composer for the smog album (see docs/albums/smog.md): a dance loop, heard through the air the map shows. nell-v2's
+// "The Wind That Sweeps the Smog", as it is.
 //
-// Each track plays its own four-bar loop (its `loop`, a SmogLoop) in a minor key at 136 BPM, a day a sixteenth note,
-// unchanged from start to end, its hook on the track's `lead`. The air only changes how the loop comes through, the
-// same way in every track:
-//   - The fog: the thicker the city's air that day (fogOf, the fog the map draws over the city), the more the whole mix
-//     is muffled, as if heard through a wall, and the more it smears into reverb and grit. Clear air plays it crisp.
-//   - The thinning: while the fog over the box is thinning, a gust of wind blows on every beat, as loud as the box is
+// Each song plays its own four-bar loop (its `loop`, a SmogLoop) at 120 BPM, unchanged from start to end; the air only
+// changes how it comes through, the same way in every song:
+//   - The fog: the thicker the haze over the plain (the fog the map draws, averaged), the more the whole mix is
+//     muffled, as if heard through a wall, and the more it smears into reverb and grit. Clear air plays it crisp.
+//   - The clearing: while the fog on the map is thinning, a gust of wind blows on every beat, as loud as the plain is
 //     losing fog.
-//   - The swings (see tracks/domain/smog.js), on their day: as the smog rolls in, a deep boom as the map darkens; as it
-//     clears, a riser over the beat before, the loop silent, then a crash as the map flashes clear.
+//   - The turns (see tracks/domain/smog.js): as the smog rolls in, a deep boom as the map darkens; as the front sweeps
+//     it out, a riser over the two bars before, the beat before it silent, and a crash as the map flashes clear.
 //
-// The day is read from the step's data time, so the bars stay in place wherever the needle is set down.
+// The bar and step are read from the song's playback time, so the loop stays in place wherever the needle is set down.
 
 import { Effect } from '../effects.js';
 import { CC, Instrument } from '../instruments.js';
 import { NoiseShape, Patch } from '../patches.js';
-import { STEPS_PER_BAR, STEPS_PER_BEAT, STEP_SEC, dayAt } from '../../../tracks/domain/smog.js';
+import { STEPS_PER_BAR, STEPS_PER_BEAT, STEP_MS, gridAt, hourlyAt } from '../../../tracks/domain/smog.js';
 
-// A chord: its four notes, low to high, held by the pad and picked by the hook, and the bass's root (MIDI).
+// A chord: its four notes, low to high, that the parts above the bass play (the pad and stabs its lowest three, the
+// pad an octave down), and the bass's root (MIDI).
 const chord = (notes, root) => Object.freeze({ notes: Object.freeze(notes), root });
+const PAD_OCTAVE = -12;
 
-// The loops a track may play, each four chords a bar apiece, and its hook: [step, chord note, length in steps], played
-// `octave` octaves above the chord.
+// The loops a song may play, each four chords a bar apiece, and its parts:
+//   drums: the steps of the bar each drum strikes (`ghost`: quiet hats);
+//   bass: its steps and their lengths in steps, playing the root on the analog synth;
+//   pad: the Instrument holding the chord through the bar, or null;
+//   arpeggio: which chord note each eighth plays on the analog synth's `patch`, or null;
+//   stabs: the steps and lengths of short chords on the analog synth's `patch`, or null;
+//   melody: [step, chord note, length in steps] on `instrument`, or null.
 export const SmogLoop = Object.freeze({
-  // D minor: Dm7, B♭maj7, Gm7, Am7; a high, sparse hook.
-  D_MINOR: Object.freeze({
-    chords: [chord([62, 65, 69, 72], 38), chord([58, 62, 65, 69], 34), chord([55, 58, 62, 65], 43), chord([57, 60, 64, 67], 45)],
-    octave: 2,
-    hook: [[0, 3, 2], [3, 2, 1], [6, 1, 2], [8, 3, 2], [10, 2, 2], [14, 0, 2]],
+  // Synth-pop in D minor: a square-wave arpeggio running over a pad and a syncopated bass.
+  SYNTH_POP: Object.freeze({
+    chords: Object.freeze([
+      chord([74, 77, 81, 86], 38),
+      chord([74, 77, 82, 86], 34),
+      chord([72, 77, 81, 84], 41),
+      chord([72, 76, 79, 84], 36),
+    ]),
+    drums: Object.freeze({ kick: [0, 4, 8, 12], snare: [4, 12], hat: [2, 6, 10, 14], ghost: [1, 3, 5, 7, 9, 11, 13, 15] }),
+    bass: new Map([[0, 3], [3, 3], [6, 2], [8, 3], [11, 3], [14, 2]]),
+    pad: Instrument.HALO_PAD,
+    arpeggio: Object.freeze({ patch: Patch.PULSE, notes: [0, 1, 2, 3, 2, 1, 2, 3] }),
+    stabs: null,
+    melody: null,
   }),
-  // A minor: Am7, Fmaj7, Dm7, Em7; a busy, syncopated hook.
-  A_MINOR: Object.freeze({
-    chords: [chord([57, 60, 64, 67], 45), chord([53, 57, 60, 64], 41), chord([50, 53, 57, 60], 38), chord([52, 55, 59, 62], 40)],
-    octave: 1,
-    hook: [[0, 0, 1], [2, 2, 1], [3, 3, 1], [6, 2, 1], [8, 1, 1], [10, 3, 1], [11, 2, 1], [14, 0, 1]],
+  // House in A minor: saw chord stabs off the beat, the bass bouncing on the offbeats under a four-to-the-floor kick.
+  HOUSE: Object.freeze({
+    chords: Object.freeze([
+      chord([69, 72, 76, 81], 45),
+      chord([69, 72, 77, 81], 41),
+      chord([67, 72, 76, 79], 48),
+      chord([67, 71, 74, 79], 43),
+    ]),
+    drums: Object.freeze({ kick: [0, 4, 8, 12], snare: [4, 12], hat: [2, 6, 10, 14], ghost: [1, 3, 5, 7, 9, 11, 13, 15] }),
+    bass: new Map([[2, 2], [6, 2], [10, 2], [14, 2]]),
+    pad: null,
+    arpeggio: null,
+    stabs: Object.freeze({ patch: Patch.STAB, steps: new Map([[0, 2], [3, 2], [6, 1], [10, 2], [13, 2]]) }),
+    melody: null,
   }),
-  // F minor: Fm7, D♭maj7, B♭m7, E♭; a slow, held hook.
-  F_MINOR: Object.freeze({
-    chords: [chord([53, 56, 60, 63], 41), chord([49, 53, 56, 60], 37), chord([46, 49, 53, 56], 34), chord([51, 55, 58, 63], 39)],
-    octave: 1,
-    hook: [[0, 3, 3], [4, 2, 2], [7, 1, 3], [10, 2, 2], [12, 0, 4]],
-  }),
-  // E minor: Em7, Cmaj7, Am7, Bm7; a ringing hook.
-  E_MINOR: Object.freeze({
-    chords: [chord([52, 55, 59, 62], 40), chord([48, 52, 55, 59], 36), chord([45, 48, 52, 55], 45), chord([47, 50, 54, 57], 35)],
-    octave: 2,
-    hook: [[0, 2, 4], [4, 3, 2], [6, 1, 2], [8, 2, 4], [12, 3, 2], [14, 1, 2]],
+  // Breakbeat in E minor: a broken beat under a dulcimer hook, a held bass and a warm pad.
+  BREAKS: Object.freeze({
+    chords: Object.freeze([
+      chord([76, 79, 83, 88], 40),
+      chord([76, 79, 84, 88], 36),
+      chord([74, 79, 83, 86], 43),
+      chord([74, 78, 81, 86], 38),
+    ]),
+    drums: Object.freeze({ kick: [0, 7, 10], snare: [4, 12], hat: [0, 2, 4, 6, 8, 10, 12, 14], ghost: [3, 5, 9, 11, 13, 15] }),
+    bass: new Map([[0, 6], [7, 3], [10, 6]]),
+    pad: Instrument.PAD,
+    arpeggio: null,
+    stabs: null,
+    melody: Object.freeze({
+      instrument: Instrument.DULCIMER,
+      notes: [[0, 3, 2], [2, 2, 2], [4, 1, 1], [6, 2, 2], [8, 3, 2], [11, 1, 1], [12, 2, 4]],
+    }),
   }),
 });
+const SOUND_FONTS = Object.freeze([
+  ...new Set(Object.values(SmogLoop).flatMap((loop) => [loop.pad, loop.melody?.instrument].filter(Boolean))),
+]);
 
-// The leads a track may play its hook on: keys and mallets.
-export const SmogLead = Object.freeze({
-  CELESTA: Instrument.CELESTA,
-  MARIMBA: Instrument.MARIMBA,
-  ELECTRIC_PIANO: Instrument.ELECTRIC_PIANO,
-  VIBRAPHONE: Instrument.VIBRAPHONE,
-});
-
-// The loop's parts (the drums from nell-v2's house loop): the steps of the bar each plays.
-const DRUMS = Object.freeze({ kick: [0, 4, 8, 12], clap: [4, 12], hat: [2, 6, 10, 14], ghost: [1, 3, 5, 7, 9, 11, 13, 15] });
-const BASS_STEPS = new Map([[2, 2], [6, 2], [10, 2], [14, 2]]);
-const VELOCITY = Object.freeze({ kick: 118, clap: 100, hat: 88, ghost: 50, bass: 110, pad: 70, lead: 104 });
+const VELOCITY = Object.freeze({ kick: 118, snare: 100, hat: 88, ghost: 50, bass: 110, pad: 70, arpeggio: 96, stab: 92, melody: 104 });
+const BASS_SHAPE = Object.freeze({ cutoff: 1.4, resonance: 4, env: 2, decay: 0.15, gate: 0.85, release: 0.2 });
+const ARP_SHAPE = Object.freeze({ cutoff: 2.5, resonance: 3, env: 1.5, decay: 0.12, gate: 0.6, release: 0.15 });
+const STAB_SHAPE = Object.freeze({ cutoff: 1.5, resonance: 5, env: 2.5, decay: 0.18, gate: 0.4, release: 0.12 });
 const SOUND_FONT_REVERB = 40;
 // The standard kit's keys.
-const Drum = Object.freeze({ KICK: 36, CLAP: 39, CLOSED_HAT: 42, CRASH: 49 });
+const Drum = Object.freeze({ KICK: 36, SNARE: 38, CLOSED_HAT: 42, CRASH: 49 });
 
-// The fog over the music: at none the mix is as it is, at all of it the low-pass is down to MUFFLED_HZ and the reverb
-// and grit are at their most (nell-v2).
+// The fog over the music, from the plain's haze: none below FOG_HAZE[0], all of it from FOG_HAZE[1]. At none the mix
+// is as it is; at all of it the low-pass is down to MUFFLED_HZ and the reverb and grit are at their most.
+const FOG_HAZE = Object.freeze([0.05, 0.8]);
 const OPEN_HZ = 18000;
 const MUFFLED_HZ = 220;
 const REVERB = Object.freeze([0.12, 0.6]);
 const DRIVE = Object.freeze([0, 0.3]);
-// A gust on each beat while the box is losing fog: a burst of noise falling from 6 kHz, as loud as the share of a whole
-// fog the box loses by the next day, none from `from` and full at `full`. nell-v2's thresholds were per hour; these
-// per-day ones are ours, set from 2025's days (the box loses 0.1 or more on about a quarter of Seoul's days and on none
-// of Pretoria's), not yet heard by the user.
-const GUST = Object.freeze({ from: 0.1, full: 0.3, velocity: 120, steps: STEPS_PER_BEAT, hz: [6000, 700] });
-// The swings: the riser, silent beat, crash and impact of a clearing; the boom of the smog rolling in (nell-v2, the
-// riser and the silence a beat long, as swings can come a few days apart).
-const RISER = Object.freeze({ velocity: 110, steps: STEPS_PER_BEAT, hz: [300, 9000] });
+// A gust on each beat while the plain is losing fog: a burst of noise falling from 6 kHz, as loud as the share of a
+// whole fog the plain loses an hour, none from `from` and full at `full`.
+const GUST = Object.freeze({ from: 0.008, full: 0.06, velocity: 120, steps: STEPS_PER_BEAT, hz: [6000, 700] });
+// The turns: the riser, silent beat, crash and impact of a clearing; the boom of the smog rolling in.
+const RISER = Object.freeze({ velocity: 110, steps: 2 * STEPS_PER_BAR, hz: [300, 9000] });
 const SILENT_STEPS = STEPS_PER_BEAT;
 const CRASH_VELOCITY = 124;
 const IMPACT = Object.freeze({ velocity: 115, steps: 4, hz: [150, 2500] });
@@ -90,97 +113,99 @@ const BOOM_NOISE = Object.freeze({ velocity: 100, steps: 8, hz: [800, 60] });
 const lerp = ([from, to], amount) => from + (to - from) * amount;
 
 export class SmogComposer {
-  instruments = Object.freeze([...Object.values(SmogLead), Instrument.PAD, Instrument.SYNTH_BASS, Instrument.STANDARD_KIT]);
-  stepSec = STEP_SEC;
+  instruments = Object.freeze([...SOUND_FONTS, Instrument.STANDARD_KIT]);
+  // A step is a sixteenth note of playback time.
+  stepSec = STEP_MS / 1000;
   stepsPerBar = STEPS_PER_BAR;
 
   /**
-   * @param {{ track: import('../../../tracks/domain/smog.js').SmogTrack, grid: import('../../../tracks/domain/smog.js').SmogGrid, lead: Object, loop: Object }} song
-   *   the city's year, the box around it, the lead (one of SmogLead) and the loop (one of SmogLoop)
+   * @param {{ track: import('../../../tracks/domain/smog.js').SmogTrack, loop: Object }} song the plain's hours and
+   *   the loop the song plays (one of SmogLoop)
    */
-  setSong({ track, grid, lead, loop }) {
+  setSong({ track, loop }) {
     this.track = track;
-    this.grid = grid;
-    this.lead = lead;
     this.loop = loop;
-    this.swings = new Map(track.swings.map((swing) => [swing.day, swing]));
+    this.turns = new Map(track.turns.map((turn) => [gridAt(turn.at).index, turn]));
   }
 
   reset() {
     this.started = false;
-    this.lastDay = null;
+    this.lastIndex = null;
   }
 
   /**
    * @param {import('./flock.js').Music} music
-   * @param {{ time: number, at: number }} now
+   * @param {{ time: number, at: number }} now `time`: the song's playback time (ms)
    */
   playStep(music, { time, at }) {
     if (!this.started) {
       this.started = true;
-      for (const inst of [this.lead, Instrument.PAD]) music.control(inst, CC.REVERB, SOUND_FONT_REVERB, at);
+      for (const inst of SOUND_FONTS) music.control(inst, CC.REVERB, SOUND_FONT_REVERB, at);
     }
-    const day = Math.round(dayAt(this.track, time));
-    if (day === this.lastDay || day < 0 || day >= this.track.t.length) return;
-    this.lastDay = day;
-    this.hear(music, this.track.fog[day], at);
-    this.playSwings(music, day, at);
-    if (this.clearingWithin(day)) return;
-    this.playGust(music, day, at);
-    this.playLoop(music, day, at);
+    const grid = gridAt(time);
+    if (grid.index === this.lastIndex) return;
+    this.lastIndex = grid.index;
+    this.hear(music, hourlyAt(this.track.t, this.track.haze, time), at);
+    this.playTurns(music, grid, at);
+    const clearing = this.track.turns.find((turn) => turn.clear && turn.at > grid.time);
+    if (clearing && clearing.at - grid.time <= SILENT_STEPS * STEP_MS) return;
+    this.playGust(music, grid, at);
+    this.playLoop(music, grid, at);
   }
 
   // The air the loop is heard through.
-  hear(music, fog, at) {
+  hear(music, haze, at) {
+    const fog = Math.min(1, Math.max(0, (haze - FOG_HAZE[0]) / (FOG_HAZE[1] - FOG_HAZE[0])));
     music.effect(Effect.LOWPASS, OPEN_HZ * (MUFFLED_HZ / OPEN_HZ) ** fog, at);
     music.effect(Effect.REVERB, lerp(REVERB, fog), at);
     music.effect(Effect.DRIVE, lerp(DRIVE, fog), at);
   }
 
-  // Whether the air clears within SILENT_STEPS after `day`, when the loop holds its breath.
-  clearingWithin(day) {
-    for (let next = day + 1; next <= day + SILENT_STEPS; next++) if (this.swings.get(next)?.clear) return true;
-    return false;
-  }
-
-  playSwings(music, day, at) {
-    if (this.swings.get(day + RISER.steps)?.clear) {
+  playTurns(music, grid, at) {
+    if (this.turns.get(grid.index + RISER.steps)?.clear) {
       music.noise(RISER.velocity, at, RISER.steps, ...RISER.hz, NoiseShape.RISE);
     }
-    const swing = this.swings.get(day);
-    if (!swing) return;
-    if (swing.clear) {
+    const turn = this.turns.get(grid.index);
+    if (!turn) return;
+    if (turn.clear) {
       music.note(Instrument.STANDARD_KIT, Drum.CRASH, CRASH_VELOCITY, at, STEPS_PER_BAR);
-      music.noise(IMPACT.velocity, at, IMPACT.steps, ...IMPACT.hz);
+      music.noise(IMPACT.velocity, at, IMPACT.steps, ...IMPACT.hz, NoiseShape.HIT);
     } else {
       music.synthNote(Patch.CAVE, BOOM.midi, BOOM.velocity, at, BOOM.steps, BOOM_SHAPE);
-      music.noise(BOOM_NOISE.velocity, at, BOOM_NOISE.steps, ...BOOM_NOISE.hz);
+      music.noise(BOOM_NOISE.velocity, at, BOOM_NOISE.steps, ...BOOM_NOISE.hz, NoiseShape.HIT);
     }
   }
 
-  playGust(music, day, at) {
-    if (day % STEPS_PER_BEAT) return;
-    const thinning = this.grid.thinning[day];
-    if (thinning < GUST.from) return;
-    const velocity = GUST.velocity * Math.min(1, (thinning - GUST.from) / (GUST.full - GUST.from));
-    music.noise(velocity, at, GUST.steps, ...GUST.hz);
+  playGust(music, { step, time }, at) {
+    if (step % STEPS_PER_BEAT) return;
+    const cleared = hourlyAt(this.track.t, this.track.cleared, time);
+    if (cleared < GUST.from) return;
+    const velocity = GUST.velocity * Math.min(1, (cleared - GUST.from) / (GUST.full - GUST.from));
+    music.noise(velocity, at, GUST.steps, ...GUST.hz, NoiseShape.HIT);
   }
 
-  playLoop(music, day, at) {
-    const step = day % STEPS_PER_BAR;
-    const bar = Math.floor(day / STEPS_PER_BAR);
-    const { chords, octave, hook } = this.loop;
+  playLoop(music, { step, bar }, at) {
+    const { chords, drums, bass, pad, arpeggio, stabs, melody } = this.loop;
     const { notes, root } = chords[bar % chords.length];
     const drum = (key, velocity) => music.note(Instrument.STANDARD_KIT, key, velocity, at, 1);
-    if (DRUMS.kick.includes(step)) drum(Drum.KICK, VELOCITY.kick);
-    if (DRUMS.clap.includes(step)) drum(Drum.CLAP, VELOCITY.clap);
-    if (DRUMS.hat.includes(step)) drum(Drum.CLOSED_HAT, VELOCITY.hat);
-    else if (DRUMS.ghost.includes(step)) drum(Drum.CLOSED_HAT, VELOCITY.ghost);
-    const bassSteps = BASS_STEPS.get(step);
-    if (bassSteps) music.note(Instrument.SYNTH_BASS, root, VELOCITY.bass, at, bassSteps);
-    if (step === 0) for (const midi of notes) music.note(Instrument.PAD, midi, VELOCITY.pad, at, STEPS_PER_BAR);
-    for (const [s, note, length] of hook) {
-      if (s === step) music.note(this.lead, notes[note] + 12 * octave, VELOCITY.lead, at, length);
+    if (drums.kick.includes(step)) drum(Drum.KICK, VELOCITY.kick);
+    if (drums.snare.includes(step)) drum(Drum.SNARE, VELOCITY.snare);
+    if (drums.hat.includes(step)) drum(Drum.CLOSED_HAT, VELOCITY.hat);
+    else if (drums.ghost.includes(step)) drum(Drum.CLOSED_HAT, VELOCITY.ghost);
+    const bassSteps = bass.get(step);
+    if (bassSteps) music.synthNote(Patch.CAVE, root, VELOCITY.bass, at, bassSteps, BASS_SHAPE);
+    if (pad && step === 0) {
+      for (const midi of notes.slice(0, 3)) music.note(pad, midi + PAD_OCTAVE, VELOCITY.pad, at, STEPS_PER_BAR);
+    }
+    if (arpeggio && step % 2 === 0) {
+      music.synthNote(arpeggio.patch, notes[arpeggio.notes[step / 2]], VELOCITY.arpeggio, at, 2, ARP_SHAPE);
+    }
+    const stabSteps = stabs?.steps.get(step);
+    if (stabSteps) {
+      for (const midi of notes.slice(0, 3)) music.synthNote(stabs.patch, midi, VELOCITY.stab, at, stabSteps, STAB_SHAPE);
+    }
+    for (const [s, note, length] of melody?.notes ?? []) {
+      if (s === step) music.note(melody.instrument, notes[note], VELOCITY.melody, at, length);
     }
   }
 }

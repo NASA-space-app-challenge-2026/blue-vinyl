@@ -232,6 +232,30 @@
   paint-order: stroke;
 }
 
+/* A city under the smog (smog-layer.js): a dot and its name above it. */
+.smog-city svg {
+  display: block;
+  overflow: visible;
+}
+
+.smog-city-dot {
+  fill: #fff;
+  stroke: #111;
+  stroke-width: 1;
+}
+
+.smog-city-name {
+  text-anchor: middle;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  fill: #fff;
+  stroke: #111;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
 /* The date at 6 o'clock on the globe (date-label.js), sized with the globe. */
 .globe-view {
   container-type: size;

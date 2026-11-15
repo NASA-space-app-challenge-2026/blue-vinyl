@@ -23,7 +23,7 @@ import { createDateLabel } from '../features/globe/presentation/date-label.js';
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
 import { createHalo } from '../features/globe/presentation/halo.js';
 import { createSeaLevelOverlay } from '../features/globe/presentation/sea-level-overlay.js';
-import { SWING_FADE_SEC } from '../features/globe/presentation/smog-layer.js';
+import { smogColor } from '../features/globe/presentation/pollution-color.js';
 import { createWildfireOverlay } from '../features/globe/presentation/wildfire-overlay.js';
 import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
@@ -42,7 +42,7 @@ import { loadStormSeason } from '../features/tracks/data/storm-season-source.js'
 import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack, loadWildfireTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
-import { cityFocus, dayAt, swingGlowAt } from '../features/tracks/domain/smog.js';
+import { hourlyAt, plainFocus } from '../features/tracks/domain/smog.js';
 import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
@@ -65,7 +65,7 @@ let musicCredits = [];
 // The attribution of the globe's map and imagery, shown with the album's credits.
 let mapCredit = '';
 // What each track of the album plays, by track index, once its data has loaded (see the Song of sound-engine.js): its
-// birds (`tracks`, `lead`), its storm (`storm`), its year of lightning (`lightning`) or a city's year of smog
+// birds (`tracks`, `lead`), its storm (`storm`), its year of lightning (`lightning`) or the smog over a plain
 // (`smog`), or null for a track with none of them. Empty until then.
 let songs = [];
 // The storm season each track of the album plays, by track index, once loaded (see seasonSong), or null for a track
@@ -145,8 +145,6 @@ const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeomet
 const globe = createGlobeView(turntable.labelSlot);
 const seaOverlay = createSeaLevelOverlay(turntable.labelSlot);
 const wildfireOverlay = createWildfireOverlay(turntable.labelSlot);
-// The smog track's read-out: the city's PM2.5 that day.
-const smogReadout = createWildfireOverlay(turntable.labelSlot);
 const music = createMusicPlayer();
 globe.setFocus(() => focus);
 const dateLabel = createDateLabel(turntable.labelSlot);
@@ -390,19 +388,19 @@ async function loadSong(track, target) {
     };
   }
   if (track.smog) {
-    const { track: smogTrack, grid, city } = await loadSmogTrack(track.smog);
+    const { track: smogTrack, timeZone } = await loadSmogTrack(track.smog);
     return {
       smog: true,
       track: smogTrack,
-      grid,
-      city,
-      focus: cityFocus(city, grid),
-      lead: track.smog.lead,
+      cities: track.smog.cities,
+      // The local clock by the hour.
+      dateFormat: { month: 'short', day: '2-digit', hour: 'numeric', timeZone },
+      focus: plainFocus(smogTrack),
       loop: track.smog.loop,
       composer: smogComposer,
-      startMs: smogTrack.t[0],
+      // Timed in playback ms from the song's start; the composer reads the plain at each step's time.
+      startMs: 0,
       msPerSec: target.msPerSec,
-      // The whole year plays; the composer reads the day at each step's time.
       sampleAt: () => smogTrack,
     };
   }
@@ -440,7 +438,7 @@ function showSeason(song, color) {
 function showSong(song, color) {
   shownSong = song;
   focus = null;
-  // A smog track holds the globe still over its city: there is no smog drawn anywhere else.
+  // A smog track holds the globe still over its plain: there is no smog drawn anywhere else.
   globe.setLocked(Boolean(song?.smog));
   globe.birds.reset(color);
   globe.storm.show(null);
@@ -675,10 +673,7 @@ function renderWildfire(data, trackIndex) {
 function renderSong(trackIndex) {
   const song = songs[trackIndex];
   if (!song?.lightning) globe.lightning.render(null, 0, 1);
-  if (!song?.smog) {
-    globe.smog.render(null, 0, null);
-    smogReadout.render(null);
-  }
+  if (!song?.smog) globe.smog.render(null, 0, []);
   if (!song) {
     if (shownSong) showSong(null, null);
     return;
@@ -753,8 +748,8 @@ function renderLightning(trackIndex, song) {
 }
 
 /**
- * Draws the city's smog at the clock on the globe, which holds still over the city, with the date and the city's PM2.5
- * that day; the last swing darkens or flashes the map on the beat it sounds. While playing, lets the music follow it.
+ * Draws the plain's smog at the clock on the globe, which holds still over the plain, with its cities and the local
+ * date and hour, under a glow the colour of its haze. While playing, lets the music follow it.
  */
 function renderSmog(trackIndex, song) {
   if (shownSong !== song) {
@@ -764,11 +759,10 @@ function renderSmog(trackIndex, song) {
   focus = song.focus;
   const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
   const time = song.startMs + elapsedSec * song.msPerSec;
-  const day = Math.max(0, dayAt(song.track, time));
-  globe.smog.render(song, day, swingGlowAt(song.track, elapsedSec, SWING_FADE_SEC));
-  dateLabel.show(time);
-  const pm25 = song.track.pm25[Math.min(song.track.pm25.length - 1, Math.floor(day))];
-  smogReadout.render({ detail: `PM2.5 ${Math.round(pm25)} µg/m³` });
+  const { t, haze, clock } = song.track;
+  globe.smog.render(song.track, time, song.cities);
+  dateLabel.show(hourlyAt(t, clock, time), song.dateFormat);
+  halo.setColor(smogColor(hourlyAt(t, haze, time)));
   if (state !== PlaybackState.PLAYING) return;
   soundEngine.follow(song, elapsedSec);
   halo.wake();

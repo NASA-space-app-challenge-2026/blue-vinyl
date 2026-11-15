@@ -302,7 +302,8 @@ export function createGlobeView(container) {
     return (2 * gap * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(1, container.clientHeight);
   }
 
-  // Birds and storms are never on the globe together: each layer sets the globe's HTML elements while it is shown.
+  // Birds, storms and the smog's cities are never on the globe together: each layer sets the globe's HTML elements
+  // while it is shown.
   const layerView = { globe, unitsPerPx, setElements: (elements) => globe.htmlElementsData(elements) };
   const birds = createBirdsLayer(layerView);
   const storms = createStormsLayer(layerView);
@@ -311,7 +312,7 @@ export function createGlobeView(container) {
   const storm = createStormLayer({ globe, container });
 
   const lightning = createLightningLayer(globe);
-  const smog = createSmogLayer(globe);
+  const smog = createSmogLayer(layerView);
 
   return {
     setTheme,

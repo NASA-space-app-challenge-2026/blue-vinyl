@@ -49,13 +49,13 @@ export const AlbumCategory = Object.freeze({
  */
 
 /**
- * A track that plays a city's year of smog, from the files the album notebook exports (see docs/data-guide.md).
+ * A track that plays the smog over a plain, from the files the album notebook exports (see docs/data-guide.md).
  *
  * @typedef {Object} SmogSource
  * @property {string} tracksDir the album's tracks folder, holding the track's CSVs and tracks.json
  * @property {string} file the track's CSV
- * @property {Object} lead the Instrument its hook is played on (one of SmogLead in music/domain/composers/smog.js)
- * @property {Object} loop the loop it plays (one of SmogLoop)
+ * @property {Object} loop the loop it plays (one of SmogLoop in music/domain/composers/smog.js)
+ * @property {{ name: string, lat: number, lon: number }[]} cities the cities named on the map
  */
 
 /**

@@ -6,8 +6,8 @@ import { GlobeLens } from '../../globe/domain/globe-lens.js';
 import { Instrument } from '../../music/domain/instruments.js';
 import { Lead } from '../../music/domain/patches.js';
 import { NorthInstrument, SouthInstrument } from '../../music/domain/composers/lightning.js';
-import { SmogLead, SmogLoop } from '../../music/domain/composers/smog.js';
-import { SMOG_MS_PER_SEC, smogDurationSec } from '../../tracks/domain/smog.js';
+import { SmogLoop } from '../../music/domain/composers/smog.js';
+import { SONG_MS } from '../../tracks/domain/smog.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
 import { Hemisphere, seasonDurationSec, seasonSpan } from '../../tracks/domain/storm-season.js';
 
@@ -57,10 +57,32 @@ const WILDFIRE_DAYS = 214;
 const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAYS);
 
 const SMOG_TRACKS = 'data/smog/tracks';
-const SMOG_COVERS = 'assets/albums/smog';
-// Each city's 2025, a day a sixteenth note: 40.3 s.
-const SMOG_DAYS = 365;
-const SMOG_TRACK_SEC = smogDurationSec(SMOG_DAYS);
+const SMOG_COVER = 'assets/albums/smog/beijing.jpg';
+const SMOG_COVER_CREDIT = 'Cover: Jade Peak Pagoda in smog from Longevity Hill, Beijing (Photo: Daniel Case, CC BY-SA 3.0)';
+// The cities named on the map, north to south.
+const NORTH_CHINA_PLAIN_CITIES = Object.freeze([
+  { name: 'Beijing', lat: 39.9, lon: 116.4 },
+  { name: 'Tangshan', lat: 39.63, lon: 118.18 },
+  { name: 'Tianjin', lat: 39.13, lon: 117.2 },
+  { name: 'Baoding', lat: 38.87, lon: 115.46 },
+  { name: 'Cangzhou', lat: 38.3, lon: 116.84 },
+  { name: 'Shijiazhuang', lat: 38.04, lon: 114.51 },
+  { name: 'Hengshui', lat: 37.74, lon: 115.67 },
+  { name: 'Jinan', lat: 36.65, lon: 117.12 },
+  { name: 'Handan', lat: 36.61, lon: 114.49 },
+]);
+
+/** A smog song: its hours over the plain, played on `loop` (one of SmogLoop), 54 s (see tracks/domain/smog.js). */
+function smogTrack(title, file, loop) {
+  return {
+    title,
+    durationSec: SONG_MS / 1000,
+    color: '#bab8b6',
+    coverUrl: SMOG_COVER,
+    coverCredit: SMOG_COVER_CREDIT,
+    smog: { tracksDir: SMOG_TRACKS, file, loop, cities: NORTH_CHINA_PLAIN_CITIES },
+  };
+}
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -281,34 +303,18 @@ export const albums = [
     id: 'smog',
     category: AlbumCategory.AIR_QUALITY,
     title: 'The Wind That Sweeps the Smog',
-    coverUrl: `${SMOG_COVERS}/seoul.jpg`,
-    coverCredit: 'Via Wikimedia Commons',
+    coverUrl: SMOG_COVER,
+    coverCredit: SMOG_COVER_CREDIT,
     dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
-    msPerSec: SMOG_MS_PER_SEC,
-    // Seoul, and the three cities of other regions whose PM2.5 swung most often between their own cleanest and dirtiest
-    // days in 2025 (see notebooks/smog_album.ipynb and docs/albums/smog.md). Each plays its own deep house loop, its
-    // hook on keys or mallets, heard through the city's air. Covers: each city in haze, from Wikimedia Commons.
+    // Songs are timed in playback ms; each sets the pace of its own hours (see tracks/domain/smog.js).
+    msPerSec: 1000,
+    // Three stretches of the winter of 2018-19 over the North China Plain, each named for the hour the front swept the
+    // smog away (see notebooks/smog_album.ipynb and docs/albums/smog.md): clear air, the smog rolling in and building
+    // for days, and the sweep. Each plays its own loop, heard through the smog. nell-v2's album, as it is.
     tracks: [
-      {
-        title: 'Seoul', durationSec: SMOG_TRACK_SEC, color: '#bab8b6',
-        coverUrl: `${SMOG_COVERS}/seoul.jpg`, coverCredit: 'Cover: Seoul with lots of fine dust, May 2021 (Photo: Hyeonyoung Lee 21, CC BY-SA 4.0)',
-        smog: { tracksDir: SMOG_TRACKS, file: 'seoul_2025.csv', lead: SmogLead.CELESTA, loop: SmogLoop.D_MINOR },
-      },
-      {
-        title: 'Pretoria', durationSec: SMOG_TRACK_SEC, color: '#908365',
-        coverUrl: `${SMOG_COVERS}/pretoria.jpg`, coverCredit: 'Cover: Pretoria from Fort Wonderboompoort (Photo: M J Hurter, CC BY 4.0)',
-        smog: { tracksDir: SMOG_TRACKS, file: 'pretoria_2025.csv', lead: SmogLead.MARIMBA, loop: SmogLoop.A_MINOR },
-      },
-      {
-        title: 'New York', durationSec: SMOG_TRACK_SEC, color: '#cdab73',
-        coverUrl: `${SMOG_COVERS}/new_york.jpg`, coverCredit: 'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)',
-        smog: { tracksDir: SMOG_TRACKS, file: 'new_york_2025.csv', lead: SmogLead.ELECTRIC_PIANO, loop: SmogLoop.F_MINOR },
-      },
-      {
-        title: 'Lisbon', durationSec: SMOG_TRACK_SEC, color: '#9e9ea1',
-        coverUrl: `${SMOG_COVERS}/lisbon.jpg`, coverCredit: 'Cover: Summer haze over Lisbon (Photo: Bosc d\'Anjou, CC BY 2.0)',
-        smog: { tracksDir: SMOG_TRACKS, file: 'lisbon_2025.csv', lead: SmogLead.VIBRAPHONE, loop: SmogLoop.E_MINOR },
-      },
+      smogTrack('Morning, December 23', 'smog_2018_12_23.csv', SmogLoop.SYNTH_POP),
+      smogTrack('Dawn, January 15', 'smog_2019_01_15.csv', SmogLoop.HOUSE),
+      smogTrack('Midday, January 20', 'smog_2019_01_20.csv', SmogLoop.BREAKS),
     ],
   },
 ];
