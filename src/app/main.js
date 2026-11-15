@@ -16,6 +16,7 @@ import { createGlassCapsule } from '../features/controls/presentation/glass-caps
 import { createPlayButton } from '../features/controls/presentation/play-button.js';
 import { createPlayHint } from '../features/controls/presentation/play-hint.js';
 import { createSettingsMenu } from '../features/controls/presentation/settings-menu.js';
+import { createStartScreen } from '../features/controls/presentation/start-screen.js';
 import { createVolumeControl } from '../features/controls/presentation/volume-control.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
@@ -199,6 +200,8 @@ createSettingsMenu(viewControls, {
 });
 applyGlobeTheme(DEFAULT_GLOBE_THEME);
 createCatView(slot('screen'));
+// A drag is no gesture audio may start from on a phone, so the title screen's tap unlocks the sound first.
+const startScreen = createStartScreen(slot('screen'), { stage: slot('stage'), onStart: unlockSound });
 
 // Album switch keys, as the previous and next chevrons.
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
@@ -210,7 +213,8 @@ const VOLUME_KEYS = Object.freeze({ ArrowUp: 1, ArrowDown: -1 });
 document.addEventListener(
   'keydown',
   (event) => {
-    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    // The title screen takes Space and Enter itself, as the button it is.
+    if (event.altKey || event.ctrlKey || event.metaKey || startScreen.isOpen()) return;
     if (event.code === 'Space') {
       event.preventDefault();
       releaseClickFocus();
@@ -250,7 +254,7 @@ document.addEventListener('gesturestart', (event) => event.preventDefault());
 document.addEventListener(
   'keyup',
   (event) => {
-    if (event.code === 'Space') event.preventDefault();
+    if (event.code === 'Space' && !startScreen.isOpen()) event.preventDefault();
   },
   { capture: true },
 );
