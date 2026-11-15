@@ -1,9 +1,10 @@
-// A short preview of the spatial audio for the onboarding: one low, groaning hum, like the sound waves NASA heard from
-// the black hole in the Perseus cluster, circling the listener's head twice, drifting nearer and further. It is placed
-// by the same head-related (HRTF) panning the music uses, so earphones bring out where it is.
+// A short preview of the spatial audio for the onboarding: one warm, bright chord, G major with an added ninth,
+// circling the listener's head twice, drifting nearer and further. It is placed by the same head-related (HRTF)
+// panning the music uses, so earphones bring out where it is.
 //
-// The hum is two detuned saws, sinking slowly in pitch, under a resonant low-pass filter that opens and closes like a
-// slow breath; their overtones are what let the ear place it. A long reverb gives it a space to sound in.
+// Each note of the chord is two detuned saws, under a soft low-pass filter that opens as it plays, so the chord grows
+// brighter, and breathes gently; their overtones are what let the ear place it. A long reverb gives it a space to
+// sound in.
 //
 // It starts ahead of the listener and turns clockwise, to the right first, as a dot drawn circling a head seen from
 // above does. It has its own audio context, closed when it ends, so it never touches the music's mix.
@@ -15,23 +16,23 @@ const TURNS = 2;
 const FADE_IN_SEC = 1.5;
 const FADE_OUT_SEC = 2.5;
 const STOP_FADE_SEC = 0.35;
-// The hum's level, its pitch sinking from one to the other over the preview, and how far its two saws are detuned.
-const LEVEL = 0.22;
-const FROM_HZ = 98;
-const TO_HZ = 73;
-const DETUNE_CENTS = 9;
-// The filter: its cutoff breathing round CUTOFF_HZ by CUTOFF_SWING_HZ at BREATH_HZ, and its resonance.
-const CUTOFF_HZ = 700;
-const CUTOFF_SWING_HZ = 450;
+// The chord's level, its notes (MIDI numbers) and how far each note's two saws are detuned.
+const LEVEL = 0.4;
+const NOTES = Object.freeze([55, 59, 62, 67, 69]);
+const DETUNE_CENTS = 8;
+// The filter: its cutoff opening from one to the other over the preview, breathing by CUTOFF_SWING_HZ at BREATH_HZ.
+const CUTOFF_FROM_HZ = 900;
+const CUTOFF_TO_HZ = 2600;
+const CUTOFF_SWING_HZ = 300;
 const BREATH_HZ = 0.3;
-const RESONANCE = 9;
+const RESONANCE = 1;
 
 // The circle's radius in panner units, breathing between near and far twice a turn, and how often its position is set.
 const RADIUS = 1.8;
 const RADIUS_SWING = 0.7;
 const PATH_STEP_SEC = 1 / 30;
 
-// The reverb: a long decaying stereo noise tail, and how much of the hum is sent to it.
+// The reverb: a long decaying stereo noise tail, and how much of the chord is sent to it.
 const REVERB_SEC = 4;
 const WET = 0.4;
 
@@ -84,17 +85,18 @@ export function createSpatialPreview() {
           panner.positionZ.setValueAtTime(-radius * Math.cos(angle), start + t);
         }
 
-        const filter = new BiquadFilterNode(context, { type: 'lowpass', frequency: CUTOFF_HZ, Q: RESONANCE });
+        const filter = new BiquadFilterNode(context, { type: 'lowpass', frequency: CUTOFF_FROM_HZ, Q: RESONANCE });
+        filter.frequency.setValueAtTime(CUTOFF_FROM_HZ, start);
+        filter.frequency.exponentialRampToValueAtTime(CUTOFF_TO_HZ, start + durationSec);
         filter.connect(panner);
         const breath = new OscillatorNode(context, { frequency: BREATH_HZ });
         breath.connect(new GainNode(context, { gain: CUTOFF_SWING_HZ })).connect(filter.frequency);
-        const saws = [-DETUNE_CENTS, DETUNE_CENTS].map((detune) => {
-          const saw = new OscillatorNode(context, { type: 'sawtooth', frequency: FROM_HZ, detune });
-          saw.frequency.setValueAtTime(FROM_HZ, start);
-          saw.frequency.exponentialRampToValueAtTime(TO_HZ, start + durationSec);
-          saw.connect(new GainNode(context, { gain: 0.5 })).connect(filter);
+        const voice = 1 / (2 * NOTES.length);
+        const saws = NOTES.flatMap((midi) => [-DETUNE_CENTS, DETUNE_CENTS].map((detune) => {
+          const saw = new OscillatorNode(context, { type: 'sawtooth', frequency: 440 * 2 ** ((midi - 69) / 12), detune });
+          saw.connect(new GainNode(context, { gain: voice })).connect(filter);
           return saw;
-        });
+        }));
         for (const node of [breath, ...saws]) {
           node.start(start);
           node.stop(stopAt);
