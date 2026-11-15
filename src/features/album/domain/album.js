@@ -188,6 +188,25 @@ export function trackStartSec(album, index) {
   return album.tracks.slice(0, index).reduce((sum, track) => sum + track.durationSec, 0);
 }
 
+// Each track's sound fades in over its first seconds and out over its last, so one track eases into the next.
+const TRACK_FADE = Object.freeze({ inSec: 1.5, outSec: 2.5 });
+
+/**
+ * How loud the music is (0..1) `sec` into the track at `index`: rising from silence at its start, falling to silence
+ * at its end, on an eased curve; full in between. A fade never takes more than half of a short track.
+ *
+ * @param {Album} album
+ * @param {number} index
+ * @param {number} sec
+ */
+export function trackFadeAt(album, index, sec) {
+  const { durationSec } = album.tracks[index];
+  const inSec = Math.min(TRACK_FADE.inSec, durationSec / 2);
+  const outSec = Math.min(TRACK_FADE.outSec, durationSec / 2);
+  const along = Math.max(0, Math.min(1, sec / inSec, (durationSec - sec) / outSec));
+  return along * along * (3 - 2 * along);
+}
+
 /**
  * The cover the sleeve shows while the track at `trackIndex` is current: the track's own, or else the album's.
  *

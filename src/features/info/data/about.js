@@ -33,6 +33,7 @@ export const ABOUT = Object.freeze({
   shortcuts: [
     { keys: 'Space', action: 'Play or pause' },
     { keys: '← / →', action: 'Previous or next album' },
+    { keys: '1 – 9', action: 'Go to that album' },
     { keys: '↑ / ↓', action: 'Volume up or down' },
   ],
   challenge: {

@@ -9,8 +9,9 @@
 // Space: the whole mix sits where the sample is, as seen from where the song starts (north ahead, east to the
 // right), further away the further it has gone; a song without a path stays straight ahead.
 //
-// Mix: synths -> effects (see master-fx.js) -> fade (a song's own level and fade) -> gate -> analyser -> panner -> volume. Besides the sound font, a composer
-// may play the analog synth (see analog-synth.js), notes, noise hits and held voices; all start over with the music.
+// Mix: synths -> effects (see master-fx.js) -> fade (a song's own level and fade) -> gate -> analyser -> panner -> volume
+// (times the track's fade, see setTrackFade). Besides the sound font, a composer may play the analog synth (see
+// analog-synth.js), notes, noise hits and held voices; all start over with the music.
 // The gate closes when the music stops and opens when it starts again.
 
 import { CC, SOUND_FONT } from '../domain/instruments.js';
@@ -38,6 +39,8 @@ const RESTART_GAP_SEC = 0.01;
 const NOTE_GAP_SEC = 0.02;
 // Volume changes ease in with this time constant, so dragging the slider does not click.
 const VOLUME_RAMP_SEC = 0.02;
+// The track's fade is set every frame; the gain glides to each with this time constant, so the frames do not step.
+const TRACK_FADE_TAU_SEC = 0.05;
 // A song's level is set every step; the gain glides to each with this time constant, so it does not step.
 const FADE_STEP_TAU_SEC = 0.05;
 // The analyser the visuals read; it sits before the volume, so they show the music even when it is turned down.
@@ -88,6 +91,7 @@ export function createSoundEngine() {
   const voices = new Set();
   let loading = null;
   let volume = 1;
+  let trackFade = 1;
   /** @type {Map<Object, number>} */
   let channels = new Map();
   // The composer the channels are set up for.
@@ -170,15 +174,22 @@ export function createSoundEngine() {
     return res.arrayBuffer();
   }
 
-  // Squared, so the slider feels even to the ear.
+  // The volume squared, so the slider feels even to the ear, times the track's fade.
   function level() {
-    return volume ** 2;
+    return volume ** 2 * trackFade;
   }
 
   /** @param {number} value 0 (silent) to 1 (full) */
   function setVolume(value) {
     volume = value;
     output?.gain.setTargetAtTime(level(), context.currentTime, VOLUME_RAMP_SEC);
+  }
+
+  /** @param {number} value how far the track has faded in, 0 (silent) to 1 (full); set every frame while it plays */
+  function setTrackFade(value) {
+    if (value === trackFade) return;
+    trackFade = value;
+    output?.gain.setTargetAtTime(level(), context.currentTime, TRACK_FADE_TAU_SEC);
   }
 
   /** @param {Song} next */
@@ -346,6 +357,7 @@ export function createSoundEngine() {
   return {
     unlock,
     setVolume,
+    setTrackFade,
     follow,
     stop,
     /** The music's AnalyserNode, or null before audio is unlocked. */
