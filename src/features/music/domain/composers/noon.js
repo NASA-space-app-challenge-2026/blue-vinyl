@@ -3,7 +3,8 @@
 // grow (forest-trees.js, the one list of trees the globe and the music share).
 //
 //   voices: a tree's kind (its height class, the colour of the tree on the globe) is its instrument, as in NASA's
-//     Caldwell 73 sonification (SVS 13786): marimba for the two low classes, glockenspiel for the three high, each class
+//     Caldwell 73 sonification (SVS 13786): marimba for the two low classes, glockenspiel for the next two and, for the
+//     gold ones, a vibraphone that rings on so the tallest are heard as their own, each class
 //     in a higher register. Inside its class a taller tree plays a higher note; the taller the tree, the louder. A tree is
 //     one strike, held from the step the tree starts to the moment it is grown. A dense forest is many trees, so many notes.
 //   landmarks: the sea is a wave; a bell marks each continent; a woodblock ticks every 30°.
@@ -23,7 +24,16 @@ const KIND_VOICES = Object.freeze({
   [TreeKind.TEAL]: { instrument: Instrument.MARIMBA, lowNote: 62 }, // D4
   [TreeKind.SKY]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 74 }, // D5
   [TreeKind.SILVER]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 81 }, // A5
-  [TreeKind.GOLD]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 86 }, // D6
+  [TreeKind.GOLD]: { instrument: Instrument.VIBRAPHONE, lowNote: 86 }, // D6
+});
+// How loud each kind plays against the others, so the many small trees do not drown the few tall ones; a kind's notes
+// that start in the same step share its loudness besides (see playLine).
+const KIND_WEIGHT = Object.freeze({
+  [TreeKind.GREEN]: 0.55,
+  [TreeKind.TEAL]: 0.7,
+  [TreeKind.SKY]: 0.85,
+  [TreeKind.SILVER]: 1,
+  [TreeKind.GOLD]: 1.25,
 });
 
 // Loudness follows a tree's height over this range (m); pitch follows it over its class, in this many scale steps.
@@ -95,8 +105,10 @@ export class NoonComposer {
     }
     if (lineStep % STEPS_PER_BAR === 0) this.playDrone(music, lineStep, at);
     // Each tree that starts to grow in this step plays where it starts, for as long as it grows.
-    for (const tree of this.song.treesByStep.get(lineStep) ?? []) {
-      this.playTree(music, tree.metres, at, tree.growSec / STEP_SEC);
+    const trees = this.song.treesByStep.get(lineStep) ?? [];
+    const crowd = Object.groupBy(trees, (tree) => tree.kind);
+    for (const tree of trees) {
+      this.playTree(music, tree.metres, at, tree.growSec / STEP_SEC, null, crowd[tree.kind].length);
     }
     const sounding = BANDS.some((band) => bandAt(this.song.line, band, lineStep));
     if (!sounding && lineStep % STEPS_PER_BAR === 0) music.note(Instrument.SEASHORE, SEA.note, SEA.velocity, at, STEPS_PER_BAR);
@@ -114,12 +126,14 @@ export class NoonComposer {
   }
 
   /** A tree `heightM` tall: its class's instrument, a note up its class with its height, held for `steps` (as long as it grows). */
-  playTree(music, heightM, at, steps, degreeOverride = null) {
+  playTree(music, heightM, at, steps, degreeOverride = null, crowd = 1) {
     const { kind, fromM, toM } = kindOf(heightM);
     const voice = KIND_VOICES[kind];
     const inClass = clamp((heightM - fromM) / (toM - fromM), 0, 1);
     const degree = degreeOverride ?? Math.round(inClass * KIND_DEGREES);
-    const velocity = VELOCITY.low + heightShare(heightM) * (VELOCITY.high - VELOCITY.low);
+    // Louder the taller, as its kind weighs, and shared by the trees of its kind that start with it.
+    const tall = VELOCITY.low + heightShare(heightM) * (VELOCITY.high - VELOCITY.low);
+    const velocity = Math.min(127, (tall * KIND_WEIGHT[kind]) / Math.sqrt(crowd));
     music.note(voice.instrument, noteAt(voice.lowNote, degree), velocity, at, steps);
   }
 

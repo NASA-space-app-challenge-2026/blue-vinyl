@@ -48,4 +48,6 @@ export const Instrument = Object.freeze({
   // glockenspiel for the high.
   MARIMBA: { program: 12, volume: 100 },
   GLOCKENSPIEL: { program: 9, volume: 90 },
+  // The tallest trees, the gold ones: a bar that rings on, unlike the other two, so they are heard as their own.
+  VIBRAPHONE: { program: 11, volume: 100 },
 });
