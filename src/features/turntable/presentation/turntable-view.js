@@ -461,7 +461,8 @@ export function createTurntableView(
     // its click to what is under the finger once the lifted arm has moved off, the record.
     const pressed = clicked;
     clicked = false;
-    if (!pressed) return;
+    // A tap on the record while the other hand holds the arm would cue or stop under it.
+    if (!pressed || dragging) return;
     const progress = grooveProgress(pointerRadius(event));
     if (progress >= 0 && progress <= 1) onSelectGroove(progress);
     else onToggle();

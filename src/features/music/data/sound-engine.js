@@ -30,6 +30,10 @@ const RESYNC_SEC = 0.15;
 const STOP_FADE_SEC = 0.02;
 // MIDI CC that silences a channel at once (All Sound Off).
 const ALL_SOUND_OFF = 120;
+// After a stop, the music starts over this long after the All Sound Off it queued (quietAt), never at the same time:
+// the synth may take the two in either order, and an All Sound Off taken second cuts the first notes, held chords and
+// drones among them, so the music would play on silent until they next sound.
+const RESTART_GAP_SEC = 0.01;
 // Notes stop this much before their full length, so repeated notes re-strike cleanly.
 const NOTE_GAP_SEC = 0.02;
 // Volume changes ease in with this time constant, so dragging the slider does not click.
@@ -204,7 +208,7 @@ export function createSoundEngine() {
       silence();
       fx.reset(now);
       // After a stop, start once the notes it left queued are silenced, from where the app's clock will be then.
-      const start = Math.max(now, quietAt);
+      const start = Math.max(now, quietAt + RESTART_GAP_SEC);
       gate.gain.cancelScheduledValues(start);
       gate.gain.setTargetAtTime(1, start, STOP_FADE_SEC);
       anchor = { audioSec: start, elapsedSec: elapsedSec + (start - now) };
