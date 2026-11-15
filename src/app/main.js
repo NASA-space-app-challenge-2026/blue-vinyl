@@ -1,3 +1,7 @@
+import { loadAerosolTrack } from '../features/tracks/data/aerosol-track-source.js';
+import { sampleAerosol } from '../features/tracks/domain/aerosol-track.js';
+import { aerosolScore } from '../features/music/domain/aerosol-score.js';
+import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
 'use strict';
 
 // Composition root: wires the features together.
@@ -41,6 +45,9 @@ let totalMs;
 // Data of each track of the album, by track index; null until loaded, and for tracks without data.
 /** @type {(import('../features/tracks/data/track-repository.js').IceSeaTrackData | null)[]} */
 let trackData = [];
+let aerosolData = [];
+let allAerosolNotes = [];
+let aerosolToggles = { salt: true, dust: true, smoke: true, sulfate: true };
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
 // What each track of the album plays, by track index, once its birds have loaded: { tracks, lead }, or null for a
@@ -65,7 +72,6 @@ const slot = (id) => document.getElementById(id);
 const albumCredit = createAlbumCredit(slot('corner-bottom-right'));
 const backdrop = createBackdrop(document.documentElement);
 const playHint = createPlayHint(slot('bottom-center'));
-
 const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack });
 const turntable = createTurntableView(slot('stage'), {
   onToggle: togglePlayback,
@@ -89,6 +95,11 @@ const turntable = createTurntableView(slot('stage'), {
   onLift: () => setState(PlaybackState.STOPPED),
   onSeek: seekTrack,
   onSelectGroove: (progress) => playFromTrack(trackIndexAt(album, progress)),
+});
+const particleToggles = createParticleToggles(turntable.label, (toggles) => {
+  aerosolToggles = toggles;
+  globe.aerosol.setToggles(toggles);
+  applyAerosolScore();
 });
 const recordSwap = createRecordSwap({ recordEl: turntable.recordEl, recordGeometry: turntable.recordGeometry, column: albumColumn });
 const globe = createGlobeView(turntable.labelSlot);
@@ -188,6 +199,8 @@ function showAlbum(index) {
   musicCredits = [];
   music.load([]);
   loadAlbumData(album);
+  aerosolData = album.tracks.map(() => null);
+  loadAerosolData(album);
 }
 
 /**
@@ -333,6 +346,7 @@ function render() {
   backdrop.show(trackCover(album, trackIndex).url);
   renderSong(trackIndex);
   renderData(trackIndex);
+  renderAerosol(trackIndex);
 }
 
 /**
@@ -388,6 +402,68 @@ function renderData(trackIndex) {
 }
 
 // Draws the birds, the date and the flock's place at the clock and, while playing, lets the music follow it.
+
+async function loadAerosolData(loading) {
+  if (!loading.tracks.some((track) => track.aerosol)) return;
+  let data;
+  try {
+    data = await Promise.all(loading.tracks.map((track) => (track.aerosol ? loadAerosolTrack(track.aerosol) : null)));
+  } catch (error) {
+    console.warn('Aerosol data unavailable:', error);
+    return;
+  }
+  if (album !== loading) return;
+  aerosolData = data;
+  const starts = trackBoundaries(album).map((edge) => (edge * totalMs) / 1000);
+  allAerosolNotes = album.tracks.flatMap((track, i) => {
+    if (!data[i]) return [];
+    return aerosolScore(data[i].records, track.durationSec, track)
+      .map((note) => ({ ...note, timeSec: note.timeSec + starts[i] }));
+  });
+  applyAerosolScore();
+  musicCredits = [SOUNDFONT_CREDIT, 'Data: NASA GMAO GEOS-FP · NOAA NHC'];
+  if (state === PlaybackState.PLAYING) music.play(() => elapsedMs / 1000);
+  render();
+  globe.glide();
+}
+
+function applyAerosolScore() {
+  const activeNotes = allAerosolNotes.filter((n) => {
+    if (n.part === 'salt') return aerosolToggles.salt;
+    if (n.part === 'dust') return aerosolToggles.dust;
+    if (n.part === 'smoke') return aerosolToggles.smoke;
+    if (n.part === 'sulfate') return aerosolToggles.sulfate;
+    return true;
+  });
+  music.load(activeNotes);
+  if (state === PlaybackState.PLAYING) {
+    music.play(() => elapsedMs / 1000);
+  }
+}
+
+function renderAerosol(trackIndex) {
+  const track = album.tracks[trackIndex];
+  const data = aerosolData[trackIndex];
+  if (album?.id !== 'aerosol' || !track?.aerosol || !data) {
+    globe.aerosol.hide();
+    particleToggles.hide();
+    return;
+  }
+  particleToggles.show();
+  const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
+  globe.aerosol.render(data.frames, trackSec, track.durationSec);
+
+  if (track.aerosol.trackEye) {
+    const s = sampleAerosol(data.records, trackSec / track.durationSec);
+    if (s) focus = { lat: s.current.viewLat, lon: s.current.viewLon };
+  } else if (track.aerosol.viewLat !== undefined) {
+    focus = { lat: track.aerosol.viewLat, lon: track.aerosol.viewLon };
+  }
+
+  if (track.color) halo.setColor(track.color);
+  if (state === PlaybackState.PLAYING) halo.wake();
+}
+
 function renderSong(trackIndex) {
   const song = songs[trackIndex];
   if (!song) return;

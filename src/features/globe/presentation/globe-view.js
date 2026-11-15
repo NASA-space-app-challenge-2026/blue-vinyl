@@ -1,3 +1,4 @@
+import { createAerosolLayer } from './aerosol-layer.js';
 import { createIceFall } from './ice-fall.js';
 import { createIceMorph } from './ice-morph.js';
 
@@ -172,6 +173,7 @@ export function createGlobeView(container) {
     return (2 * gap * Math.tan((camera.fov * Math.PI) / 360)) / Math.max(1, container.clientHeight);
   }
 
+  const aerosol = createAerosolLayer(globe);
   const birds = createBirdsLayer({
     globe,
     unitsPerPx,
@@ -184,6 +186,7 @@ export function createGlobeView(container) {
     showIce,
     setWaterLine,
     birds,
+    aerosol,
     /** @param {() => ({ lat: number, lon: number } | null)} next */
     setFocus(next) {
       getFocus = next;

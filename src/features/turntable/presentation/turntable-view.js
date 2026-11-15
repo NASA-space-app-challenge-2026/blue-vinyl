@@ -570,5 +570,5 @@ export function createTurntableView(parent, { onToggle, onCued, onGrab, onScrub,
     return { x: label.offsetLeft + r, y: label.offsetTop + r, r };
   }
 
-  return { labelSlot, haloCanvas, labelDisc, recordEl: record, recordGeometry, setTrackStarts, render };
+  return { label, labelSlot, haloCanvas, labelDisc, recordEl: record, recordGeometry, setTrackStarts, render };
 }

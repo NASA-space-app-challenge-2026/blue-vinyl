@@ -15,7 +15,20 @@ export const AlbumCategory = Object.freeze({
  */
 
 /**
+ * A track that plays atmospheric aerosol optical depth and particle motion from GEOS-FP.
+ *
+ * @typedef {Object} AerosolSource
+ * @property {string} csvUrl the track's time series CSV
+ * @property {string} framesDir directory containing the visual PNG frames
+ * @property {string} lead particle type that leads the track ('sea_salt', 'dust', 'smoke', 'sulfate')
+ * @property {number} [viewLat] latitude of the track's view centre
+ * @property {number} [viewLon] longitude of the track's view centre
+ * @property {boolean} [trackEye] whether the view follows the eye of the storm
+ */
+
+/**
  * @typedef {Object} Track
+ * @property {AerosolSource} [aerosol] aerosol data and view
  * @property {string} title
  * @property {number} durationSec
  * @property {IceSeaSource} [iceSea] data, sound and view of a polar track

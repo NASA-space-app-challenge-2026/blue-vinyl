@@ -17,7 +17,92 @@ const POLAR_YEARS = 32;
 const POLAR_TRACK_SEC = trackDurationSec(YEAR_TIMELINE, POLAR_YEARS);
 
 /** @type {import('../domain/album.js').Album[]} */
+const AEROSOL_DATA = 'data/aerosol/tracks';
+const AEROSOL_COVERS = 'assets/albums/aerosol';
+const AEROSOL_FRAMES = 'data/aerosol/tracks/frames';
+const AEROSOL_TRACK_SEC = 44.8;
+
 export const albums = [
+  {
+    id: 'aerosol',
+    category: AlbumCategory.CLIMATE,
+    title: 'Connected by the Air',
+    coverUrl: `${AEROSOL_COVERS}/cover.jpg`,
+    coverCredit: 'NASA Scientific Visualization Studio · SVS 5669',
+    dataCredit: 'Data: NASA GMAO GEOS-FP · NOAA NHC',
+    tracks: [
+      {
+        title: 'Hurricane Erin',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#4080ff',
+        coverUrl: `${AEROSOL_COVERS}/erin.jpg`,
+        coverCredit: 'NASA MODIS Rapid Response, Aug 16 2025',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/erin.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'sea_salt',
+          trackEye: true,
+        },
+      },
+      {
+        title: 'Saharan Dust',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#ff58a0',
+        coverUrl: `${AEROSOL_COVERS}/saharan_dust.jpg`,
+        coverCredit: 'NASA MODIS / Terra, Saharan Dust over the Atlantic',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/saharan_dust.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'dust',
+          viewLat: 17.0,
+          viewLon: -45.0,
+        },
+      },
+      {
+        title: 'Southern Africa Smoke',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#ff7820',
+        coverUrl: `${AEROSOL_COVERS}/southern_africa_smoke.jpg`,
+        coverCredit: 'NASA Earth Observatory / Aqua MODIS, Fires and Smoke',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/southern_africa_smoke.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'smoke',
+          viewLat: -12.0,
+          viewLon: 5.0,
+        },
+      },
+      {
+        title: 'Kilauea',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#50d060',
+        coverUrl: `${AEROSOL_COVERS}/kilauea.jpg`,
+        coverCredit: 'NASA Earth Observatory / EO-1 ALI, Kilauea Plume',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/kilauea.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'sulfate',
+          viewLat: 19.0,
+          viewLon: -165.0,
+        },
+      },
+      {
+        title: 'Spain and Etna',
+        durationSec: AEROSOL_TRACK_SEC,
+        color: '#e0a030',
+        coverUrl: `${AEROSOL_COVERS}/spain_and_etna.jpg`,
+        coverCredit: 'NASA MODIS / Terra, Mt. Etna Eruption',
+        aerosol: {
+          csvUrl: `${AEROSOL_DATA}/spain_and_etna.csv`,
+          framesDir: AEROSOL_FRAMES,
+          lead: 'smoke_and_sulfate',
+          viewLat: 40.0,
+          viewLon: 5.0,
+        },
+      },
+    ],
+  },
+
   {
     id: 'arctic-bird',
     category: AlbumCategory.BIODIVERSITY,
