@@ -17,11 +17,11 @@ export const FOREST_FROM_M = 4;
 export const TREE_SIZE = Object.freeze({ fromM: 4, fullM: 40, smallestU: 13, tallestU: 50 });
 // Each height class a kind of tree: the globe gives each its colour and the music its instrument. A tree is of the
 // tallest class it reaches.
-export const TreeKind = Object.freeze({ GREEN: 'green', TEAL: 'teal', SKY: 'sky', PURPLE: 'purple', GOLD: 'gold' });
+export const TreeKind = Object.freeze({ GREEN: 'green', BLUE: 'blue', SKY: 'sky', PURPLE: 'purple', GOLD: 'gold' });
 /** The kinds from the lowest up, each with the height (m) it starts at. */
 export const TREE_KINDS = Object.freeze([
   { kind: TreeKind.GREEN, fromM: 4 },
-  { kind: TreeKind.TEAL, fromM: 8 },
+  { kind: TreeKind.BLUE, fromM: 8 },
   { kind: TreeKind.SKY, fromM: 14 },
   { kind: TreeKind.PURPLE, fromM: 20 },
   { kind: TreeKind.GOLD, fromM: 28 },

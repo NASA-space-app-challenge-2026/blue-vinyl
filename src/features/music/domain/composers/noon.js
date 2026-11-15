@@ -21,7 +21,7 @@ const SCALE = [0, 2, 3, 5, 7, 9, 10]; // D dorian, above D
 // Each kind of tree its instrument and the note it plays at the bottom of its class: the classes climb the scale together.
 const KIND_VOICES = Object.freeze({
   [TreeKind.GREEN]: { instrument: Instrument.MARIMBA, lowNote: 50 }, // D3
-  [TreeKind.TEAL]: { instrument: Instrument.MARIMBA, lowNote: 62 }, // D4
+  [TreeKind.BLUE]: { instrument: Instrument.MARIMBA, lowNote: 62 }, // D4
   [TreeKind.SKY]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 74 }, // D5
   [TreeKind.PURPLE]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 81 }, // A5
   [TreeKind.GOLD]: { instrument: Instrument.VIBRAPHONE, lowNote: 86 }, // D6
@@ -30,7 +30,7 @@ const KIND_VOICES = Object.freeze({
 // that start in the same step share its loudness besides (see playLine).
 const KIND_WEIGHT = Object.freeze({
   [TreeKind.GREEN]: 0.55,
-  [TreeKind.TEAL]: 0.7,
+  [TreeKind.BLUE]: 0.7,
   [TreeKind.SKY]: 0.85,
   [TreeKind.PURPLE]: 1,
   [TreeKind.GOLD]: 1.25,
