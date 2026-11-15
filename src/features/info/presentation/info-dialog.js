@@ -101,7 +101,8 @@ export function createInfoDialog(parent, { id, title, subtitle, body }) {
  * The About dialog's body.
  *
  * @param {import('../domain/info.js').AboutContent} about
- * @param {{ title: string, category: string }[]} albums each album's title and category label
+ * @param {{ title: string, category: string, duration: string }[]} albums each album's title, category label and total
+ *   length of time
  * @param {(index: number) => void} onSelectAlbum called with the index of the album that was clicked
  * @returns {Node[]}
  */
@@ -113,10 +114,11 @@ export function renderAbout(about, albums, onSelectAlbum) {
     el('dd', '', [body]),
   ]));
 
-  const albumList = el('ol', 'info-rows info-albums', albums.map(({ title, category }, index) => {
+  const albumList = el('ol', 'info-rows info-albums', albums.map(({ title, category, duration }, index) => {
     const row = el('button', 'info-row', [
       el('span', 'info-row-title', [title]),
       el('span', 'info-row-note', [category]),
+      el('span', 'info-row-duration', [duration]),
     ]);
     row.type = 'button';
     row.addEventListener('click', () => onSelectAlbum(index));

@@ -271,6 +271,14 @@ a.info-row:focus-visible {
   flex: 1;
 }
 
+.info-row-duration {
+  min-width: 3.2em;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 .info-row-note {
   font-size: 11px;
   letter-spacing: 0.18em;
