@@ -152,7 +152,7 @@ const flockComposer = new FlockComposer();
 const hurricaneComposer = new HurricaneComposer();
 const lightningComposer = new LightningComposer();
 const ticker = createTicker(tick);
-// The system's media controls play and pause, and step through the album's tracks.
+// The system's media controls play and pause, and step through the tracks, on into the next or previous album.
 const mediaCenter = createMediaCenter({
   onPlay: () => {
     if (state === PlaybackState.STOPPED) togglePlayback();
@@ -160,11 +160,8 @@ const mediaCenter = createMediaCenter({
   onPause: () => {
     if (state === PlaybackState.PLAYING || state === PlaybackState.CUEING) togglePlayback();
   },
-  onPrevious: () => playFromTrack(Math.max(0, trackIndexAt(album, elapsedMs / totalMs) - 1)),
-  onNext: () => {
-    const next = trackIndexAt(album, elapsedMs / totalMs) + 1;
-    if (next < album.tracks.length) playFromTrack(next);
-  },
+  onPrevious: () => stepTrack(-1),
+  onNext: () => stepTrack(1),
 });
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
@@ -479,6 +476,28 @@ async function switchAlbum(step) {
     slot('stage').inert = false;
     swapping = false;
   }
+}
+
+/**
+ * Plays the track `step` (-1 or 1) away from the current one. Past either end of the album it switches to the album
+ * next to it, as switchAlbum does, and plays its first track going forward or its last going back. A hidden page draws
+ * no frames for the records to change by, so there the album changes at once.
+ */
+async function stepTrack(step) {
+  if (swapping) return;
+  const next = trackIndexAt(album, elapsedMs / totalMs) + step;
+  if (next >= 0 && next < album.tracks.length) {
+    playFromTrack(next);
+    return;
+  }
+  if (document.hidden) {
+    elapsedMs = 0;
+    setState(PlaybackState.STOPPED);
+    showAlbum(wrapIndex(albumIndex + step, albums.length));
+  } else {
+    await switchAlbum(step);
+  }
+  playFromTrack(step > 0 ? 0 : album.tracks.length - 1);
 }
 
 // 0..1 through the track at `trackIndex`.

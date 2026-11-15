@@ -9,6 +9,31 @@
 const SILENCE = Object.freeze({ seconds: 10, sampleRate: 8000 });
 // 8-bit PCM is unsigned, centred on 128.
 const SILENT_SAMPLE = 128;
+// The artwork the media controls show: the cover's middle square, at this many pixels a side.
+const ARTWORK = Object.freeze({ sizePx: 512, type: 'image/jpeg', quality: 0.9 });
+
+/** The middle square of the image at `url`, as a data URL. */
+async function squareArtwork(url) {
+  const image = new Image();
+  image.src = url;
+  await image.decode();
+  const side = Math.min(image.naturalWidth, image.naturalHeight);
+  const canvas = document.createElement('canvas');
+  canvas.width = ARTWORK.sizePx;
+  canvas.height = ARTWORK.sizePx;
+  canvas.getContext('2d').drawImage(
+    image,
+    (image.naturalWidth - side) / 2,
+    (image.naturalHeight - side) / 2,
+    side,
+    side,
+    0,
+    0,
+    ARTWORK.sizePx,
+    ARTWORK.sizePx,
+  );
+  return canvas.toDataURL(ARTWORK.type, ARTWORK.quality);
+}
 
 /** A WAV of silence, mono 8-bit PCM. */
 function silentWav() {
@@ -75,14 +100,26 @@ export function createMediaCenter({ onPlay, onPause, onPrevious, onNext }) {
     },
 
     /**
-     * Shows the track in the media controls; does nothing while it is the one shown.
+     * Shows the track in the media controls, its artwork once cropped; does nothing while it is the one shown.
      *
      * @param {{ key: string, title: string, album: string, artworkUrl: string }} track
      */
-    setTrack({ key, title, album, artworkUrl }) {
+    async setTrack({ key, title, album, artworkUrl }) {
       if (!session || key === shownKey) return;
       shownKey = key;
-      session.metadata = new MediaMetadata({ title, album, artwork: [{ src: new URL(artworkUrl, document.baseURI).href }] });
+      // The app is the artist, by the name its page goes by (index.html).
+      const artist = document.title;
+      session.metadata = new MediaMetadata({ title, artist, album });
+      let src;
+      try {
+        src = await squareArtwork(artworkUrl);
+      } catch (error) {
+        console.warn('Media artwork unavailable:', error);
+        return;
+      }
+      if (key !== shownKey) return;
+      const size = `${ARTWORK.sizePx}x${ARTWORK.sizePx}`;
+      session.metadata = new MediaMetadata({ title, artist, album, artwork: [{ src, sizes: size, type: ARTWORK.type }] });
     },
   };
 }
