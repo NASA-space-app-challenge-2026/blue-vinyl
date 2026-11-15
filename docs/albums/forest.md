@@ -32,15 +32,15 @@ A step is a sixteenth note of 0.125 s at 120 bpm in 3/4 (12 steps a bar). One st
 
 D dorian, from the album's sound font (`orchestra.sf2`, GeneralUser GS). Code: [`noon.js`](../../src/features/music/domain/composers/noon.js).
 
-Every tree on the globe is one note: it starts when the tree starts to grow and lasts as long as the tree takes to grow. The globe and the music read one list of trees ([`forest-trees.js`](../../src/features/tracks/domain/forest-trees.js); picked with a fixed seed, so the same trees grow on every play). A tree's height class (the colour of the tree on the globe) is its instrument, one that holds a note for the whole growth; inside its class a taller tree plays a higher note, and the taller the tree the louder. A dense forest is many trees, so many notes at once (about 800 trees). Where the forest is quiet (sparse land, under 4 m) no tree grows and no note sounds.
+Every tree on the globe is one note: it starts when the tree starts to grow and lasts as long as the tree takes to grow. The globe and the music read one list of trees ([`forest-trees.js`](../../src/features/tracks/domain/forest-trees.js); picked with a fixed seed, so the same trees grow on every play). A tree's height class (the colour of the tree on the globe) is its instrument, as in NASA's Caldwell 73 sonification ([SVS 13786](https://svs.gsfc.nasa.gov/13786/): marimba and glockenspiel; its choir is left out): marimba for the low classes, glockenspiel for the high. A struck bar dies away, so a tree is a roll, the bar struck every 0.06 s and louder as the tree grows, from the moment it starts until it is grown. Inside its class a taller tree plays a higher note, and the taller the tree the louder. A dense forest is many trees, so many notes at once (about 800 trees). Where the forest is quiet (sparse land, under 4 m) no tree grows and no note sounds.
 
 | Part | Data | Mapping |
 | --- | --- | --- |
-| Green trees (4–8 m) | Trees by final height | Cello from D3; higher up the class, higher the note |
-| Teal trees (8–14 m) | Same | Viola from G3 |
-| Sky trees (14–20 m) | Same | Violin from D4 |
-| Silver trees (20–28 m) | Same | Flute from A4 |
-| Gold trees (28 m and up) | Same | Oboe from D5 |
+| Green trees (4–8 m) | Trees by final height | Marimba roll from D3; higher up the class, higher the note |
+| Teal trees (8–14 m) | Same | Marimba from D4 |
+| Sky trees (14–20 m) | Same | Glockenspiel from D5 |
+| Silver trees (20–28 m) | Same | Glockenspiel from A5 |
+| Gold trees (28 m and up) | Same | Glockenspiel from D6 |
 | Tubular bells | Land regions | A bell as the line reaches each continent |
 | Woodblock | Longitude | A tick every 30° |
 | Seashore | Sea / no forest | A wave each bar where no band is sounding |

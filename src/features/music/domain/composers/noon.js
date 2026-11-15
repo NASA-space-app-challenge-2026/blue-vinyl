@@ -2,9 +2,11 @@
 // tree it passes is one note: it starts when the tree starts to grow on the globe and lasts as long as the tree takes to
 // grow (forest-trees.js, the one list of trees the globe and the music share).
 //
-//   voices: a tree's kind (its height class, the colour of the tree on the globe) is its instrument, one that holds a
-//     note: cello, viola, violin, flute and oboe from the lowest class up, each in a higher register. Inside its class a
-//     taller tree plays a higher note; the taller the tree, the louder. A dense forest is many trees, so many notes.
+//   voices: a tree's kind (its height class, the colour of the tree on the globe) is its instrument, as in NASA's
+//     Caldwell 73 sonification (SVS 13786): marimba for the two low classes, glockenspiel for the three high, each class
+//     in a higher register. Inside its class a taller tree plays a higher note; the taller the tree, the louder. A struck
+//     bar dies away, so a tree is a roll: the bar struck again and again, louder as the tree grows, from the step the
+//     tree starts to the moment it is grown. A dense forest is many trees, so many rolls at once.
 //   landmarks: the sea is a wave; a bell marks each continent; a woodblock ticks every 30°.
 //   legend (the first track): ten bars that explain the mappings while the line is already moving.
 //
@@ -19,12 +21,14 @@ const SCALE = [0, 2, 3, 5, 7, 9, 10]; // D dorian, above D
 
 // Each kind of tree its instrument and the note it plays at the bottom of its class: the classes climb the scale together.
 const KIND_VOICES = Object.freeze({
-  [TreeKind.GREEN]: { instrument: Instrument.CELLO, lowNote: 50 }, // D3
-  [TreeKind.TEAL]: { instrument: Instrument.VIOLA, lowNote: 55 }, // G3
-  [TreeKind.SKY]: { instrument: Instrument.VIOLIN, lowNote: 62 }, // D4
-  [TreeKind.SILVER]: { instrument: Instrument.FLUTE, lowNote: 69 }, // A4
-  [TreeKind.GOLD]: { instrument: Instrument.OBOE, lowNote: 74 }, // D5
+  [TreeKind.GREEN]: { instrument: Instrument.MARIMBA, lowNote: 50 }, // D3
+  [TreeKind.TEAL]: { instrument: Instrument.MARIMBA, lowNote: 62 }, // D4
+  [TreeKind.SKY]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 74 }, // D5
+  [TreeKind.SILVER]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 81 }, // A5
+  [TreeKind.GOLD]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 86 }, // D6
 });
+// A tree's roll: a strike every `strikeSec`, from `fromShare` of the tree's loudness up to all of it as it grows.
+const ROLL = Object.freeze({ strikeSec: 0.06, fromShare: 0.5 });
 // Loudness follows a tree's height over this range (m); pitch follows it over its class, in this many scale steps.
 const HEIGHT_RANGE_M = Object.freeze({ low: 4, high: 24 });
 const KIND_DEGREES = 4;
@@ -52,7 +56,7 @@ const REGION_STARTS = new Map(REGIONS.map((region) => [Math.round(lineLonAt(0) -
 
 export class NoonComposer {
   instruments = Object.freeze([
-    ...TREE_KINDS.map(({ kind }) => KIND_VOICES[kind].instrument),
+    ...new Set(TREE_KINDS.map(({ kind }) => KIND_VOICES[kind].instrument)),
     Instrument.SEASHORE,
     Instrument.TUBULAR_BELLS,
     Instrument.WOODBLOCK,
@@ -97,14 +101,19 @@ export class NoonComposer {
     if (!sounding && lineStep % STEPS_PER_BAR === 0) music.note(Instrument.SEASHORE, SEA.note, SEA.velocity, at, STEPS_PER_BAR);
   }
 
-  /** A tree `heightM` tall: its class's instrument, a note up its class with its height, held `steps` (as long as it grows). */
+  /** A tree `heightM` tall: its class's instrument, a note up its class with its height, rolled for `steps` (as long as it grows). */
   playTree(music, heightM, at, steps, degreeOverride = null) {
     const { kind, fromM, toM } = kindOf(heightM);
     const voice = KIND_VOICES[kind];
     const inClass = clamp((heightM - fromM) / (toM - fromM), 0, 1);
     const degree = degreeOverride ?? Math.round(inClass * KIND_DEGREES);
     const velocity = VELOCITY.low + heightShare(heightM) * (VELOCITY.high - VELOCITY.low);
-    music.note(voice.instrument, noteAt(voice.lowNote, degree), velocity, at, steps);
+    const note = noteAt(voice.lowNote, degree);
+    const strikes = Math.max(1, Math.ceil((steps * STEP_SEC) / ROLL.strikeSec));
+    for (let i = 0; i < strikes; i++) {
+      const swell = ROLL.fromShare + (1 - ROLL.fromShare) * (i / Math.max(1, strikes - 1));
+      music.note(voice.instrument, note, velocity * swell, at + i * ROLL.strikeSec, ROLL.strikeSec / STEP_SEC);
+    }
   }
 
   playLegend(music, step, at) {

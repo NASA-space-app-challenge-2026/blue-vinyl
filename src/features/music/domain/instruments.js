@@ -44,4 +44,8 @@ export const Instrument = Object.freeze({
   SEASHORE: { program: 122, volume: 70 },
   TUBULAR_BELLS: { program: 14, volume: 85 },
   WOODBLOCK: { program: 115, volume: 70 },
+  // The forest's trees, played as NASA's Caldwell 73 sonification does (SVS 13786): marimba for the low classes,
+  // glockenspiel for the high.
+  MARIMBA: { program: 12, volume: 100 },
+  GLOCKENSPIEL: { program: 9, volume: 90 },
 });

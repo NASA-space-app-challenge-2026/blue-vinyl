@@ -16,7 +16,7 @@ const DESCRIBED_FROM_M = 5;
  */
 export function legendLines() {
   return [
-    { step: 0, text: 'How to listen. Every tree is a note, as long as the tree takes to grow. Taller trees play higher and louder, on cello, viola, violin, flute and oboe.' },
+    { step: 0, text: 'How to listen. Every tree is a roll, as long as the tree takes to grow. Taller trees play higher and louder: the low classes on marimba, the high on glockenspiel.' },
     { step: 60, text: 'Many trees at once make a dense forest.' },
     { step: 90, text: 'Waves are the sea, a bell marks land, a tick every thirty degrees.' },
   ];
