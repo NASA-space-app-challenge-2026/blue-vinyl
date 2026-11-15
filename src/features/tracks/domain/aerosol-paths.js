@@ -3,7 +3,7 @@
 // released; nothing is steered.
 
 /** The most particles a track draws; the notebook keeps to it and so does the loader. */
-export const MAX_PARTICLES = 30;
+export const MAX_PARTICLES = 10;
 
 /** How many steps of its path (3 hours each) a particle draws behind its head, and a track's lead particle (`hero`). */
 export const TAIL_STEPS = Object.freeze({ crowd: 24, hero: 48 });
