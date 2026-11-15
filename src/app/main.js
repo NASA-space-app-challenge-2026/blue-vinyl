@@ -228,7 +228,11 @@ const aboutDialog = createInfoDialog(slot('screen'), {
   id: 'about',
   title: 'Blue Vinyl',
   subtitle: ABOUT.tagline,
-  body: renderAbout(ABOUT, albums.map(({ title, category }) => ({ title, category: ALBUM_CATEGORY_LABEL[category] }))),
+  body: renderAbout(ABOUT, albums.map(({ title, category }) => ({ title, category: ALBUM_CATEGORY_LABEL[category] })),
+    (index) => {
+      aboutDialog.close();
+      goToAlbum(index);
+    }),
 });
 const licenseDialog = createInfoDialog(slot('screen'), {
   id: 'license',
@@ -597,6 +601,20 @@ async function switchAlbum(step) {
     slot('stage').inert = false;
     swapping = false;
   }
+}
+
+/**
+ * Changes records to the album at `index`, one record at a time the shorter way round the catalog (forward when both
+ * ways are as long), as the chevrons would.
+ */
+function goToAlbum(index) {
+  if (swapping) return;
+  const count = albums.length;
+  const forward = wrapIndex(index - albumIndex, count);
+  if (forward === 0) return;
+  const step = forward <= count - forward ? 1 : -1;
+  pendingSteps = step * ((step > 0 ? forward : count - forward) - 1);
+  switchAlbum(step);
 }
 
 /**

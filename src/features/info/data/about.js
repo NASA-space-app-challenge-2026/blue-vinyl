@@ -40,7 +40,6 @@ export const ABOUT = Object.freeze({
     label: 'NASA Space Apps Challenge 2026 · The Earth Information Jukebox',
     url: 'https://www.spaceappschallenge.org/2026/challenges/the-earth-information-jukebox/',
   },
-  teamName: 'Team Blue Vinyl',
   team: [
     { name: 'Nell', github: 'nero-angela' },
     { name: 'shkim', github: 'coco0402' },

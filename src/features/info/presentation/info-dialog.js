@@ -36,7 +36,7 @@ function createCloseIcon() {
  *
  * @param {HTMLElement} parent
  * @param {{ id: string, title: string, subtitle?: string, body: Node[] }} options
- * @returns {{ open: () => void }}
+ * @returns {{ open: () => void, close: () => void }}
  */
 export function createInfoDialog(parent, { id, title, subtitle, body }) {
   const dialog = el('dialog', 'info-dialog');
@@ -93,6 +93,7 @@ export function createInfoDialog(parent, { id, title, subtitle, body }) {
       dialog.showModal();
       close.focus();
     },
+    close: requestClose,
   };
 }
 
@@ -101,9 +102,10 @@ export function createInfoDialog(parent, { id, title, subtitle, body }) {
  *
  * @param {import('../domain/info.js').AboutContent} about
  * @param {{ title: string, category: string }[]} albums each album's title and category label
+ * @param {(index: number) => void} onSelectAlbum called with the index of the album that was clicked
  * @returns {Node[]}
  */
-export function renderAbout(about, albums) {
+export function renderAbout(about, albums, onSelectAlbum) {
   const intro = about.intro.map((text) => el('p', 'info-lead', [text]));
 
   const how = el('dl', 'info-grid', about.howItWorks.flatMap(({ title, body }) => [
@@ -111,22 +113,37 @@ export function renderAbout(about, albums) {
     el('dd', '', [body]),
   ]));
 
-  const albumList = el('ol', 'info-albums', albums.map(({ title, category }) => el('li', '', [
-    el('span', 'info-album-title', [title]),
-    el('span', 'info-album-category', [category]),
-  ])));
+  const albumList = el('ol', 'info-rows info-albums', albums.map(({ title, category }, index) => {
+    const row = el('button', 'info-row', [
+      el('span', 'info-row-title', [title]),
+      el('span', 'info-row-note', [category]),
+    ]);
+    row.type = 'button';
+    row.addEventListener('click', () => onSelectAlbum(index));
+    return el('li', '', [row]);
+  }));
 
   const shortcuts = el('dl', 'info-keys', about.shortcuts.flatMap(({ keys, action }) => [
     el('dt', '', [el('kbd', '', [keys])]),
     el('dd', '', [action]),
   ]));
 
-  const team = el('ul', 'info-team', about.team.map(({ name, role, github }) => {
-    const item = el('li', '', [el('span', 'info-team-name', [name])]);
-    if (role) item.append(el('span', 'info-team-role', [role]));
-    if (github) item.append(link(`@${github}`, `https://github.com/${github}`));
-    return item;
+  const team = el('ul', 'info-rows', about.team.map(({ name, role, github }) => {
+    const row = el(github ? 'a' : 'div', 'info-row', [el('span', 'info-row-title', [name])]);
+    if (role) row.append(el('span', 'info-row-note', [role]));
+    if (github) {
+      row.href = `https://github.com/${github}`;
+      row.target = '_blank';
+      row.rel = 'noopener noreferrer';
+      row.append(el('span', 'info-row-note', [`@${github}`]));
+    }
+    return el('li', '', [row]);
   }));
+
+  const version = el('ul', 'info-rows', [el('li', '', [el('div', 'info-row', [
+    el('span', 'info-row-title', ['Blue Vinyl']),
+    el('span', 'info-row-note', [about.version]),
+  ])])]);
 
   return [
     ...intro,
@@ -134,8 +151,8 @@ export function renderAbout(about, albums) {
     section('How it works', [how]),
     section('Albums', [albumList]),
     section('Shortcuts', [shortcuts]),
-    section(about.teamName, [team]),
-    section('Version', [el('p', 'info-version', [about.version])]),
+    section('Made by', [team]),
+    section('Version', [version]),
   ];
 }
 

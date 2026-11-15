@@ -15,7 +15,6 @@
  * @property {{ title: string, body: string }[]} howItWorks
  * @property {{ keys: string, action: string }[]} shortcuts
  * @property {{ label: string, url: string }} challenge
- * @property {string} teamName
  * @property {TeamMember[]} team
  */
 
