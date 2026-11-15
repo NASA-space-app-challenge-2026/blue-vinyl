@@ -66,9 +66,6 @@ export function createBackdrop(root) {
   // Color per cover URL, so a cover is counted once.
   const colors = new Map();
   let shownUrl = null;
-  // The browser's own bars take the backdrop's rim color from it; without it they take the page's background. Safari
-  // does not follow a change of its content, so each color gets a new one.
-  let themeColor = null;
   // iOS 26 Safari ignores theme-color and tints its bars and the safe areas from the background color of the body, or
   // of the html element. It follows that color live only when it is set on the elements themselves, not through a
   // variable or a selector; the body's gradient hides it. The cover's rim color, or an overlay's while one is over the
@@ -90,8 +87,6 @@ export function createBackdrop(root) {
       root.style.removeProperty('--bg-deep');
       barsColor = null;
       paintBars();
-      themeColor?.remove();
-      themeColor = null;
       return;
     }
     // Darkened by mixing with black, like the same color in shadow, so a pale tint stays a muted one.
@@ -102,11 +97,6 @@ export function createBackdrop(root) {
     root.style.setProperty('--bg-deep', deep);
     barsColor = deep;
     paintBars();
-    themeColor?.remove();
-    themeColor = document.createElement('meta');
-    themeColor.name = 'theme-color';
-    themeColor.content = deep;
-    document.head.append(themeColor);
   }
 
   /** @param {string} url the cover image */
