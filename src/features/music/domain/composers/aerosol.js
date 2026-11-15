@@ -5,9 +5,11 @@
 //       covers; the voice glides to each new note
 //     degrees east of where it was released -> place around the listener, fully to the side PAN_SPAN_DEG away
 //     speed -> loudness and brightness
-//   the air: one sustained instrument for each of the other three particle types, held on a chord tone, never quieter than
-//     AIR_LOUDNESS's low end and louder the thicker that type's AOD at the lead's head, on a log scale (EIC's, down to the
-//     thinnest air a frame holds); a type whose toggle is off is silent, as it is on the globe
+//   the air: as the sea under Mirror Storms' storms (storm-season.js), the tonic minor seventh and the one on the fourth,
+//     AIR_BARS bars each, in turn; each of the other three particle types plays its own part of it on its own
+//     instrument (AIR), never quieter than AIR_LOUDNESS's low end and louder the thicker that type's AOD at the lead's
+//     head, on a log scale (EIC's, down to the thinnest air a frame holds); a type whose toggle is off is silent, as it
+//     is on the globe
 
 import { Effect } from '../effects.js';
 import { CC, Instrument } from '../instruments.js';
@@ -29,19 +31,38 @@ const SPEED = Object.freeze({ gain: [0, 1], cutoff: [1, 4] });
 // The lead sounds fully to one side once it has gone this many degrees of longitude east or west of where it started.
 const PAN_SPAN_DEG = 20;
 
-// What each particle type plays: its instrument, and the tone it holds, in semitones above the air's root (the
-// tonic, in the octave from C3). Together they are the tonic minor chord.
-const AIR_ROOT_MIDI = 48;
+// The air's chords, as semitones above the tonic in the octave from C3 (AIR_CHORD_MIDI), AIR_BARS bars each, in turn:
+// i7 and iv7 of the track's minor key, as Mirror Storms' sea plays I and IV of D major.
+const AIR_CHORD_MIDI = 48;
+const AIR_CHORDS = Object.freeze([Object.freeze([0, 3, 7, 10]), Object.freeze([5, 8, 12, 15])]);
+const AIR_BARS = 2;
+// The part of the chord a particle type plays.
+const AirPart = Object.freeze({
+  // the whole chord, held through its bars
+  CHORD: 'chord',
+  // the chord's root an octave down, held through its bars
+  ROOT: 'root',
+  // the chord's top two notes an octave up, held through its bars
+  TOP: 'top',
+  // the chord's notes an octave up, rising one a beat
+  ARPEGGIO: 'arpeggio',
+});
+// What each particle type plays, each on an instrument of its own kind (synth pad, bowed string, voices, plucked string)
+// so they are told apart.
+const AIR = Object.freeze({
+  seaSalt: Object.freeze({ instrument: Instrument.HARP, part: AirPart.ARPEGGIO }),
+  dust: Object.freeze({ instrument: Instrument.HALO_PAD, part: AirPart.CHORD }),
+  smoke: Object.freeze({ instrument: Instrument.CELLO, part: AirPart.ROOT }),
+  sulfate: Object.freeze({ instrument: Instrument.VOICE_OOHS, part: AirPart.TOP }),
+});
+// An arpeggio's note rings this many steps.
+const ARPEGGIO_STEPS = 2 * STEPS_PER_BEAT;
+// The pad's own reverb in the sound font (CC 91), as Mirror Storms' pad.
+const PAD_REVERB = 90;
 // The air plays at full velocity and channel volume (CC 7), over the instruments' usual evening out, so it is heard
 // under the lead.
 const AIR_VELOCITY = 127;
 const AIR_VOLUME = 127;
-const AIR = Object.freeze({
-  seaSalt: Object.freeze({ instrument: Instrument.SEASHORE, above: 12 }),
-  dust: Object.freeze({ instrument: Instrument.HALO_PAD, above: 0 }),
-  smoke: Object.freeze({ instrument: Instrument.VOICE_OOHS, above: 7 }),
-  sulfate: Object.freeze({ instrument: Instrument.PAD, above: 15 }),
-});
 const AIR_PARTICLES = Object.freeze(Object.keys(AIR));
 // How loud a particle type's instrument is, as a share of full, from the thinnest air (still plainly heard) to the
 // thickest.
@@ -98,9 +119,10 @@ export class AerosolComposer {
    * @param {import('./flock.js').Music} music
    * @param {{ sample: Object, at: number }} now  the sample is what the song's sampleAt gives
    */
-  playStep(music, { sample, at }) {
+  playStep(music, { sample, step, bar, at }) {
     if (!this.started) this.start(music, at);
     for (const particle of this.air) this.mixAir(music, particle, sample, at);
+    for (const particle of this.air) this.playAir(music, particle, step, bar, at);
     this.voice.move(this.soundOf(sample), at, GLIDE_SEC);
   }
 
@@ -110,15 +132,31 @@ export class AerosolComposer {
     music.effect(Effect.ECHO, SPACE.echo, at);
     music.effect(Effect.ECHO_TIME, SPACE.echoSteps * this.stepSec, at);
     music.effect(Effect.FEEDBACK, SPACE.feedback, at);
-    const { lead, baseMidi } = this.song;
-    const tonic = baseMidi % 12;
+    const { lead } = this.song;
     for (const particle of this.air) {
-      const { instrument, above } = AIR[particle];
+      const { instrument } = AIR[particle];
       music.control(instrument, CC.VOLUME, AIR_VOLUME, at);
       music.control(instrument, CC.EXPRESSION, 0, at);
-      music.hold(instrument, AIR_ROOT_MIDI + tonic + above, AIR_VELOCITY, at);
+      if (instrument === Instrument.HALO_PAD) music.control(instrument, CC.REVERB, PAD_REVERB, at);
     }
     this.voice = music.voice(lead, { ...this.soundOf({ lat: this.song.hero.lat.min, east: 0, speedKm: 0 }), gain: 0 }, at);
+  }
+
+  // Plays a particle type's part of the chord of `bar`: at the chord's first step, or for the arpeggio at every beat.
+  playAir(music, particle, step, bar, at) {
+    const { instrument, part } = AIR[particle];
+    const chordBar = bar % AIR_BARS;
+    const chord = AIR_CHORDS[Math.floor(bar / AIR_BARS) % AIR_CHORDS.length].map((pc) => AIR_CHORD_MIDI + this.song.baseMidi % 12 + pc);
+    if (part === AirPart.ARPEGGIO) {
+      if (step % STEPS_PER_BEAT !== 0) return;
+      const beat = chordBar * (STEPS_PER_BAR / STEPS_PER_BEAT) + step / STEPS_PER_BEAT;
+      music.note(instrument, chord[beat % chord.length] + 12, AIR_VELOCITY, at, ARPEGGIO_STEPS);
+      return;
+    }
+    if (step !== 0 || chordBar !== 0) return;
+    const steps = AIR_BARS * STEPS_PER_BAR;
+    const notes = { [AirPart.CHORD]: chord, [AirPart.ROOT]: [chord[0] - 12], [AirPart.TOP]: chord.slice(-2).map((midi) => midi + 12) }[part];
+    for (const midi of notes) music.note(instrument, midi, AIR_VELOCITY, at, steps);
   }
 
   // Sets how loud a particle type sounds: its AOD at the lead's head, none when its toggle is off. The SoundFont's

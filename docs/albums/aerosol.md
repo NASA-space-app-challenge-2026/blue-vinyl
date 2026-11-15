@@ -55,14 +55,14 @@ The lead is the track's lead particle (the one the globe circles), one held voic
 | Southern Africa Smoke | Vocal | two hollow squares, ringing filter, slow wide vibrato |
 | Etna's Breath | Brass | two sawtooths a little apart |
 
-The air is one sustained instrument for each of the three particle types other than the lead's, held on a tone of the tonic minor chord. Its loudness is that type's AOD at the lead's head, read from the frame the globe draws, on a log scale from 0.01 (the thinnest air a frame holds) to 1.0 (the top of EIC's colours); EIC's own scale starts at 0.03, so air too thin to colour on the globe is already faintly heard. The SoundFont squares its expression, so the expression is the square root of the level. Its loudness never falls below 0.2 of full, so each instrument is always plainly heard while its toggle is on, even where its type is absent round the lead; it grows to full as the air thickens. The toggle inside the globe switches the particle type off on the globe and in the music together.
+The air is played as the sea under Mirror Storms' storms ([hemispheres.md](hemispheres.md)): two chords of the track's minor key, the tonic minor seventh and the minor seventh on the fourth, two bars each, in turn. Each of the three particle types other than the lead's plays its own part of the chord on an instrument of its own kind, so they are told apart. Its loudness is that type's AOD at the lead's head, read from the frame the globe draws, on a log scale from 0.01 (the thinnest air a frame holds) to 1.0 (the top of EIC's colours); EIC's own scale starts at 0.03, so air too thin to colour on the globe is already faintly heard. The SoundFont squares its expression, so the expression is the square root of the level. Its loudness never falls below 0.2 of full, so each instrument is always plainly heard while its toggle is on, even where its type is absent round the lead; it grows to full as the air thickens. The toggle inside the globe switches the particle type off on the globe and in the music together.
 
-| Particle type | Instrument | Tone above the tonic |
+| Particle type | Instrument | Part of the chord |
 | --- | --- | --- |
-| Sea salt | Seashore | an octave (noise, no pitch to speak of) |
-| Dust | Halo pad | the tonic |
-| Smoke | Voice oohs | the fifth |
-| Sulfate | Warm pad | the minor third, an octave up |
+| Sea salt | Harp | its notes an octave up, rising one a beat |
+| Dust | Halo pad | the whole chord, held through its two bars |
+| Smoke | Cello | its root an octave down, held |
+| Sulfate | Voice oohs | its top two notes an octave up, held |
 
 ## Globe
 
