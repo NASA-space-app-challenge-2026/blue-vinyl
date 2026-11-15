@@ -116,7 +116,7 @@ body {
   }
 
   .stage .album-cover-title {
-    font-size: clamp(18px, 3.8vh, 40px);
+    font-size: clamp(16px, 3.4vh, 36px);
   }
 
   .stage .album-cover-tracks {
@@ -126,6 +126,11 @@ body {
   /* Twice the bottom padding, so the last tracks sit clear of the buttons in the bottom corner. */
   .stage .album-cover-body {
     padding-bottom: 10cqw;
+  }
+
+  /* More room between tracks, so each is easier to tap. */
+  .stage .album-cover-track {
+    margin: 1.6cqw 0;
   }
 
   .stage .turntable {
@@ -148,9 +153,18 @@ body {
     padding: 3vh var(--gutter);
   }
 
+  .stage .album-cover-title {
+    font-size: 5.8cqw;
+  }
+
   /* Twice the bottom padding, so the last tracks sit clear of the buttons in the bottom corner. */
   .stage .album-cover-body {
     padding-bottom: 10cqw;
+  }
+
+  /* More room between tracks, so each is easier to tap. */
+  .stage .album-cover-track {
+    margin: 1.6cqw 0;
   }
 
   #bottom-center {
