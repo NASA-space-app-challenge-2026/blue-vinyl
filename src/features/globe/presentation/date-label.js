@@ -1,4 +1,4 @@
-// The date (or other text of the moment, such as a month and its CO₂) printed on the globe at 6 o'clock. It sits in the globe's container and is sized with it (see the
+// The date printed on the globe at 6 o'clock. It sits in the globe's container and is sized with it (see the
 // `.globe-date` styles).
 
 const LOCALE = 'en';
@@ -20,12 +20,7 @@ export function createDateLabel(container) {
     showDigits(el, time === null ? '' : new Date(time).toLocaleString(LOCALE, format));
   }
 
-  /** @param {string | null} text any text to print instead of a date, or null to show nothing */
-  function showText(text) {
-    showDigits(el, text ?? '');
-  }
-
-  return { show, showText };
+  return { show };
 }
 
 // Each digit gets its own fixed-width cell (the font's digits are proportional), so centred text does not shift as

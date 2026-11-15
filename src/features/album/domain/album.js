@@ -109,8 +109,8 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  * @property {SmogSource} [smog] data, sound and view of a smog track
  * @property {{ kind: 'annual' | 'season', csvUrl: string, firesUrl: string }} [wildfire]
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
- * @property {{ lineUrl: string, mapUrl: string, airMapUrl: string, airUrl: string }} [forest] the noon line, canopy
- *   map, and the CO₂ map and months of the same window the track plays (see tracks/domain/noon-line.js)
+ * @property {{ lineUrl: string, mapUrl: string }} [forest] the noon line and canopy map
+ *   the track plays (see tracks/domain/noon-line.js)
  * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
  * @property {string} [color] CSS color the track's data is drawn in
  * @property {string} [coverUrl] the track's own cover image, shown on the sleeve while it is the current track

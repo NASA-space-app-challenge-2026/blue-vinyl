@@ -56,7 +56,7 @@ import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack, loadWildfireTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
 import { boxFocus, hourlyAt, smogDurationSec } from '../features/tracks/domain/smog.js';
-import { STEP_SEC, airAt, lineLonAt } from '../features/tracks/domain/noon-line.js';
+import { STEP_SEC, levelAt, lineLonAt } from '../features/tracks/domain/noon-line.js';
 import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
@@ -208,7 +208,6 @@ const noonComposer = new NoonComposer();
 // The globe turns to keep the noon meridian in front, easing with this time constant; while playing, it aims this far
 // ahead of the line, so the eased camera settles on the line itself rather than trailing it.
 const FOREST_FOLLOW_TAU_SEC = 0.5;
-const MONTH_FORMAT = Object.freeze({ month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
@@ -503,7 +502,6 @@ async function loadSong(track, target) {
     return {
       forest: true,
       ...forest,
-      lead: track.lead,
       // The album's first track opens with the listening legend.
       legend: target.tracks.indexOf(track) === 0,
       composer: noonComposer,
@@ -511,6 +509,7 @@ async function loadSong(track, target) {
       startMs: 0,
       msPerSec: 1000,
       sampleAt: () => forest.line,
+      levelAt: (ms) => levelAt(ms / 1000),
       followTauSec: FOREST_FOLLOW_TAU_SEC,
     };
   }
@@ -554,7 +553,6 @@ function showSong(song, color) {
   globe.forest.reset(song?.forest ? song : null, color);
   globe.storm.show(null);
   halo.setSwirl(song?.storm ? () => globe.storm.swirl : null);
-  halo.setAir(0);
   dateLabel.show(null);
   if (color) halo.setColor(color);
 }
@@ -1004,7 +1002,7 @@ function renderSmog(trackIndex, song) {
 
 /**
  * Draws the canopy and the noon meridian at the clock, the globe turned to keep the line facing the listener, and the
- * month with its CO₂ thickening the air; while playing, lets the music follow it.
+ * trees growing; while playing, lets the music follow it.
  */
 function renderForest(trackIndex, song) {
   if (shownSong !== song) {
@@ -1014,10 +1012,6 @@ function renderForest(trackIndex, song) {
   const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
   const step = Math.max(0, elapsedSec / STEP_SEC);
   globe.forest.render(song, step, state === PlaybackState.PLAYING);
-  const air = airAt(song.air, step);
-  const month = new Date(`${air.month}-01T00:00:00Z`).toLocaleDateString('en', MONTH_FORMAT);
-  dateLabel.showText(`${month} · ${air.ppm.toFixed(1)} ppm`);
-  halo.setAir(air.thickness);
   // The equator under the noon line, in the fitted view. Playing, the line moves west at a steady pace, and a camera
   // easing after it with time constant τ trails it by τ of travel, so it aims τ ahead.
   const lead = state === PlaybackState.PLAYING ? FOREST_FOLLOW_TAU_SEC / STEP_SEC : 0;

@@ -1,4 +1,5 @@
-import { parseAirMonths, parseNoonLine } from '../domain/noon-line.js';
+import { parseNoonLine } from '../domain/noon-line.js';
+import { pickTrees, treesByStep } from '../domain/forest-trees.js';
 
 async function fetchOk(url) {
   const res = await fetch(url);
@@ -29,11 +30,6 @@ function loadCanopyMap(url) {
   return loadGreyMap(url, (grey) => grey / 4).then(({ width, height, values }) => ({ width, height, metres: values }));
 }
 
-/** Column CO₂: grey / 4 + 380 = ppm. */
-function loadAirMap(url) {
-  return loadGreyMap(url, (grey) => grey / 4 + 380).then(({ width, height, values }) => ({ width, height, ppm: values }));
-}
-
 // Maps are loaded once per URL.
 const maps = new Map();
 
@@ -43,16 +39,16 @@ function cached(url, load) {
 }
 
 /**
- * Loads one forest track: the noon line, the canopy map, the CO₂ map of the same window, and its months of air.
+ * Loads one forest track: the noon line, the canopy map and the trees picked from it (the globe grows them and the music
+ * plays them).
  *
- * @param {{ lineUrl: string, mapUrl: string, airMapUrl: string, airUrl: string }} source
+ * @param {{ lineUrl: string, mapUrl: string }} source
  */
-export async function loadNoonSong({ lineUrl, mapUrl, airMapUrl, airUrl }) {
-  const [line, map, airMap, air] = await Promise.all([
+export async function loadNoonSong({ lineUrl, mapUrl }) {
+  const [line, map] = await Promise.all([
     fetchOk(lineUrl).then((res) => res.text()).then(parseNoonLine),
     cached(mapUrl, loadCanopyMap),
-    cached(airMapUrl, loadAirMap),
-    fetchOk(airUrl).then((res) => res.text()).then(parseAirMonths),
   ]);
-  return { line, map, airMap, air };
+  const trees = pickTrees(map);
+  return { line, map, trees, treesByStep: treesByStep(trees) };
 }

@@ -5,8 +5,20 @@
 
 /** Seconds a step lasts: a sixteenth note at 120 beats a minute. */
 export const STEP_SEC = 0.125;
+/** Steps in a bar: 3/4 in sixteenths. */
+export const STEPS_PER_BAR = 12;
 /** Steps the line takes to go once round the Earth: a degree of longitude each. */
 export const LINE_STEPS = 360;
+/**
+ * Steps of the line that have sound: the last tree's note and the last bar of the drone end here (step 312, over North
+ * America), and the Pacific after it is silent, so the track ends here. Measured from the picked trees (forest-trees.js)
+ * and the line; measure it again if either changes.
+ */
+export const SOUND_STEPS = 312;
+/** How much louder the forest track plays than the sound font's levels give it, in dB: measured against the other albums, its median level was about 3 dB lower. */
+export const TRACK_GAIN_DB = 3;
+/** Seconds the track fades in over at its start and out over at its end. */
+export const FADE_SEC = Object.freeze({ in: 2, out: 4 });
 /** Steps the listening legend takes before the line starts, on a track that opens with it (10 bars of 3/4). */
 export const LEGEND_STEPS = 120;
 /** The line starts at the date line and moves west. */
@@ -21,6 +33,9 @@ export const BAND_LATS = Object.freeze({
   [Band.TROPICS]: Object.freeze([-23, 23]),
   [Band.SOUTH]: Object.freeze([-52, -23]),
 });
+
+// A bar's mean forest density (see barLevelAt) that counts as the thickest the line meets.
+const LEVEL_FULL_AT = 0.4;
 
 // A band takes part where at least this share of it is land and its forest is this tall on average (m).
 const PLAYS_FROM = Object.freeze({ land: 0.2, heightM: 4 });
@@ -78,43 +93,14 @@ export function parseNoonLine(csv) {
   };
 }
 
-/**
- * @typedef {Object} AirMonths  the global CO₂ of each month GEDI drew the canopy map in (April 2019 to March 2023)
- * @property {{ month: string, ppm: number }[]} months  `YYYY-MM`, in order
- * @property {number} min  the thinnest month (ppm)
- * @property {number} max  the thickest month (ppm)
- */
-
-/**
- * @param {string} csv  `month,xco2_ppm`
- * @returns {AirMonths}
- */
-export function parseAirMonths(csv) {
-  const months = csv.trim().split('\n').slice(1).map((line) => {
-    const [month, ppm] = line.split(',');
-    return { month, ppm: Number(ppm) };
-  });
-  const ppms = months.map(({ ppm }) => ppm);
-  return { months, min: Math.min(...ppms), max: Math.max(...ppms) };
-}
-
-/**
- * The air at a fractional step of the line: the months are laid evenly over one turn, so the line goes round once
- * while GEDI's four years go by. `thickness` is 0 in the window's thinnest month to 1 in its thickest.
- *
- * @param {AirMonths} air
- * @param {number} lineStep
- */
-export function airAt(air, lineStep) {
-  const { months, min, max } = air;
-  const i = Math.min(months.length - 1, Math.max(0, Math.floor((lineStep / LINE_STEPS) * months.length)));
-  const { month, ppm } = months[i];
-  return { month, ppm, thickness: max > min ? (ppm - min) / (max - min) : 0 };
-}
-
 /** Longitude of the noon line at a fractional step of the line (0 at the date line, LINE_STEPS once round). */
 export function lineLonAt(lineStep) {
   return START_LON - Math.max(0, Math.min(LINE_STEPS, lineStep));
+}
+
+/** The step of the line at which it crosses longitude `lon` (degrees east). */
+export function lineStepAt(lon) {
+  return (((START_LON - lon) % LINE_STEPS) + LINE_STEPS) % LINE_STEPS;
 }
 
 /** The region the line is in at a whole step of the line. */
@@ -136,4 +122,27 @@ export function bandAt(line, band, lineStep) {
   const height = series.height[lineStep];
   if (!(series.land[lineStep] >= PLAYS_FROM.land) || !(height >= PLAYS_FROM.heightM)) return null;
   return { height, density: series.density[lineStep] || 0 };
+}
+
+/**
+ * How thick the forest under the line is over the bar a step is in, 0..1: each band's forest density where it sounds
+ * (see bandAt), added up and shared over the bands, averaged over the bar's steps and counted full from `LEVEL_FULL_AT`. The drone under the music and the
+ * brightness of the noon meridian both follow it, a bar at a time.
+ *
+ * @param {NoonLine} line
+ * @param {number} lineStep
+ */
+export function barLevelAt(line, lineStep) {
+  const first = Math.floor(lineStep / STEPS_PER_BAR) * STEPS_PER_BAR;
+  let sum = 0;
+  for (let step = first; step < first + STEPS_PER_BAR; step++) {
+    if (step >= LINE_STEPS) break;
+    for (const band of BANDS) sum += bandAt(line, band, step)?.density ?? 0;
+  }
+  return Math.min(1, sum / (STEPS_PER_BAR * BANDS.length) / LEVEL_FULL_AT);
+}
+
+/** The gain of the forest track `sec` seconds in: its level, faded in at its start and out at its end. */
+export function levelAt(sec) {
+  return 10 ** (TRACK_GAIN_DB / 20) * Math.max(0, Math.min(1, sec / FADE_SEC.in, (SOUND_STEPS * STEP_SEC - sec) / FADE_SEC.out));
 }

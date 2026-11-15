@@ -1,11 +1,8 @@
 // What the docent says over a forest track, so it can be followed by ear alone: the legend's lines while the noon line
-// is already moving, when the map was drawn and how the air rose meanwhile, and each region as the line reaches it. Each line is said once, at the step
+// is already moving, when the map was drawn, and each region as the line reaches it. Each line is said once, at the step
 // it belongs to; a screen reader reads it, and it can be spoken aloud.
 
 import { BANDS, Band, LINE_STEPS, REGIONS } from '../../tracks/domain/noon-line.js';
-
-const MONTH_FORMAT = Object.freeze({ month: 'long', year: 'numeric', timeZone: 'UTC' });
-const monthName = (month) => new Date(`${month}-01T00:00:00Z`).toLocaleDateString('en', MONTH_FORMAT);
 
 const BAND_NAME = Object.freeze({ [Band.NORTH]: 'northern', [Band.TROPICS]: 'tropical', [Band.SOUTH]: 'southern' });
 // Words for a region's forest: its mean height (m) and density, as the music plays them.
@@ -16,15 +13,12 @@ const DESCRIBED_FROM_M = 5;
 
 /**
  * The legend's lines, at the step each part of it starts (see composers/noon.js, which plays it).
- *
- * @param {string} leadName  what the tropics are played on, as a listener would call it
  */
-export function legendLines(leadName) {
+export function legendLines() {
   return [
-    { step: 0, text: 'How to listen. Higher, louder notes mean taller forest.' },
-    { step: 30, text: 'Faster notes mean denser forest.' },
-    { step: 60, text: `Flute is the north, ${leadName} the tropics, pizzicato the south.` },
-    { step: 90, text: 'Waves are the sea, a bell marks land, a tick every thirty degrees, and the pad is the air.' },
+    { step: 0, text: 'How to listen. Every tree is a note, as long as the tree takes to grow. Taller trees play higher and louder: the low classes on marimba, the middle on glockenspiel, the tallest, gold ones on a ringing vibraphone.' },
+    { step: 60, text: 'Many trees at once make a dense forest.' },
+    { step: 90, text: 'A bell marks land, a tick every thirty degrees.' },
   ];
 }
 
@@ -35,21 +29,15 @@ const word = (words, value) => words.find(([from]) => value >= from)[1];
  *
  * @param {Object} options
  * @param {import('../../tracks/domain/noon-line.js').NoonLine} options.line
- * @param {import('../../tracks/domain/noon-line.js').AirMonths} options.air
- * @param {string} options.leadName
  * @param {boolean} options.legend  whether the track opens with the legend
  * @returns {{ step: number, text: string }[]}
  */
-export function noonNarration({ line, air, leadName, legend }) {
-  const lines = legend ? legendLines(leadName) : [];
-  const firstMonth = air.months[0];
-  const lastMonth = air.months[air.months.length - 1];
+export function noonNarration({ line, legend }) {
+  const lines = legend ? legendLines() : [];
   // Same clock as the noon line: regions are announced as the meridian reaches them.
   lines.push({
     step: 0,
-    text: `The Earth turns under the noon sun, over the forest GEDI mapped from ${monthName(firstMonth.month)} to `
-      + `${monthName(lastMonth.month)}. Meanwhile the carbon dioxide in the air rose from ${firstMonth.ppm.toFixed(0)} to `
-      + `${lastMonth.ppm.toFixed(0)} parts per million.`,
+    text: 'The Earth turns under the noon sun, over the forest GEDI mapped from April 2019 to March 2023.',
   });
   REGIONS.forEach((region, i) => {
     const first = Math.round(180 - region.fromLon);
