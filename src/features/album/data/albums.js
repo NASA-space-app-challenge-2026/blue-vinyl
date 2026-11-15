@@ -7,6 +7,7 @@ import { Instrument } from '../../music/domain/instruments.js';
 import { Lead } from '../../music/domain/patches.js';
 import { NorthInstrument, SouthInstrument } from '../../music/domain/composers/lightning.js';
 import { DAY_MS, YEAR_MS } from '../../tracks/domain/bird-track.js';
+import { LINE_STEPS, STEP_SEC } from '../../tracks/domain/noon-line.js';
 import { Hemisphere, seasonDurationSec, seasonSpan } from '../../tracks/domain/storm-season.js';
 
 const ARCTIC_BIRD_TRACKS = 'data/arctic_bird/tracks';
@@ -53,6 +54,13 @@ const WILDFIRE_ANNUAL_SEC = trackDurationSec(WILDFIRE_YEAR_TIMELINE, WILDFIRE_YE
 export const WILDFIRE_DAY_TIMELINE = Object.freeze({ introSec: 0, beatSec: 0.13, tailSec: 1.2 });
 const WILDFIRE_DAYS = 214;
 const WILDFIRE_SEASON_SEC = trackDurationSec(WILDFIRE_DAY_TIMELINE, WILDFIRE_DAYS);
+
+const FOREST_TRACKS = 'data/forest/tracks';
+const FOREST_COVERS = 'assets/albums/forest';
+// The Earth turns once under the noon line from the first step, with the listening legend riding along.
+const FOREST_LINE_SEC = LINE_STEPS * STEP_SEC;
+// GEDI's canopy map is one composite of April 2019 to March 2023; the air is read over the same window.
+const GEDI_WINDOW = '201904-202303';
 
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
@@ -148,6 +156,30 @@ export const albums = [
         title: 'Asia and Australia', durationSec: LIGHTNING_YEAR_SEC, color: '#d9a35a',
         coverUrl: `${LIGHTNING_COVERS}/asia_australia.jpg`, coverCredit: 'Photo: ISS Expedition 49 crew, thunderstorms over South East Asia, cropped',
         lightning: { tracksDir: EXTREME_WEATHER_TRACKS, file: 'asia_australia_2021.csv', north: NorthInstrument.DULCIMER, south: SouthInstrument.MELODIC_TOM },
+      },
+    ],
+  },
+  {
+    id: 'forest',
+    category: AlbumCategory.CLIMATE,
+    title: 'Forests Hold Carbon',
+    coverUrl: `${FOREST_COVERS}/cover.jpg`,
+    coverCredit: 'Cover: SVS 4950, GEDI forest height · NASA Scientific Visualization Studio',
+    dataCredit: 'Data: GEDI L3 (UMD, ORNL DAAC) via NASA GIBS · NASA GMAO GEOS CO₂ · EIC 14696',
+    // One turn of the Earth under the noon line over GEDI's map, while the air of the four years it was drawn in goes
+    // by (see notebooks/forest_album.ipynb, section 8).
+    tracks: [
+      {
+        title: 'Under the Noon Sun · 2019–2023',
+        durationSec: FOREST_LINE_SEC,
+        forest: {
+          lineUrl: `${FOREST_TRACKS}/forest_noon_line.csv`,
+          mapUrl: `${FOREST_TRACKS}/canopy_height_quarter_degree.png`,
+          airMapUrl: `${FOREST_TRACKS}/xco2_${GEDI_WINDOW}_degree.png`,
+          airUrl: `${FOREST_TRACKS}/global_xco2_monthly_${GEDI_WINDOW}.csv`,
+        },
+        lead: Instrument.HARP,
+        color: '#8ecf7a',
       },
     ],
   },

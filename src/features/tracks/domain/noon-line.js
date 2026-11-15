@@ -1,0 +1,139 @@
+// The world's forest read under the noon line, as exported by notebooks/forest_album.ipynb (section 8) into
+// data/forest/tracks/. The Earth turns once under the line, the meridian where the Sun stands highest, which moves west a
+// degree of longitude a step from the date line round to it again. It is read in three bands, each a voice of the
+// music. Lookups shared by the globe, the music and the docent.
+
+/** Seconds a step lasts: a sixteenth note at 120 beats a minute. */
+export const STEP_SEC = 0.125;
+/** Steps the line takes to go once round the Earth: a degree of longitude each. */
+export const LINE_STEPS = 360;
+/** Steps the listening legend takes before the line starts, on a track that opens with it (10 bars of 3/4). */
+export const LEGEND_STEPS = 120;
+/** The line starts at the date line and moves west. */
+const START_LON = 180;
+
+/** The bands the line is read in, north to south, each a voice of the music. */
+export const Band = Object.freeze({ NORTH: 'north', TROPICS: 'tropics', SOUTH: 'south' });
+export const BANDS = Object.freeze([Band.NORTH, Band.TROPICS, Band.SOUTH]);
+/** Each band's latitudes, south to north (°), as notebooks/forest_album.ipynb (section 4) reads them. */
+export const BAND_LATS = Object.freeze({
+  [Band.NORTH]: Object.freeze([23, 52]),
+  [Band.TROPICS]: Object.freeze([-23, 23]),
+  [Band.SOUTH]: Object.freeze([-52, -23]),
+});
+
+// A band takes part where at least this share of it is land and its forest is this tall on average (m).
+const PLAYS_FROM = Object.freeze({ land: 0.2, heightM: 4 });
+
+/**
+ * The regions the line crosses, in the order it reaches them, from the longitude where each begins (east edge) going
+ * west; `land` regions are announced with a bell. Ours: drawn round the continents as they lie between 52° S and
+ * 52° N.
+ */
+export const REGIONS = Object.freeze([
+  { name: 'the Pacific Ocean', fromLon: 180, land: false },
+  { name: 'East Asia and Australia', fromLon: 160, land: true },
+  { name: 'South Asia', fromLon: 95, land: true },
+  { name: 'Africa and Europe', fromLon: 60, land: true },
+  { name: 'the Atlantic Ocean', fromLon: -18, land: false },
+  { name: 'South America', fromLon: -35, land: true },
+  { name: 'North America', fromLon: -82, land: true },
+  { name: 'the Pacific Ocean', fromLon: -125, land: false },
+]);
+
+/**
+ * @typedef {Object} BandSeries  one value per step
+ * @property {Float32Array} height  mean canopy height (m) of the band's land under the line, NaN where none
+ * @property {Float32Array} density  share of that land with canopy of 10 m or taller, NaN where none
+ * @property {Float32Array} land  share of the band with data at all
+ */
+
+/**
+ * @typedef {Object} NoonLine
+ * @property {Float32Array} lon  the middle of the degree each step crosses
+ * @property {Record<string, BandSeries>} bands  by Band
+ */
+
+/** @returns {NoonLine} */
+export function parseNoonLine(csv) {
+  const [header, ...lines] = csv.trim().split('\n');
+  const names = header.split(',');
+  const column = (name) => {
+    const i = names.indexOf(name);
+    if (i < 0) throw new Error(`noon line CSV lacks ${name}`);
+    return i;
+  };
+  const rows = lines.map((line) => line.split(','));
+  const series = (name) => {
+    const i = column(name);
+    return Float32Array.from(rows, (row) => (row[i] === '' ? NaN : Number(row[i])));
+  };
+  return {
+    lon: series('lon_deg'),
+    bands: Object.fromEntries(BANDS.map((band) => [band, {
+      height: series(`${band}_height_m`),
+      density: series(`${band}_density`),
+      land: series(`${band}_land_share`),
+    }])),
+  };
+}
+
+/**
+ * @typedef {Object} AirMonths  the global CO₂ of each month GEDI drew the canopy map in (April 2019 to March 2023)
+ * @property {{ month: string, ppm: number }[]} months  `YYYY-MM`, in order
+ * @property {number} min  the thinnest month (ppm)
+ * @property {number} max  the thickest month (ppm)
+ */
+
+/**
+ * @param {string} csv  `month,xco2_ppm`
+ * @returns {AirMonths}
+ */
+export function parseAirMonths(csv) {
+  const months = csv.trim().split('\n').slice(1).map((line) => {
+    const [month, ppm] = line.split(',');
+    return { month, ppm: Number(ppm) };
+  });
+  const ppms = months.map(({ ppm }) => ppm);
+  return { months, min: Math.min(...ppms), max: Math.max(...ppms) };
+}
+
+/**
+ * The air at a fractional step of the line: the months are laid evenly over one turn, so the line goes round once
+ * while GEDI's four years go by. `thickness` is 0 in the window's thinnest month to 1 in its thickest.
+ *
+ * @param {AirMonths} air
+ * @param {number} lineStep
+ */
+export function airAt(air, lineStep) {
+  const { months, min, max } = air;
+  const i = Math.min(months.length - 1, Math.max(0, Math.floor((lineStep / LINE_STEPS) * months.length)));
+  const { month, ppm } = months[i];
+  return { month, ppm, thickness: max > min ? (ppm - min) / (max - min) : 0 };
+}
+
+/** Longitude of the noon line at a fractional step of the line (0 at the date line, LINE_STEPS once round). */
+export function lineLonAt(lineStep) {
+  return START_LON - Math.max(0, Math.min(LINE_STEPS, lineStep));
+}
+
+/** The region the line is in at a whole step of the line. */
+export function regionAt(lineStep) {
+  const lon = lineLonAt(lineStep) - 0.5;
+  return REGIONS.findLast((region) => lon <= region.fromLon) ?? REGIONS[0];
+}
+
+/**
+ * What a band does at a whole step of the line: null where it stays quiet (sea, desert, grass), otherwise its forest's
+ * height (m) and density (0..1).
+ *
+ * @param {NoonLine} line
+ * @param {string} band
+ * @param {number} lineStep
+ */
+export function bandAt(line, band, lineStep) {
+  const series = line.bands[band];
+  const height = series.height[lineStep];
+  if (!(series.land[lineStep] >= PLAYS_FROM.land) || !(height >= PLAYS_FROM.heightM)) return null;
+  return { height, density: series.density[lineStep] || 0 };
+}

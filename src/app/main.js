@@ -30,15 +30,18 @@ import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
 import { HurricaneComposer } from '../features/music/domain/composers/hurricane.js';
 import { LightningComposer } from '../features/music/domain/composers/lightning.js';
+import { NoonComposer } from '../features/music/domain/composers/noon.js';
 import { seasonSong, StormSeasonComposer } from '../features/music/domain/composers/storm-season.js';
 import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
 import { annualBurnScore, seasonScore } from '../features/music/domain/wildfire-score.js';
 import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
 import { loadLightningTrack } from '../features/tracks/data/lightning-season-source.js';
+import { loadNoonSong } from '../features/tracks/data/noon-line-source.js';
 import { loadStormSeason } from '../features/tracks/data/storm-season-source.js';
 import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack, loadWildfireTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
+import { STEP_SEC, airAt, lineLonAt } from '../features/tracks/domain/noon-line.js';
 import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
@@ -61,14 +64,15 @@ let musicCredits = [];
 // The attribution of the globe's map and imagery, shown with the album's credits.
 let mapCredit = '';
 // What each track of the album plays, by track index, once its data has loaded (see the Song of sound-engine.js): its
-// birds (`tracks`, `lead`), its storm (`storm`) or its year of lightning (`lightning`), or null for a track with none
-// of them. Empty until then.
+// birds (`tracks`, `lead`), its storm (`storm`), its year of lightning (`lightning`) or its forest under the noon line
+// (`forest`), or null for a track with none of them. Empty until then.
 let songs = [];
 // The storm season each track of the album plays, by track index, once loaded (see seasonSong), or null for a track
 // without one; empty until then. The season the globe shows.
 let seasons = [];
 let shownSeason = null;
-// The song whose birds, storm or lightning the globe shows, and where they are now (the globe keeps them in the middle).
+// The song whose birds, storm, lightning or forest the globe shows, and where they are now (the globe keeps them in the
+// middle).
 let shownSong = null;
 let focus = null;
 // The pole the globe looks down on for an ice track, to glide there when it changes; null for other tracks.
@@ -150,6 +154,11 @@ const soundEngine = createSoundEngine();
 const flockComposer = new FlockComposer();
 const hurricaneComposer = new HurricaneComposer();
 const lightningComposer = new LightningComposer();
+const noonComposer = new NoonComposer();
+// The globe turns to keep the noon meridian in front, easing with this time constant; while playing, it aims this far
+// ahead of the line, so the eased camera settles on the line itself rather than trailing it.
+const FOREST_FOLLOW_TAU_SEC = 0.5;
+const MONTH_FORMAT = Object.freeze({ month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
@@ -312,9 +321,10 @@ async function loadAlbumData(loading) {
   globe.glide();
 }
 
-// Loads the birds, the storm or the lightning of each of `target`'s tracks, unless another album is shown by then.
+// Loads the birds, the storm, the lightning or the forest of each of `target`'s tracks, unless another album is shown
+// by then.
 async function loadSongs(target) {
-  if (!target.tracks.some((track) => track.birdsUrl || track.storm || track.lightning)) return;
+  if (!target.tracks.some((track) => track.birdsUrl || track.storm || track.lightning || track.forest)) return;
   let perTrack;
   try {
     perTrack = await Promise.all(target.tracks.map((track) => loadSong(track, target)));
@@ -382,6 +392,22 @@ async function loadSong(track, target) {
       sampleAt: () => season,
     };
   }
+  if (track.forest) {
+    const forest = await loadNoonSong(track.forest);
+    return {
+      forest: true,
+      ...forest,
+      lead: track.lead,
+      // The album's first track opens with the listening legend.
+      legend: target.tracks.indexOf(track) === 0,
+      composer: noonComposer,
+      // Data time is the track's own time: the composer reads the step of the noon line from it.
+      startMs: 0,
+      msPerSec: 1000,
+      sampleAt: () => forest.line,
+      followTauSec: FOREST_FOLLOW_TAU_SEC,
+    };
+  }
   return null;
 }
 
@@ -412,13 +438,15 @@ function showSeason(song, color) {
 }
 
 // Puts `song`'s birds on the globe in `color`, and the glow in it; null takes them off. A storm's song clears the
-// birds and draws its storm instead (renderStorm).
+// birds and draws its storm instead (renderStorm); a forest's draws its canopy and noon line (renderForest).
 function showSong(song, color) {
   shownSong = song;
   focus = null;
   globe.birds.reset(color);
+  globe.forest.reset(song?.forest ? song : null, color);
   globe.storm.show(null);
   halo.setSwirl(song?.storm ? () => globe.storm.swirl : null);
+  halo.setAir(0);
   dateLabel.show(null);
   if (color) halo.setColor(color);
 }
@@ -664,6 +692,10 @@ function renderSong(trackIndex) {
     renderLightning(trackIndex, song);
     return;
   }
+  if (song.forest) {
+    renderForest(trackIndex, song);
+    return;
+  }
   if (shownSong !== song) {
     showSong(song, album.tracks[trackIndex].color);
     globe.glide();
@@ -721,6 +753,31 @@ function renderLightning(trackIndex, song) {
   halo.wake();
 }
 
+/**
+ * Draws the canopy and the noon meridian at the clock, the globe turned to keep the line facing the listener, and the
+ * month with its CO₂ thickening the air; while playing, lets the music follow it.
+ */
+function renderForest(trackIndex, song) {
+  if (shownSong !== song) {
+    showSong(song, album.tracks[trackIndex].color);
+    globe.glide();
+  }
+  const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  const step = Math.max(0, elapsedSec / STEP_SEC);
+  globe.forest.render(song, step, state === PlaybackState.PLAYING);
+  const air = airAt(song.air, step);
+  const month = new Date(`${air.month}-01T00:00:00Z`).toLocaleDateString('en', MONTH_FORMAT);
+  dateLabel.showText(`${month} · ${air.ppm.toFixed(1)} ppm`);
+  halo.setAir(air.thickness);
+  // The equator under the noon line, in the fitted view. Playing, the line moves west at a steady pace, and a camera
+  // easing after it with time constant τ trails it by τ of travel, so it aims τ ahead.
+  const lead = state === PlaybackState.PLAYING ? FOREST_FOLLOW_TAU_SEC / STEP_SEC : 0;
+  focus = { lat: 0, lon: lineLonAt(step + lead) };
+  if (state !== PlaybackState.PLAYING) return;
+  soundEngine.follow(song, elapsedSec);
+  halo.wake();
+}
+
 function setState(next) {
   if (next !== PlaybackState.PLAYING) music.stop();
   state = next;
@@ -744,7 +801,7 @@ function tick(ts) {
     return;
   }
   render();
-  if (!globe.gliding) globe.follow(dtMs / 1000);
+  if (!globe.gliding) globe.follow(dtMs / 1000, shownSong?.followTauSec);
   tickFrame = requestAnimationFrame(tick);
 }
 
