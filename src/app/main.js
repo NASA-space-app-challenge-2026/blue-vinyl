@@ -16,7 +16,6 @@ import { createGlassCapsule } from '../features/controls/presentation/glass-caps
 import { createMoreMenu } from '../features/controls/presentation/more-menu.js';
 import { createPlayButton } from '../features/controls/presentation/play-button.js';
 import { createPlayHint } from '../features/controls/presentation/play-hint.js';
-import { createStartScreen } from '../features/controls/presentation/start-screen.js';
 import { createVolumeControl } from '../features/controls/presentation/volume-control.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
@@ -28,9 +27,12 @@ import { createSeaLevelOverlay } from '../features/globe/presentation/sea-level-
 import { createWildfireOverlay } from '../features/globe/presentation/wildfire-overlay.js';
 import { ABOUT } from '../features/info/data/about.js';
 import { LICENSES } from '../features/info/data/licenses.js';
+import { ONBOARDING } from '../features/info/data/onboarding.js';
 import { createInfoDialog, renderAbout, renderLicenses } from '../features/info/presentation/info-dialog.js';
+import { createOnboarding } from '../features/info/presentation/onboarding.js';
 import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
+import { createSpatialPreview } from '../features/music/data/spatial-preview.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
 import { HurricaneComposer } from '../features/music/domain/composers/hurricane.js';
@@ -225,11 +227,13 @@ createMoreMenu(viewControls, {
 });
 applyGlobeTheme(DEFAULT_GLOBE_THEME);
 createCatView(slot('screen'));
-// A drag is no gesture audio may start from on a phone, so the title screen's tap unlocks the sound first.
-// The bars and the safe areas take the title screen's color while it is up.
+// A drag is no gesture audio may start from on a phone, so the onboarding's taps unlock the sound first.
+// The bars and the safe areas take the onboarding's color while it is up.
 backdrop.overlay(getComputedStyle(document.documentElement).getPropertyValue('--title-bg').trim());
-const startScreen = createStartScreen(slot('screen'), {
+const onboarding = createOnboarding(slot('screen'), {
+  content: ONBOARDING,
   stage: slot('stage'),
+  preview: createSpatialPreview(),
   onStart: () => {
     backdrop.overlay(null);
     unlockSound();
@@ -246,8 +250,8 @@ const VOLUME_KEYS = Object.freeze({ ArrowUp: 1, ArrowDown: -1 });
 document.addEventListener(
   'keydown',
   (event) => {
-    // The title screen takes Space and Enter itself, as the button it is.
-    if (event.altKey || event.ctrlKey || event.metaKey || startScreen.isOpen()) return;
+    // The onboarding keeps its keys while it is up: Space and Enter press its buttons, the arrows step through it.
+    if (event.altKey || event.ctrlKey || event.metaKey || onboarding.isOpen()) return;
     // An open dialog or menu keeps its keys: Space and the arrows scroll the dialog or move through the menu.
     if (document.querySelector('dialog[open]')) return;
     if (event.target instanceof Element && event.target.closest('[role="menu"]')) return;
@@ -290,7 +294,7 @@ document.addEventListener('gesturestart', (event) => event.preventDefault());
 document.addEventListener(
   'keyup',
   (event) => {
-    if (event.code === 'Space' && !startScreen.isOpen()) event.preventDefault();
+    if (event.code === 'Space' && !onboarding.isOpen()) event.preventDefault();
   },
   { capture: true },
 );

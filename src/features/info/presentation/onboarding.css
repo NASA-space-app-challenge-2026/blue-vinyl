@@ -1,0 +1,459 @@
+/* The onboarding (onboarding.js): over the whole screen, the corners' controls included, until it is closed. Sized in
+   container units, so it fits the screen's own box, turned or not (the portrait layout turns the screen). */
+.onboarding {
+  --space: #05070d;
+  --earth: #bfe0ff;
+  --gold: #e2c79a;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  container-type: size;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: calc(var(--gutter) + var(--safe-top)) calc(var(--gutter) + var(--safe-right))
+    calc(var(--gutter) + var(--safe-bottom)) calc(var(--gutter) + var(--safe-left));
+  background: radial-gradient(ellipse at 30% 45%, #0f1524 0%, var(--space) 70%);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+/* The sky: a wide band of scattered sunlight slanting across it, as across Voyager 1's photo, and faint grain. */
+.onboarding-sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.onboarding-beam {
+  position: absolute;
+  top: -30%;
+  bottom: -30%;
+  left: 18%;
+  width: 26%;
+  rotate: 14deg;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(205 140 120 / 0.1) 18%,
+    rgb(226 170 140 / 0.2) 34%,
+    rgb(200 150 200 / 0.14) 52%,
+    rgb(140 170 220 / 0.12) 68%,
+    transparent 100%
+  );
+  filter: blur(14px);
+}
+
+.onboarding-grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(1px 1px at 12% 22%, rgb(255 255 255 / 0.5), transparent),
+    radial-gradient(1px 1px at 78% 14%, rgb(255 255 255 / 0.35), transparent),
+    radial-gradient(1px 1px at 64% 72%, rgb(255 255 255 / 0.3), transparent),
+    radial-gradient(1px 1px at 88% 58%, rgb(255 255 255 / 0.4), transparent),
+    radial-gradient(1px 1px at 8% 84%, rgb(255 255 255 / 0.3), transparent),
+    radial-gradient(1px 1px at 46% 8%, rgb(255 255 255 / 0.25), transparent);
+}
+
+.onboarding-top,
+.onboarding-steps,
+.onboarding-nav {
+  position: relative;
+}
+
+.onboarding-top {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 40px;
+}
+
+.onboarding-steps {
+  display: grid;
+  min-height: 0;
+}
+
+.onboarding-step {
+  grid-area: 1 / 1;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: 5cqw;
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  min-height: 0;
+}
+
+.onboarding-step[hidden] {
+  display: none;
+}
+
+.onboarding-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.onboarding-text {
+  max-width: 34em;
+  font-size: clamp(13px, 2.3cqmin, 18px);
+  line-height: 1.6;
+}
+
+.onboarding-text :where(p) {
+  margin: 0;
+}
+
+/* The text logo, as the app title in the top left corner: Yellowtail, cream lit from above fading to warm gold. The
+   padding leaves room for the script's swashes, which reach past the letters. */
+.onboarding-logo {
+  display: inline-block;
+  margin: 0 0 0.15em -0.08em;
+  padding: 0.05em 0.45em 0.2em 0.1em;
+  font-family: var(--font-title);
+  font-size: clamp(44px, 12cqmin, 110px);
+  font-weight: 400;
+  line-height: 1.1;
+  rotate: -4deg;
+  background: linear-gradient(180deg, #fff8ec 0%, #f3ece1 45%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 10px rgb(0 0 0 / 0.5));
+}
+
+.onboarding-eyebrow {
+  margin-bottom: 0.5em;
+  font-size: 0.78em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.onboarding-heading {
+  margin: 0 0 0.7em;
+  font-size: clamp(20px, 4.6cqmin, 36px);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.onboarding-body + .onboarding-body {
+  margin-top: 0.7em;
+}
+
+.onboarding-body {
+  color: rgb(243 236 225 / 0.85);
+}
+
+.onboarding-note {
+  margin-top: 1.2em;
+  padding-left: 0.9em;
+  border-left: 2px solid rgb(191 224 255 / 0.4);
+  font-size: 0.85em;
+  color: var(--ink-muted);
+}
+
+/* The Pale Blue Dot: a ray of light in the dark and, in it, one blue speck marked "You are here". */
+.pale-blue-dot {
+  position: relative;
+  width: min(100%, 58cqmin);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.03), transparent 70%);
+}
+
+.pale-blue-dot-ray {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+    104deg,
+    transparent 30%,
+    rgb(220 150 130 / 0.22) 42%,
+    rgb(236 190 160 / 0.32) 50%,
+    rgb(190 160 210 / 0.2) 58%,
+    transparent 70%
+  );
+  filter: blur(6px);
+  -webkit-mask-image: radial-gradient(circle, #000 45%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 45%, transparent 72%);
+}
+
+.pale-blue-dot-earth {
+  position: absolute;
+  left: 53%;
+  top: 60%;
+  width: clamp(5px, 1.3cqmin, 10px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  translate: -50% -50%;
+  background: var(--earth);
+  box-shadow: 0 0 6px 2px rgb(150 200 255 / 0.75), 0 0 22px 6px rgb(120 180 255 / 0.25);
+  animation: pale-blue-dot-twinkle 3.2s ease-in-out infinite;
+}
+
+/* A hairline from the dot up to the right, ending in its label. */
+.pale-blue-dot-mark {
+  position: absolute;
+  left: calc(53% + 1.6cqmin);
+  top: calc(60% - 1.6cqmin);
+  width: 12cqmin;
+  height: 9cqmin;
+  translate: 0 -100%;
+  border-left: 1px solid rgb(243 236 225 / 0.35);
+  rotate: 35deg;
+  transform-origin: bottom left;
+}
+
+.pale-blue-dot-label {
+  position: absolute;
+  top: -0.6em;
+  left: 0;
+  rotate: -35deg;
+  transform-origin: top left;
+  white-space: nowrap;
+  font-size: clamp(11px, 2cqmin, 15px);
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+@keyframes pale-blue-dot-twinkle {
+  50% {
+    opacity: 0.65;
+    scale: 0.85;
+  }
+}
+
+/* The earphones: a head from above, facing up, its headphones gold, and the pale blue dot circling it. */
+.earphones {
+  width: min(100%, 56cqmin);
+  height: auto;
+  overflow: visible;
+}
+
+.earphones-path {
+  fill: none;
+  stroke: rgb(243 236 225 / 0.18);
+  stroke-width: 1;
+  stroke-dasharray: 2 5;
+}
+
+.earphones-head {
+  fill: rgb(243 236 225 / 0.06);
+  stroke: rgb(243 236 225 / 0.55);
+  stroke-width: 1.5;
+}
+
+.earphones-nose {
+  fill: rgb(243 236 225 / 0.55);
+}
+
+.earphones-band {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.earphones-cup {
+  fill: var(--gold);
+}
+
+.earphones-side {
+  font-size: 11px;
+  text-anchor: middle;
+  fill: var(--ink-muted);
+  letter-spacing: 0.05em;
+}
+
+.earphones-orbit {
+  transform-box: view-box;
+  transform-origin: 100px 100px;
+}
+
+.earphones-glow {
+  fill: url(#earphones-glow);
+}
+
+.earphones-dot,
+.earphones-trail {
+  fill: var(--earth);
+}
+
+/* Buttons: Skip and Back quiet, Next a glass pill, Start listening lit in gold. */
+.onboarding :where(button) {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.onboarding button:focus-visible {
+  outline: 2px solid var(--earth);
+  outline-offset: 3px;
+}
+
+.onboarding-skip,
+.onboarding-back {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+}
+
+.onboarding-skip:hover,
+.onboarding-back:hover {
+  color: var(--ink);
+}
+
+.onboarding .is-hidden {
+  visibility: hidden;
+}
+
+.onboarding-nav {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.onboarding-back {
+  justify-self: start;
+}
+
+.onboarding-next {
+  justify-self: end;
+  min-height: 44px;
+  padding: 0 24px;
+  border: 1px solid rgb(255 255 255 / 0.28);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.18), rgb(255 255 255 / 0.06));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.onboarding-next.is-start {
+  border-color: transparent;
+  background: linear-gradient(180deg, #fff3dc, var(--gold));
+  box-shadow: 0 6px 24px rgb(226 199 154 / 0.3);
+  color: #2a1f10;
+  font-weight: 700;
+}
+
+.onboarding-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.onboarding-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgb(243 236 225 / 0.3);
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.onboarding-dot.is-current {
+  width: 20px;
+  background: var(--earth);
+}
+
+.onboarding-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  margin-top: 1.4em;
+  padding: 0 16px 0 12px;
+  border: 1px solid rgb(191 224 255 / 0.4);
+  border-radius: 999px;
+  background: rgb(191 224 255 / 0.08);
+  font-size: 14px;
+  letter-spacing: 0.03em;
+}
+
+.onboarding-preview:hover {
+  background: rgb(191 224 255 / 0.16);
+}
+
+.onboarding-preview.is-playing {
+  cursor: default;
+  color: var(--earth);
+}
+
+.onboarding-preview-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.onboarding-preview-icon rect {
+  fill: currentColor;
+}
+
+/* The stage stays out of sight under the onboarding until it comes up. */
+.before-start {
+  opacity: 0;
+}
+
+/* The cat (cat-view.js) joins the screen once its model has loaded, which may be while the onboarding is up, and would
+   sit above it; it waits out of sight until the stage comes up. Visibility, as the widget sets its own opacity. */
+.screen:has(> .onboarding) #live2d-widget {
+  visibility: hidden;
+}
+
+/* Low screens (phones on their side): a smaller picture, tighter text, and the note left out. */
+@container (max-height: 460px) {
+  .onboarding-step {
+    gap: 4cqw;
+  }
+
+  .onboarding-text {
+    font-size: clamp(12px, 3.2cqh, 15px);
+    line-height: 1.5;
+  }
+
+  .onboarding-logo {
+    font-size: clamp(36px, 13cqh, 64px);
+  }
+
+  .onboarding-heading {
+    margin-bottom: 0.5em;
+    font-size: clamp(17px, 5.4cqh, 24px);
+  }
+
+  .onboarding-note {
+    display: none;
+  }
+
+  .onboarding-preview {
+    margin-top: 0.9em;
+  }
+
+  .pale-blue-dot,
+  .earphones {
+    width: min(100%, 62cqh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pale-blue-dot-earth {
+    animation: none;
+  }
+}
