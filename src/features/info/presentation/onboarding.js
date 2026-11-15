@@ -126,6 +126,7 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
   function finish() {
     if (!open) return;
     open = false;
+    root.style.pointerEvents = 'none';
     preview.stop();
     onStart();
     for (const child of covered) child.inert = false;

@@ -206,7 +206,7 @@ export const albums = [
   {
     id: 'forest',
     category: AlbumCategory.BIODIVERSITY,
-    title: 'Forests Hold Carbon',
+    title: 'The Forest Chorus',
     coverUrl: `${FOREST_COVERS}/cover.jpg`,
     coverCredit: 'Cover: SVS 4950, GEDI forest height · NASA Scientific Visualization Studio',
     coverAlt: 'A globe centred on Africa with its forests raised in green by the height of their canopy, measured from space by GEDI',

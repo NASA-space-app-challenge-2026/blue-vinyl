@@ -444,8 +444,7 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
  *
  * Round the record's own rim, outside the grooves, run the credits (setCredit), turning with the record.
  *
- * Clicking the grooves calls `onSelectGroove(progress)` with the album progress of the groove clicked; clicking the
- * record off the grooves calls `onToggle()`.
+ * Clicking the grooves calls `onSelectGroove(progress)` with the album progress of the groove clicked.
  *
  * The listener can also hold the record by hand, like a real one on its platter. Pressing on it stops it under the
  * hand and calls `onHandHold()`. Moving the pointer then turns it round its centre, and each move calls
@@ -454,7 +453,6 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
  *
  * @param {HTMLElement} parent
  * @param {{
- *   onToggle: () => void,
  *   onCued: () => void,
  *   onGrab: () => void,
  *   onScrub: (progress: number | null) => void,
@@ -467,14 +465,13 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
  *   onHandRelease: () => void,
  *   space: { rectOf: (el: Element) => DOMRectReadOnly, pointOf: (event: PointerEvent) => { x: number, y: number } },
  * }} options
- *   onToggle: called when the record is clicked off the grooves.
  *   onCued: called when the arm, swung on by render(CUEING), has reached its groove.
  *   space: an element's box and a pointer's place in the pixels of the layout the turntable is drawn in, which a
  *     turned screen does not share with the client's (see shared/screen-space.js); pointers are read in them.
  */
 export function createTurntableView(
   parent,
-  { onToggle, onCued, onGrab, onScrub, onDrop, onLift, onSeek, onSelectGroove, onHandHold, onHandTurn, onHandRelease, space },
+  { onCued, onGrab, onScrub, onDrop, onLift, onSeek, onSelectGroove, onHandHold, onHandTurn, onHandRelease, space },
 ) {
   const { rectOf, pointOf } = space;
   const root = document.createElement('div');
@@ -532,7 +529,6 @@ export function createTurntableView(
     if (!pressed || dragging) return;
     const progress = grooveProgress(pointerRadius(event));
     if (progress >= 0 && progress <= 1) onSelectGroove(progress);
-    else onToggle();
   });
   parent.append(root);
 
