@@ -90,11 +90,11 @@ const Drum = Object.freeze({ KICK: 36, SNARE: 38, CLOSED_HAT: 42 });
 // The fog over the music follows the air over the city hour by hour, against the song's own air (user, 2026-11-15: not
 // absolute concentrations; each song goes from its own cleanest air to its own thickest): none at the cleanest, all of
 // it at the thickest, in between as the level goes. At none the mix is open and full; at all of it the low-pass is down
-// to MUFFLED_HZ and the volume to QUIET, so the music can barely be heard. The reverb and grit stay as they are in
+// to MUFFLED_HZ and the volume to QUIET, so only a low hum of it comes through. The reverb and grit stay as they are in
 // clear air. The mix also fades in over the song's first FADE_MS and out over its last, so songs run into each other.
 const OPEN_HZ = 18000;
 const MUFFLED_HZ = 220;
-const QUIET = 0.03;
+const QUIET = 0.12;
 const REVERB = 0.12;
 const DRIVE = 0;
 
