@@ -108,15 +108,17 @@ export function createBackdrop(root) {
       return;
     }
     const img = new Image();
-    img.addEventListener('load', () => {
-      colors.set(url, mainColor(img));
-      if (shownUrl === url) apply(colors.get(url));
-    });
-    img.addEventListener('error', () => {
-      colors.set(url, null);
-      if (shownUrl === url) apply(null);
-    });
     img.src = url;
+    // Decoded before it is drawn: iOS Safari fires load before a large image is decoded and then draws it blank, so its
+    // pixels read all black.
+    img
+      .decode()
+      .then(() => mainColor(img))
+      .catch(() => null)
+      .then((color) => {
+        colors.set(url, color);
+        if (shownUrl === url) apply(color);
+      });
   }
 
   /** @param {string | null} color an overlay's color for the bars while it is over the page; null when it has gone */
