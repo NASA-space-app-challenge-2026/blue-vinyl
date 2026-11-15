@@ -255,6 +255,9 @@ function layer(className, markup) {
 // The progress ring in the label's own units (radius 1 at its rim, where the globe's edge is): the rail runs centred
 // on that edge; how thick it is, and how wide a band round it takes a click.
 const RING = Object.freeze({ radius: 1, width: 0.014, dotRadius: 0.024, hitWidth: 0.09 });
+// The ring's drawing reaches this far (label units) past the rim on every side, so the dot, its shadow and the click
+// band lie inside it: Safari clips what an SVG draws outside its own box, overflow: visible or not.
+const RING_BLEED = 0.1;
 // A change of more than JUMP (share of a turn) within a track, such as a seek, glides there over GLIDE_MS instead of
 // jumping; playback itself moves far less than JUMP a frame.
 const RING_GLIDE = Object.freeze({ jump: 0.02, ms: 450 });
@@ -288,7 +291,16 @@ function arcFromTop(share) {
 function createProgressRing(onSeek) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'record-progress');
-  svg.setAttribute('viewBox', '-1 -1 2 2');
+  const side = 2 * (1 + RING_BLEED);
+  svg.setAttribute('viewBox', `${-side / 2} ${-side / 2} ${side} ${side}`);
+  // The label is 2 units across, so the bleed is RING_BLEED / 2 of its width on each side.
+  const bleedPercent = (RING_BLEED / 2) * 100;
+  Object.assign(svg.style, {
+    left: `${-bleedPercent}%`,
+    top: `${-bleedPercent}%`,
+    width: `${100 + 2 * bleedPercent}%`,
+    height: `${100 + 2 * bleedPercent}%`,
+  });
   svg.innerHTML = `
     <circle class="record-progress-rail" r="${RING.radius}" fill="none" stroke-width="${RING.width}"/>
     <path class="record-progress-fill" fill="none" stroke-width="${RING.width}"/>
