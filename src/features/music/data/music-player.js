@@ -212,10 +212,14 @@ export function createMusicPlayer() {
     running = null;
   }
 
-  /** Album position (s) of the sound, or null while nothing plays. */
+  /**
+   * Album position (s) of the sound as it is heard, or null while nothing plays. `currentTime` is when the audio is
+   * rendered; it reaches the speakers the output latency later (a few ms built in, a few hundred on Bluetooth).
+   */
   function positionSec() {
     if (!running) return null;
-    return running.from + Math.max(0, context.currentTime - running.startAt);
+    const latencySec = (context.outputLatency || 0) + (context.baseLatency || 0);
+    return running.from + Math.max(0, context.currentTime - latencySec - running.startAt);
   }
 
   /** @param {number} level 0..1 */
