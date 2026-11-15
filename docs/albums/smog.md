@@ -51,7 +51,7 @@ nell-v2's, with its fog over the music widened (user, 2026-11-15: as muffled as 
 | --- | --- | --- | --- | --- |
 | Portland | `SYNTH_POP` | D minor: Dm, B♭, F, C | Square-wave arpeggio (`PULSE`), halo pad, syncopated bass | Kick on every beat, snare on 2 and 4, eighth-note hats, sixteenth ghosts |
 | Beijing | `HOUSE` | A minor: Am, F, C, G | Saw chord stabs off the beat (`STAB`), offbeat bass | Kick on every beat, snare on 2 and 4, offbeat hats, sixteenth ghosts |
-| Dakar | `BREAKS` | E minor: Em, C, G, D | Dulcimer hook, warm pad, held bass | Broken kick, snare on 2 and 4, eighth-note hats and ghosts |
+| Lahore | `BREAKS` | E minor: Em, C, G, D | Dulcimer hook, warm pad, held bass | Broken kick, snare on 2 and 4, eighth-note hats and ghosts |
 
 Shared: the bass is the analog synth's `CAVE`, the drums the standard kit. Clear air plays dry (reverb 0.12); the thicker the smog, the more reverb (up to 0.6) and overdrive (up to 0.3).
 
@@ -66,7 +66,7 @@ Shared: the bass is the analog synth's `CAVE`, the drums the standard kit. Clear
 
 ## Globe
 
-The globe keeps the city's cell in the middle, close enough that the fog fills the label: the label's edge is where the fog has faded out (0.85 of the way to the box's nearer sides on the ground): 2.5° of arc in Portland, 2.7° in Beijing, 3.4° in Dakar (user, 2026-11-15). It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
+The globe keeps the city's cell in the middle, close enough that the fog fills the label: the label's edge is where the fog has faded out (0.85 of the way to the box's nearer sides on the ground): 2.5° of arc in Portland, 2.7° in Beijing, 3.0° in Lahore (user, 2026-11-15). It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
 
 The fog is one patch of the globe over the box, drawn by nell-v2's shader in [`smog-layer.js`](../../src/features/globe/presentation/smog-layer.js); the textures are uploaded only when the hour changes. It fades in over the song's first 1.5 s and out over its last.
 
