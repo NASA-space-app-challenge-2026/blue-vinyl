@@ -59,14 +59,12 @@ const AIR = Object.freeze({
 const ARPEGGIO_STEPS = 2 * STEPS_PER_BEAT;
 // The pad's own reverb in the sound font (CC 91), as Mirror Storms' pad.
 const PAD_REVERB = 90;
-// The air plays at full velocity and channel volume (CC 7), over the instruments' usual evening out, so it is heard
-// under the lead.
+// The air plays at full velocity, at the channel volumes (CC 7) that even the instruments out against each other.
 const AIR_VELOCITY = 127;
-const AIR_VOLUME = 127;
 const AIR_PARTICLES = Object.freeze(Object.keys(AIR));
 // How loud a particle type's instrument is, as a share of full, from the thinnest air (still plainly heard) to the
-// thickest.
-const AIR_LOUDNESS = Object.freeze([0.2, 1]);
+// thickest, which stays under the lead.
+const AIR_LOUDNESS = Object.freeze([0.2, 0.6]);
 const SPACE = Object.freeze({ reverb: 0.4, echo: 0.18, echoSteps: 3, feedback: 0.4 });
 
 const lerp = ([from, to], amount) => from + (to - from) * amount;
@@ -135,7 +133,6 @@ export class AerosolComposer {
     const { lead } = this.song;
     for (const particle of this.air) {
       const { instrument } = AIR[particle];
-      music.control(instrument, CC.VOLUME, AIR_VOLUME, at);
       music.control(instrument, CC.EXPRESSION, 0, at);
       if (instrument === Instrument.HALO_PAD) music.control(instrument, CC.REVERB, PAD_REVERB, at);
     }
