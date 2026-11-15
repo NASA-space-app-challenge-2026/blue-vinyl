@@ -2,7 +2,7 @@
 
 Every source the album uses, whether it comes from EIC or elsewhere. Written from [smog_album.ipynb](../../notebooks/smog_album.ipynb), which does the downloads. Rules: [data-guide.md](../../docs/data-guide.md#sources-file).
 
-The album plays nell-v2's "The Wind That Sweeps the Smog" over three cities of three regions (user, 2026-11-15): Portland (September 2020), Lahore (October 2024) and Beijing (January 2025), the air right over each city. The notebook screens 25 candidate episodes, picks them and exports them to `data/smog/tracks/` (see `tracks.json` there).
+The album plays nell-v2's "The Wind That Sweeps the Smog" over three cities of three regions (user, 2026-11-15): Canberra (December 2019), Seattle (September 2020) and Beijing (October 2025), the air right over each city. The notebook screens 25 candidate episodes, picks them and exports them to `data/smog/tracks/` (see `tracks.json` there).
 
 ## EIC Visualizations
 

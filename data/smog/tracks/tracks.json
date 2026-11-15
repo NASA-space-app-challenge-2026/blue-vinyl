@@ -1,7 +1,7 @@
 [
   {
-    "file": "portland_2020.csv",
-    "title": "Portland",
+    "file": "canberra_2019.csv",
+    "title": "Canberra",
     "pages": [
       {
         "svsId": 5151,
@@ -14,7 +14,7 @@
       {
         "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[23732:23787][0][526:558][213:245]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[17367:17499][0][203:235][1301:1333]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
@@ -24,13 +24,58 @@
       }
     ],
     "city": {
-      "name": "Portland",
-      "lat": 45.52,
-      "lon": -122.68
+      "name": "Canberra",
+      "lat": -35.28,
+      "lon": 149.13
     },
     "grid": {
-      "south": 41.5,
-      "west": -126.75,
+      "south": -39.25,
+      "west": 145.25,
+      "stepDeg": 0.25,
+      "rows": 33,
+      "cols": 33
+    },
+    "timeZone": "Australia/Sydney",
+    "units": {
+      "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
+    },
+    "timeRange": [
+      "2019-12-25T15:30Z",
+      "2019-12-31T03:30Z"
+    ]
+  },
+  {
+    "file": "seattle_2020.csv",
+    "title": "Seattle",
+    "pages": [
+      {
+        "svsId": 5151,
+        "svsUrl": "https://svs.gsfc.nasa.gov/5151/",
+        "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
+      }
+    ],
+    "note": "Ours: the city's box filling with smog and clearing again once, picked by the app's rules (section 5); every hour of it.",
+    "sources": [
+      {
+        "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
+        "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[23512:23624][0][534:566][215:247]",
+        "version": "v1",
+        "doi": "https://doi.org/10.1029/2020MS002413",
+        "downloaded": "2026-11-15",
+        "license": "NASA data, no restrictions on use",
+        "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
+        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; v1 holds every song."
+      }
+    ],
+    "city": {
+      "name": "Seattle",
+      "lat": 47.61,
+      "lon": -122.33
+    },
+    "grid": {
+      "south": 43.5,
+      "west": -126.25,
       "stepDeg": 0.25,
       "rows": 33,
       "cols": 33
@@ -40,53 +85,8 @@
       "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2020-09-15T20:30Z",
-      "2020-09-18T03:30Z"
-    ]
-  },
-  {
-    "file": "lahore_2024.csv",
-    "title": "Lahore",
-    "pages": [
-      {
-        "svsId": 5151,
-        "svsUrl": "https://svs.gsfc.nasa.gov/5151/",
-        "message": "Though small particles typically remain in the atmosphere for only a few days, they can be transported far away from source regions by large scale weather systems."
-      }
-    ],
-    "note": "Ours: the city's box filling with smog and clearing again once, picked by the app's rules (section 5); every hour of it.",
-    "sources": [
-      {
-        "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
-        "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[59838:59891][0][470:502][1001:1033]",
-        "version": "v1",
-        "doi": "https://doi.org/10.1029/2020MS002413",
-        "downloaded": "2026-11-15",
-        "license": "NASA data, no restrictions on use",
-        "credit": "Keller, C. A., et al. (2021). Description of the NASA GEOS composition forecast modeling system GEOS-CF v1.0. JAMES 13, e2020MS002413.",
-        "substitute": "EIC 5151 links GEOS-CF v2, which starts on 2025-08-04; v1 holds every song."
-      }
-    ],
-    "city": {
-      "name": "Lahore",
-      "lat": 31.55,
-      "lon": 74.34
-    },
-    "grid": {
-      "south": 27.5,
-      "west": 70.25,
-      "stepDeg": 0.25,
-      "rows": 33,
-      "cols": 33
-    },
-    "timeZone": "Asia/Karachi",
-    "units": {
-      "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
-    },
-    "timeRange": [
-      "2024-10-29T06:30Z",
-      "2024-10-31T11:30Z"
+      "2020-09-06T16:30Z",
+      "2020-09-11T08:30Z"
     ]
   },
   {
@@ -104,7 +104,7 @@
       {
         "source": "GEOS-CF v1 (NASA GMAO), aqc_tavg_1hr_g1440x721_v1, pm25_rh35_gcc",
         "sourceUrl": "https://gmao.gsfc.nasa.gov/gmao-products/geos-cf/",
-        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[62067:62144][0][504:536][1170:1202]",
+        "downloadUrl": "https://opendap.nccs.nasa.gov/dods/gmao/geos-cf/assim/aqc_tavg_1hr_g1440x721_v1.dods?pm25_rh35_gcc[68394:68534][0][504:536][1170:1202]",
         "version": "v1",
         "doi": "https://doi.org/10.1029/2020MS002413",
         "downloaded": "2026-11-15",
@@ -130,8 +130,8 @@
       "<lat>_<lon>": "µg/m³ (surface PM2.5 at 35 % relative humidity, hourly mean, the cell centred there)"
     },
     "timeRange": [
-      "2025-01-30T03:30Z",
-      "2025-02-02T08:30Z"
+      "2025-10-20T18:30Z",
+      "2025-10-26T14:30Z"
     ]
   }
 ]
