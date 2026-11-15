@@ -995,7 +995,8 @@ function renderData(trackIndex) {
 
 /**
  * Draws the year or day of a wildfire track that plays at the clock, looking at the contiguous United States: the
- * year's large MTBS fires where they burned, lit through its bar in the order they started (Burned Acres), or each
+ * year's large MTBS fires where they burned, their scars in full on its first beat and flaring through its bar in the
+ * order they started (Burned Acres), or each
  * large fire's scar, front and smoke that day (2020 Fire Season). The globe and the read-out change only when the year or day does; the fires ease and flicker by themselves.
  *
  * @param {import('../features/tracks/data/track-repository.js').WildfireTrackData} data

@@ -2,9 +2,9 @@
 // flames licking out past it, embers flickering inside and, while it burns hard, smoke lit orange from below and
 // sparks streaming east on the westerlies.
 //
-// Track 1 (Burned Acres): each year's large MTBS fires where they burned, lit in the order they started through the
-// year's bar: each flares up as large and as hot as its acres, then burns down to its scar, and the year's scars give
-// way to the next year's.
+// Track 1 (Burned Acres): each year's large MTBS fires where they burned. Their scars, the year's area, show in full on
+// the bar's first beat, with the year's note; through the bar each fire flares up as hot as its acres in the order
+// they started, with its pluck, then burns down to its scar, and the year's scars give way to the next year's.
 // Track 2 (2020 Fire Season): each large FEDS fire where it burned, its scar as large as the fire has grown, its front
 // and smoke as bright as the VIIRS pixels newly burning that day.
 // In both, a scar is in proportion to its fire's area, far larger than life so it reads on a record label.
@@ -18,7 +18,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.m
 // Under the storm's clouds (0.008), above the ice.
 const ALTITUDE = 0.006;
 // Changes ease in with this time constant, so a new year or day spreads the fire instead of jumping.
-const EASE_SEC = Object.freeze({ scar: 0.25, fade: 0.2 });
+const EASE_SEC = Object.freeze({ fade: 0.2 });
 // Track 2: a day's scar and heat ease in with a time constant of this share of its beat, so they are 95% there by the
 // next day, as its notes are.
 const DAY_EASE_SHARE = 1 / 3;
@@ -376,16 +376,7 @@ export function createFiresLayer({ globe }) {
         continue;
       }
       const lit = trackClock() - fire.igniteAt;
-      if (lit < 0) {
-        fire.shown = false;
-        continue;
-      }
-      if (!fire.shown) {
-        fire.shown = true;
-        fire.scar = fire.target.scar * 0.3;
-      }
-      fire.scar = ease(fire.scar, fire.target.scar, dt, EASE_SEC.scar);
-      fire.heat = fire.peakHeat * (1 - Math.exp(-lit / FLARE_SEC)) * Math.exp(-lit / BURN_SEC);
+      fire.heat = lit < 0 ? 0 : fire.peakHeat * (1 - Math.exp(-lit / FLARE_SEC)) * Math.exp(-lit / BURN_SEC);
       drawShown(fire);
     }
     endFrame();
@@ -408,8 +399,9 @@ export function createFiresLayer({ globe }) {
     lastNow = null;
   }
 
-  // Track 1: the year's fires are lit through its bar (`spanSec` from `startSec`, track time), each as far into it as
-  // it started into its year; the fires still shown from another year fade out.
+  // Track 1: the year's scars show in full at once, on its first beat; its fires flare through its bar (`spanSec` from
+  // `startSec`, track time), each as far into it as it started into its year. The fires still shown from another year
+  // fade out.
   function showYear(year, fires, startSec, spanSec) {
     if (year === shownYear) return;
     shownYear = year;
@@ -419,7 +411,8 @@ export function createFiresLayer({ globe }) {
       const peakHeat = Math.min(1, Math.sqrt(data.areaKm2 / FULL_HEAT_KM2));
       yearFires.add({
         ...fireAt(data.fireid, data.lat, data.lon, capOf(scar, peakHeat)),
-        scar: 0,
+        shown: true,
+        scar,
         heat: 0,
         fade: 1,
         target: { scar, heat: 0, fade: 1 },
