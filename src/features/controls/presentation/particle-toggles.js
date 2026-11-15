@@ -93,9 +93,13 @@ export function createParticleToggles(parent, onChange) {
 
   const container = document.createElement('div');
   container.className = 'glass-capsule particle-toggles';
+  // A dark tint under the glass, so the white names read over the bright air inside the globe
   container.style.cssText = `
     display: flex;
     align-items: center;
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.14) 0%, rgb(255 255 255 / 0.04) 100%),
+      rgb(15 23 42 / 0.35);
   `;
 
   const states = {
