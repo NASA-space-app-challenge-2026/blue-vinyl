@@ -6,7 +6,7 @@ const SOUND_URLS = Object.freeze([
   new URL('../assets/meow-3.m4a', import.meta.url).href,
 ]);
 
-const DEFAULT_VOLUME = 0.3;
+const DEFAULT_VOLUME = 0.08;
 
 /**
  * Loads and plays cute, cheerful kitten meows at a gentle volume.
