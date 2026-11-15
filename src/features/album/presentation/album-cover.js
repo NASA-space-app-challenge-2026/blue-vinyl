@@ -1,6 +1,6 @@
 import { ALBUM_CATEGORY_LABEL, formatDuration, trackCover } from '../domain/album.js';
 import { ALBUM_NOTES } from '../data/album-notes.js';
-import { docentIntroSec, introText } from '../../docent/domain/docent.js';
+import { introSec } from '../../docent/data/docent-audio.js';
 
 // Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always
 // leans the same way and never stands straight.
@@ -66,6 +66,8 @@ export function createAlbumCover(parent, { onSelectTrack, onSelectDocent } = {})
   noteBtn.type = 'button';
   noteBtn.setAttribute('aria-label', 'Show liner notes');
   noteBtn.textContent = 'NOTE';
+  // Hidden for now (user, 2026-11-15): the notes stay built on the back, and showing the button brings them back.
+  noteBtn.hidden = true;
   noteBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
   noteBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -227,7 +229,7 @@ export function createAlbumCover(parent, { onSelectTrack, onSelectDocent } = {})
       item.append(button);
       return item;
     });
-    docentDuration.textContent = formatDuration(docentIntroSec(introText(album.title, ALBUM_NOTES[album.id]?.docentTip)));
+    docentDuration.textContent = formatDuration(introSec(album.id, album.title, ALBUM_NOTES[album.id]?.docentTip));
     list.append(docentItem, ...items);
     body.replaceChildren(el('p', 'album-cover-category', ALBUM_CATEGORY_LABEL[album.category]), el('h1', 'album-cover-title', album.title), list);
 

@@ -1,10 +1,12 @@
 import { ControlIcon, createControlIcon } from '../../controls/presentation/control-icons.js';
 
 /**
- * A glass segment that turns the docent on and off. It starts off, its speech bubble struck through.
+ * A glass segment that turns the docent on and off. It starts off, its speech bubble struck through. Returns
+ * `toggle`, to turn it from elsewhere (a key) as a click does.
  *
  * @param {HTMLElement} parent a glass capsule
  * @param {{ onChange: (on: boolean) => void }} options
+ * @returns {{ toggle: () => void }}
  */
 export function createDocentToggle(parent, { onChange }) {
   const button = document.createElement('button');
@@ -19,12 +21,14 @@ export function createDocentToggle(parent, { onChange }) {
     button.title = on ? 'Docent on' : 'Docent off';
   }
 
-  button.addEventListener('click', () => {
+  function toggle() {
     on = !on;
     render();
     onChange(on);
-  });
+  }
 
+  button.addEventListener('click', toggle);
   render();
   parent.append(button);
+  return { toggle };
 }

@@ -1,32 +1,29 @@
-/* The docent's speech bubble (docent-bubble.js): a small cream card along the bottom, just left of the cat in the
-   bottom right corner (cat-view.js, 150 px wide, 80 px on a phone), as wide as its sentence and no wider than a short
-   paragraph, so it sits below the globe; its rounded tail curls toward the cat. Over the stage, as the corners are. */
+/* The docent's speech bubble (docent-bubble.js): a small cream card, as wide as its sentence and no wider than a short
+   paragraph, its tail pointing at the cat in the bottom right corner (cat-view.js). docent-bubble.js hangs it beside
+   the cat from the height of its mouth, a longer sentence reaching further down, and aims the tail (--tail-y); until
+   the cat is drawn it waits here, just left of the cat's corner. Over the stage, as the corners are. */
 .docent-bubble {
   --cat-width: 150px;
-  /* The tail's height above the bubble's bottom, level with the cat's head. */
-  --tail-bottom: 40px;
   --paper: #fbf4e6;
   --paper-ink: #3b2a1a;
-  --honey: #c98a2b;
   position: absolute;
   right: calc(var(--gutter) + var(--safe-right) + var(--cat-width));
-  /* As low as the corners' controls, so a sentence's few lines stay below the globe. */
   bottom: calc(var(--gutter) + var(--safe-bottom));
   z-index: 3;
   width: max-content;
   max-width: min(420px, 34%);
   margin: 0;
-  padding: 14px 18px 12px;
-  border-radius: 22px;
+  padding: 12px 18px;
+  border-radius: 20px;
   background: var(--paper);
-  /* A paper card lifted off the table: a soft shadow below, a light rim on top. */
-  box-shadow:
-    0 12px 28px rgb(0 0 0 / 0.36),
-    0 2px 6px rgb(0 0 0 / 0.18),
-    inset 0 1px 0 rgb(255 255 255 / 0.9);
+  /* A paper card lifted off the table: a light rim on top, and a soft shadow below the card and its tail together
+     (a filter, so the tail casts it too, with no seam where it joins). */
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  filter: drop-shadow(0 10px 14px rgb(0 0 0 / 0.3)) drop-shadow(0 2px 3px rgb(0 0 0 / 0.16));
   color: var(--paper-ink);
   text-shadow: none;
-  transform-origin: right bottom;
+  /* It pops out from its tail, as if from the cat's mouth. */
+  transform-origin: right var(--tail-y, 30px);
   animation: docent-bubble-float 4s ease-in-out infinite alternate;
 }
 
@@ -34,36 +31,21 @@
   display: none;
 }
 
-/* The tail: a square turned on its corner, half tucked under the card, its rounded tip reaching out to the cat. */
+/* The tail, out of the card's right side toward the cat's cheek: tucked a little into the card, so it joins it
+   cleanly, and reaching 22 px past it (TAIL_REACH in docent-bubble.js), turned toward the cat (--tail-turn) round
+   where it leaves the card when the card cannot be level with it. Its colour is the card's (--paper), written into
+   the drawing. */
 .docent-bubble::after {
   content: '';
   position: absolute;
-  right: -7px;
-  bottom: min(var(--tail-bottom), calc(100% - 30px));
-  width: 18px;
-  height: 18px;
-  border-top-right-radius: 6px;
-  background: var(--paper);
-  rotate: 45deg;
-}
-
-/* A little tag stuck on the card's top edge, so it takes no room of its own. */
-.docent-bubble-label {
-  position: absolute;
-  top: -9px;
-  left: 14px;
-  padding: 1px 9px 2px;
-  border-radius: 999px;
-  background: var(--honey);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 0.2);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #fff8ec;
-}
-
-.docent-bubble-label::before {
-  content: '🐾 ';
+  top: var(--tail-y, 30px);
+  right: -22px;
+  width: 30px;
+  height: 24px;
+  translate: 0 -50%;
+  rotate: var(--tail-turn, 0deg);
+  transform-origin: 8px 50%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 24'%3E%3Cpath fill='%23fbf4e6' d='M0 2H8C13 7 20 10 30 12C20 14 13 17 8 22H0Z'/%3E%3C/svg%3E") no-repeat center / 100% 100%;
 }
 
 .docent-bubble-text {
@@ -89,32 +71,14 @@
   }
 }
 
-/* A phone, on its side or turned by app.css to show the layout on its side: the globe fills the screen's height, so
-   there is no room below it. The bubble sits above the cat instead, under the top right controls, clear of the globe
-   to its left, its tail pointing down at the cat. */
+/* A phone, on its side or turned by app.css to show the layout on its side: a smaller card and smaller words, as the
+   cat is smaller there (cat-view.js). */
 @media screen and (orientation: landscape) and (max-height: 540px), screen and (orientation: portrait) and (max-width: 540px) {
   .docent-bubble {
-    top: calc(var(--gutter) + var(--safe-top) + 56px);
-    right: calc(var(--gutter) + var(--safe-right));
-    bottom: auto;
+    --cat-width: 80px;
     max-width: 230px;
-    padding: 10px 12px 8px;
+    padding: 9px 12px;
     border-radius: 16px;
-    transform-origin: right top;
-  }
-
-  .docent-bubble::after {
-    right: 36px;
-    bottom: -6px;
-    width: 14px;
-    height: 14px;
-    border-radius: 0 0 4px;
-  }
-
-  .docent-bubble-label {
-    top: -8px;
-    left: 10px;
-    font-size: 9px;
   }
 
   .docent-bubble-text {

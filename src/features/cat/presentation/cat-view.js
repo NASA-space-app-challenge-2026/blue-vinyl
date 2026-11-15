@@ -6,9 +6,31 @@ import { createCatSound } from '../data/cat-sound.js';
 // Rendered by live2d-widget (global L2Dwidget, loaded in index.html).
 
 const HIJIKI_MODEL_URL = 'https://unpkg.com/live2d-widget-model-hijiki@1.0.5/assets/hijiki.model.json';
-const MOBILE_MAX_WIDTH = 768;
+// A phone, by the screen's shorter side, so one held on its side (wider than a tablet's narrow side) is one too.
+const MOBILE_MAX_SIDE = 540;
 // The element live2d-widget draws the cat in (its default name.div).
 const WIDGET_ID = 'live2d-widget';
+
+// The canvas live2d-widget draws the cat on.
+const CANVAS_ID = 'live2dcanvas';
+// Where the cat's left cheek is in its canvas, at the height of its mouth, as shares of the canvas's width and height
+// (measured on the hijiki model as DISPLAY draws it): what a speech bubble's tail points at.
+const CHEEK = Object.freeze({ x: 0.34, y: 0.4 });
+
+/**
+ * The cat's left cheek, where the docent's speech bubble points: in the pixels `rectOf` measures boxes in, or null
+ * while the cat is not drawn yet.
+ *
+ * @param {(el: Element) => DOMRectReadOnly} rectOf
+ * @returns {{ x: number, y: number } | null}
+ */
+export function catCheek(rectOf) {
+  const canvas = document.getElementById(CANVAS_ID);
+  if (!canvas) return null;
+  const rect = rectOf(canvas);
+  if (!rect.width) return null;
+  return { x: rect.left + rect.width * CHEEK.x, y: rect.top + rect.height * CHEEK.y };
+}
 
 const DISPLAY = Object.freeze({
   desktop: Object.freeze({ width: 150, height: 300, hOffset: 0, vOffset: -20 }),
@@ -21,7 +43,7 @@ const DISPLAY = Object.freeze({
  */
 export function createCatView(screen) {
   const catSound = createCatSound();
-  const size = window.innerWidth <= MOBILE_MAX_WIDTH ? DISPLAY.mobile : DISPLAY.desktop;
+  const size = Math.min(window.innerWidth, window.innerHeight) <= MOBILE_MAX_SIDE ? DISPLAY.mobile : DISPLAY.desktop;
   window.L2Dwidget.init({
     model: { jsonPath: HIJIKI_MODEL_URL, scale: 1 },
     display: { position: 'right', ...size },
@@ -38,7 +60,7 @@ export function createCatView(screen) {
     const onMeow = (event) => {
       if (event.button !== undefined && event.button !== 0) return;
       catSound.play();
-      const canvas = document.getElementById('live2dcanvas');
+      const canvas = document.getElementById(CANVAS_ID);
       if (canvas) {
         canvas.style.setProperty('pointer-events', 'auto', 'important');
         canvas.classList.remove('meowing');

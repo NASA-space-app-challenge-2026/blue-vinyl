@@ -11,7 +11,7 @@ import { albumDurationSec, formatDuration, trackBoundaries, trackCover, trackFad
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
-import { createCatView } from '../features/cat/presentation/cat-view.js';
+import { catCheek, createCatView } from '../features/cat/presentation/cat-view.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
 import { createMediaCenter } from '../features/controls/data/media-center.js';
 import { createAlbumSwitcher } from '../features/controls/presentation/album-switcher.js';
@@ -25,9 +25,8 @@ import { ALBUM_NOTES } from '../features/album/data/album-notes.js';
 import { createDocentBubble } from '../features/docent/presentation/docent-bubble.js';
 import { createDocentToggle } from '../features/docent/presentation/docent-toggle.js';
 import { createDocentNarrator } from '../features/docent/presentation/docent-narrator.js';
-import { docentIntroSec, introText } from '../features/docent/domain/docent.js';
 import { createDocentVoice } from '../features/docent/data/docent-voice.js';
-import { introLines, trackLines } from '../features/docent/data/docent-audio.js';
+import { introLines, introSec as docentIntroLength, trackLines } from '../features/docent/data/docent-audio.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
 import { DEFAULT_GLOBE_THEME } from '../features/globe/domain/globe-theme.js';
@@ -243,15 +242,16 @@ createAlbumSwitcher(albumControls, {
   onNext: () => switchAlbum(1),
 });
 // The docent, off until turned on: the cat says the current album's introduction (see showAlbum).
-// The bubble keeps clear of the globe on the record's label.
+// The bubble keeps clear of the globe on the record's label, and points at the cat.
 const docentBubble = createDocentBubble(slot('screen'), {
   avoid: () => {
     const rect = screenSpace.rectOf(turntable.label);
     return rect.width ? { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, r: rect.width / 2 } : null;
   },
+  speaker: () => catCheek(screenSpace.rectOf),
 });
 const docentNarrator = createDocentNarrator(docentVoice, docentBubble);
-createDocentToggle(createGlassCapsule(slot('corner-bottom-left')), { onChange: setDocent });
+const docentToggle = createDocentToggle(createGlassCapsule(slot('corner-bottom-left')), { onChange: setDocent });
 const viewControls = createGlassCapsule(slot('corner-top-right'));
 createFullscreenButton(viewControls);
 const aboutDialog = createInfoDialog(slot('screen'), {
@@ -301,6 +301,8 @@ const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
 const VOLUME_KEYS = Object.freeze({ ArrowUp: 1, ArrowDown: -1 });
 // The number keys, on the main row or the keypad, go straight to the album at that place in the catalog (1 the first).
 const ALBUM_NUMBER_CODE = /^(?:Digit|Numpad)([1-9])$/;
+// The docent key, by its place on the keyboard (so it works whatever the layout's letter there, Korean too).
+const DOCENT_KEY = 'KeyD';
 
 // Space always plays or pauses, left and right switch albums, 1 to 9 go to an album and up and down set the volume,
 // wherever the focus is.
@@ -317,6 +319,13 @@ document.addEventListener(
       event.preventDefault();
       releaseClickFocus();
       if (!event.repeat) togglePlayback();
+      return;
+    }
+    // D turns the docent on and off, as its button does; a text field keeps its letters.
+    if (event.code === DOCENT_KEY && !(event.target instanceof HTMLInputElement && event.target.type !== 'range')) {
+      event.preventDefault();
+      releaseClickFocus();
+      if (!event.repeat) docentToggle.toggle();
       return;
     }
     const albumNumber = ALBUM_NUMBER_CODE.exec(event.code);
@@ -1233,7 +1242,7 @@ function tick(ts) {
     lastFrameTs = ts;
     introMs += dtMs;
     // It ends when the voice does (see syncVoice); with no voice heard, after the words' estimated length.
-    const introSec = docentIntroSec(introText(album.title, ALBUM_NOTES[album.id]?.docentTip));
+    const introSec = docentIntroLength(album.id, album.title, ALBUM_NOTES[album.id]?.docentTip);
     if (!docentNarrator.speaking && introMs >= introSec * 1000) {
       finishIntro();
       return;
