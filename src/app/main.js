@@ -398,7 +398,7 @@ async function loadSong(track, target) {
       city,
       // The local clock by the hour.
       dateFormat: { month: 'short', day: '2-digit', hour: '2-digit', hourCycle: 'h23', timeZone },
-      focus: track.smog.view ?? boxFocus(smogTrack),
+      focus: { ...boxFocus(smogTrack), ...(track.smog.arcDeg && { arcDeg: track.smog.arcDeg }) },
       loop: track.smog.loop,
       composer: smogComposer,
       // Timed in playback ms from the song's start; the composer reads the box at each step's time.
