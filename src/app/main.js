@@ -292,7 +292,7 @@ async function loadAlbumData(loading) {
       }));
     }
     if (track.wildfire?.kind === 'annual') {
-      return annualBurnScore(data[i].years, WILDFIRE_YEAR_TIMELINE, track.durationSec).map((note) => ({
+      return annualBurnScore(data[i].years, data[i].firesByYear, WILDFIRE_YEAR_TIMELINE, track.durationSec).map((note) => ({
         ...note,
         timeSec: note.timeSec + offset,
       }));
