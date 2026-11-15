@@ -37,4 +37,10 @@ export const Instrument = Object.freeze({
   DULCIMER: { program: 15, volume: 127 },
   TAIKO: { program: 116, volume: 66 },
   MELODIC_TOM: { program: 117, volume: 85 },
+  // The smog album (see composers/smog.js): each city's lead, keys and mallets, and the deep house loop's bass. Volumes
+  // not yet evened out against each other.
+  ELECTRIC_PIANO: { program: 4, volume: 100 },
+  VIBRAPHONE: { program: 11, volume: 100 },
+  MARIMBA: { program: 12, volume: 100 },
+  SYNTH_BASS: { program: 38, volume: 100 },
 });
