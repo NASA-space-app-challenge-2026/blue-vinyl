@@ -23,7 +23,7 @@ const KIND_VOICES = Object.freeze({
   [TreeKind.GREEN]: { instrument: Instrument.MARIMBA, lowNote: 50 }, // D3
   [TreeKind.TEAL]: { instrument: Instrument.MARIMBA, lowNote: 62 }, // D4
   [TreeKind.SKY]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 74 }, // D5
-  [TreeKind.SILVER]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 81 }, // A5
+  [TreeKind.PURPLE]: { instrument: Instrument.GLOCKENSPIEL, lowNote: 81 }, // A5
   [TreeKind.GOLD]: { instrument: Instrument.VIBRAPHONE, lowNote: 86 }, // D6
 });
 // How loud each kind plays against the others, so the many small trees do not drown the few tall ones; a kind's notes
@@ -32,7 +32,7 @@ const KIND_WEIGHT = Object.freeze({
   [TreeKind.GREEN]: 0.55,
   [TreeKind.TEAL]: 0.7,
   [TreeKind.SKY]: 0.85,
-  [TreeKind.SILVER]: 1,
+  [TreeKind.PURPLE]: 1,
   [TreeKind.GOLD]: 1.25,
 });
 

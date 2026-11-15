@@ -14,7 +14,7 @@ const TREE_LOOK = Object.freeze({
   [TreeKind.GREEN]: Object.freeze({ color: '#2f8f46', depth: 4 }),
   [TreeKind.TEAL]: Object.freeze({ color: '#22a99a', depth: 5 }),
   [TreeKind.SKY]: Object.freeze({ color: '#79c7ee', depth: 6 }),
-  [TreeKind.SILVER]: Object.freeze({ color: '#e6edf5', depth: 7 }),
+  [TreeKind.PURPLE]: Object.freeze({ color: '#b07cf0', depth: 7 }),
   [TreeKind.GOLD]: Object.freeze({ color: '#f4c34a', depth: 8 }),
 });
 // Trees are drawn over the globe without a depth test (an upright sprite against the surface flickered as the two
