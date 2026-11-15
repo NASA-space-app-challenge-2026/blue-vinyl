@@ -33,6 +33,8 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  * @property {string} csvUrl the track's time series CSV
  * @property {string} framesDir directory containing the visual PNG frames
  * @property {string} pathsUrl the particles' paths (see tracks/domain/aerosol-paths.js)
+ * @property {{ lead: import('../../music/domain/patches.js').Lead, baseMidi: number }} sound what the lead particle sings on,
+ *   and the note its lowest latitude sings, the track's tonic (see music/domain/composers/aerosol.js)
  * @property {number} [viewLat] latitude of the track's view centre
  * @property {number} [viewLon] longitude of the track's view centre
  */

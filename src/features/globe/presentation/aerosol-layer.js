@@ -10,24 +10,14 @@
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
 
+import { EIC_AOD, FRAME } from '../../tracks/domain/aerosol-frame.js';
+
 const ALTITUDE = 0.005;
 
-// How the frames are encoded (ENC_* of the notebook) and laid out: the AOD grid is 0.5° by 0.625°, its first column
-// centred at 179.84375° W and its first row at 90° S.
-const FRAME = Object.freeze({
-  cols: 576,
-  rows: 361,
-  stepLatDeg: 0.5,
-  stepLonDeg: 0.625,
-  firstLonDeg: -179.84375,
-  aodLo: 0.01,
-  aodHi: 3.0,
-  speedMax: 40.0,
-});
 // EIC's colouring (AOD_LO, AOD_HI, COLOR and `composite` of the notebook).
 const EIC = Object.freeze({
-  aodLo: 0.03,
-  aodHi: 1.0,
+  aodLo: EIC_AOD.lo,
+  aodHi: EIC_AOD.hi,
   gamma: 1.3,
   exposure: 1.6,
   salt: [0.25, 0.55, 1.0],

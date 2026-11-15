@@ -36,6 +36,34 @@ Frames for the globe: `data/aerosol/tracks/frames/`, one PNG per step shared by 
 
 Two weeks, 112 steps of 3 hours, 0.25 s a step: 28 s a track. 
 
+## Sound
+
+120 BPM, a step a sixteenth note. Erin is in A minor, the other tracks in C minor. The lead sings on the analog synth (`src/features/music/data/analog-synth.js`, an exception to the album guide's SoundFont rule as in Mirror Storms); the air plays from the app's SoundFont. The whole mix rings in a large room (reverb send 0.4) and echoes three steps behind (send 0.18, feedback 0.4). Composer: `src/features/music/domain/composers/aerosol.js`.
+
+The lead is the track's lead particle (the one the globe circles), one held voice, as a storm's in [hemispheres.md](hemispheres.md):
+
+| Data | Mapping |
+| --- | --- |
+| latitude | pitch, north higher, on the track's minor pentatonic over two octaves from the tonic, spread over the latitudes the particle covers (11 notes); it glides to each new note over 0.15 s |
+| degrees east of where it was released | place around the listener on an HRTF panner, fully to the side 20° of longitude away |
+| speed (km a step) | loudness (0.35 at the slowest to 1 at the fastest step) and brightness (the filter's cutoff 1 to 4 octaves above the note) |
+
+| Track | Lead | Sound |
+| --- | --- | --- |
+| Hurricane Erin | Whistle | one sine, quick vibrato |
+| Saharan Dust | Bowed string | a sawtooth over a triangle an octave down |
+| Southern Africa Smoke | Vocal | two hollow squares, ringing filter, slow wide vibrato |
+| Etna's Breath | Brass | two sawtooths a little apart |
+
+The air is one sustained instrument for each particle type, held on a tone of the tonic minor chord. Its loudness is that type's AOD at the lead's head, read from the frame the globe draws, on the same log scale (0.03 to 1.0) as the globe's colours, so the sound is as thick as the colour round the lead. The toggle under the globe switches the particle type off on the globe and in the music together.
+
+| Particle type | Instrument | Tone above the tonic |
+| --- | --- | --- |
+| Sea salt | Seashore | an octave (noise, no pitch to speak of) |
+| Dust | Halo pad | the tonic |
+| Smoke | Voice oohs | the fifth |
+| Sulfate | Warm pad | the minor third, an octave up |
+
 ## Globe
 
 - The four AODs are drawn as a shell over the whole globe in EIC's colours and log scale, decoded to their real values and carried along the frames' flow between two frames; nothing is added to any particle type.

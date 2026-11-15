@@ -1,4 +1,5 @@
-import { parseAerosolPaths } from '../domain/aerosol-paths.js';
+import { aodsAt, FRAME } from '../domain/aerosol-frame.js';
+import { headOf, parseAerosolPaths } from '../domain/aerosol-paths.js';
 import { parseAerosolCsv } from '../domain/aerosol-track.js';
 
 /**
@@ -39,4 +40,44 @@ export function loadAerosolTrack(source) {
     cache.set(csvUrl, loading);
   }
   return cache.get(csvUrl);
+}
+
+// How many frames are decoded at once.
+const DECODE_BATCH = 4;
+
+/**
+ * The AOD of each particle type at each track's lead particle, at each step: every frame is decoded once, for all the
+ * tracks, which share them.
+ *
+ * @param {AerosolTrackData[]} tracks
+ * @returns {Promise<import('../domain/aerosol-frame.js').ParticleAods[][]>} by track, then step
+ */
+export async function loadHeroAods(tracks) {
+  const { frames } = tracks[0];
+  if (tracks.some((track) => track.frames.join() !== frames.join())) throw new Error('aerosol: tracks differ in frames');
+  const heroes = tracks.map(({ paths }) => paths.find((p) => p.hero));
+  const aods = tracks.map(() => []);
+  const canvas = document.createElement('canvas');
+  canvas.width = FRAME.cols;
+  canvas.height = 2 * FRAME.rows;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  for (let first = 0; first < frames.length; first += DECODE_BATCH) {
+    const images = await Promise.all(frames.slice(first, first + DECODE_BATCH).map(decodeImage));
+    images.forEach((image, i) => {
+      context.drawImage(image, 0, 0);
+      const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+      heroes.forEach((hero, t) => {
+        const [lat, lon] = headOf(hero, first + i);
+        aods[t].push(aodsAt(data, 4, lat, lon));
+      });
+    });
+  }
+  return aods;
+}
+
+async function decodeImage(url) {
+  const image = new Image();
+  image.src = url;
+  await image.decode();
+  return image;
 }

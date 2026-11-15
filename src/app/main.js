@@ -1,5 +1,6 @@
 import { heroFocus, PARTICLE_TOGGLE } from '../features/tracks/domain/aerosol-paths.js';
-import { loadAerosolTrack } from '../features/tracks/data/aerosol-track-source.js';
+import { loadAerosolTrack, loadHeroAods } from '../features/tracks/data/aerosol-track-source.js';
+import { heroAt, heroSeries } from '../features/tracks/domain/aerosol-hero.js';
 import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
 'use strict';
 
@@ -38,6 +39,7 @@ import { createMusicPlayer } from '../features/music/data/music-player.js';
 import { createSoundEngine } from '../features/music/data/sound-engine.js';
 import { createSpatialPreview } from '../features/music/data/spatial-preview.js';
 import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
+import { AerosolComposer, aerosolSong } from '../features/music/domain/composers/aerosol.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
 import { HurricaneComposer } from '../features/music/domain/composers/hurricane.js';
 import { LightningComposer } from '../features/music/domain/composers/lightning.js';
@@ -188,6 +190,7 @@ const flockComposer = new FlockComposer();
 const hurricaneComposer = new HurricaneComposer();
 const lightningComposer = new LightningComposer();
 const smogComposer = new SmogComposer();
+const aerosolComposer = new AerosolComposer();
 const ticker = createTicker(tick);
 // The system's media controls play and pause, and step through the tracks, on into the next or previous album.
 const mediaCenter = createMediaCenter({
@@ -879,6 +882,28 @@ async function loadAerosolData(loading) {
   musicCredits = ['Data: NASA GMAO GEOS-FP · NOAA NHC'];
   render();
   globe.glide();
+  // The music takes a while to decode from the frames; the globe does not wait for it.
+  const aerosolSongs = await loadAerosolSongs(loading, data);
+  if (album !== loading) return;
+  songs = aerosolSongs;
+}
+
+// The song of each of `target`'s aerosol tracks: its lead particle's way and the air it goes through, which the
+// particle toggles switch particle type by particle type.
+async function loadAerosolSongs(target, data) {
+  const loaded = data.filter(Boolean);
+  let aods;
+  try {
+    aods = await loadHeroAods(loaded);
+  } catch (error) {
+    console.warn('Aerosol music unavailable:', error);
+    return [];
+  }
+  return data.map((track, i) => {
+    if (!track) return null;
+    const hero = heroSeries(track.paths, aods[loaded.indexOf(track)]);
+    return aerosolSong(aerosolComposer, hero, target.tracks[i].durationSec, target.tracks[i].aerosol.sound, heroAt, () => particleToggles.states);
+  });
 }
 
 function renderAerosol(trackIndex) {
@@ -936,6 +961,11 @@ function renderSong(trackIndex) {
   }
   if (song.forest) {
     renderForest(trackIndex, song);
+    return;
+  }
+  if (song.aerosol) {
+    // The globe is drawn by renderAerosol; the music follows the clock.
+    if (state === PlaybackState.PLAYING) soundEngine.follow(song, elapsedMs / 1000 - trackStartSec(album, trackIndex));
     return;
   }
   if (shownSong !== song) {
