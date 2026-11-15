@@ -4,8 +4,9 @@
 // way and, at its end, forks: one child carries on near its line, the other leans off; now and then a shoot does not
 // grow at all, so the crown stays open. Every frame draws only what grew since the last one, in the tree's colour,
 // with globalCompositeOperation 'lighter', so where branches cross the light adds up and the trunk glows brightest,
-// like neon. Round each stroke a wider, fainter one is its glow (cheap, unlike a shadow blur, which made the frames
-// stutter). The canvas is otherwise transparent, so it adds nothing to the globe or the page around it.
+// like neon. Round each piece a wider, fainter one is its glow (cheap, unlike a shadow blur, which made the frames
+// stutter). A piece is a quad whose first edge is the last piece's last edge, so a branch that bends has no dark wedge
+// or bright overlap at its joints (stroked pieces with butt caps left a ladder of dark cracks across the trunk). The canvas is otherwise transparent, so it adds nothing to the globe or the page around it.
 
 import { seeded } from '../../tracks/domain/forest-trees.js';
 
@@ -45,7 +46,7 @@ export function createGrowingTree({ color, depth, growSec, sizePx, seed }) {
   function branch(x, y, angle, length, width, generation) {
     // Where along it a side shoot comes out, if one does.
     const shootAt = generation >= 1 && generation < depth && random() < CHANCE.shoot ? 0.3 + 0.5 * random() : null;
-    return { x, y, angle, length, width, generation, grown: 0, toPiece: PIECE, shootAt };
+    return { x, y, angle, length, width, generation, grown: 0, toPiece: PIECE, shootAt, core: null, glow: null };
   }
 
   /** Draws what grew up to `now` (seconds). Returns whether the tree is still growing. */
@@ -56,11 +57,33 @@ export function createGrowingTree({ color, depth, growSec, sizePx, seed }) {
     ctx.save();
     ctx.scale(sizePx, sizePx);
     ctx.globalCompositeOperation = 'lighter';
-    ctx.lineCap = 'butt';
-    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
     growing = growing.flatMap((b) => grow(b, speed * dt));
     ctx.restore();
     return growing.length > 0;
+  }
+
+  /** A branch's width where `grown` of it is drawn: it tapers toward its tip, but stays a pixel or so wide. */
+  function widthAt(b, grown) {
+    return Math.max(b.width * (1 - 0.35 * (grown / b.length)), 1.2 / sizePx);
+  }
+
+  /** The two corners of a piece's edge across a branch at (x, y) heading `angle`, `half` either side. */
+  function edgeAt(x, y, angle, half) {
+    const nx = -Math.sin(angle) * half;
+    const ny = Math.cos(angle) * half;
+    return [x + nx, y + ny, x - nx, y - ny];
+  }
+
+  /** Fills the piece between edge `from` and edge `to`. */
+  function fill(from, to) {
+    ctx.beginPath();
+    ctx.moveTo(from[0], from[1]);
+    ctx.lineTo(to[0], to[1]);
+    ctx.lineTo(to[2], to[3]);
+    ctx.lineTo(from[2], from[3]);
+    ctx.closePath();
+    ctx.fill();
   }
 
   /** Grows branch `b` by `by`, drawing it piece by piece; returns what grows on. */
@@ -71,18 +94,19 @@ export function createGrowingTree({ color, depth, growSec, sizePx, seed }) {
       const piece = Math.min(left, b.toPiece, b.length - b.grown);
       const x1 = b.x + Math.cos(b.angle) * piece;
       const y1 = b.y + Math.sin(b.angle) * piece;
-      const taper = 1 - 0.35 * (b.grown / b.length);
       const alpha = STROKE.alpha * STROKE.fade ** b.generation;
-      const width = Math.max(b.width * taper, 1.2 / sizePx);
-      ctx.beginPath();
-      ctx.moveTo(b.x, b.y);
-      ctx.lineTo(x1, y1);
+      const width = widthAt(b, b.grown);
+      b.core ??= edgeAt(b.x, b.y, b.angle, width / 2);
+      b.glow ??= edgeAt(b.x, b.y, b.angle, (width * STROKE.glowWidth) / 2);
+      const widthEnd = widthAt(b, b.grown + piece);
+      const core = edgeAt(x1, y1, b.angle, widthEnd / 2);
+      const glow = edgeAt(x1, y1, b.angle, (widthEnd * STROKE.glowWidth) / 2);
       ctx.globalAlpha = alpha * STROKE.glowAlpha;
-      ctx.lineWidth = width * STROKE.glowWidth;
-      ctx.stroke();
+      fill(b.glow, glow);
       ctx.globalAlpha = alpha;
-      ctx.lineWidth = width;
-      ctx.stroke();
+      fill(b.core, core);
+      b.core = core;
+      b.glow = glow;
       const before = b.grown / b.length;
       b.x = x1;
       b.y = y1;
