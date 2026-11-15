@@ -86,6 +86,33 @@ export function createGrowingTree({ color, depth, growSec, sizePx, seed }) {
     ctx.fill();
   }
 
+  /**
+   * Closes the fork where `child` leaves `parent`: the child's first edge is across its own line, so on the outer side
+   * of the turn it leaves a dark wedge between itself and the parent's last edge. Fills that wedge, a triangle from the
+   * fork to the parent's corner and the child's corner on that side.
+   */
+  function closeFork(parent, child) {
+    const [px, py] = [parent.x, parent.y];
+    const width = widthAt(child, 0);
+    const alpha = STROKE.alpha * STROKE.fade ** child.generation;
+    for (const [parentEdge, scale, share] of [
+      [parent.glow, STROKE.glowWidth, STROKE.glowAlpha],
+      [parent.core, 1, 1],
+    ]) {
+      const childEdge = edgeAt(px, py, child.angle, (width * scale) / 2);
+      // The child's corner that lies ahead of the parent's end is the one outside the parent.
+      const ahead = (corner) => (childEdge[corner] - px) * Math.cos(parent.angle) + (childEdge[corner + 1] - py) * Math.sin(parent.angle);
+      const side = ahead(0) > ahead(2) ? 0 : 2;
+      ctx.globalAlpha = alpha * share;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(parentEdge[side], parentEdge[side + 1]);
+      ctx.lineTo(childEdge[side], childEdge[side + 1]);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
   /** Grows branch `b` by `by`, drawing it piece by piece; returns what grows on. */
   function grow(b, by) {
     const out = [];
@@ -129,9 +156,13 @@ export function createGrowingTree({ color, depth, growSec, sizePx, seed }) {
     // The fork: a leader near the line, and maybe a second child leaning off to one side.
     const side = random() < 0.5 ? -1 : 1;
     const width = b.width * SHRINK.width;
-    out.push(branch(b.x, b.y, b.angle + (random() - 0.5) * 2 * ANGLE.leader, b.length * between(SHRINK.leader), width, b.generation + 1));
+    const leaderChild = branch(b.x, b.y, b.angle + (random() - 0.5) * 2 * ANGLE.leader, b.length * between(SHRINK.leader), width, b.generation + 1);
+    closeFork(b, leaderChild);
+    out.push(leaderChild);
     if (random() < CHANCE.fork) {
-      out.push(branch(b.x, b.y, b.angle + side * between(ANGLE.fork), b.length * between(SHRINK.fork), width * 0.85, b.generation + 1));
+      const forkChild = branch(b.x, b.y, b.angle + side * between(ANGLE.fork), b.length * between(SHRINK.fork), width * 0.85, b.generation + 1);
+      closeFork(b, forkChild);
+      out.push(forkChild);
     }
     return out;
   }
