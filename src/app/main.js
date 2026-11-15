@@ -332,8 +332,11 @@ function releaseClickFocus() {
   clickFocused = null;
 }
 
-// Safari ignores user-scalable=no (index.html) and touch-action for pinches, so its pinch gesture is cancelled here.
-document.addEventListener('gesturestart', (event) => event.preventDefault());
+// Safari ignores touch-action for pinches, so a pinch on the turntable (the record, the arm, the globe), which takes its
+// own touches, would zoom the page too; there it is cancelled. Anywhere else a pinch zooms the page.
+document.addEventListener('gesturestart', (event) => {
+  if (event.target instanceof Element && event.target.closest('.turntable')) event.preventDefault();
+});
 
 // A focused button is pressed on Space's keyup, so that is held back too.
 document.addEventListener(
