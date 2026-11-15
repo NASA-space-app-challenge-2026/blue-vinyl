@@ -19,6 +19,7 @@
   --ink-muted: rgb(243 236 225 / 0.65);
   --gutter: clamp(16px, 2vw, 32px);
   --font: 'Gowun Batang', serif;
+  --font-title: 'Yellowtail', cursive;
 }
 
 * {
@@ -82,14 +83,23 @@ body {
   transform: translateX(-50%);
 }
 
-/* The app's name in the top left corner. */
+/* The app's name in the top left corner, in a retro script like the name on a record label: warm cream lit from above,
+   tilted up a little as if signed. */
 .app-title {
   margin: 0;
-  font-size: clamp(16px, 1.5vw, 22px);
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  padding: 0 0.15em 0.1em;
+  font-family: var(--font-title);
+  font-size: clamp(26px, 2.4vw, 38px);
+  font-weight: 400;
+  line-height: 1.1;
   color: var(--ink);
-  text-shadow: 0 1px 8px rgb(0 0 0 / 0.35);
+  background: linear-gradient(180deg, #fff8ec 0%, #f3ece1 45%, #e2c79a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.45));
+  transform: rotate(-4deg);
+  transform-origin: left center;
   pointer-events: none;
   user-select: none;
 }

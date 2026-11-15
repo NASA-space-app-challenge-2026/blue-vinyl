@@ -102,6 +102,14 @@ export const LICENSES = Object.freeze([
         licenseUrl: LICENSE_URL.OFL,
       },
       {
+        name: 'Yellowtail',
+        url: 'https://fonts.google.com/specimen/Yellowtail',
+        by: 'Astigmatic, via Google Fonts',
+        use: 'The app title',
+        license: 'SIL Open Font License 1.1',
+        licenseUrl: LICENSE_URL.OFL,
+      },
+      {
         name: 'GeneralUser GS 2.0.3',
         url: 'https://github.com/mrbumpy409/GeneralUser-GS',
         by: 'S. Christian Collins',

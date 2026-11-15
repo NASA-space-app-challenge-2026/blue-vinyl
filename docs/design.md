@@ -8,9 +8,10 @@ One album is one LP record. The screen shows a single album at a time: the sleev
 
 ## Typography
 
-- Gowun Batang is the only typeface. Do not add another font family.
+- Gowun Batang is the typeface for everything except the app title. Do not add another font family.
+- The app title alone is set in Yellowtail, a retro script like the name on a record label (`--font-title`, SIL Open Font License 1.1, loaded with Gowun Batang).
 - Loaded from Google Fonts (weights 400 and 700) in `index.html`. Licensed under the SIL Open Font License 1.1.
-- Referenced through the `--font` token in `src/app/app.css`. Every element inherits it from `body`; never set `font-family` elsewhere.
+- Referenced through the `--font` token in `src/app/app.css`. Every element inherits it from `body`; never set `font-family` elsewhere, except `.app-title`.
 - Weights: 400 for body text, 700 for the album title and the active track.
 
 | Role | Style |
@@ -44,7 +45,7 @@ The record, label and tonearm use fixed dark and silver tones in `src/features/t
 - The sleeve's corners are rounded by 2px, just off sharp.
 - The sleeve's text is sized with the sleeve, as print on a sleeve is. It sits on a dark gradient at the bottom, and every line has a soft dark shadow, so the title and track list stay readable over any cover photo.
 - The sleeve shows the current track's cover when the track has one, else the album's; it fades from one to the next as the tracks change.
-- Top left: the app title, **Blue Vinyl** in Gowun Batang bold. The favicon is the 🌍 emoji, drawn in an inline SVG in `index.html`. Top right: a glass capsule with the fullscreen and more (`⋯`) buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. The credits of the cover shown, the album's data, the instruments and the globe's map/imagery run round the record's rim, outside the grooves, turning with the record (centred at 12 o'clock at rest) and shrunk to fit if long.
+- Top left: the app title, **Blue Vinyl** in Yellowtail, cream fading to warm gold, tilted up 4°. The favicon is the 🌍 emoji, drawn in an inline SVG in `index.html`. Top right: a glass capsule with the fullscreen and more (`⋯`) buttons. Bottom left: a glass capsule with play/pause and volume, and next to it a capsule with the previous/next album chevrons (left/right). Bottom center: the play hint. The credits of the cover shown, the album's data, the instruments and the globe's map/imagery run round the record's rim, outside the grooves, turning with the record (centred at 12 o'clock at rest) and shrunk to fit if long.
 - Always landscape: the screen maintains the horizontal sleeve-and-turntable layout on all viewports without vertical stacking. In portrait orientation (e.g. mobile phones held vertically), the screen is rotated 90 degrees via CSS transform so it completely fills the viewport in a forced landscape layout.
 
 ## Record
