@@ -284,6 +284,7 @@ createCatView(slot('screen'));
 // A drag is no gesture audio may start from on a phone, so the onboarding's taps unlock the sound first.
 // The bars and the safe areas take the onboarding's color while it is up.
 backdrop.overlay(getComputedStyle(document.documentElement).getPropertyValue('--title-bg').trim());
+document.documentElement.classList.add('is-booted');
 const onboarding = createOnboarding(slot('screen'), {
   content: ONBOARDING,
   stage: slot('stage'),
