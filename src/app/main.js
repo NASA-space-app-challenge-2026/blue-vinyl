@@ -922,17 +922,8 @@ function renderAerosol(trackIndex) {
   }
   particleToggles.show();
   const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
-  globe.aerosol.setLead(track.aerosol.events.filter((e) => (e.level ?? 1) >= 1).map((e) => e.particle));
   globe.aerosol.render(data.frames, trackSec, track.durationSec);
-  globe.aerosolJourney.render({
-    events: track.aerosol.events,
-    records: data.records,
-    frames: data.frames,
-    cues: aerosolTrackCues[trackIndex] ?? [],
-    trackSec,
-    durationSec: track.durationSec,
-    shown: aerosolToggles,
-  });
+  globe.aerosolJourney.hide(); // TEMP(#63): the music's cues are not drawn while the data is redrawn plainly
 
   if (track.aerosol.trackEye) {
     const s = sampleAerosol(data.records, trackSec / track.durationSec);
