@@ -119,18 +119,6 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
-// Adds light to the globe without touching the canvas's alpha. The globe draws on a transparent canvas that the page shows
-// through, and THREE.AdditiveBlending adds the alpha of what it draws too: a sprite's square, a light's point or the
-// ribbon then turned the map under it opaque, and it showed as a dark box. Here only the colour is added.
-const ADD_LIGHT = Object.freeze({
-  blending: THREE.CustomBlending,
-  blendEquation: THREE.AddEquation,
-  blendSrc: THREE.SrcAlphaFactor,
-  blendDst: THREE.OneFactor,
-  blendSrcAlpha: THREE.ZeroFactor,
-  blendDstAlpha: THREE.OneFactor,
-});
-
 const between = ([low, high], share = Math.random()) => low + share * (high - low);
 const smoothstep = (edge0, edge1, x) => {
   const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
@@ -206,7 +194,7 @@ export function createNoonLayer(view) {
       },
       transparent: true,
       depthWrite: false,
-      ...ADD_LIGHT,
+      blending: THREE.AdditiveBlending,
     });
     const points = new THREE.Points(geometry, material);
     points.frustumCulled = false;
@@ -291,7 +279,7 @@ export function createNoonLayer(view) {
       transparent: true,
       depthTest: false,
       depthWrite: false,
-      ...ADD_LIGHT,
+      blending: THREE.AdditiveBlending,
     }));
     const { x, y, z } = view.globe.getCoords(tree.lat, tree.lon, MERIDIAN_ALTITUDE);
     sprite.position.set(x, y, z);
@@ -376,7 +364,7 @@ export function createNoonLayer(view) {
       transparent: true,
       depthTest: false,
       depthWrite: false,
-      ...ADD_LIGHT,
+      blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
     });
     const ribbon = new THREE.Mesh(geometry, material);
