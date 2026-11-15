@@ -6,8 +6,10 @@ const SOUND_URLS = Object.freeze([
   new URL('../assets/meow-3.m4a', import.meta.url).href,
 ]);
 
+const DEFAULT_VOLUME = 0.3;
+
 /**
- * Loads and plays cute, cheerful kitten meows.
+ * Loads and plays cute, cheerful kitten meows at a gentle volume.
  * Cycles through distinct high-pitched meow samples with subtle pitch jitter.
  */
 export function createCatSound() {
@@ -66,7 +68,10 @@ export function createCatSound() {
         const source = audioContext.createBufferSource();
         source.buffer = buffer;
         source.playbackRate.value = pitch;
-        source.connect(audioContext.destination);
+        const gain = audioContext.createGain();
+        gain.gain.value = DEFAULT_VOLUME;
+        source.connect(gain);
+        gain.connect(audioContext.destination);
         source.start(0);
         return;
       } catch (err) {
@@ -78,6 +83,7 @@ export function createCatSound() {
     try {
       const audio = new Audio(url);
       audio.playbackRate = pitch;
+      audio.volume = DEFAULT_VOLUME;
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.catch((err) => console.warn('HTML Audio meow failed:', err));
