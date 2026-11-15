@@ -1,4 +1,4 @@
-# Forest Album: Forests Hold Carbon
+# Forest Album: The Forest Chorus
 
 The album's story, data and mappings. It follows [album-guide.md](../album-guide.md); the data comes from `notebooks/forest_album.ipynb` (issue #23).
 

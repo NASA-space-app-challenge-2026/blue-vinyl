@@ -187,7 +187,7 @@ export const albums = [
   {
     id: 'forest',
     category: AlbumCategory.BIODIVERSITY,
-    title: 'Forests Hold Carbon',
+    title: 'The Forest Chorus',
     coverUrl: `${FOREST_COVERS}/cover.jpg`,
     coverCredit: 'Cover: SVS 4950, GEDI forest height · NASA Scientific Visualization Studio',
     dataCredit: 'Data: GEDI L3 (UMD, ORNL DAAC) via NASA GIBS · EIC 14696',
