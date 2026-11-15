@@ -301,11 +301,11 @@ export const albums = [
     // notebooks/smog_album.ipynb and docs/albums/smog.md), in time order. Each plays nell-v2's loops, heard through
     // the air over the city.
     tracks: [
-      smogTrack('New York', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
+      smogTrack('New York 2023', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
         'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)'),
-      smogTrack('Seoul', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
+      smogTrack('Seoul 2025', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
         'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)'),
-      smogTrack('Shanghai', 'shanghai_2025.csv', 18, SmogLoop.HOUSE, 'shanghai.jpg',
+      smogTrack('Shanghai 2025', 'shanghai_2025.csv', 18, SmogLoop.HOUSE, 'shanghai.jpg',
         'Cover: Lujiazui in the haze, May 28 2011 (Photo: Weixi Zeng, CC BY-SA 3.0)'),
     ],
   },

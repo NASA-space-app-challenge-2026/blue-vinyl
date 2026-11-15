@@ -15,9 +15,9 @@ Smoke from fires, dust from the desert and winter smog all arrive with the weath
 
 | # | Track | Region | Smog | Stretch (local time) | Length |
 | --- | --- | --- | --- | --- | --- |
-| 1 | New York | Northern America | Canadian wildfire smoke | 2023-06-05 04:30 to 06-08 19:30 (87 h) | 0:29 |
-| 2 | Seoul | Eastern Asia | Early summer haze | 2025-06-15 02:30 to 06-17 17:30 (63 h) | 0:21 |
-| 3 | Shanghai | Eastern Asia | Winter smog | 2025-12-28 23:30 to 12-31 05:30 (54 h) | 0:18 |
+| 1 | New York 2023 | Northern America | Canadian wildfire smoke | 2023-06-05 04:30 to 06-08 19:30 (87 h) | 0:29 |
+| 2 | Seoul 2025 | Eastern Asia | Early summer haze | 2025-06-15 02:30 to 06-17 17:30 (63 h) | 0:21 |
+| 3 | Shanghai 2025 | Eastern Asia | Winter smog | 2025-12-28 23:30 to 12-31 05:30 (54 h) | 0:18 |
 
 The air the music hears is the air right over the city: the city's own 0.25° cell, the middle of the label (user, 2026-11-15). nell-v2 heard the mean over its whole plain.
 
