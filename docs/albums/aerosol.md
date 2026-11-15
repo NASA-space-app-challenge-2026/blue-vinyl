@@ -55,7 +55,7 @@ The lead is the track's lead particle (the one the globe circles), one held voic
 | Southern Africa Smoke | Vocal | two hollow squares, ringing filter, slow wide vibrato |
 | Etna's Breath | Brass | two sawtooths a little apart |
 
-The air is one sustained instrument for each of the three particle types other than the lead's, held on a tone of the tonic minor chord. Its loudness is that type's AOD at the lead's head, read from the frame the globe draws, on the same log scale (0.03 to 1.0) as the globe's colours, so the sound is as thick as the colour round the lead (the SoundFont squares its expression, so the expression is the square root of the level). Where a type is faint or absent round the lead (smoke round Erin, dust round the smoke track), its instrument is quiet or silent. The toggle under the globe switches the particle type off on the globe and in the music together.
+The air is one sustained instrument for each of the three particle types other than the lead's, held on a tone of the tonic minor chord. Its loudness is that type's AOD at the lead's head, read from the frame the globe draws, on a log scale from 0.01 (the thinnest air a frame holds) to 1.0 (the top of EIC's colours); EIC's own scale starts at 0.03, so air too thin to colour on the globe is already faintly heard. The SoundFont squares its expression, so the expression is the square root of the level. Where a type is absent round the lead (dust round the smoke track), its instrument is silent. The toggle under the globe switches the particle type off on the globe and in the music together.
 
 | Particle type | Instrument | Tone above the tonic |
 | --- | --- | --- |

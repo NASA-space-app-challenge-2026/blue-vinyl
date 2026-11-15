@@ -6,13 +6,13 @@
 //     degrees east of where it was released -> place around the listener, fully to the side PAN_SPAN_DEG away
 //     speed -> loudness and brightness
 //   the air: one sustained instrument for each of the other three particle types, held on a chord tone, as loud as that
-//     type's AOD at the lead's head on the globe's log scale (EIC's); a type whose toggle is off is silent, as it is on
+//     type's AOD at the lead's head on a log scale (EIC's, down to the thinnest air a frame holds); a type whose toggle is off is silent, as it is on
 //     the globe
 
 import { Effect } from '../effects.js';
 import { CC, Instrument } from '../instruments.js';
 import { PARTICLE_TOGGLE } from '../../../tracks/domain/aerosol-paths.js';
-import { levelOf } from '../../../tracks/domain/aerosol-frame.js';
+import { levelOf, SOUND_AOD } from '../../../tracks/domain/aerosol-frame.js';
 
 const BPM = 120;
 const STEPS_PER_BEAT = 4;
@@ -118,7 +118,7 @@ export class AerosolComposer {
 
   // Sets how loud a particle type sounds: its AOD at the lead's head, none when its toggle is off.
   mixAir(music, particle, { aods, on }, at) {
-    const expression = on[PARTICLE_TOGGLE[particle]] ? Math.round(127 * Math.sqrt(levelOf(aods[particle]))) : 0;
+    const expression = on[PARTICLE_TOGGLE[particle]] ? Math.round(127 * Math.sqrt(levelOf(aods[particle], SOUND_AOD))) : 0;
     if (this.expression[particle] === expression) return;
     this.expression[particle] = expression;
     music.control(AIR[particle].instrument, CC.EXPRESSION, expression, at);

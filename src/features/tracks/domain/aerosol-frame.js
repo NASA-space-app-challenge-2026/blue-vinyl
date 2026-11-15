@@ -25,11 +25,17 @@ function decodeAod(code) {
 }
 
 /**
- * How far up EIC's log scale an AOD is, 0 (at or under its low end) to 1 (at or over its high end); the same as the
- * globe's `level`.
+ * The AOD range the music's loudness runs over, on a log scale: EIC's high end, down to the lowest AOD a frame holds, so
+ * air too thin for EIC's colours still sounds.
  */
-export function levelOf(aod) {
-  const level = Math.log(Math.max(aod, 1e-6) / EIC_AOD.lo) / Math.log(EIC_AOD.hi / EIC_AOD.lo);
+export const SOUND_AOD = Object.freeze({ lo: FRAME.aodLo, hi: EIC_AOD.hi });
+
+/**
+ * How far up a log scale an AOD is, 0 (at or under its low end) to 1 (at or over its high end); by default EIC's, the
+ * same as the globe's `level`.
+ */
+export function levelOf(aod, { lo, hi } = EIC_AOD) {
+  const level = Math.log(Math.max(aod, 1e-6) / lo) / Math.log(hi / lo);
   return Math.min(1, Math.max(0, level));
 }
 
