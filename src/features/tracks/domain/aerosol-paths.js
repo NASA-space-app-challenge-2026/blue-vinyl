@@ -51,17 +51,18 @@ export function headOf({ release, path }, step) {
 }
 
 /**
- * The part of a particle's path to draw at a step of the track: from its tail to its head, or null while it is not yet
- * released or once its tail has caught up with where its path ends.
+ * The part of a particle's path to draw at a step of the track: from `tailSteps` behind its head to its head (all of it
+ * with Infinity), or null while it is not yet released or once its tail has caught up with where its path ends.
  *
  * @param {AerosolParticlePath} particle
  * @param {number} step the track's time in steps, with a fraction between two of them
+ * @param {number} [tailSteps]
  * @returns {[number, number][] | null}
  */
-export function visiblePath({ release, path, hero }, step) {
+export function visiblePath({ release, path, hero }, step, tailSteps = hero ? TAIL_STEPS.hero : TAIL_STEPS.crowd) {
   const local = step - release;
   const head = Math.min(local, path.length - 1);
-  const tail = Math.max(0, local - (hero ? TAIL_STEPS.hero : TAIL_STEPS.crowd));
+  const tail = Math.max(0, local - tailSteps);
   if (local <= 0 || tail >= head) return null;
   const points = [pointAt(path, tail)];
   for (let i = Math.floor(tail) + 1; i <= Math.floor(head); i++) points.push(path[i]);
