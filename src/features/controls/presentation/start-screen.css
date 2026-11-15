@@ -13,7 +13,7 @@
   margin: 0;
   padding: var(--gutter);
   border: 0;
-  background: radial-gradient(ellipse at 60% 45%, var(--bg) 0%, var(--bg-deep) 100%);
+  background: #0e67ae;
   color: var(--ink);
   font: inherit;
   text-align: center;
