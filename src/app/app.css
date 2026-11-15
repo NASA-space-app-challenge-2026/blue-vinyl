@@ -66,22 +66,16 @@ body {
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
+  background-color: var(--bg-bars, var(--bg-deep));
+  background-image: radial-gradient(ellipse at 60% 45%, var(--bg) 0%, var(--bg-deep) 100%);
   color: var(--ink);
   font-family: var(--font);
 }
 
-/* The backdrop, on a fixed layer over the whole viewport: iOS 26 Safari ignores theme-color and tints its bars and the
-   safe areas from the background colour of a fixed element at the screen's edges, following it as it changes, but
-   not a change of the page's own background. The colour sits under the gradient: the cover's (--bg-bars, set by
+/* iOS 26 Safari ignores theme-color and tints its bars and the safe areas from the body's background colour, which it
+   follows as it changes; a gradient does not count. The colour sits under the gradient: the cover's (--bg-bars, set by
    backdrop.js), or the title screen's while it is up. */
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: var(--bg-bars, var(--bg-deep));
-  background-image: radial-gradient(ellipse at 60% 45%, var(--bg) 0%, var(--bg-deep) 100%);
-}
-
-body:has(.start-screen) .backdrop {
+body:has(.start-screen) {
   background-color: var(--title-bg);
 }
 
