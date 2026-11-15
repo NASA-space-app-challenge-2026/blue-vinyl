@@ -43,7 +43,7 @@ The date on the label is the city's local time by the hour.
 
 ## Sound
 
-nell-v2's, unchanged. Each song plays its own bright dance loop from start to end, heard through the air ([`composers/smog.js`](../../src/features/music/domain/composers/smog.js)). The loop never changes with the data; only how it comes through does, the same way in every song.
+nell-v2's, with its fog over the music widened (user, 2026-11-15: as muffled as it can be). Each song plays its own bright dance loop from start to end, heard through the air ([`composers/smog.js`](../../src/features/music/domain/composers/smog.js)). The loop never changes with the data; only how it comes through does, the same way in every song.
 
 | Song | Loop | Chords | Lead and backing | Drums |
 | --- | --- | --- | --- | --- |
@@ -58,13 +58,13 @@ Shared: the bass is the analog synth's `CAVE`, the drums the standard kit. Clear
 | Data | Screen | Sound | Updated |
 | --- | --- | --- | --- |
 | Each cell's pollution (`pollutionOf`: PM2.5 in multiples of 15 µg/m³ on a log scale to 600, 0 to 1) | The fog (`fogOf`): clear below about 40 µg/m³, so the map shows; thicker and browner as it rises. Smooth between cells (bicubic) and between hours, billowing and drifting | (screen only) | Frame |
-| The haze (the mean fog over the box's cells) | The colour of the glow round the globe | The whole mix's low-pass: 18 kHz at haze 0.05 or less, down to 220 Hz from 0.8, as if through a wall (exponential); reverb and overdrive rise with it | Sixteenth note |
+| The haze (the mean fog over the box's cells) | The colour of the glow round the globe | The whole mix's low-pass: 18 kHz while the air is clear (haze below 0.3), falling as the smog gathers to 220 Hz as it rolls in (0.5), and held at 220 Hz, as if through a wall, until the air clears (exponential); reverb and overdrive rise with it. nell-v2 ran it from haze 0.05 to 0.8, which these boxes (peak 0.53–0.56) never fill | Sixteenth note |
 | How fast the fog thins (the fog each cell loses by the next hour) | A cold sheen where it thins | While the box loses 0.008 or more an hour, a gust on each beat (noise falling from 6 kHz to 700 Hz), loudest at 0.06 | Frame, beat |
 | The turns (`turnsOf`: the haze rising past 0.5 is the smog rolling in, falling below 0.3 the air clearing; in between it stays as it was) | Rolling in: the map darkens for a moment. Clearing: the clear places flash bright. Both fade over 1.2 s | Rolling in: a deep boom (`CAVE` at D1 and a low noise hit). Clearing: a riser from two bars before, a silent beat, then a crash and an impact | The downbeat |
 
 ## Globe
 
-The globe keeps the city's cell in the middle, as close as nell-v2's: the globe eleven times the label's size, so the label's edge is asin(1/11) ≈ 5.2° of arc from the city. It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
+The globe keeps the city's cell in the middle, close enough that the fog fills the label: the label's edge is where the fog has faded out (0.85 of the way to the box's nearer sides on the ground): 2.5° of arc in Portland, 2.7° in Beijing, 3.4° in Dakar (user, 2026-11-15). It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
 
 The fog is one patch of the globe over the box, drawn by nell-v2's shader in [`smog-layer.js`](../../src/features/globe/presentation/smog-layer.js); the textures are uploaded only when the hour changes. It fades in over the song's first 1.5 s and out over its last.
 
@@ -81,5 +81,5 @@ From Wikimedia Commons (credits in [`albums.js`](../../src/features/album/data/a
 | Check | Result |
 | --- | --- |
 | Length | 54 s each; the turns land on 0:16 / 0:46, 0:08 / 0:46 and 0:20 / 0:46 |
-| Muffling | The low-pass reaches 884 Hz (Portland), 1,073 Hz (Beijing) and 987 Hz (Dakar) at their thickest (mock run of the composer), against 220–247 Hz on nell-v2's plain: these boxes' haze peaks at 0.53–0.56, the plain's at 0.78–0.85 |
+| Muffling | Mock run of the composer: each song opens at 18 kHz, falls as the smog gathers, sits at 220 Hz from the smog rolling in until 0:46, then opens to 17–18 kHz with the crash |
 | Listening, screen | Not yet done: needs the user |

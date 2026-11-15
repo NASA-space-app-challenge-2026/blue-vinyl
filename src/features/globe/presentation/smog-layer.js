@@ -16,7 +16,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
 import { svg } from '../../../shared/svg.js';
 import { lastIndexAtOrBefore } from '../../tracks/domain/bird-track.js';
-import { FOG } from '../../tracks/domain/smog.js';
+import { FOG, FOG_EDGE } from '../../tracks/domain/smog.js';
 
 // Lifted above the map so the fog lies over it.
 const ALTITUDE = 0.004;
@@ -28,10 +28,6 @@ const TURN_FADE_MS = 1200;
 const FADE_MS = 1500;
 // A city's dot radius and where its name sits above it (px).
 const CITY = Object.freeze({ r: 2.5, nameDy: -7 });
-// The fade toward the box's edge, by distance from its middle on the ground, 1 where the box's nearer sides are: the
-// fog is whole up to `from` and gone by `to`, that distance pushed in and out by up to ±`ragged`/2 with the billows.
-// `to` + `ragged`/2 stays below 1, so nothing is left at the box's sides.
-const EDGE = Object.freeze({ from: 0.45, to: 0.85, ragged: 0.25 });
 
 const glsl = (v) => v.toFixed(4);
 
@@ -135,8 +131,8 @@ void main() {
   color = mix(color, vec3(0.22, 0.16, 0.11), uDark);
   alpha = max(alpha, 0.55 * uDark);
   // Faded out toward the box's edge, round on the ground and ragged with the billows.
-  float reach = length((vUv - 0.5) * uGround) / (0.5 * min(uGround.x, uGround.y)) + (billow - 0.5) * ${glsl(EDGE.ragged)};
-  float edge = 1.0 - smoothstep(${glsl(EDGE.from)}, ${glsl(EDGE.to)}, reach);
+  float reach = length((vUv - 0.5) * uGround) / (0.5 * min(uGround.x, uGround.y)) + (billow - 0.5) * ${glsl(FOG_EDGE.ragged)};
+  float edge = 1.0 - smoothstep(${glsl(FOG_EDGE.from)}, ${glsl(FOG_EDGE.to)}, reach);
   gl_FragColor = vec4(color, alpha * edge * uFade);
   #include <colorspace_fragment>
 }`;

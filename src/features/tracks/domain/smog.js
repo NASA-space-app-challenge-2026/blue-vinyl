@@ -20,9 +20,15 @@ export const SONG_MS = 54000;
 
 /** A cell is clear below `from` and fully fogged from `full` (pollution levels: about 40 and 330 µg/m³). */
 export const FOG = Object.freeze({ from: 0.33, full: 0.85 });
-// The plain's haze at which it counts as cleared and as smothered.
-const CLEAR_BELOW = 0.3;
-const SMOTHERED_ABOVE = 0.5;
+/** The haze below which the air counts as cleared, and above which as smothered. */
+export const CLEAR_BELOW = 0.3;
+export const SMOTHERED_ABOVE = 0.5;
+/**
+ * The fog's fade toward its box's edge, by distance from the box's middle on the ground, 1 where the box's nearer
+ * sides are: whole up to `from` and gone by `to`, that distance pushed in and out by up to ±`ragged`/2 with the
+ * billows (see globe/presentation/smog-layer.js). `to` + `ragged`/2 stays below 1, so nothing is left at the sides.
+ */
+export const FOG_EDGE = Object.freeze({ from: 0.45, to: 0.85, ragged: 0.25 });
 // The pace: the hours leading into a turn play for a set number of bars (`clear`: the front sweeping the smog out,
 // `smothered`: the smog rolling in), and the clear air after the last clearing for OUTRO_BARS; the rest of the song
 // shares out what is left of SONG_MS. Within each stretch an hour plays for 1 + SLOW · |change in haze| / CHANGE of a
@@ -173,13 +179,20 @@ export function buildSmogTrack(pm25, startMs, box) {
   };
 }
 
-// The globe looks at the box's middle from close enough that the label's edge is this many degrees of arc from it:
-// nell-v2's globe drawn eleven times the label's size, its edge asin(1/11) of arc from the middle.
-const BOX_ARC_DEG = (Math.asin(1 / 11) * 180) / Math.PI;
-
-/** Where the globe looks for `track`: the middle of its box (the city's cell), the label's edge BOX_ARC_DEG from it. */
+/**
+ * Where the globe looks for `track`: the middle of its box (the city's cell), close enough that the fog it draws fills
+ * the label, the label's edge where the fog is gone (FOG_EDGE.to of the way to the box's nearer sides on the ground;
+ * user, 2026-11-15).
+ */
 export function boxFocus({ field: { rows, cols, south, west, stepDeg } }) {
-  return { lat: south + ((rows - 1) * stepDeg) / 2, lon: west + ((cols - 1) * stepDeg) / 2, arcDeg: BOX_ARC_DEG };
+  const lat = south + ((rows - 1) * stepDeg) / 2;
+  const halfGround = (stepDeg / 2) * Math.min(rows, cols * Math.cos((lat * Math.PI) / 180));
+  return { lat, lon: west + ((cols - 1) * stepDeg) / 2, arcDeg: FOG_EDGE.to * halfGround };
+}
+
+/** Whether the air over `track` is smothered at playback `time`: past a turn into smog and not yet cleared. */
+export function smotheredAt(track, time) {
+  return track.turns.findLast((turn) => turn.at <= time)?.clear === false;
 }
 
 /** How long `track` plays (s): to its last hour. */

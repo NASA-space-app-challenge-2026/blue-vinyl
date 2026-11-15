@@ -1,10 +1,11 @@
 // Composer for the smog album (see docs/albums/smog.md): a dance loop, heard through the air the map shows. nell-v2's
-// "The Wind That Sweeps the Smog", as it is.
+// "The Wind That Sweeps the Smog", its fog over the music widened.
 //
 // Each song plays its own four-bar loop (its `loop`, a SmogLoop) at 120 BPM, unchanged from start to end; the air only
 // changes how it comes through, the same way in every song:
-//   - The fog: the thicker the haze over the box (the fog the map draws, averaged), the more the whole mix is
-//     muffled, as if heard through a wall, and the more it smears into reverb and grit. Clear air plays it crisp.
+//   - The fog: clear air plays the loop crisp; as the smog gathers over the box (the haze, the fog the map draws,
+//     averaged) the whole mix is muffled more and more, and from the moment it rolls in until the air clears it is
+//     heard through a wall, smeared into reverb and grit.
 //   - The clearing: while the fog on the map is thinning, a gust of wind blows on every beat, as loud as the box is
 //     losing fog.
 //   - The turns (see tracks/domain/smog.js): as the smog rolls in, a deep boom as the map darkens; as the front sweeps
@@ -15,7 +16,16 @@
 import { Effect } from '../effects.js';
 import { CC, Instrument } from '../instruments.js';
 import { NoiseShape, Patch } from '../patches.js';
-import { STEPS_PER_BAR, STEPS_PER_BEAT, STEP_MS, gridAt, hourlyAt } from '../../../tracks/domain/smog.js';
+import {
+  CLEAR_BELOW,
+  SMOTHERED_ABOVE,
+  STEPS_PER_BAR,
+  STEPS_PER_BEAT,
+  STEP_MS,
+  gridAt,
+  hourlyAt,
+  smotheredAt,
+} from '../../../tracks/domain/smog.js';
 
 // A chord: its four notes, low to high, that the parts above the bass play (the pad and stabs its lowest three, the
 // pad an octave down), and the bass's root (MIDI).
@@ -91,9 +101,10 @@ const SOUND_FONT_REVERB = 40;
 // The standard kit's keys.
 const Drum = Object.freeze({ KICK: 36, SNARE: 38, CLOSED_HAT: 42, CRASH: 49 });
 
-// The fog over the music, from the haze: none below FOG_HAZE[0], all of it from FOG_HAZE[1]. At none the mix
-// is as it is; at all of it the low-pass is down to MUFFLED_HZ and the reverb and grit are at their most.
-const FOG_HAZE = Object.freeze([0.05, 0.8]);
+// The fog over the music, at its widest (user, 2026-11-15: as muffled as it can be): none while the air is clear
+// (haze below CLEAR_BELOW), rising as the smog gathers to all of it as it rolls in (SMOTHERED_ABOVE), and all of it
+// for as long as the air stays smothered, until it clears. At none the mix is as it is; at all of it the low-pass is
+// down to MUFFLED_HZ and the reverb and grit are at their most.
 const OPEN_HZ = 18000;
 const MUFFLED_HZ = 220;
 const REVERB = Object.freeze([0.12, 0.6]);
@@ -145,7 +156,7 @@ export class SmogComposer {
     const grid = gridAt(time);
     if (grid.index === this.lastIndex) return;
     this.lastIndex = grid.index;
-    this.hear(music, hourlyAt(this.track.t, this.track.haze, time), at);
+    this.hear(music, this.fogAt(time), at);
     this.playTurns(music, grid, at);
     const clearing = this.track.turns.find((turn) => turn.clear && turn.at > grid.time);
     if (clearing && clearing.at - grid.time <= SILENT_STEPS * STEP_MS) return;
@@ -154,8 +165,14 @@ export class SmogComposer {
   }
 
   // The air the loop is heard through.
-  hear(music, haze, at) {
-    const fog = Math.min(1, Math.max(0, (haze - FOG_HAZE[0]) / (FOG_HAZE[1] - FOG_HAZE[0])));
+  // How much of the fog is over the music at playback `time`, 0 to 1.
+  fogAt(time) {
+    if (smotheredAt(this.track, time)) return 1;
+    const haze = hourlyAt(this.track.t, this.track.haze, time);
+    return Math.min(1, Math.max(0, (haze - CLEAR_BELOW) / (SMOTHERED_ABOVE - CLEAR_BELOW)));
+  }
+
+  hear(music, fog, at) {
     music.effect(Effect.LOWPASS, OPEN_HZ * (MUFFLED_HZ / OPEN_HZ) ** fog, at);
     music.effect(Effect.REVERB, lerp(REVERB, fog), at);
     music.effect(Effect.DRIVE, lerp(DRIVE, fog), at);
