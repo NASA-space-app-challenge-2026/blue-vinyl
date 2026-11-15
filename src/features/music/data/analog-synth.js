@@ -2,8 +2,11 @@
 //
 //   play: a note of a Patch (see domain/patches.js), its oscillators through a resonant low-pass filter that an
 //     envelope throws open as the note starts and lets fall back, held for part of its length and released over a tail.
-//   noise: a burst of white noise through a sweeping high-pass that fades out, a tick of percussion.
+//   noise: a burst of white noise through a sweeping high-pass that fades out, a tick of percussion, or swells into its
+//     end, a riser.
 //   voice: a GlideVoice of a Lead, held open while its composer moves its pitch, level, brightness and place.
+
+import { NoiseShape } from '../domain/patches.js';
 
 const HZ = Object.freeze({ min: 20, max: 18000 });
 // How fast a note's level and filter open (s).
@@ -18,6 +21,8 @@ const TIME_CONSTANTS = 3;
 const TAIL_CONSTANTS = 8;
 // The noise hit's high-pass resonance.
 const NOISE_Q = 2;
+// A riser starts this many times quieter than it ends.
+const RISE_FROM = 20;
 // How fast silence() fades out what is sounding (s).
 const SILENCE_SEC = 0.03;
 
@@ -101,16 +106,24 @@ export function createAnalogSynth(context, destination) {
     track(amp, oscillators);
   }
 
-  /** A burst of noise at `velocity` (0-127) from `at` fading over `durationSec`, through a high-pass sweeping from `fromHz` to `toHz`. */
-  function noise(velocity, at, durationSec, fromHz, toHz) {
+  /**
+   * A burst of noise at `velocity` (0-127) from `at` for `durationSec`, through a high-pass sweeping from `fromHz` to
+   * `toHz`, shaped by `shape` (a NoiseShape): a hit fades out, a riser swells into its end.
+   */
+  function noise(velocity, at, durationSec, fromHz, toHz, shape = NoiseShape.HIT) {
     const source = new AudioBufferSourceNode(context, { buffer: noiseBuffer, loop: true });
     const filter = new BiquadFilterNode(context, { type: 'highpass', frequency: fromHz, Q: NOISE_Q });
     filter.frequency.setValueAtTime(fromHz, at);
     filter.frequency.exponentialRampToValueAtTime(toHz, at + durationSec);
     const amp = new GainNode(context, { gain: 0 });
     const peak = (NOISE_GAIN * velocity) / 127;
-    amp.gain.setValueAtTime(peak, at);
-    amp.gain.setTargetAtTime(0, at, durationSec / TIME_CONSTANTS);
+    if (shape === NoiseShape.RISE) {
+      amp.gain.setValueAtTime(peak / RISE_FROM, at);
+      amp.gain.exponentialRampToValueAtTime(peak, at + durationSec);
+    } else {
+      amp.gain.setValueAtTime(peak, at);
+      amp.gain.setTargetAtTime(0, at, durationSec / TIME_CONSTANTS);
+    }
     source.connect(filter).connect(amp).connect(destination);
     source.start(at, Math.random() * NOISE_SEC);
     source.stop(at + durationSec);

@@ -1,4 +1,7 @@
 // Sounds of the analog synth (see data/analog-synth.js).
+
+// How a noise burst is shaped: HIT strikes and fades, RISE swells into its end.
+export const NoiseShape = Object.freeze({ HIT: 'hit', RISE: 'rise' });
 //
 // A Patch is a stack of oscillators played as one note: `waves`, each { type, octave (above the note), detune (cents),
 // gain (its share of the patch) }, and `level`, which evens out how loud patches play.
