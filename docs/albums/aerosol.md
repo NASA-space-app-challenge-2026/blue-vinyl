@@ -46,7 +46,7 @@ The lead is the track's lead particle (the one the globe circles), one held voic
 | --- | --- |
 | latitude | pitch, north higher, on the track's minor pentatonic over two octaves from the tonic, spread over the latitudes the particle covers (11 notes); it glides to each new note over 0.15 s |
 | degrees east of where it was released | place around the listener on an HRTF panner, fully to the side 20° of longitude away |
-| speed (km a step) | loudness (0.35 at the slowest to 1 at the fastest step) and brightness (the filter's cutoff 1 to 4 octaves above the note) |
+| speed (km a step) | loudness (silent at the slowest to 1 at the fastest step) and brightness (the filter's cutoff 1 to 4 octaves above the note) |
 
 | Track | Lead | Sound |
 | --- | --- | --- |

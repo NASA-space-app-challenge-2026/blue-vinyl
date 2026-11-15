@@ -25,7 +25,7 @@ const OCTAVES = 2;
 const GLIDE_SEC = 0.15;
 const ONSET_SEC = 0.12;
 // Gains and filter cutoffs (octaves above the note) from the slowest step of the lead to its fastest.
-const SPEED = Object.freeze({ gain: [0.35, 1], cutoff: [1, 4] });
+const SPEED = Object.freeze({ gain: [0, 1], cutoff: [1, 4] });
 // The lead sounds fully to one side once it has gone this many degrees of longitude east or west of where it started.
 const PAN_SPAN_DEG = 20;
 
