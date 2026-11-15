@@ -8,8 +8,8 @@ export const ONBOARDING = Object.freeze({
       eyebrow: 'An Earth Information Jukebox',
       heading: 'Listen to the sound of the Pale Blue Dot.',
       body: [
-        'Blue Vinyl turns NASA Earth data into music. Each album is one story of our planet, from sea ice and storms to '
-          + 'birds and wildfires, pressed onto a record.',
+        'Blue Vinyl turns NASA Earth data into music.',
+        'Each album is one story of our planet, from sea ice and storms to birds and wildfires, pressed onto a record.',
       ],
       note: 'In 1990 Voyager 1 looked back from six billion kilometers away and saw Earth as a pale blue dot.',
     },
