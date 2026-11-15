@@ -338,6 +338,7 @@ export const albums = [
         coverCredit: 'NASA MODIS Rapid Response, Aug 16 2025',
         aerosol: {
           csvUrl: `${AEROSOL_DATA}/erin.csv`,
+          pathsUrl: `${AEROSOL_DATA}/paths/erin.json`,
           framesDir: AEROSOL_FRAMES,
         },
       },
@@ -349,6 +350,7 @@ export const albums = [
         coverCredit: 'NASA MODIS / Terra, Saharan Dust over the Atlantic',
         aerosol: {
           csvUrl: `${AEROSOL_DATA}/saharan_dust.csv`,
+          pathsUrl: `${AEROSOL_DATA}/paths/saharan_dust.json`,
           framesDir: AEROSOL_FRAMES,
           viewLat: 17.0,
           viewLon: -45.0,
@@ -362,6 +364,7 @@ export const albums = [
         coverCredit: 'NASA Earth Observatory / Aqua MODIS, Fires and Smoke',
         aerosol: {
           csvUrl: `${AEROSOL_DATA}/southern_africa_smoke.csv`,
+          pathsUrl: `${AEROSOL_DATA}/paths/southern_africa_smoke.json`,
           framesDir: AEROSOL_FRAMES,
           viewLat: -12.0,
           viewLon: 5.0,
@@ -375,6 +378,7 @@ export const albums = [
         coverCredit: 'NASA MODIS / Terra, Mt. Etna Eruption',
         aerosol: {
           csvUrl: `${AEROSOL_DATA}/spain_and_etna.csv`,
+          pathsUrl: `${AEROSOL_DATA}/paths/spain_and_etna.json`,
           framesDir: AEROSOL_FRAMES,
           viewLat: 40.0,
           viewLon: 5.0,

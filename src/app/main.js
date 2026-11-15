@@ -163,6 +163,7 @@ const turntable = createTurntableView(slot('stage'), {
 const albumCredit = createAlbumCredit((text) => turntable.setCredit(text));
 const particleToggles = createParticleToggles(turntable.label, (toggles) => {
   globe.aerosol.setToggles(toggles);
+  globe.aerosolPaths.setToggles(toggles);
 });
 
 const recordSwap = createRecordSwap({
@@ -882,12 +883,14 @@ function renderAerosol(trackIndex) {
   const data = aerosolData[trackIndex];
   if (album?.id !== 'aerosol' || !track?.aerosol || !data) {
     globe.aerosol.hide();
+    globe.aerosolPaths.hide();
     particleToggles.hide();
     return;
   }
   particleToggles.show();
   const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
   globe.aerosol.render(data.frames, trackSec, track.durationSec);
+  globe.aerosolPaths.render(data.paths, Math.min(1, trackSec / track.durationSec) * (data.records.length - 1));
 
   // TEMP(#63): the whole globe, still, with no zoom: on the track's own view, or where Erin's eye starts.
   const view = track.aerosol.viewLat !== undefined

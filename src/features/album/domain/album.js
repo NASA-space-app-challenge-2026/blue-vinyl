@@ -32,6 +32,7 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  * @typedef {Object} AerosolSource
  * @property {string} csvUrl the track's time series CSV
  * @property {string} framesDir directory containing the visual PNG frames
+ * @property {string} pathsUrl the particles' paths (see tracks/domain/aerosol-paths.js)
  * @property {number} [viewLat] latitude of the track's view centre
  * @property {number} [viewLon] longitude of the track's view centre
  */
