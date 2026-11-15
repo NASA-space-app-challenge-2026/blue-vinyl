@@ -29,8 +29,12 @@ const TREE_KINDS = Object.values(TreeKind);
 // Only some trees grow: picked at random, the taller likelier (`tallBias`), and no two closer than `spacing` times
 // the mean of their sizes, so the forest stays open. Each grows `afterSteps` after the noon line has crossed it.
 const TREE_PICK = Object.freeze({ tallBias: 3, spacing: 0.8, afterSteps: [1, 10] });
-// A tree takes from `shortest` (the lowest kind) to `longest` (the tallest) to reach its tips.
-const TREE_GROWTH = Object.freeze({ shortest: 0.6, longest: 1.5 });
+// Every tree shoots up at one pace: the smallest reaches its tips in `smallestSec`, a bigger one in proportion to its size.
+const TREE_GROWTH = Object.freeze({ smallestSec: 0.1 });
+// Trees are drawn over the globe without a depth test (an upright sprite against the surface flickered as the two
+// fought for depth), so a tree behind the globe is hidden by hand: by how much its ground faces the camera (cosine),
+// gone at `hiddenAt` and fully shown from `shownFrom`, so it fades at the rim.
+const TREE_LIMB = Object.freeze({ hiddenAt: 0, shownFrom: 0.12 });
 // Each tree's canvas: the smaller kinds at the first size, the taller at the second (pixels, a power of two).
 const TREE_CANVAS_PX = Object.freeze([256, 512]);
 // The tree's base in its sprite (share of the sprite, from the bottom left), as tree-sprites.js plants it.
@@ -193,6 +197,12 @@ function bandForest(map, band, lineStep) {
 }
 
 const between = ([low, high], share = Math.random()) => low + share * (high - low);
+const smoothstep = (edge0, edge1, x) => {
+  const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+};
+// Scratch for a tree's direction to the camera, reused every frame.
+const toCamera = new THREE.Vector3();
 
 /** A tree's size on the map (globe units) for its height in metres. */
 function treeSizeU(metres) {
@@ -410,10 +420,11 @@ export function createNoonLayer(view) {
     const kindIndex = TREE_KINDS.indexOf(treeKindOf(tree.metres));
     const kind = TREE_KINDS[kindIndex];
     const share = kindIndex / (TREE_KINDS.length - 1);
+    const size = treeSizeU(tree.metres);
     tree.grower = createGrowingTree({
       color: kind.color,
       depth: kind.depth,
-      growSec: TREE_GROWTH.shortest + share * (TREE_GROWTH.longest - TREE_GROWTH.shortest),
+      growSec: (TREE_GROWTH.smallestSec * size) / TREE_SIZE.smallestU,
       sizePx: TREE_CANVAS_PX[share > 0.5 ? 1 : 0],
       seed: tree.seed,
     });
@@ -424,15 +435,22 @@ export function createNoonLayer(view) {
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
       map: texture,
       transparent: true,
+      depthTest: false,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     }));
     const { x, y, z } = view.globe.getCoords(tree.lat, tree.lon, MERIDIAN_ALTITUDE);
     sprite.position.set(x, y, z);
     sprite.center.set(TREE_BASE.x, TREE_BASE.y);
-    const size = treeSizeU(tree.metres);
     sprite.scale.set(size, size, 1);
     sprite.renderOrder = 1;
+    // The sprite stands up from its base, outside the bounds three.js culls by, so it would pop at the screen's edge.
+    sprite.frustumCulled = false;
+    const ground = sprite.position.clone().normalize();
+    sprite.onBeforeRender = (renderer, scene, camera) => {
+      const facing = toCamera.subVectors(camera.position, sprite.position).normalize().dot(ground);
+      sprite.material.opacity = smoothstep(TREE_LIMB.hiddenAt, TREE_LIMB.shownFrom, facing);
+    };
     tree.sprite = sprite;
     tree.growing = true;
     view.globe.scene().add(sprite);
