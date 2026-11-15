@@ -64,8 +64,10 @@ const FOREST_LINE_SEC = SOUND_STEPS * STEP_SEC;
 const AEROSOL_DATA = 'data/aerosol/tracks';
 const AEROSOL_COVERS = 'assets/albums/aerosol';
 const AEROSOL_FRAMES = 'data/aerosol/tracks/frames';
-// Two weeks, every 3 hours (112 steps), 0.4 s a step: a day is a bar of 3.2 s.
-const AEROSOL_TRACK_SEC = 44.8;
+// Two weeks, every 3 hours (112 steps), 0.25 s a step.
+const AEROSOL_STEPS = 112;
+const AEROSOL_STEP_SEC = 0.25;
+const AEROSOL_TRACK_SEC = AEROSOL_STEPS * AEROSOL_STEP_SEC;
 
 const SMOG_TRACKS = 'data/smog/tracks';
 const SMOG_COVERS = 'assets/albums/smog';

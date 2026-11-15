@@ -1,8 +1,7 @@
-// The particles of an aerosol track on the globe (see tracks/domain/aerosol-paths.js): each one a small dot at the head of
-// the path the wind has carried it along, the path it has gone behind it, faint, and its last TAIL_STEPS brighter toward
-// the head, all in its particle type's own colour (EIC's, as the shell). All the track's particles are drawn in two
+// The particles of an aerosol track on the globe (see tracks/domain/aerosol-paths.js): each one the path the wind has
+// carried it along, faint, with its last TAIL_STEPS brighter toward the head, all in its particle type's own colour (EIC's, as the shell). All the track's particles are drawn in two
 // meshes, one of dots and one of path segments, so a hundred of them cost the same as one. Only the lead particle
-// (`hero`) is circled.
+// (`hero`) has a dot at its head, circled.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
 import { TAIL_STEPS } from '../../tracks/domain/aerosol-paths.js';
@@ -182,7 +181,7 @@ export function createAerosolPathsLayer(view) {
       const points = xyz[i];
       lerp3(points, local, head);
       dotPos.setXYZ(i, head[0], head[1], head[2]);
-      dotAlpha.setX(i, ALPHA.head);
+      dotAlpha.setX(i, particle.hero ? ALPHA.head : 0);
       // The path from the release to the head: segment k joins step k and k + 1, the last ends at the head.
       const whole = Math.floor(local);
       for (let k = 0; k <= whole; k++) {
