@@ -159,7 +159,9 @@ export function createAerosolPathsLayer(view) {
     const across = new Float32Array(vertices);
     const white = new Float32Array(vertices);
     const index = [];
-    for (const { steps, first, hero } of tailOf) {
+    // The lead's tail is drawn last, over every other tail.
+    const heroLast = [...tailOf].sort((a, b) => Number(a.hero) - Number(b.hero));
+    for (const { steps, first, hero } of heroLast) {
       for (let j = 0; j <= steps; j++) {
         const v = 2 * (first + j);
         across[v] = -1;
@@ -184,6 +186,8 @@ export function createAerosolPathsLayer(view) {
       }),
     );
     tails.frustumCulled = false;
+    // Over the air (renderOrder 1) and the paths, under the lead's marker.
+    tails.renderOrder = 3;
     marker = new THREE.Sprite(new THREE.SpriteMaterial({ map: markerTexture(color, PARTICLE_SHAPE[paths[0].particle]), depthWrite: false, depthTest: false, transparent: true, sizeAttenuation: false }));
     marker.renderOrder = 4;
     marker.visible = false;
