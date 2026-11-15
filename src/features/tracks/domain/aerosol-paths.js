@@ -3,7 +3,7 @@
 // released; nothing is steered.
 
 /** The most particles a track draws; the notebook keeps to it and so does the loader. */
-export const MAX_PARTICLES = 100;
+export const MAX_PARTICLES = 200;
 
 /** How many steps of its path (3 hours each) a particle draws brightly behind its head. */
 export const TAIL_STEPS = 24;
@@ -51,7 +51,7 @@ export function headOf({ release, path }, step) {
 }
 
 /** The view arc (degrees from the focus to the edge of the label) that keeps the lead particles in frame. */
-export const HERO_ARC_DEG = Object.freeze({ close: 32, wide: 75 });
+export const HERO_ARC_DEG = Object.freeze({ close: 26, wide: 75 });
 // Padding round the lead particles when there are several, as a share of their spread.
 const SPREAD_PAD = 1.8;
 
