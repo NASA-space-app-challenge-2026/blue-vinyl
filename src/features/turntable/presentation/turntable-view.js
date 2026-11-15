@@ -452,8 +452,11 @@ export function createTurntableView(
 
   root.append(record, armLayer);
   vinylTop.addEventListener('click', (event) => {
-    // A press that held or turned the record is not a click on it.
-    if (!clicked) return;
+    // A press that held or turned the record is not a click on it, nor is a tap that began on the arm: a phone sends
+    // its click to what is under the finger once the lifted arm has moved off, the record.
+    const pressed = clicked;
+    clicked = false;
+    if (!pressed) return;
     const progress = grooveProgress(pointerRadius(event));
     if (progress >= 0 && progress <= 1) onSelectGroove(progress);
     else onToggle();
@@ -472,7 +475,7 @@ export function createTurntableView(
   let angle = 0;
   // Whether a hand holds the record, and whether the last press on it was a click (short, and didn't turn it).
   let held = false;
-  let clicked = true;
+  let clicked = false;
 
   function placeArm() {
     arm.setAttribute('transform', `translate(${PIVOT.x} ${PIVOT.y}) rotate(${bearing})`);
