@@ -9,6 +9,7 @@ import { createAlbumCredit } from '../features/album/presentation/album-credit.j
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
 import { createCatView } from '../features/cat/presentation/cat-view.js';
 import { PlaybackState } from '../features/controls/domain/playback-state.js';
+import { createMediaCenter } from '../features/controls/data/media-center.js';
 import { createAlbumSwitcher } from '../features/controls/presentation/album-switcher.js';
 import { createFullscreenButton } from '../features/controls/presentation/fullscreen-button.js';
 import { createGlassCapsule } from '../features/controls/presentation/glass-capsule.js';
@@ -44,6 +45,7 @@ import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../feature
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
+import { createTicker } from '../shared/ticker.js';
 
 // The contiguous United States, zoomed until the label's edge is 30 degrees of arc from its middle, so the West's fires
 // and the burn field read large.
@@ -80,7 +82,6 @@ let shownFireKey = null;
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
 let lastFrameTs = null;
-let tickFrame = null;
 // True while the records change; steps asked for meanwhile add up in pendingSteps.
 let swapping = false;
 let pendingSteps = 0;
@@ -150,6 +151,21 @@ const soundEngine = createSoundEngine();
 const flockComposer = new FlockComposer();
 const hurricaneComposer = new HurricaneComposer();
 const lightningComposer = new LightningComposer();
+const ticker = createTicker(tick);
+// The system's media controls play and pause, and step through the album's tracks.
+const mediaCenter = createMediaCenter({
+  onPlay: () => {
+    if (state === PlaybackState.STOPPED) togglePlayback();
+  },
+  onPause: () => {
+    if (state === PlaybackState.PLAYING || state === PlaybackState.CUEING) togglePlayback();
+  },
+  onPrevious: () => playFromTrack(Math.max(0, trackIndexAt(album, elapsedMs / totalMs) - 1)),
+  onNext: () => {
+    const next = trackIndexAt(album, elapsedMs / totalMs) + 1;
+    if (next < album.tracks.length) playFromTrack(next);
+  },
+});
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
@@ -425,6 +441,7 @@ function showSong(song, color) {
 
 // Audio may only start from a user gesture, so every gesture that can start playback unlocks it.
 function unlockSound() {
+  mediaCenter.unlock();
   music.unlock();
   soundEngine.unlock().catch((error) => console.error('sound engine failed to load', error));
 }
@@ -492,21 +509,32 @@ function seekTo(ms) {
     return;
   }
   unlockSound();
-  setState(PlaybackState.CUEING);
+  cue();
 }
 
 function togglePlayback() {
   if (swapping) return;
   unlockSound();
-  setState(state === PlaybackState.STOPPED ? PlaybackState.CUEING : PlaybackState.STOPPED);
+  if (state === PlaybackState.STOPPED) cue();
+  else setState(PlaybackState.STOPPED);
+}
+
+// A page hidden while the tonearm moves would wait for it until shown again, so it plays at once.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && state === PlaybackState.CUEING) startPlaying();
+});
+
+// Sets the tonearm down to play. A hidden page draws no frames, so the arm cannot move there: it plays at once.
+function cue() {
+  if (document.hidden) startPlaying();
+  else setState(PlaybackState.CUEING);
 }
 
 function startPlaying() {
   setState(PlaybackState.PLAYING);
   music.play(() => elapsedMs / 1000);
-  cancelAnimationFrame(tickFrame);
   lastFrameTs = null;
-  tickFrame = requestAnimationFrame(tick);
+  ticker.start();
 }
 
 function render() {
@@ -516,6 +544,12 @@ function render() {
   albumColumn.render(trackIndex);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
   backdrop.show(trackCover(album, trackIndex).url);
+  mediaCenter.setTrack({
+    key: `${album.id}:${trackIndex}`,
+    title: album.tracks[trackIndex].title,
+    album: album.title,
+    artworkUrl: trackCover(album, trackIndex).url,
+  });
   renderSong(trackIndex);
   renderData(trackIndex);
   renderSeason(trackIndex);
@@ -722,13 +756,17 @@ function setState(next) {
   if (next !== PlaybackState.PLAYING) music.stop();
   state = next;
   if (state !== PlaybackState.PLAYING) soundEngine.stop();
+  mediaCenter.setPlaying(state === PlaybackState.PLAYING || state === PlaybackState.CUEING);
   playHint.render(state);
   playButton.render(state);
   render();
 }
 
 function tick(ts) {
-  if (state !== PlaybackState.PLAYING) return;
+  if (state !== PlaybackState.PLAYING) {
+    ticker.stop();
+    return;
+  }
   const dtMs = lastFrameTs === null ? 0 : ts - lastFrameTs;
   // The ice and sea music sets the clock while it plays, so the globe follows what is heard; otherwise the frames do.
   const heardSec = music.positionSec();
@@ -742,7 +780,6 @@ function tick(ts) {
   }
   render();
   if (!globe.gliding) globe.follow(dtMs / 1000);
-  tickFrame = requestAnimationFrame(tick);
 }
 
 showAlbum(albumIndex);

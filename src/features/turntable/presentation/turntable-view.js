@@ -697,7 +697,9 @@ export function createTurntableView(
       if (!onRecord) drop();
       setProgress(progress);
     } else if (state === PlaybackState.PLAYING || state === PlaybackState.HELD) {
-      // A record held by hand keeps the needle on it, following where the hand turns it.
+      // A record held by hand keeps the needle on it, following where the hand turns it. Playback started while the
+      // page was hidden skipped the cue, so the arm sets down now.
+      if (!onRecord) drop();
       setProgress(progress);
     }
   }
