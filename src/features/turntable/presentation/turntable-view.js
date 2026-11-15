@@ -374,7 +374,8 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
   let toldSec = null;
 
   function tell() {
-    const sec = Math.floor(target * track.durationSec);
+    // Rounded, so a seek of 5 s is not told as 4 by floating point.
+    const sec = Math.round(target * track.durationSec);
     if (sec === toldSec) return;
     toldSec = sec;
     svg.setAttribute('aria-valuemax', String(Math.round(track.durationSec)));
