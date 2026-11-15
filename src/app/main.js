@@ -24,7 +24,8 @@ import { createVolumeControl } from '../features/controls/presentation/volume-co
 import { ALBUM_NOTES } from '../features/album/data/album-notes.js';
 import { createDocentBubble } from '../features/docent/presentation/docent-bubble.js';
 import { createDocentToggle } from '../features/docent/presentation/docent-toggle.js';
-import { docentIntroSec } from '../features/docent/domain/docent.js';
+import { createDocentNarrator } from '../features/docent/presentation/docent-narrator.js';
+import { docentIntroSec, introText, trackAnnouncement } from '../features/docent/domain/docent.js';
 import { createDocentVoice } from '../features/docent/data/docent-voice.js';
 import { GLOBE_THEMES } from '../features/globe/data/globe-themes.js';
 import { DEFAULT_GLOBE_LENS } from '../features/globe/domain/globe-lens.js';
@@ -111,12 +112,14 @@ let shownFireKey = null;
 let state = PlaybackState.STOPPED;
 let elapsedMs = 0;
 // Whether the docent is on. While it is, an album opens with the docent's introduction before its first track, its
-// words read aloud (docentVoice): introMs is how far into it the record is, and null once past it (or when the docent
-// is off). The album's own clock (elapsedMs) waits at 0 meanwhile, and its music is silent.
+// words read aloud and shown as captions (docentNarrator): introMs is how far into it the record is, and null once
+// past it (or when the docent is off). The album's own clock (elapsedMs) waits at 0 meanwhile, and its music is silent.
 let docentOn = false;
 let introMs = null;
 // Whether the voice has begun this introduction, so playing again after a pause resumes it rather than starting over.
 let introVoiced = false;
+// The track the docent last announced (album id and track index), so each is announced once as it begins.
+let announcedKey = null;
 const docentVoice = createDocentVoice();
 let lastFrameTs = null;
 // True while the records change; steps asked for meanwhile add up in pendingSteps.
@@ -240,6 +243,7 @@ createAlbumSwitcher(albumControls, {
 });
 // The docent, off until turned on: the cat says the current album's introduction (see showAlbum).
 const docentBubble = createDocentBubble(slot('screen'));
+const docentNarrator = createDocentNarrator(docentVoice, docentBubble);
 createDocentToggle(createGlassCapsule(slot('corner-bottom-left')), { onChange: setDocent });
 const viewControls = createGlassCapsule(slot('corner-top-right'));
 createFullscreenButton(viewControls);
@@ -364,7 +368,6 @@ function showAlbum(index) {
   album = albums[albumIndex];
   totalMs = albumDurationSec(album) * 1000;
   albumColumn.setAlbum(albumIndex);
-  docentBubble.say(ALBUM_NOTES[album.id]?.docentTip);
   // A new album opens with the docent's introduction while the docent is on.
   if (docentOn) enterIntro();
   else leaveIntro();
@@ -759,19 +762,23 @@ function setDocent(on) {
     leaveIntro();
     if (state === PlaybackState.PLAYING) playMusic();
   }
+  // Turned on, it announces the track playing; turned off, it falls silent at once.
+  announcedKey = null;
+  if (!on) docentNarrator.cancel();
   render();
 }
 
 // The record is set at the start of the docent's introduction, its words not yet said.
 function enterIntro() {
-  docentVoice.cancel();
+  docentNarrator.cancel();
   introMs = 0;
   introVoiced = false;
+  announcedKey = null;
 }
 
 // The record leaves the docent's introduction, its words cut off.
 function leaveIntro() {
-  docentVoice.cancel();
+  if (introMs !== null) docentNarrator.cancel();
   introMs = null;
 }
 
@@ -787,18 +794,28 @@ function finishIntro() {
 function syncVoice() {
   if (introMs === null) return;
   if (state !== PlaybackState.PLAYING) {
-    docentVoice.pause();
+    docentNarrator.pause();
     return;
   }
   if (introVoiced) {
-    docentVoice.resume();
+    docentNarrator.resume();
     return;
   }
   introVoiced = true;
-  const text = ALBUM_NOTES[album.id]?.docentTip;
-  if (text) docentVoice.speak(text, () => {
+  docentNarrator.speak(introText(album.title, ALBUM_NOTES[album.id]?.docentTip), () => {
     if (state === PlaybackState.PLAYING) finishIntro();
   });
+}
+
+// While the docent is on, it says each track's number and title as the track begins to play (for a listener who
+// cannot see the sleeve), and the bubble shows it.
+function announceTrack(trackIndex) {
+  if (!docentOn || !sounding()) return;
+  const key = `${album.id}:${trackIndex}`;
+  if (key === announcedKey) return;
+  announcedKey = key;
+  const { title } = album.tracks[trackIndex];
+  docentNarrator.speak(trackAnnouncement(trackIndex, title));
 }
 
 // Plays the album's music from the clock, unless the docent's introduction is playing before it.
@@ -846,6 +863,7 @@ function render() {
   soundEngine.setTrackFade(fade);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex, introMs !== null);
+  announceTrack(trackIndex);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
   backdrop.show(trackCover(album, trackIndex).url);
   mediaCenter.setTrack({
@@ -1207,7 +1225,7 @@ function tick(ts) {
     lastFrameTs = ts;
     introMs += dtMs;
     // It ends when the voice does (see syncVoice); with no voice heard, after the words' estimated length.
-    if (!docentVoice.speaking && introMs >= docentIntroSec(ALBUM_NOTES[album.id]?.docentTip) * 1000) {
+    if (!docentNarrator.speaking && introMs >= docentIntroSec(introText(album.title, ALBUM_NOTES[album.id]?.docentTip)) * 1000) {
       finishIntro();
       return;
     }
