@@ -45,7 +45,7 @@ export function createOnboarding(parent, { content, stage, preview, onStart }) {
   let previewStep = -1;
   let playPreview = () => {};
   const steps = content.steps.map((step, index) => {
-    const section = el('section', index === 0 ? 'onboarding-step is-intro' : 'onboarding-step');
+    const section = el('section', 'onboarding-step');
     section.setAttribute('aria-label', `Step ${index + 1} of ${count}`);
     const heading = el('h2', 'onboarding-heading', [step.heading]);
     heading.id = `onboarding-heading-${index}`;
