@@ -1,151 +1,76 @@
-// A forest track on the globe: the GEDI canopy map as forest columns lit by the noon sun, a CO₂ field floating above it
-// as a faint haze (warmer as the air of GEDI's four years thickens), the noon meridian moving west, and a note of light wherever
-// the music strikes one: each forest voice glows at the forest it is playing, in its own colour, and lets a few motes
-// of pollen rise from there.
+// A forest track on the globe: the GEDI canopy map as trees, big and small, lit by the noon sun, the noon meridian
+// moving west, and a note of light where each tree starts to grow: the music plays that tree there and then (see
+// composers/noon.js); the light is in its voice's colour and lets a few motes of pollen rise from the tree.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
-import { BAND_LATS, Band, LINE_STEPS, airAt, lineLonAt } from '../../tracks/domain/noon-line.js';
-import { forestNotesAt } from '../../music/domain/composers/noon.js';
+import { LINE_STEPS, barLevelAt, lineLonAt } from '../../tracks/domain/noon-line.js';
+import { TREE_KINDS, TREE_SIZE, TreeKind, treeSizeU } from '../../tracks/domain/forest-trees.js';
+import { createGrowingTree } from './tree-sprites.js';
 
-// Canopy PNG is 0.25°; drawn at full resolution.
-const MAP_CELL_DEG = 0.25;
-const CELL_DEG = MAP_CELL_DEG;
-const FOOTPRINT = 0.78;
-// Mild relief: 45 m is about 5 globe units (radius 100), so canopy reads as texture, not spikes.
-const UNITS_PER_M = 0.11;
-const COLUMN_MIN_U = 0.2;
-const HIGHLIGHT_DEG = 0.75;
+// Each height class its own colour and its own tree: the commonest, the lowest, is plain green; each class up is
+// brighter and branches more generations deep, so it glows more, up to gold. Colours are sRGB, as picked. The music
+// plays each class on its own instrument (composers/noon.js), so a colour is a sound.
+const TREE_LOOK = Object.freeze({
+  [TreeKind.GREEN]: Object.freeze({ color: '#2f8f46', depth: 4 }),
+  [TreeKind.BLUE]: Object.freeze({ color: '#3d7bff', depth: 5 }),
+  [TreeKind.SKY]: Object.freeze({ color: '#79c7ee', depth: 6 }),
+  [TreeKind.PURPLE]: Object.freeze({ color: '#b07cf0', depth: 7 }),
+  [TreeKind.GOLD]: Object.freeze({ color: '#f4c34a', depth: 8 }),
+});
+// Trees are drawn over the globe without a depth test (an upright sprite against the surface flickered as the two
+// fought for depth), so a tree behind the globe is hidden by hand: by how much its ground faces the camera (cosine),
+// gone at `hiddenAt` and fully shown from `shownFrom`, so it fades at the rim.
+const TREE_LIMB = Object.freeze({ hiddenAt: 0, shownFrom: 0.12 });
+// A tree the music has gone back past fades out over this long (s) instead of vanishing.
+const TREE_FADE_OUT_SEC = 0.15;
+// Each tree's canvas: the smaller kinds at the first size, the taller at the second (pixels, a power of two).
+const TREE_CANVAS_PX = Object.freeze([256, 512]);
+// The tree's base in its sprite (share of the sprite, from the bottom left), as tree-sprites.js plants it.
+const TREE_BASE = Object.freeze({ x: 0.5, y: 0.015 });
 const MAP_NORTH = 52;
 const MAP_SOUTH = -52;
 const MERIDIAN_SAMPLES = 96;
 const MERIDIAN_ALTITUDE = 0.006;
 const MERIDIAN_HALF_DEG = 0.7;
+// The noon meridian shines with the forest under it (noon-line.js barLevelAt, as the drone plays it): `thin` over the sea,
+// full over the thickest forest, easing at `easePerFrame` of the way to its mark.
+const MERIDIAN_STRENGTH = Object.freeze({ thin: 0.35, easePerFrame: 0.12 });
 // Notes of light: points drawn on the GPU from one fixed pool, each fading out where it was struck (it does not slide
 // along with the meridian). Sizes and speeds in globe units (radius 100).
 const LIGHT_POOL = 2048;
-// The forest a voice plays: the band's cells under the degree of the step, at least this tall (m; as noon-line.js).
-const SOUNDING_FROM_M = 4;
-// The glow where a note is struck: bigger the higher and louder the note (share 0..1).
+// The glow where a tree's note is struck: bigger the taller the tree (share 0..1).
 const NOTE_GLOW = Object.freeze({ life: 0.9, size: [5, 11], grow: 1.7 });
-// Motes of pollen rising from the forest the note plays, more the louder it is.
+// Motes of pollen rising from the tree, more the taller it is.
 const MOTE = Object.freeze({ count: [2, 5], life: [1.6, 2.8], size: [2.5, 4.5], rise: [3, 6], drift: 3, sway: 1.2, grow: 0.45 });
-// Each voice in its own colour, so the eye can follow the ear: the north's flute cool, the tropics' lead gold, the
-// south's pizzicato rose. The warm light is every glow's heart.
-const VOICE_COLORS = Object.freeze({
-  [Band.NORTH]: '#7fd0ff',
-  [Band.TROPICS]: '#ffc94d',
-  [Band.SOUTH]: '#ff8fb1',
-});
+// A tree's note glows in the tree's own colour, so the eye can follow the ear. The warm light is every glow's heart.
 const LIGHT_HEART = '#fff1cf';
-// Steps a frame may jump and still have each one's notes shown (more is a seek).
+// Steps a frame may jump and still have each tree's note shown (more is a seek).
 const MAX_STEPS_A_FRAME = 4;
-// CO₂ map is 1°, the mean of GEDI's window; the range it is coloured over (ppm), round that window's spread.
-const AIR_CELL_DEG = 1;
-const AIR_PPM = Object.freeze({ low: 409, high: 418 });
-const AIR_ALT = Object.freeze({ low: 0.014, high: 0.04 });
-const AIR_FOOTPRINT = 0.92;
-
-const vertexShader = `
-attribute float aHeight;
-attribute float aLon;
-attribute float aLat;
-uniform float uLineLon;
-uniform float uHighlight;
-varying float vHeight;
-varying float vShade;
-varying float vSun;
-varying float vLit;
-void main() {
-  vec3 p = position;
-  p.z *= max(aHeight * ${UNITS_PER_M.toFixed(3)}, ${COLUMN_MIN_U.toFixed(1)});
-  vHeight = aHeight;
-  // Tops catch the light; the sides facing east and west a little more than those facing the poles.
-  vShade = normal.z > 0.5 ? 1.0 : (abs(normal.x) > 0.5 ? 0.78 : 0.66);
-  float d = abs(mod(aLon - uLineLon + 540.0, 360.0) - 180.0);
-  // The noon sun stands over the line at the equator: full light there, falling to dusk a quarter of the way round.
-  float sun = cos(radians(aLat)) * cos(radians(min(d, 90.0)));
-  vSun = 0.32 + 0.68 * pow(max(sun, 0.0), 0.8);
-  vLit = uHighlight * (1.0 - smoothstep(0.0, ${HIGHLIGHT_DEG.toFixed(2)}, d));
-  gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(p, 1.0);
-}`;
-
-const fragmentShader = `
-varying float vHeight;
-varying float vShade;
-varying float vSun;
-varying float vLit;
-// The colours below are sRGB, as picked; the shader works in linear light.
-vec3 srgb(vec3 c) { return pow(c, vec3(2.2)); }
-vec3 ramp(float h) {
-  // After SVS 4950: bare ground warm tan, scrub olive, forest deepening to pine, the tallest canopy bright leaf
-  // with pale tips.
-  vec3 c0 = srgb(vec3(0.55, 0.45, 0.31));
-  vec3 c1 = srgb(vec3(0.42, 0.47, 0.22));
-  vec3 c2 = srgb(vec3(0.16, 0.40, 0.18));
-  vec3 c3 = srgb(vec3(0.07, 0.31, 0.20));
-  vec3 c4 = srgb(vec3(0.33, 0.66, 0.27));
-  vec3 c5 = srgb(vec3(0.86, 0.95, 0.66));
-  if (h < 5.0) return mix(c0, c1, h / 5.0);
-  if (h < 12.0) return mix(c1, c2, (h - 5.0) / 7.0);
-  if (h < 22.0) return mix(c2, c3, (h - 12.0) / 10.0);
-  if (h < 32.0) return mix(c3, c4, (h - 22.0) / 10.0);
-  return mix(c4, c5, clamp((h - 32.0) / 12.0, 0.0, 1.0));
-}
-void main() {
-  vec3 color = ramp(vHeight) * vShade * vSun;
-  // Under the line itself the canopy is caught in warm noon light.
-  color = mix(color, srgb(vec3(1.0, 0.93, 0.70)), vLit * 0.45);
-  gl_FragColor = vec4(color, 1.0);
-  #include <colorspace_fragment>
-}`;
-
-const airVertex = `
-attribute float aShare;
-varying float vShare;
-varying float vAcross;
-void main() {
-  vShare = aShare;
-  vAcross = max(abs(position.x), abs(position.y));
-  gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
-}`;
-
-const airFragment = `
-uniform float uAirThick;
-varying float vShare;
-varying float vAcross;
-void main() {
-  // The window's thinnest month: a faint cool veil. Its thickest: a warmer, denser one, still thin enough to see the
-  // forest through.
-  // Colours are sRGB, as picked; the shader works in linear light.
-  vec3 cool = pow(vec3(0.42, 0.62, 0.95), vec3(2.2));
-  vec3 warm = pow(vec3(1.0, 0.52, 0.36), vec3(2.2));
-  float thick = clamp(uAirThick, 0.0, 1.0);
-  vec3 color = mix(cool, warm, mix(vShare * 0.35, 0.55 + vShare * 0.45, thick));
-  float edge = 1.0 - smoothstep(0.3, 0.5, vAcross);
-  float alpha = edge * mix(0.05, 0.22, thick) * mix(0.6, 1.0, vShare);
-  if (alpha < 0.01) discard;
-  gl_FragColor = vec4(color, alpha);
-  #include <colorspace_fragment>
-}`;
-
 const meridianVertex = `
 varying float vAlong;
 varying float vAcross;
+varying float vFacing;
+uniform vec2 uLimb;
 void main() {
   vAlong = uv.y;
   vAcross = uv.x * 2.0 - 1.0;
+  // The ribbon is drawn without a depth test (it lies too close to the globe's surface, and the depth buffer cut it
+  // into pieces), so it fades out toward the globe's edge instead, as the trees do.
+  vFacing = smoothstep(uLimb.x, uLimb.y, dot(normalize(position), normalize(cameraPosition - position)));
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }`;
 
 const meridianFragment = `
 uniform vec3 uColor;
+uniform float uStrength;
 varying float vAlong;
 varying float vAcross;
+varying float vFacing;
 void main() {
   float edge = 1.0 - abs(vAcross);
   float core = pow(edge, 6.0);
   float fade = smoothstep(0.0, 0.08, vAlong) * smoothstep(1.0, 0.92, vAlong);
-  float alpha = fade * (0.35 * edge * edge + 0.65 * core);
+  float alpha = uStrength * fade * vFacing * (0.35 * edge * edge + 0.65 * core);
   gl_FragColor = vec4(mix(uColor, vec3(1.0), core * 0.7), alpha);
   #include <colorspace_fragment>
 }`;
@@ -158,6 +83,7 @@ attribute vec4 aLife; // born (s), life (s), size (units), grow (size at the end
 attribute vec2 aLook; // attack (share of the life it takes to come up), seed
 uniform float uTime;
 uniform float uPxPerUnit;
+uniform vec2 uLimb;
 varying float vAlpha;
 varying vec3 vColor;
 void main() {
@@ -176,6 +102,9 @@ void main() {
   gl_PointSize = aLife.z * mix(1.0, aLife.w, ease) * uPxPerUnit / -mv.z;
   // Struck: up fast, then dies away like the note.
   vAlpha = smoothstep(0.0, aLook.x, u) * (1.0 - u) * (1.0 - u);
+  // Drawn without a depth test (the map tiles bulge above the sphere and cut the glow into boxes), so it fades out toward
+  // the globe's edge instead of showing through from the far side.
+  vAlpha *= smoothstep(uLimb.x, uLimb.y, dot(normalize(p), normalize(cameraPosition - p)));
   vColor = aColor;
 }`;
 
@@ -194,51 +123,33 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
-/**
- * The forest a band plays at a step: its cells on the canopy map under the step's degree of longitude, as { lat, lon,
- * height }, and their centre, weighted toward the tallest (where the note is heard from). Null where it has none.
- */
-function bandForest(map, band, lineStep) {
-  const { width, height, metres } = map;
-  const east = lineLonAt(lineStep);
-  const [south, north] = BAND_LATS[band];
-  const c0 = Math.round((east - 1 + 180) / MAP_CELL_DEG);
-  const r0 = Math.max(0, Math.round((MAP_NORTH - north) / MAP_CELL_DEG));
-  const r1 = Math.min(height, Math.round((MAP_NORTH - south) / MAP_CELL_DEG));
-  const cells = [];
-  let weight = 0;
-  let lat = 0;
-  let lon = 0;
-  for (let c = c0; c < c0 + 1 / MAP_CELL_DEG; c++) {
-    const col = ((c % width) + width) % width;
-    for (let row = r0; row < r1; row++) {
-      const h = metres[row * width + col];
-      if (!(h >= SOUNDING_FROM_M)) continue;
-      const cell = { lat: MAP_NORTH - (row + 0.5) * MAP_CELL_DEG, lon: -180 + (col + 0.5) * MAP_CELL_DEG, height: h };
-      cells.push(cell);
-      const w = h * h;
-      weight += w;
-      lat += cell.lat * w;
-      lon += cell.lon * w;
-    }
-  }
-  if (!cells.length) return null;
-  return { cells, lat: lat / weight, lon: lon / weight };
-}
-
 const between = ([low, high], share = Math.random()) => low + share * (high - low);
+const smoothstep = (edge0, edge1, x) => {
+  const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+};
+// Scratch for a tree's direction to the camera, reused every frame.
+const toCamera = new THREE.Vector3();
+
+/**
+ * How lit a tree is by the noon sun over the line at `lineLon`: full light under it at the equator, falling to dusk
+ * a quarter of the way round.
+ */
+function sunAt(lat, lon, lineLon) {
+  const d = Math.abs(((lon - lineLon + 540) % 360) - 180);
+  const sun = Math.cos((lat * Math.PI) / 180) * Math.cos((Math.min(d, 90) * Math.PI) / 180);
+  return 0.32 + 0.68 * Math.max(sun, 0) ** 0.8;
+}
 
 /**
  * @param {{ globe: Object, unitsPerPx: () => number, setElements: (elements: Object[]) => void }} view
  */
 export function createNoonLayer(view) {
-  let mesh = null;
-  let airMesh = null;
+  let trees = [];
   let meridian = null;
-  let canopyMap = null;
   let lights = null;
   let nextLight = 0;
-  let lastNoteStep = null;
+  let growFrame = 0;
 
   function disposeMesh(m) {
     if (!m) return;
@@ -247,23 +158,18 @@ export function createNoonLayer(view) {
     m.material.dispose();
   }
 
-  /** Takes the forest and air off the globe and, for `song`, puts them and the noon meridian on. */
+  /** Takes the forest off the globe and, for `song`, puts them and the noon meridian on. */
   function reset(song, color) {
-    disposeMesh(mesh);
-    disposeMesh(airMesh);
+    for (const tree of trees) unplant(tree);
+    trees = [];
     disposeMesh(meridian);
     disposeMesh(lights);
-    mesh = airMesh = meridian = lights = null;
-    canopyMap = null;
+    meridian = lights = null;
     nextLight = 0;
-    lastNoteStep = null;
     view.setElements([]);
     if (!song) return;
-    canopyMap = song.map;
-    mesh = buildColumns(song.map);
-    view.globe.scene().add(mesh);
-    airMesh = buildAir(song.airMap);
-    view.globe.scene().add(airMesh);
+    // Copies, since the layer keeps each tree's sprite on it.
+    trees = song.trees.map((tree) => ({ ...tree }));
     meridian = buildMeridian(color);
     view.globe.scene().add(meridian);
     lights = buildLights();
@@ -289,8 +195,10 @@ export function createNoonLayer(view) {
         uTime: { value: 0 },
         uPxPerUnit: { value: 1 },
         uHeart: { value: new THREE.Color(LIGHT_HEART) },
+        uLimb: { value: new THREE.Vector2(TREE_LIMB.hiddenAt, TREE_LIMB.shownFrom) },
       },
       transparent: true,
+      depthTest: false,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
@@ -301,12 +209,11 @@ export function createNoonLayer(view) {
   }
 
   /**
-   * Lights one point on top of the canopy at `lat`, `lon`, `heightM` tall: a glow where it stands still (`rises`
-   * false), or a mote of pollen drifting up.
+   * Lights one point over the forest at `lat`, `lon`: a glow where it stands still (`rises` false), or a mote of pollen
+   * drifting up.
    */
-  function light({ lat, lon, heightM, color, now, life, size, grow, attack, rises }) {
-    const globeR = view.globe.getGlobeRadius();
-    const { x, y, z } = view.globe.getCoords(lat, lon, MERIDIAN_ALTITUDE + (heightM * UNITS_PER_M) / globeR);
+  function light({ lat, lon, color, now, life, size, grow, attack, rises }) {
+    const { x, y, z } = view.globe.getCoords(lat, lon, MERIDIAN_ALTITUDE);
     const i = nextLight;
     nextLight = (nextLight + 1) % LIGHT_POOL;
     const { attributes } = lights.geometry;
@@ -330,30 +237,21 @@ export function createNoonLayer(view) {
     for (const name of ['position', 'aDrift', 'aSway', 'aColor', 'aLife', 'aLook']) attributes[name].needsUpdate = true;
   }
 
-  const voiceColors = Object.fromEntries(Object.entries(VOICE_COLORS).map(([band, hex]) => [band, new THREE.Color(hex)]));
+  const kindColors = Object.fromEntries(Object.entries(TREE_LOOK).map(([kind, look]) => [kind, new THREE.Color(look.color)]));
 
-  /** The notes the forest voices strike at a whole step of the line, each lit where its band's forest is. */
-  function lightNotes(line, lineStep, now) {
-    for (const note of forestNotesAt(line, lineStep)) {
-      const forest = bandForest(canopyMap, note.band, lineStep);
-      if (!forest) continue;
-      const color = voiceColors[note.band];
-      // The note: a glow at the heart of the forest it plays, as big as it is high and loud.
+  /** The note of a tree: a glow where it starts, as big as it is tall, and pollen from it. */
+  function lightTree(tree, now) {
+    const color = kindColors[tree.kind];
+    const share = (treeSizeU(tree.metres) - TREE_SIZE.smallestU) / (TREE_SIZE.tallestU - TREE_SIZE.smallestU);
+    light({
+      lat: tree.lat, lon: tree.lon, color, now,
+      life: NOTE_GLOW.life, size: between(NOTE_GLOW.size, share), grow: NOTE_GLOW.grow, attack: 0.06, rises: false,
+    });
+    for (let made = 0; made < Math.round(between(MOTE.count, share)); made++) {
       light({
-        lat: forest.lat, lon: forest.lon, heightM: note.height, color, now,
-        life: NOTE_GLOW.life, size: between(NOTE_GLOW.size, note.share), grow: NOTE_GLOW.grow, attack: 0.06, rises: false,
+        lat: tree.lat, lon: tree.lon, color, now,
+        life: between(MOTE.life), size: between(MOTE.size), grow: MOTE.grow, attack: 0.15, rises: true,
       });
-      // Pollen from the forest itself, the taller cells likelier.
-      const motes = Math.round(between(MOTE.count, note.share));
-      for (let tries = 0, made = 0; made < motes && tries < motes * 8; tries++) {
-        const cell = forest.cells[Math.floor(Math.random() * forest.cells.length)];
-        if (Math.random() > cell.height / 35) continue;
-        light({
-          lat: cell.lat, lon: cell.lon, heightM: cell.height, color, now,
-          life: between(MOTE.life), size: between(MOTE.size), grow: MOTE.grow, attack: 0.15, rises: true,
-        });
-        made++;
-      }
     }
   }
 
@@ -363,113 +261,89 @@ export function createNoonLayer(view) {
     lights.material.uniforms.uPxPerUnit.value = height / (2 * Math.tan((camera.fov * Math.PI) / 360));
   }
 
-  function buildColumns(map) {
-    const { width, height, metres } = map;
-    const cells = [];
-    for (let row = 0; row < height; row++) {
-      for (let col = 0; col < width; col++) {
-        const h = metres[row * width + col];
-        if (!(h > 0)) continue;
-        cells.push({
-          lat: MAP_NORTH - (row + 0.5) * MAP_CELL_DEG,
-          lon: -180 + (col + 0.5) * MAP_CELL_DEG,
-          height: h,
-        });
-      }
-    }
-    const n = cells.length;
-    const geometry = new THREE.BoxGeometry(1, 1, 1).translate(0, 0, 0.5);
-    const material = new THREE.ShaderMaterial({
-      vertexShader,
-      fragmentShader,
-      uniforms: { uLineLon: { value: 180 }, uHighlight: { value: 0 } },
+  /**
+   * Starts `tree` growing where it stands: its own canvas (tree-sprites.js), drawn frame by frame, on a sprite standing
+   * upright on the screen and added onto the globe like light.
+   */
+  function plant(tree) {
+    const look = TREE_LOOK[tree.kind];
+    const share = TREE_KINDS.findIndex((k) => k.kind === tree.kind) / (TREE_KINDS.length - 1);
+    const size = treeSizeU(tree.metres);
+    tree.grower = createGrowingTree({
+      color: look.color,
+      depth: look.depth,
+      growSec: tree.growSec,
+      sizePx: TREE_CANVAS_PX[share > 0.5 ? 1 : 0],
+      seed: tree.seed,
     });
-    const columns = new THREE.InstancedMesh(geometry, material, n);
-    const unitsPerDeg = (view.globe.getGlobeRadius() * Math.PI) / 180;
-    const widthM = CELL_DEG * FOOTPRINT * unitsPerDeg;
-    const pole = new THREE.Vector3(0, 1, 0);
-    const up = new THREE.Vector3();
-    const east = new THREE.Vector3();
-    const north = new THREE.Vector3();
-    const matrix = new THREE.Matrix4();
-    const heights = new Float32Array(n);
-    const lons = new Float32Array(n);
-    const lats = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const cell = cells[i];
-      const { x, y, z } = view.globe.getCoords(cell.lat, cell.lon, 0);
-      up.set(x, y, z).normalize();
-      east.crossVectors(pole, up).normalize();
-      north.crossVectors(up, east);
-      const across = widthM * Math.cos((cell.lat * Math.PI) / 180);
-      matrix.makeBasis(east.multiplyScalar(across), north.multiplyScalar(widthM), up.clone());
-      matrix.setPosition(x, y, z);
-      columns.setMatrixAt(i, matrix);
-      heights[i] = cell.height;
-      lons[i] = cell.lon;
-      lats[i] = cell.lat;
-    }
-    geometry.setAttribute('aHeight', new THREE.InstancedBufferAttribute(heights, 1));
-    geometry.setAttribute('aLon', new THREE.InstancedBufferAttribute(lons, 1));
-    geometry.setAttribute('aLat', new THREE.InstancedBufferAttribute(lats, 1));
-    columns.frustumCulled = false;
-    return columns;
-  }
-
-  function buildAir(airMap) {
-    const { width, height, ppm } = airMap;
-    const cells = [];
-    const span = AIR_PPM.high - AIR_PPM.low;
-    for (let row = 0; row < height; row++) {
-      for (let col = 0; col < width; col++) {
-        const value = ppm[row * width + col];
-        if (!(value > 0)) continue;
-        const share = Math.min(1, Math.max(0, (value - AIR_PPM.low) / span));
-        cells.push({
-          lat: 90 - (row + 0.5) * AIR_CELL_DEG,
-          lon: -180 + (col + 0.5) * AIR_CELL_DEG,
-          share,
-          alt: AIR_ALT.low + share * (AIR_ALT.high - AIR_ALT.low),
-        });
-      }
-    }
-    const n = cells.length;
-    const geometry = new THREE.PlaneGeometry(1, 1);
-    const material = new THREE.ShaderMaterial({
-      vertexShader: airVertex,
-      fragmentShader: airFragment,
-      uniforms: { uAirThick: { value: 0 } },
+    const texture = new THREE.CanvasTexture(tree.grower.canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    // Mipmapped, so a tree drawn small stays smooth as the globe turns.
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: texture,
       transparent: true,
+      depthTest: false,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-    });
-    const field = new THREE.InstancedMesh(geometry, material, n);
-    const unitsPerDeg = (view.globe.getGlobeRadius() * Math.PI) / 180;
-    const widthM = AIR_CELL_DEG * AIR_FOOTPRINT * unitsPerDeg;
-    const pole = new THREE.Vector3(0, 1, 0);
-    const up = new THREE.Vector3();
-    const east = new THREE.Vector3();
-    const north = new THREE.Vector3();
-    const matrix = new THREE.Matrix4();
-    const shares = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const cell = cells[i];
-      const { x, y, z } = view.globe.getCoords(cell.lat, cell.lon, cell.alt);
-      up.set(x, y, z).normalize();
-      east.crossVectors(pole, up).normalize();
-      if (east.lengthSq() < 1e-8) east.set(1, 0, 0).addScaledVector(up, -up.x).normalize();
-      north.crossVectors(up, east);
-      const across = widthM * Math.cos((cell.lat * Math.PI) / 180);
-      matrix.makeBasis(east.multiplyScalar(across), north.multiplyScalar(widthM), up.clone());
-      matrix.setPosition(x, y, z);
-      field.setMatrixAt(i, matrix);
-      shares[i] = cell.share;
-    }
-    geometry.setAttribute('aShare', new THREE.InstancedBufferAttribute(shares, 1));
-    field.frustumCulled = false;
-    field.renderOrder = 2;
-    return field;
+    }));
+    const { x, y, z } = view.globe.getCoords(tree.lat, tree.lon, MERIDIAN_ALTITUDE);
+    sprite.position.set(x, y, z);
+    sprite.center.set(TREE_BASE.x, TREE_BASE.y);
+    sprite.scale.set(size, size, 1);
+    sprite.renderOrder = 1;
+    // The sprite stands up from its base, outside the bounds three.js culls by, so it would pop at the screen's edge.
+    sprite.frustumCulled = false;
+    const ground = sprite.position.clone().normalize();
+    sprite.onBeforeRender = (renderer, scene, camera) => {
+      const facing = toCamera.subVectors(camera.position, sprite.position).normalize().dot(ground);
+      sprite.material.opacity = smoothstep(TREE_LIMB.hiddenAt, TREE_LIMB.shownFrom, facing) * tree.fadeOut;
+    };
+    tree.sprite = sprite;
+    tree.growing = true;
+    tree.fadeOut = 1;
+    tree.leavingAt = null;
+    view.globe.scene().add(sprite);
+    growTrees();
+  }
+
+  /** Starts `tree` fading out; the frame loop takes it off the globe once it is gone. */
+  function fadeOut(tree) {
+    tree.leavingAt = performance.now() / 1000;
+    growTrees();
+  }
+
+  function unplant(tree) {
+    if (!tree.sprite) return;
+    view.globe.scene().remove(tree.sprite);
+    tree.sprite.material.map.dispose();
+    tree.sprite.material.dispose();
+    tree.sprite = tree.grower = null;
+    tree.growing = false;
+    tree.leavingAt = null;
+  }
+
+  /** Draws the growing trees frame by frame until every planted tree is grown. */
+  function growTrees() {
+    if (growFrame) return;
+    const frame = () => {
+      const now = performance.now() / 1000;
+      let any = false;
+      for (const tree of trees) {
+        if (tree.leavingAt !== null) {
+          tree.fadeOut = 1 - (now - tree.leavingAt) / TREE_FADE_OUT_SEC;
+          if (tree.fadeOut <= 0) unplant(tree);
+          else any = true;
+          continue;
+        }
+        if (!tree.growing) continue;
+        tree.growing = tree.grower.step(now);
+        tree.sprite.material.map.needsUpdate = true;
+        any ||= tree.growing;
+      }
+      growFrame = any ? requestAnimationFrame(frame) : 0;
+    };
+    growFrame = requestAnimationFrame(frame);
   }
 
   function buildMeridian(color) {
@@ -489,10 +363,12 @@ export function createNoonLayer(view) {
     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
     geometry.setIndex(new THREE.BufferAttribute(index, 1));
     const material = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: new THREE.Color(color) } },
+      uniforms: { uColor: { value: new THREE.Color(color) }, uStrength: { value: MERIDIAN_STRENGTH.thin },
+        uLimb: { value: new THREE.Vector2(TREE_LIMB.hiddenAt, TREE_LIMB.shownFrom) } },
       vertexShader: meridianVertex,
       fragmentShader: meridianFragment,
       transparent: true,
+      depthTest: false,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
       side: THREE.DoubleSide,
@@ -526,31 +402,35 @@ export function createNoonLayer(view) {
   }
 
   /**
-   * @param {{ map: Object, airMap: Object, air: import('../../tracks/domain/noon-line.js').AirMonths, line: Object }} song
+   * @param {{ map: Object, line: Object }} song
    * @param {number} step
    * @param {boolean} [playing]  whether the music is playing, so notes are heard and lit
    */
   function render(song, step, playing = false) {
-    if (!mesh || !meridian) return;
+    if (!meridian) return;
     // The noon line moves from the first step; the listening legend does not hold it back.
     const lineStep = Math.max(0, Math.min(LINE_STEPS, step));
     const headLon = lineLonAt(lineStep);
-    mesh.material.uniforms.uLineLon.value = headLon;
-    mesh.material.uniforms.uHighlight.value = 1;
-    if (airMesh) airMesh.material.uniforms.uAirThick.value = airAt(song.air, lineStep).thickness;
+    // A picked tree grows once the line has crossed it, and is gone again if the music goes back before that.
+    const now = performance.now() / 1000;
+    for (const tree of trees) {
+      if (!tree.sprite && lineStep >= tree.startStep) {
+        plant(tree);
+        // A tree's note sounds as it starts (composers/noon.js); a seek past it plants it without a note.
+        if (playing && lineStep - tree.startStep <= MAX_STEPS_A_FRAME) lightTree(tree, now);
+      } else if (tree.sprite && tree.leavingAt === null && lineStep < tree.startStep) fadeOut(tree);
+      else if (tree.sprite && tree.leavingAt !== null && lineStep >= tree.startStep) {
+        tree.leavingAt = null;
+        tree.fadeOut = 1;
+      }
+      if (tree.sprite) tree.sprite.material.color.setScalar(sunAt(tree.lat, tree.lon, headLon));
+    }
     placeMeridian(headLon);
     meridian.visible = true;
+    const level = barLevelAt(song.line, Math.min(LINE_STEPS - 1, Math.floor(lineStep)));
+    const strength = meridian.material.uniforms.uStrength;
+    strength.value += (MERIDIAN_STRENGTH.thin + (1 - MERIDIAN_STRENGTH.thin) * level - strength.value) * MERIDIAN_STRENGTH.easePerFrame;
 
-    // A note sounds at the start of its step (composers/noon.js plays step n at n steps in), so it lights then too.
-    const now = performance.now() / 1000;
-    const stepInt = Math.floor(lineStep);
-    if (!playing) {
-      lastNoteStep = null;
-    } else if (canopyMap && song.line && stepInt !== lastNoteStep) {
-      const ahead = lastNoteStep !== null && stepInt > lastNoteStep && stepInt - lastNoteStep <= MAX_STEPS_A_FRAME;
-      for (let s = ahead ? lastNoteStep + 1 : stepInt; s <= stepInt; s++) lightNotes(song.line, s, now);
-      lastNoteStep = stepInt;
-    }
     lights.material.uniforms.uTime.value = now;
     updateLightScale();
   }

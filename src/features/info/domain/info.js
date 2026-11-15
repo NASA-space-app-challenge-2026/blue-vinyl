@@ -9,14 +9,13 @@
 
 /**
  * @typedef {Object} AboutContent
+ * @property {string} version release version, as in 1.2.3
  * @property {string} tagline
  * @property {string[]} intro paragraphs
  * @property {{ title: string, body: string }[]} howItWorks
  * @property {{ keys: string, action: string }[]} shortcuts
  * @property {{ label: string, url: string }} challenge
- * @property {string} teamName
  * @property {TeamMember[]} team
- * @property {string} disclaimer
  */
 
 /**

@@ -2,6 +2,7 @@ export const AlbumCategory = Object.freeze({
   BIODIVERSITY: 'biodiversity',
   CLIMATE: 'climate',
   EXTREME_WEATHER: 'extreme-weather',
+  AIR_QUALITY: 'air-quality',
   DISASTER: 'disaster',
 });
 
@@ -11,6 +12,7 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
   [AlbumCategory.CLIMATE]: 'Climate',
   [AlbumCategory.EXTREME_WEATHER]: 'Extreme Weather',
   [AlbumCategory.DISASTER]: 'Disaster',
+  [AlbumCategory.AIR_QUALITY]: 'Air Quality',
 });
 
 /**
@@ -87,6 +89,15 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  */
 
 /**
+ * A track that plays the smog around a city, from the files the album notebook exports (see docs/data-guide.md).
+ *
+ * @typedef {Object} SmogSource
+ * @property {string} tracksDir the album's tracks folder, holding the track's CSVs and tracks.json
+ * @property {string} file the track's CSV
+ * @property {Object} loop the loop it plays (one of SmogLoop in music/domain/composers/smog.js)
+ */
+
+/**
  * @typedef {Object} Track
  * @property {AerosolSource} [aerosol] aerosol data and view
  * @property {string} title
@@ -95,10 +106,11 @@ export const ALBUM_CATEGORY_LABEL = Object.freeze({
  * @property {StormSource} [storm] data, sound and view of a hurricane track
  * @property {StormSeasonSource} [season] data, sound and view of a storm season track
  * @property {LightningSource} [lightning] data and sound of a lightning track
+ * @property {SmogSource} [smog] data, sound and view of a smog track
  * @property {{ kind: 'annual' | 'season', csvUrl: string, firesUrl: string }} [wildfire]
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
- * @property {{ lineUrl: string, mapUrl: string, airMapUrl: string, airUrl: string }} [forest] the noon line, canopy
- *   map, and the CO₂ map and months of the same window the track plays (see tracks/domain/noon-line.js)
+ * @property {{ lineUrl: string, mapUrl: string }} [forest] the noon line and canopy map
+ *   the track plays (see tracks/domain/noon-line.js)
  * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
  * @property {string} [color] CSS color the track's data is drawn in
  * @property {string} [coverUrl] the track's own cover image, shown on the sleeve while it is the current track
@@ -135,6 +147,14 @@ export function wrapIndex(index, count) {
 /** @param {Album} album */
 export function albumDurationSec(album) {
   return album.tracks.reduce((sum, track) => sum + track.durationSec, 0);
+}
+
+/** @param {number} sec a length of time @returns {string} as minutes:seconds, such as 3:05 */
+export function formatDuration(sec) {
+  const whole = Math.round(sec);
+  const minutes = Math.floor(whole / 60);
+  const seconds = String(whole % 60).padStart(2, '0');
+  return `${minutes}:${seconds}`;
 }
 
 /**
@@ -174,6 +194,25 @@ export function trackIndexAt(album, progress) {
  */
 export function trackStartSec(album, index) {
   return album.tracks.slice(0, index).reduce((sum, track) => sum + track.durationSec, 0);
+}
+
+// Each track's sound fades in over its first seconds and out over its last, so one track eases into the next.
+const TRACK_FADE = Object.freeze({ inSec: 1.5, outSec: 2.5 });
+
+/**
+ * How loud the music is (0..1) `sec` into the track at `index`: rising from silence at its start, falling to silence
+ * at its end, on an eased curve; full in between. A fade never takes more than half of a short track.
+ *
+ * @param {Album} album
+ * @param {number} index
+ * @param {number} sec
+ */
+export function trackFadeAt(album, index, sec) {
+  const { durationSec } = album.tracks[index];
+  const inSec = Math.min(TRACK_FADE.inSec, durationSec / 2);
+  const outSec = Math.min(TRACK_FADE.outSec, durationSec / 2);
+  const along = Math.max(0, Math.min(1, sec / inSec, (durationSec - sec) / outSec));
+  return along * along * (3 - 2 * along);
 }
 
 /**

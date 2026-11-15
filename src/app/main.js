@@ -7,7 +7,7 @@ import { createParticleToggles } from '../features/controls/presentation/particl
 // Composition root: wires the features together.
 
 import { albums, WILDFIRE_DAY_TIMELINE, WILDFIRE_YEAR_TIMELINE } from '../features/album/data/albums.js';
-import { ALBUM_CATEGORY_LABEL, albumDurationSec, trackBoundaries, trackCover, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
+import { albumDurationSec, formatDuration, trackBoundaries, trackCover, trackFadeAt, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
@@ -28,6 +28,7 @@ import { createDateLabel } from '../features/globe/presentation/date-label.js';
 import { createGlobeView } from '../features/globe/presentation/globe-view.js';
 import { createHalo } from '../features/globe/presentation/halo.js';
 import { createSeaLevelOverlay } from '../features/globe/presentation/sea-level-overlay.js';
+import { smogColor } from '../features/globe/presentation/pollution-color.js';
 import { createWildfireOverlay } from '../features/globe/presentation/wildfire-overlay.js';
 import { ABOUT } from '../features/info/data/about.js';
 import { LICENSES } from '../features/info/data/licenses.js';
@@ -41,18 +42,21 @@ import { SOUNDFONT_CREDIT } from '../features/music/data/soundfont-bank.js';
 import { FlockComposer } from '../features/music/domain/composers/flock.js';
 import { HurricaneComposer } from '../features/music/domain/composers/hurricane.js';
 import { LightningComposer } from '../features/music/domain/composers/lightning.js';
+import { SmogComposer } from '../features/music/domain/composers/smog.js';
 import { NoonComposer } from '../features/music/domain/composers/noon.js';
 import { seasonSong, StormSeasonComposer } from '../features/music/domain/composers/storm-season.js';
 import { iceSeaScore } from '../features/music/domain/ice-sea-score.js';
 import { annualBurnScore, seasonScore } from '../features/music/domain/wildfire-score.js';
 import { loadBirdTracks } from '../features/tracks/data/bird-track-source.js';
 import { loadLightningTrack } from '../features/tracks/data/lightning-season-source.js';
+import { loadSmogTrack } from '../features/tracks/data/smog-source.js';
 import { loadNoonSong } from '../features/tracks/data/noon-line-source.js';
 import { loadStormSeason } from '../features/tracks/data/storm-season-source.js';
 import { loadStormTrack } from '../features/tracks/data/storm-track-source.js';
 import { loadIceSeaTrack, loadWildfireTrack } from '../features/tracks/data/track-repository.js';
 import { dailyFlock, sampleFlock } from '../features/tracks/domain/bird-track.js';
-import { STEP_SEC, airAt, lineLonAt } from '../features/tracks/domain/noon-line.js';
+import { boxFocus, hourlyAt, smogDurationSec } from '../features/tracks/domain/smog.js';
+import { STEP_SEC, levelAt, lineLonAt } from '../features/tracks/domain/noon-line.js';
 import { seasonTimeAt } from '../features/tracks/domain/storm-season.js';
 import { sampleStorm, stormFadeAt, stormMsPerSec, stormTimeAt } from '../features/tracks/domain/storm-track.js';
 import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.js';
@@ -82,8 +86,8 @@ let musicCredits = [];
 // The attribution of the globe's map and imagery, shown with the album's credits.
 let mapCredit = '';
 // What each track of the album plays, by track index, once its data has loaded (see the Song of sound-engine.js): its
-// birds (`tracks`, `lead`), its storm (`storm`), its year of lightning (`lightning`) or its forest under the noon line
-// (`forest`), or null for a track with none of them. Empty until then.
+// birds (`tracks`, `lead`), its storm (`storm`), its year of lightning (`lightning`) its forest under the noon line
+// (`forest`) or the smog around a city (`smog`), or null for a track with none of them. Empty until then.
 let songs = [];
 // The storm season each track of the album plays, by track index, once loaded (see seasonSong), or null for a track
 // without one; empty until then. The season the globe shows.
@@ -186,6 +190,7 @@ const soundEngine = createSoundEngine();
 const flockComposer = new FlockComposer();
 const hurricaneComposer = new HurricaneComposer();
 const lightningComposer = new LightningComposer();
+const smogComposer = new SmogComposer();
 const ticker = createTicker(tick);
 // The system's media controls play and pause, and step through the tracks, on into the next or previous album.
 const mediaCenter = createMediaCenter({
@@ -202,7 +207,6 @@ const noonComposer = new NoonComposer();
 // The globe turns to keep the noon meridian in front, easing with this time constant; while playing, it aims this far
 // ahead of the line, so the eased camera settles on the line itself rather than trailing it.
 const FOREST_FOLLOW_TAU_SEC = 0.5;
-const MONTH_FORMAT = Object.freeze({ month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 const transportControls = createGlassCapsule(slot('corner-bottom-left'));
 const playButton = createPlayButton(transportControls, { onToggle: togglePlayback });
@@ -223,7 +227,14 @@ const aboutDialog = createInfoDialog(slot('screen'), {
   id: 'about',
   title: 'Blue Vinyl',
   subtitle: ABOUT.tagline,
-  body: renderAbout(ABOUT, albums.map(({ title, category }) => ({ title, category: ALBUM_CATEGORY_LABEL[category] }))),
+  body: renderAbout(ABOUT, albums.map((album) => ({
+      title: album.title,
+      duration: formatDuration(albumDurationSec(album)),
+    })),
+    (index) => {
+      aboutDialog.close();
+      goToAlbum(index);
+    }),
 });
 const licenseDialog = createInfoDialog(slot('screen'), {
   id: 'license',
@@ -256,8 +267,11 @@ const onboarding = createOnboarding(slot('screen'), {
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
 // Volume keys: up louder, down quieter.
 const VOLUME_KEYS = Object.freeze({ ArrowUp: 1, ArrowDown: -1 });
+// The number keys, on the main row or the keypad, go straight to the album at that place in the catalog (1 the first).
+const ALBUM_NUMBER_CODE = /^(?:Digit|Numpad)([1-9])$/;
 
-// Space always plays or pauses, left and right switch albums and up and down set the volume, wherever the focus is.
+// Space always plays or pauses, left and right switch albums, 1 to 9 go to an album and up and down set the volume,
+// wherever the focus is.
 // Captured before any control sees the key, so a button left focused by a click is not pressed again.
 document.addEventListener(
   'keydown',
@@ -271,6 +285,14 @@ document.addEventListener(
       event.preventDefault();
       releaseClickFocus();
       if (!event.repeat) togglePlayback();
+      return;
+    }
+    const albumNumber = ALBUM_NUMBER_CODE.exec(event.code);
+    // A text field keeps its digits.
+    if (albumNumber && !(event.target instanceof HTMLInputElement && event.target.type !== 'range')) {
+      event.preventDefault();
+      releaseClickFocus();
+      if (!event.repeat) goToAlbum(Number(albumNumber[1]) - 1);
       return;
     }
     const albumStep = ALBUM_KEYS[event.key];
@@ -404,7 +426,7 @@ async function loadAlbumData(loading) {
 // Loads the birds, the storm, the lightning or the forest of each of `target`'s tracks, unless another album is shown
 // by then.
 async function loadSongs(target) {
-  if (!target.tracks.some((track) => track.birdsUrl || track.storm || track.lightning || track.forest)) return;
+  if (!target.tracks.some((track) => track.birdsUrl || track.storm || track.lightning || track.forest || track.smog)) return;
   let perTrack;
   try {
     perTrack = await Promise.all(target.tracks.map((track) => loadSong(track, target)));
@@ -472,12 +494,31 @@ async function loadSong(track, target) {
       sampleAt: () => season,
     };
   }
+  if (track.smog) {
+    const { track: smogTrack, city, timeZone } = await loadSmogTrack(track.smog);
+    if (smogDurationSec(smogTrack) !== track.durationSec) {
+      throw new Error(`${track.smog.file} plays ${smogDurationSec(smogTrack)} s, not ${track.durationSec} s`);
+    }
+    return {
+      smog: true,
+      track: smogTrack,
+      city,
+      // The local clock by the hour.
+      dateFormat: { month: 'short', day: '2-digit', hour: '2-digit', hourCycle: 'h23', timeZone },
+      focus: boxFocus(smogTrack),
+      loop: track.smog.loop,
+      composer: smogComposer,
+      // Timed in playback ms from the song's start; the composer reads the box at each step's time.
+      startMs: 0,
+      msPerSec: target.msPerSec,
+      sampleAt: () => smogTrack,
+    };
+  }
   if (track.forest) {
     const forest = await loadNoonSong(track.forest);
     return {
       forest: true,
       ...forest,
-      lead: track.lead,
       // The album's first track opens with the listening legend.
       legend: target.tracks.indexOf(track) === 0,
       composer: noonComposer,
@@ -485,6 +526,7 @@ async function loadSong(track, target) {
       startMs: 0,
       msPerSec: 1000,
       sampleAt: () => forest.line,
+      levelAt: (ms) => levelAt(ms / 1000),
       followTauSec: FOREST_FOLLOW_TAU_SEC,
     };
   }
@@ -522,11 +564,12 @@ function showSeason(song, color) {
 function showSong(song, color) {
   shownSong = song;
   focus = null;
+  // A smog track looks at its city from close up.
+  globe.setCloseUp(Boolean(song?.smog));
   globe.birds.reset(color);
   globe.forest.reset(song?.forest ? song : null, color);
   globe.storm.show(null);
   halo.setSwirl(song?.storm ? () => globe.storm.swirl : null);
-  halo.setAir(0);
   dateLabel.show(null);
   if (color) halo.setColor(color);
 }
@@ -550,8 +593,12 @@ function takePendingStep() {
  * Changes records, once for `step` (-1 or 1) and once more for each step asked for meanwhile, even while the new
  * record is being drawn out (see createRecordSwap): the arm lifts, the record goes into its sleeve and the column of
  * sleeves moves along to the new album, whose record comes out stopped at its start. The catalog wraps around.
+ * Given a `target` album, the first change goes straight to it, its sleeve standing next to the current one.
+ *
+ * @param {number} step
+ * @param {number | null} [target]
  */
-async function switchAlbum(step) {
+async function switchAlbum(step, target = null) {
   if (swapping) {
     if (recordSwap.skip()) pendingSteps += step;
     return;
@@ -561,9 +608,11 @@ async function switchAlbum(step) {
   slot('stage').inert = true;
   elapsedMs = 0;
   setState(PlaybackState.STOPPED);
+  if (target !== null) albumColumn.setNeighbour(step, target);
   try {
     await recordSwap.play(step, (direction) => {
-      showAlbum(wrapIndex(albumIndex + direction, albums.length));
+      showAlbum(target ?? wrapIndex(albumIndex + direction, albums.length));
+      target = null;
       render();
     }, takePendingStep);
   } finally {
@@ -574,9 +623,18 @@ async function switchAlbum(step) {
 }
 
 /**
- * Plays the track `step` (-1 or 1) away from the current one. Past either end of the album it switches to the album
- * next to it, as switchAlbum does, and plays its first track going forward or its last going back. A hidden page draws
- * no frames for the records to change by, so there the album changes at once.
+ * Changes records straight to the album at `index`, in one change as switchAlbum does: its sleeve comes from below a
+ * later album, from above an earlier one. Nothing happens for the album already shown, an album the catalog does not
+ * have, or while the records change.
+ */
+function goToAlbum(index) {
+  if (swapping || index === albumIndex || index >= albums.length) return;
+  switchAlbum(Math.sign(index - albumIndex), index);
+}
+
+/**
+ * Plays the track `step` (-1 or 1) away from the current one. Past either end of the album it plays on into the album
+ * next to it (see playNextAlbum).
  */
 async function stepTrack(step) {
   if (swapping) return;
@@ -585,6 +643,14 @@ async function stepTrack(step) {
     playFromTrack(next);
     return;
   }
+  await playNextAlbum(step);
+}
+
+/**
+ * Switches to the album `step` (-1 or 1) away, as switchAlbum does, and plays its first track going forward or its
+ * last going back. A hidden page draws no frames for the records to change by, so there the album changes at once.
+ */
+async function playNextAlbum(step) {
   if (document.hidden) {
     elapsedMs = 0;
     setState(PlaybackState.STOPPED);
@@ -654,6 +720,10 @@ function startPlaying() {
 function render() {
   const progress = elapsedMs / totalMs;
   const trackIndex = trackIndexAt(album, progress);
+  // Every track's music fades in at its start and out at its end.
+  const fade = trackFadeAt(album, trackIndex, elapsedMs / 1000 - trackStartSec(album, trackIndex));
+  music.setTrackFade(fade);
+  soundEngine.setTrackFade(fade);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
@@ -875,6 +945,7 @@ function renderAerosol(trackIndex) {
 function renderSong(trackIndex) {
   const song = songs[trackIndex];
   if (!song?.lightning) globe.lightning.render(null, 0, 1);
+  if (!song?.smog) globe.smog.render(null, 0, null);
   if (!song) {
     if (shownSong) showSong(null, null);
     return;
@@ -885,6 +956,10 @@ function renderSong(trackIndex) {
   }
   if (song.lightning) {
     renderLightning(trackIndex, song);
+    return;
+  }
+  if (song.smog) {
+    renderSmog(trackIndex, song);
     return;
   }
   if (song.forest) {
@@ -949,8 +1024,29 @@ function renderLightning(trackIndex, song) {
 }
 
 /**
+ * Draws the smog around the city at the clock on the globe, which keeps the city in the middle, with the local date and
+ * hour, under a glow the colour of its haze. While playing, lets the music follow it.
+ */
+function renderSmog(trackIndex, song) {
+  if (shownSong !== song) {
+    showSong(song, album.tracks[trackIndex].color);
+    globe.glide();
+  }
+  focus = song.focus;
+  const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
+  const time = song.startMs + elapsedSec * song.msPerSec;
+  const { t, haze, clock } = song.track;
+  globe.smog.render(song.track, time, song.city);
+  dateLabel.show(hourlyAt(t, clock, time), song.dateFormat);
+  halo.setColor(smogColor(hourlyAt(t, haze, time)));
+  if (state !== PlaybackState.PLAYING) return;
+  soundEngine.follow(song, elapsedSec);
+  halo.wake();
+}
+
+/**
  * Draws the canopy and the noon meridian at the clock, the globe turned to keep the line facing the listener, and the
- * month with its CO₂ thickening the air; while playing, lets the music follow it.
+ * trees growing; while playing, lets the music follow it.
  */
 function renderForest(trackIndex, song) {
   if (shownSong !== song) {
@@ -960,10 +1056,6 @@ function renderForest(trackIndex, song) {
   const elapsedSec = elapsedMs / 1000 - trackStartSec(album, trackIndex);
   const step = Math.max(0, elapsedSec / STEP_SEC);
   globe.forest.render(song, step, state === PlaybackState.PLAYING);
-  const air = airAt(song.air, step);
-  const month = new Date(`${air.month}-01T00:00:00Z`).toLocaleDateString('en', MONTH_FORMAT);
-  dateLabel.showText(`${month} · ${air.ppm.toFixed(1)} ppm`);
-  halo.setAir(air.thickness);
   // The equator under the noon line, in the fitted view. Playing, the line moves west at a steady pace, and a camera
   // easing after it with time constant τ trails it by τ of travel, so it aims τ ahead.
   const lead = state === PlaybackState.PLAYING ? FOREST_FOLLOW_TAU_SEC / STEP_SEC : 0;
@@ -994,9 +1086,9 @@ function tick(ts) {
   if (heardSec !== null) elapsedMs = heardSec * 1000;
   else elapsedMs += dtMs;
   lastFrameTs = ts;
+  // The album's last track has ended: the record changes and the next album plays from its first track.
   if (elapsedMs >= totalMs) {
-    elapsedMs = 0;
-    setState(PlaybackState.STOPPED);
+    playNextAlbum(1);
     return;
   }
   render();

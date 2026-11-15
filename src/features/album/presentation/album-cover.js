@@ -1,4 +1,4 @@
-import { ALBUM_CATEGORY_LABEL, trackCover } from '../domain/album.js';
+import { ALBUM_CATEGORY_LABEL, formatDuration, trackCover } from '../domain/album.js';
 import { ALBUM_NOTES } from '../data/album-notes.js';
 
 // Each sleeve lies at its own angle, picked from its place in the catalog so it is the same every time. It always
@@ -19,13 +19,6 @@ function el(tag, className, text) {
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
-}
-
-function formatDuration(sec) {
-  const whole = Math.round(sec);
-  const minutes = Math.floor(whole / 60);
-  const seconds = String(whole % 60).padStart(2, '0');
-  return `${minutes}:${seconds}`;
 }
 
 /**

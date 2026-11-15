@@ -2,6 +2,7 @@
 
 /** @type {Readonly<import('../domain/info.js').AboutContent>} */
 export const ABOUT = Object.freeze({
+  version: '0.1.0',
   tagline: 'An Earth Information Jukebox',
   intro: [
     'Blue Vinyl turns NASA Earth data into music. Each dataset is an album on a record. Press play, and the globe at the '
@@ -33,17 +34,15 @@ export const ABOUT = Object.freeze({
   shortcuts: [
     { keys: 'Space', action: 'Play or pause' },
     { keys: '← / →', action: 'Previous or next album' },
+    { keys: '1 – 9', action: 'Go to that album' },
     { keys: '↑ / ↓', action: 'Volume up or down' },
   ],
   challenge: {
     label: 'NASA Space Apps Challenge 2026 · The Earth Information Jukebox',
     url: 'https://www.spaceappschallenge.org/2026/challenges/the-earth-information-jukebox/',
   },
-  teamName: 'Team Blue Vinyl',
   team: [
     { name: 'Nell', github: 'nero-angela' },
     { name: 'shkim', github: 'coco0402' },
   ],
-  disclaimer: 'Blue Vinyl is a team entry for the NASA Space Apps Challenge. It is not made, endorsed or supported by '
-    + 'NASA.',
 });

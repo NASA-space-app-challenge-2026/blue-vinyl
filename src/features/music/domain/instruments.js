@@ -38,10 +38,16 @@ export const Instrument = Object.freeze({
   TAIKO: { program: 116, volume: 66 },
   MELODIC_TOM: { program: 117, volume: 85 },
   // The forest album: harp for canopy height in the tropics (clear pitch steps, not percussion toys), flute for the
-  // north, pizzicato for the south, seashore, a land bell, a longitude tick, and a warm pad for the air (CO₂).
+  // north, pizzicato for the south, seashore, a land bell, a longitude tick.
   HARP: { program: 46, volume: 105 },
   PIZZICATO: { program: 45, volume: 100 },
   SEASHORE: { program: 122, volume: 70 },
   TUBULAR_BELLS: { program: 14, volume: 85 },
   WOODBLOCK: { program: 115, volume: 70 },
+  // The forest's trees, played as NASA's Caldwell 73 sonification does (SVS 13786): marimba for the low classes,
+  // glockenspiel for the high.
+  MARIMBA: { program: 12, volume: 100 },
+  GLOCKENSPIEL: { program: 9, volume: 90 },
+  // The tallest trees, the gold ones: a bar that rings on, unlike the other two, so they are heard as their own.
+  VIBRAPHONE: { program: 11, volume: 100 },
 });
