@@ -427,7 +427,7 @@ export const albums = [
     category: AlbumCategory.AIR_QUALITY,
     title: 'The Wind That Sweeps the Smog',
     coverUrl: `${SMOG_COVERS}/new_york.jpg`,
-    coverCredit: 'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)',
+    coverCredit: 'Cover: The Empire State Building in wildfire smoke, Jun 7 2023 (Photo: @Aelthemplaer, CC BY 4.0)',
     globeAlt: 'smog flowing in over one city, covering it for a while and passing on',
     dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
     // Songs are timed in playback ms, one hour of the data a third of a second in all of them (see tracks/domain/smog.js).
@@ -437,8 +437,8 @@ export const albums = [
     // the air over the city.
     tracks: [
       smogTrack('New York 2023', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
-        'Cover: Orange haze hides Manhattan, Jun 7 2023 (Photo: Jim Griffin, CC0)',
-        "Manhattan's buildings barely visible through a thick orange-brown haze on June 7 2023"),
+        'Cover: The Empire State Building in wildfire smoke, Jun 7 2023 (Photo: @Aelthemplaer, CC BY 4.0)',
+        'The Empire State Building barely visible through thick orange wildfire smoke on June 7 2023'),
       smogTrack('Seoul 2025', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
         'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)',
         'Seoul seen from Namsan Tower, its towers and hills dimmed by grey smog and dust'),
