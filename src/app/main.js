@@ -121,7 +121,6 @@ const screenSpace = Object.freeze({
 });
 const turntable = createTurntableView(slot('stage'), {
   space: screenSpace,
-  onToggle: togglePlayback,
   onCued: () => {
     if (state === PlaybackState.CUEING) startPlaying();
   },
@@ -141,7 +140,9 @@ const turntable = createTurntableView(slot('stage'), {
   },
   onLift: () => setState(PlaybackState.STOPPED),
   onSeek: seekTrack,
-  onSelectGroove: (progress) => playFromTrack(trackIndexAt(album, progress)),
+  onSelectGroove: (progress) => {
+    if (state === PlaybackState.PLAYING) playFromTrack(trackIndexAt(album, progress));
+  },
   // A hand on the playing record pauses it; turning it moves the music forward or back as far as it is turned, and
   // letting go plays on from there.
   onHandHold: () => {
