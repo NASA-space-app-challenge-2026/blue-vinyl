@@ -60,7 +60,7 @@ const SMOG_COVERS = 'assets/albums/smog';
 
 // The arc to the edge of the square view that holds all of South Korea round Seoul, which stays in the middle: Jeju, its
 // farthest point, is 4.4° south of it.
-const SOUTH_KOREA_ARC_DEG = 5.5;
+const SOUTH_KOREA_ARC_DEG = 4.8;
 
 /**
  * A smog song: the hours around its city, played on `loop` (one of SmogLoop) at 3 hours of the data a second, so it

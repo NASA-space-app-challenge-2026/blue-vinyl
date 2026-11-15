@@ -67,7 +67,7 @@ Shared: the bass is the analog synth's `CAVE`, the drums the standard kit. Four 
 
 ## Globe
 
-The globe keeps the city's cell in the middle, close enough that the fog fills the label: the label's edge is where the fog has faded out (0.85 of the way to the box's nearer sides on the ground), 2.5° to 3.5° of arc (user, 2026-11-15). Seoul's view is wider so that all of South Korea shows (user, 2026-11-15): Seoul stays in the middle, 5.5° of arc to the edge. It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
+The globe keeps the city's cell in the middle, close enough that the fog fills the label: the label's edge is where the fog has faded out (0.85 of the way to the box's nearer sides on the ground), 2.5° to 3.5° of arc (user, 2026-11-15). Seoul's view is wider so that all of South Korea shows (user, 2026-11-15): Seoul stays in the middle, 4.8° of arc to the edge. It can be turned and zoomed by hand, and glides back to the city a moment after it is let go (user, 2026-11-15).
 
 The fog is one patch of the globe over the box, drawn by nell-v2's shader in [`smog-layer.js`](../../src/features/globe/presentation/smog-layer.js); the textures are uploaded only when the hour changes. It fades in over the song's first 1.5 s and out over its last, as does the music.
 
