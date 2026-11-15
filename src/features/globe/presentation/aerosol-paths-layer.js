@@ -19,9 +19,9 @@ const MARKER_PX = 19.5;
 // The opacity of a path, and of a tail at its head.
 const ALPHA = Object.freeze({ path: 0.15, heroPath: 0.6, head: 0.9 });
 // A tail's width at its head in pixels. From the head it thins as t^widthPow and fades as t^alphaPow, t = 1 at the head
-// and 0 at the tail's end (as comet-trail.js).
+// and 0 at the tail's end: narrowing straight to a sharp point, and fading slowly enough that the point is seen.
 const TAIL_WIDTH_PX = Object.freeze({ crowd: 4, hero: 12 });
-const TAIL_SHAPE = Object.freeze({ widthPow: 0.6, alphaPow: 1.6 });
+const TAIL_SHAPE = Object.freeze({ widthPow: 1, alphaPow: 0.8 });
 
 const lineVertex = `
 attribute float alpha;
