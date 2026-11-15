@@ -69,16 +69,19 @@ export function createBackdrop(root) {
   // The browser's own bars take the backdrop's rim color from it; without it they take the page's background. Safari
   // does not follow a change of its content, so each color gets a new one.
   let themeColor = null;
-  // iOS 26 Safari ignores theme-color and tints its bars and the safe areas from the body's background color. It
-  // follows that color live only when it is set on the body itself, not through a variable or a selector; the gradient
-  // over it hides it. The cover's rim color, or an overlay's while one is over the page.
+  // iOS 26 Safari ignores theme-color and tints its bars and the safe areas from the background color of the body, or
+  // of the html element. It follows that color live only when it is set on the elements themselves, not through a
+  // variable or a selector; the body's gradient hides it. The cover's rim color, or an overlay's while one is over the
+  // page.
   let barsColor = null;
   let overlayColor = null;
 
   function paintBars() {
     const color = overlayColor ?? barsColor;
-    if (color) document.body.style.backgroundColor = color;
-    else document.body.style.removeProperty('background-color');
+    for (const element of [root, document.body]) {
+      if (color) element.style.backgroundColor = color;
+      else element.style.removeProperty('background-color');
+    }
   }
 
   function apply(color) {
