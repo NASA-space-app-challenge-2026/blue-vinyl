@@ -41,7 +41,7 @@ const HEIGHT_RANGE_M = Object.freeze({ low: 4, high: 24 });
 const KIND_DEGREES = 4;
 const VELOCITY = Object.freeze({ low: 50, high: 115 });
 
-// The drone: a fifth on cello from this level of forest on, from soft to strong with the level (0..1). Its root walks a
+// The drone: a fifth on cello under the whole track, soft over empty sea and stronger with the level of forest (0..1). Its root walks a
 // slow round of D dorian chords, one every two bars (D, C, G, A: D-A, C-G, G-D, A-E), so it never sits still; on the
 // second bar of each pair a viola adds the chord's colour tone (its third) up high, softly.
 // The velocity swells and ebbs a little (`swell`, a share of it) over a round of eight bars.
@@ -56,7 +56,6 @@ const DRONE = Object.freeze({
   fifth: 7,
   colorSoftness: 0.6,
   swell: 0.15,
-  fromLevel: 0.02,
   velocity: { low: 35, high: 105 },
 });
 const TICK = Object.freeze({ everyDeg: 30, note: 76, velocity: 50, loudAtStart: 80 });
@@ -129,11 +128,10 @@ export class NoonComposer {
 
   /**
    * The drone under the bar: a low fifth on cello, held the whole bar and louder the thicker the forest under the line
-   * is (noon-line.js barLevelAt, which the globe's meridian brightens with). Silent where there is none.
+   * is (noon-line.js barLevelAt, which the globe's meridian brightens with), but never silent: it plays on over the sea.
    */
   playDrone(music, lineStep, at) {
     const level = barLevelAt(this.song.line, lineStep);
-    if (level < DRONE.fromLevel) return;
     const bar = lineStep / STEPS_PER_BAR;
     const chord = DRONE.chords[Math.floor(bar / DRONE.barsPerChord) % DRONE.chords.length];
     const swell = 1 + DRONE.swell * Math.sin((bar / (DRONE.chords.length * DRONE.barsPerChord)) * 2 * Math.PI);

@@ -41,7 +41,7 @@ Every tree on the globe is one note: it starts when the tree starts to grow and 
 | Sky trees (14–20 m) | Same | Glockenspiel from D5 |
 | Purple trees (20–28 m) | Same | Glockenspiel from A5 |
 | Gold trees (28 m and up) | Same | Vibraphone from D6, a bar that rings on, so the tallest trees are heard as their own |
-| Cello drone | Forest density under the line | A low fifth held each bar, louder the thicker the bar's forest (swelling and ebbing a little over eight bars); silent over sea and desert. Its root walks D, C, G, A, two bars each, and on the second bar of each a soft viola adds the chord's third. The noon meridian shines with the same level |
+| Cello drone | Forest density under the line | A low fifth held each bar, louder the thicker the bar's forest (swelling and ebbing a little over eight bars); soft but never silent over sea and desert. Its root walks D, C, G, A, two bars each, and on the second bar of each a soft viola adds the chord's third. The noon meridian shines with the same level |
 | Tubular bells | Land regions | A bell as the line reaches each continent |
 | Woodblock | Longitude | A tick every 30° |
 
