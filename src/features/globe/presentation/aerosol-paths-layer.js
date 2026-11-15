@@ -4,15 +4,10 @@
 // them cost the same as one. Only the lead particle (`hero`) is marked: a disc in its colour with a white edge.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
-import { TAIL_STEPS } from '../../tracks/domain/aerosol-paths.js';
+import { PARTICLE_TOGGLE, TAIL_STEPS } from '../../tracks/domain/aerosol-paths.js';
 
-// EIC's colours of the four particle types (COLOR of notebooks/aerosol_album.ipynb), and the toggle that switches each.
-const PARTICLE = Object.freeze({
-  seaSalt: { color: '#408cff', toggle: 'salt' },
-  dust: { color: '#ff59bf', toggle: 'dust' },
-  smoke: { color: '#ff731a', toggle: 'smoke' },
-  sulfate: { color: '#4cff59', toggle: 'sulfate' },
-});
+// EIC's colours of the four particle types (COLOR of notebooks/aerosol_album.ipynb).
+const COLOR = Object.freeze({ seaSalt: '#408cff', dust: '#ff59bf', smoke: '#ff731a', sulfate: '#4cff59' });
 // Lifted a little off the surface, as the comet tails are.
 const ALTITUDE = 0.003;
 // The lead particle's marker, in pixels across.
@@ -81,7 +76,7 @@ export function createAerosolPathsLayer(view) {
   }
 
   function build(paths) {
-    const { color } = PARTICLE[paths[0].particle];
+    const color = COLOR[paths[0].particle];
     xyz = paths.map(({ path }) => {
       const points = new Float32Array(path.length * 3);
       path.forEach(([lat, lng], k) => {
@@ -126,7 +121,7 @@ export function createAerosolPathsLayer(view) {
       build(paths);
     }
     shownStep = step;
-    const on = toggles[PARTICLE[paths[0].particle].toggle];
+    const on = toggles[PARTICLE_TOGGLE[paths[0].particle]];
     segments.visible = on;
     marker.visible = false;
     if (!on) return;

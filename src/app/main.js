@@ -1,4 +1,4 @@
-import { heroFocus } from '../features/tracks/domain/aerosol-paths.js';
+import { heroFocus, PARTICLE_TOGGLE } from '../features/tracks/domain/aerosol-paths.js';
 import { loadAerosolTrack } from '../features/tracks/data/aerosol-track-source.js';
 import { createParticleToggles } from '../features/controls/presentation/particle-toggles.js';
 'use strict';
@@ -76,6 +76,8 @@ let totalMs;
 /** @type {(import('../features/tracks/data/track-repository.js').IceSeaTrackData | null)[]} */
 let trackData = [];
 let aerosolData = [];
+// The track whose particle toggles are set (see renderAerosol); null while none is shown.
+let togglesTrack = null;
 // Credits added once the album's music is built, such as the SoundFont the ice is played on.
 let musicCredits = [];
 // The attribution of the globe's map and imagery, shown with the album's credits.
@@ -886,9 +888,15 @@ function renderAerosol(trackIndex) {
     globe.aerosol.hide();
     globe.aerosolPaths.hide();
     particleToggles.hide();
+    togglesTrack = null;
     return;
   }
   particleToggles.show();
+  // Each track starts with its lead particle type alone, which cannot be switched off.
+  if (togglesTrack !== trackIndex) {
+    togglesTrack = trackIndex;
+    particleToggles.setLead(PARTICLE_TOGGLE[data.paths[0].particle]);
+  }
   const trackSec = Math.max(0, elapsedMs / 1000 - trackStartSec(album, trackIndex));
   globe.aerosol.render(data.frames, trackSec, track.durationSec);
   const step = Math.min(1, trackSec / track.durationSec) * (data.records.length - 1);

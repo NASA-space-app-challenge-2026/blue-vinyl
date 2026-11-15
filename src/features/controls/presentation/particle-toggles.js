@@ -95,6 +95,18 @@ export function createParticleToggles(parent, onChange) {
   };
 
   const buttons = new Map();
+  // The track's lead particle type: always on, its toggle cannot be switched off.
+  let lead = null;
+
+  function paint(id) {
+    const { btn, dot, color } = buttons.get(id);
+    btn.classList.toggle('active', states[id]);
+    btn.setAttribute('aria-disabled', String(id === lead));
+    btn.style.cursor = id === lead ? 'not-allowed' : '';
+    dot.style.opacity = states[id] ? '1.0' : '0.2';
+    dot.style.transform = states[id] ? 'scale(1.0)' : 'scale(0.7)';
+    dot.style.boxShadow = states[id] ? `0 0 8px ${color}` : 'none';
+  }
 
   for (const { id, name, desc, color } of PARTICLES) {
     const btn = document.createElement('button');
@@ -130,15 +142,13 @@ export function createParticleToggles(parent, onChange) {
     // Click toggle handler
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
+      if (id === lead) return;
       states[id] = !states[id];
-      btn.classList.toggle('active', states[id]);
-      dot.style.opacity = states[id] ? '1.0' : '0.2';
-      dot.style.transform = states[id] ? 'scale(1.0)' : 'scale(0.7)';
-      dot.style.boxShadow = states[id] ? `0 0 8px ${color}` : 'none';
+      paint(id);
       onChange({ ...states });
     });
 
-    buttons.set(id, btn);
+    buttons.set(id, { btn, dot, color });
     container.append(btn);
   }
 
@@ -154,6 +164,15 @@ export function createParticleToggles(parent, onChange) {
       wrapper.style.display = 'none';
       container.hidden = true;
       caption.style.opacity = '0';
+    },
+    /** Starts a track: its lead particle type on and locked, every other one off. */
+    setLead(id) {
+      lead = id;
+      for (const key of buttons.keys()) {
+        states[key] = key === id;
+        paint(key);
+      }
+      onChange({ ...states });
     },
     get states() {
       return { ...states };

@@ -12,6 +12,9 @@ export const TAIL_STEPS = 24;
  * @typedef {'seaSalt' | 'dust' | 'smoke' | 'sulfate'} AerosolParticle
  */
 
+/** The particle toggle under the globe (see controls/presentation/particle-toggles.js) that switches each particle type. */
+export const PARTICLE_TOGGLE = Object.freeze({ seaSalt: 'salt', dust: 'dust', smoke: 'smoke', sulfate: 'sulfate' });
+
 /**
  * @typedef {Object} AerosolParticlePath
  * @property {AerosolParticle} particle
