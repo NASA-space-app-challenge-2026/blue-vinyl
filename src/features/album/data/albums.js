@@ -349,7 +349,7 @@ export const albums = [
         durationSec: AEROSOL_TRACK_SEC,
         color: '#ff58a0',
         coverUrl: `${AEROSOL_COVERS}/saharan_dust.jpg`,
-        coverCredit: 'NASA MODIS / Terra, Saharan Dust over the Atlantic',
+        coverCredit: 'NASA Earth Observatory image by Joshua Stevens, MODIS / Terra, Jun 18 2020',
         aerosol: {
           csvUrl: `${AEROSOL_DATA}/saharan_dust.csv`,
           pathsUrl: `${AEROSOL_DATA}/paths/saharan_dust.json`,

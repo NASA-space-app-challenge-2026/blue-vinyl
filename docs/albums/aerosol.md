@@ -43,11 +43,10 @@ Two weeks, 112 steps of 3 hours, 0.25 s a step: 28 s a track.
 
 ## Credits
 
-- Cover: NASA Scientific Visualization Studio, SVS 5669; track covers: NASA MODIS and Earth Observatory (see `albums.js`)
+- Cover: NASA Scientific Visualization Studio, SVS 5669; track covers: NASA MODIS and Earth Observatory; Saharan Dust: [Dust Traverses the Atlantic Ocean](https://science.nasa.gov/earth/earth-observatory/dust-traverses-the-atlantic-ocean-146871), Jun 18 2020 (see `albums.js`)
 - Data: NASA GMAO GEOS-FP; NOAA National Hurricane Center
 
 ## Not Done Yet
 
 - Text for screen readers (the date, what arrives where) is not read out yet.
 - 5669 is not linked from the EIC gallery itself; it is in the challenge resources. Album guide Q4 asks for a gallery page.
-- The Saharan Dust cover is a MODIS swath with black gaps between orbits.
