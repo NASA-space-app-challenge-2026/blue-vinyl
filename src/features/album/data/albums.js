@@ -91,6 +91,28 @@ function smogTrack(title, file, durationSec, loop, cover, coverCredit, coverAlt)
 /** @type {import('../domain/album.js').Album[]} */
 export const albums = [
   {
+    id: 'forest',
+    category: AlbumCategory.BIODIVERSITY,
+    title: 'The Forest Chorus',
+    coverUrl: `${FOREST_COVERS}/cover.jpg`,
+    coverCredit: 'Cover: SVS 4950, GEDI forest height · NASA Scientific Visualization Studio',
+    coverAlt: 'A globe centred on Africa with its forests raised in green by the height of their canopy, measured from space by GEDI',
+    globeAlt: "the world's forests by the height of their canopy, as the Earth turns once under the noon line",
+    dataCredit: 'Data: GEDI L3 (UMD, ORNL DAAC) via NASA GIBS · EIC 14696',
+    // One turn of the Earth under the noon line over GEDI's map (see notebooks/forest_album.ipynb, section 8).
+    tracks: [
+      {
+        title: 'Under the Noon Sun · 2019–2023',
+        durationSec: FOREST_LINE_SEC,
+        forest: {
+          lineUrl: `${FOREST_TRACKS}/forest_noon_line.csv`,
+          mapUrl: `${FOREST_TRACKS}/canopy_height_quarter_degree.png`,
+        },
+        color: '#8ecf7a',
+      },
+    ],
+  },
+  {
     id: 'arctic-bird',
     category: AlbumCategory.BIODIVERSITY,
     title: 'A Year on the Wing',
@@ -127,48 +149,6 @@ export const albums = [
     ],
   },
   {
-    id: 'glacier',
-    category: AlbumCategory.CLIMATE,
-    title: 'As the Ice Melts',
-    coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
-    coverCredit: 'NASA Scientific Visualization Studio',
-    globeAlt: 'the sea ice round one pole shrinking year after year, while the global sea level rises',
-    dataCredit: 'Data: NSIDC Sea Ice Index v4 · NOAA Laboratory for Satellite Altimetry',
-    // Close in on the pole, the ice large in the middle.
-    globeLens: GlobeLens.WIDE,
-    tracks: [
-      {
-        title: 'Arctic',
-        durationSec: POLAR_TRACK_SEC,
-        // Each track shows its own pole at its smallest ice of 2024, from the SVS page the track's ice comes from.
-        coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
-        coverCredit: 'Cover: SVS 5382, Arctic sea ice, Sep 11 2024',
-        coverAlt: 'Satellite view of the Arctic sea ice at its September 2024 low, a white cap on the dark ocean between Greenland and northern Canada',
-        iceSea: {
-          csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
-          shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
-          poleLat: 90,
-          // The ice on a vibraphone.
-          iceVoice: IceVoice.VIBRAPHONE,
-        },
-      },
-      {
-        title: 'Antarctic',
-        durationSec: POLAR_TRACK_SEC,
-        coverUrl: `${GLACIER_COVERS}/antarctic.jpg`,
-        coverCredit: 'Cover: SVS 5064, Antarctic sea ice, Feb 20 2024',
-        coverAlt: 'Satellite view of Antarctica in February 2024, the white continent ringed by only a thin edge of sea ice in the dark Southern Ocean',
-        iceSea: {
-          csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,
-          shapesUrl: `${GLACIER_DATA}/antarctic_february_sea_ice_extent.geojson`,
-          poleLat: -90,
-          // The ice on a piano, so the two tracks are told apart.
-          iceVoice: IceVoice.PIANO,
-        },
-      },
-    ],
-  },
-  {
     id: 'lightning',
     category: AlbumCategory.EXTREME_WEATHER,
     title: 'Lightning Crosses the Equator',
@@ -193,28 +173,6 @@ export const albums = [
         coverUrl: `${LIGHTNING_COVERS}/asia_australia.jpg`, coverCredit: 'Photo: ISS Expedition 49 crew, thunderstorms over South East Asia, cropped',
         coverAlt: 'Night view from the International Space Station of a thunderstorm flashing over South East Asia, city lights below and a docked spacecraft in front',
         lightning: { tracksDir: EXTREME_WEATHER_TRACKS, file: 'asia_australia_2021.csv', north: NorthInstrument.DULCIMER, south: SouthInstrument.MELODIC_TOM },
-      },
-    ],
-  },
-  {
-    id: 'forest',
-    category: AlbumCategory.BIODIVERSITY,
-    title: 'The Forest Chorus',
-    coverUrl: `${FOREST_COVERS}/cover.jpg`,
-    coverCredit: 'Cover: SVS 4950, GEDI forest height · NASA Scientific Visualization Studio',
-    coverAlt: 'A globe centred on Africa with its forests raised in green by the height of their canopy, measured from space by GEDI',
-    globeAlt: "the world's forests by the height of their canopy, as the Earth turns once under the noon line",
-    dataCredit: 'Data: GEDI L3 (UMD, ORNL DAAC) via NASA GIBS · EIC 14696',
-    // One turn of the Earth under the noon line over GEDI's map (see notebooks/forest_album.ipynb, section 8).
-    tracks: [
-      {
-        title: 'Under the Noon Sun · 2019–2023',
-        durationSec: FOREST_LINE_SEC,
-        forest: {
-          lineUrl: `${FOREST_TRACKS}/forest_noon_line.csv`,
-          mapUrl: `${FOREST_TRACKS}/canopy_height_quarter_degree.png`,
-        },
-        color: '#8ecf7a',
       },
     ],
   },
@@ -266,6 +224,111 @@ export const albums = [
     ],
   },
   {
+    id: 'glacier',
+    category: AlbumCategory.CLIMATE,
+    title: 'As the Ice Melts',
+    coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
+    coverCredit: 'NASA Scientific Visualization Studio',
+    globeAlt: 'the sea ice round one pole shrinking year after year, while the global sea level rises',
+    dataCredit: 'Data: NSIDC Sea Ice Index v4 · NOAA Laboratory for Satellite Altimetry',
+    // Close in on the pole, the ice large in the middle.
+    globeLens: GlobeLens.WIDE,
+    tracks: [
+      {
+        title: 'Arctic',
+        durationSec: POLAR_TRACK_SEC,
+        // Each track shows its own pole at its smallest ice of 2024, from the SVS page the track's ice comes from.
+        coverUrl: `${GLACIER_COVERS}/arctic.jpg`,
+        coverCredit: 'Cover: SVS 5382, Arctic sea ice, Sep 11 2024',
+        coverAlt: 'Satellite view of the Arctic sea ice at its September 2024 low, a white cap on the dark ocean between Greenland and northern Canada',
+        iceSea: {
+          csvUrl: `${GLACIER_DATA}/arctic_sea_ice_and_global_sea_level.csv`,
+          shapesUrl: `${GLACIER_DATA}/arctic_september_sea_ice_extent.geojson`,
+          poleLat: 90,
+          // The ice on a vibraphone.
+          iceVoice: IceVoice.VIBRAPHONE,
+        },
+      },
+      {
+        title: 'Antarctic',
+        durationSec: POLAR_TRACK_SEC,
+        coverUrl: `${GLACIER_COVERS}/antarctic.jpg`,
+        coverCredit: 'Cover: SVS 5064, Antarctic sea ice, Feb 20 2024',
+        coverAlt: 'Satellite view of Antarctica in February 2024, the white continent ringed by only a thin edge of sea ice in the dark Southern Ocean',
+        iceSea: {
+          csvUrl: `${GLACIER_DATA}/antarctic_sea_ice_and_global_sea_level.csv`,
+          shapesUrl: `${GLACIER_DATA}/antarctic_february_sea_ice_extent.geojson`,
+          poleLat: -90,
+          // The ice on a piano, so the two tracks are told apart.
+          iceVoice: IceVoice.PIANO,
+        },
+      },
+    ],
+  },
+  {
+    id: 'smog',
+    category: AlbumCategory.AIR_QUALITY,
+    title: 'The Wind That Sweeps the Smog',
+    coverUrl: `${SMOG_COVERS}/new_york.jpg`,
+    coverCredit: 'Cover: The Empire State Building in wildfire smoke, Jun 7 2023 (Photo: @Aelthemplaer, CC BY 4.0)',
+    globeAlt: 'smog flowing in over one city, covering it for a while and passing on',
+    dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
+    // Songs are timed in playback ms, one hour of the data a third of a second in all of them (see tracks/domain/smog.js).
+    msPerSec: 1000,
+    // Four cities whose smog flows in from outside the map, covers them and passes on, each a different length (see
+    // notebooks/smog_album.ipynb and docs/albums/smog.md), in time order. Each plays nell-v2's loops, heard through
+    // the air over the city.
+    tracks: [
+      smogTrack('New York 2023', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
+        'Cover: The Empire State Building in wildfire smoke, Jun 7 2023 (Photo: @Aelthemplaer, CC BY 4.0)',
+        'The Empire State Building barely visible through thick orange wildfire smoke on June 7 2023'),
+      smogTrack('Seoul 2025', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
+        'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)',
+        'Seoul seen from Namsan Tower, its towers and hills dimmed by grey smog and dust'),
+      smogTrack('Shanghai 2025', 'shanghai_2025.csv', 18, SmogLoop.HOUSE, 'shanghai.jpg',
+        'Cover: Lujiazui in the haze, May 28 2011 (Photo: Weixi Zeng, CC BY-SA 3.0)',
+        "Shanghai's Lujiazui skyscrapers and the Oriental Pearl Tower fading into grey haze"),
+    ],
+  },
+  {
+    id: 'wildfire',
+    category: AlbumCategory.DISASTER,
+    title: 'As the Season Burns',
+    coverUrl: `${WILDFIRE_COVERS}/creek_fire_2020.jpg`,
+    coverCredit: 'Photo: CAL FIRE, public domain, via Wikimedia Commons',
+    globeAlt: 'where large wildfires burned in the United States, year after year or through the 2020 season',
+    dataCredit: 'Data: NIFC / NICC · MTBS (USGS, USDA Forest Service) · NASA FEDS (VEDA)',
+    tracks: [
+      {
+        title: 'Burned Acres',
+        durationSec: WILDFIRE_ANNUAL_SEC,
+        // The Creek Fire, California, 8 Sep 2020: 2020 is one of the two peak years of the graph (EIC 5453).
+        coverUrl: `${WILDFIRE_COVERS}/creek_fire_2020.jpg`,
+        coverCredit: 'Cover: Creek Fire, California, Sep 8 2020 (CAL FIRE, public domain)',
+        coverAlt: 'Flames engulfing trees and a building in the Creek Fire, California, on September 8 2020, under a smoky orange sky',
+        wildfire: {
+          kind: 'annual',
+          csvUrl: `${WILDFIRE_DATA}/us_annual_burned_acres.csv`,
+          // Each year's large fires where they burned: NIFC's acres have no places.
+          firesUrl: `${WILDFIRE_DATA}/mtbs_large_fires.csv`,
+        },
+      },
+      {
+        title: '2020 Fire Season',
+        durationSec: WILDFIRE_SEASON_SEC,
+        // San Francisco's "Orange Skies Day", 9 Sep 2020: the season's smoke turned a city's noon orange.
+        coverUrl: `${WILDFIRE_COVERS}/orange_skies_2020.jpg`,
+        coverCredit: 'Cover: Orange Skies Day, San Francisco, Sep 9 2020 (Photo: Dllu, CC BY-SA 4.0, via Wikimedia Commons)',
+        coverAlt: 'Market Street in San Francisco under an orange sky darkened by wildfire smoke on September 9 2020',
+        wildfire: {
+          kind: 'season',
+          csvUrl: `${WILDFIRE_DATA}/feds_2020_daily_large_fires.csv`,
+          firesUrl: `${WILDFIRE_DATA}/feds_2020_fire_days.csv`,
+        },
+      },
+    ],
+  },
+  {
     id: 'hemispheres',
     category: AlbumCategory.CLIMATE,
     title: 'Mirror Storms',
@@ -307,44 +370,6 @@ export const albums = [
           hemisphere: Hemisphere.SOUTH,
           lead: Lead.BOWED,
           focus: { lat: -18, lon: 80, arcDeg: SOUTHERN_ARC_DEG },
-        },
-      },
-    ],
-  },
-  {
-    id: 'wildfire',
-    category: AlbumCategory.DISASTER,
-    title: 'As the Season Burns',
-    coverUrl: `${WILDFIRE_COVERS}/creek_fire_2020.jpg`,
-    coverCredit: 'Photo: CAL FIRE, public domain, via Wikimedia Commons',
-    globeAlt: 'where large wildfires burned in the United States, year after year or through the 2020 season',
-    dataCredit: 'Data: NIFC / NICC · MTBS (USGS, USDA Forest Service) · NASA FEDS (VEDA)',
-    tracks: [
-      {
-        title: 'Burned Acres',
-        durationSec: WILDFIRE_ANNUAL_SEC,
-        // The Creek Fire, California, 8 Sep 2020: 2020 is one of the two peak years of the graph (EIC 5453).
-        coverUrl: `${WILDFIRE_COVERS}/creek_fire_2020.jpg`,
-        coverCredit: 'Cover: Creek Fire, California, Sep 8 2020 (CAL FIRE, public domain)',
-        coverAlt: 'Flames engulfing trees and a building in the Creek Fire, California, on September 8 2020, under a smoky orange sky',
-        wildfire: {
-          kind: 'annual',
-          csvUrl: `${WILDFIRE_DATA}/us_annual_burned_acres.csv`,
-          // Each year's large fires where they burned: NIFC's acres have no places.
-          firesUrl: `${WILDFIRE_DATA}/mtbs_large_fires.csv`,
-        },
-      },
-      {
-        title: '2020 Fire Season',
-        durationSec: WILDFIRE_SEASON_SEC,
-        // San Francisco's "Orange Skies Day", 9 Sep 2020: the season's smoke turned a city's noon orange.
-        coverUrl: `${WILDFIRE_COVERS}/orange_skies_2020.jpg`,
-        coverCredit: 'Cover: Orange Skies Day, San Francisco, Sep 9 2020 (Photo: Dllu, CC BY-SA 4.0, via Wikimedia Commons)',
-        coverAlt: 'Market Street in San Francisco under an orange sky darkened by wildfire smoke on September 9 2020',
-        wildfire: {
-          kind: 'season',
-          csvUrl: `${WILDFIRE_DATA}/feds_2020_daily_large_fires.csv`,
-          firesUrl: `${WILDFIRE_DATA}/feds_2020_fire_days.csv`,
         },
       },
     ],
@@ -420,31 +445,6 @@ export const albums = [
           viewLon: 5.0,
         },
       },
-    ],
-  },
-  {
-    id: 'smog',
-    category: AlbumCategory.AIR_QUALITY,
-    title: 'The Wind That Sweeps the Smog',
-    coverUrl: `${SMOG_COVERS}/new_york.jpg`,
-    coverCredit: 'Cover: The Empire State Building in wildfire smoke, Jun 7 2023 (Photo: @Aelthemplaer, CC BY 4.0)',
-    globeAlt: 'smog flowing in over one city, covering it for a while and passing on',
-    dataCredit: 'Data: GEOS-CF v1 (NASA GMAO) · NASA SVS 5151',
-    // Songs are timed in playback ms, one hour of the data a third of a second in all of them (see tracks/domain/smog.js).
-    msPerSec: 1000,
-    // Four cities whose smog flows in from outside the map, covers them and passes on, each a different length (see
-    // notebooks/smog_album.ipynb and docs/albums/smog.md), in time order. Each plays nell-v2's loops, heard through
-    // the air over the city.
-    tracks: [
-      smogTrack('New York 2023', 'new_york_2023.csv', 29, SmogLoop.SYNTH_POP, 'new_york.jpg',
-        'Cover: The Empire State Building in wildfire smoke, Jun 7 2023 (Photo: @Aelthemplaer, CC BY 4.0)',
-        'The Empire State Building barely visible through thick orange wildfire smoke on June 7 2023'),
-      smogTrack('Seoul 2025', 'seoul_2025.csv', 21, SmogLoop.HOUSE, 'seoul.jpg',
-        'Cover: Seoul in smog and dust from Namsan Tower, Apr 25 2008 (Photo: taylorandayumi, CC BY 2.0)',
-        'Seoul seen from Namsan Tower, its towers and hills dimmed by grey smog and dust'),
-      smogTrack('Shanghai 2025', 'shanghai_2025.csv', 18, SmogLoop.HOUSE, 'shanghai.jpg',
-        'Cover: Lujiazui in the haze, May 28 2011 (Photo: Weixi Zeng, CC BY-SA 3.0)',
-        "Shanghai's Lujiazui skyscrapers and the Oriental Pearl Tower fading into grey haze"),
     ],
   },
 ];
