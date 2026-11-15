@@ -1,5 +1,5 @@
 // A short preview of the spatial audio for the onboarding: one warm, bright chord, G major with an added ninth,
-// circling the listener's head twice, drifting nearer and further. It is placed by the same head-related (HRTF)
+// circling the listener's head once, drifting nearer and further. It is placed by the same head-related (HRTF)
 // panning the music uses, so earphones bring out where it is.
 //
 // Each note of the chord is two detuned saws, under a soft low-pass filter that opens as it plays, so the chord grows
@@ -11,7 +11,7 @@
 
 // One turn round the head, and how many turns the preview takes.
 const TURN_SEC = 6;
-const TURNS = 2;
+const TURNS = 1;
 // How long it swells in and fades out, and how fast Stop fades it.
 const FADE_IN_SEC = 1.5;
 const FADE_OUT_SEC = 2.5;

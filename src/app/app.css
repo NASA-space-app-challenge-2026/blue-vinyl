@@ -73,6 +73,18 @@ body {
   font-family: var(--font);
 }
 
+/* Until main.js runs (the scripts above it are fetched first), the page shows the onboarding's own dark sky, not the
+   album backdrop and the title that would flash first. main.js sets .is-booted on the root. */
+html:not(.is-booted),
+html:not(.is-booted) body {
+  background-color: var(--title-bg);
+  background-image: none;
+}
+
+html:not(.is-booted) .screen > * {
+  visibility: hidden;
+}
+
 .screen {
   position: absolute;
   inset: 0;
@@ -137,6 +149,14 @@ body {
   filter: drop-shadow(0 2px 6px rgb(0 0 0 / 0.45));
   pointer-events: none;
   user-select: none;
+}
+
+/* The logo is a link back to the start: a reload of the page, which opens on the onboarding again. */
+.app-title a {
+  color: inherit;
+  text-decoration: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 /* In portrait orientation, force a rotated landscape layout that completely fills the screen */
