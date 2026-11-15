@@ -4,7 +4,8 @@
 // way and, at its end, forks: one child carries on near its line, the other leans off; now and then a shoot does not
 // grow at all, so the crown stays open. Every frame draws only what grew since the last one, in the tree's colour,
 // with globalCompositeOperation 'lighter', so where branches cross the light adds up and the trunk glows brightest,
-// like neon. The canvas is opaque black, which adds nothing to the globe.
+// like neon. Round each stroke a wider, fainter one is its glow (cheap, unlike a shadow blur, which made the frames
+// stutter). The canvas is otherwise transparent, so it adds nothing to the globe or the page around it.
 
 // The trunk's base, first length and width in the canvas (canvas units, y down).
 const ROOT = Object.freeze({ x: 0.5, y: 0.985, length: 0.22, width: 0.03 });
@@ -17,8 +18,11 @@ const ANGLE = Object.freeze({ leader: 0.25, fork: [0.45, 0.85], shoot: [0.7, 1.1
 const CHANCE = Object.freeze({ fork: 0.8, shoot: 0.55 });
 // Length of the pieces a branch is drawn in, so it can bend (canvas units).
 const PIECE = 0.02;
-// Brightness: the trunk's stroke alpha, falling by `fade` each generation; the glow round the strokes (canvas share).
-const STROKE = Object.freeze({ alpha: 0.85, fade: 0.82, glow: 0.012 });
+// Brightness: the trunk's stroke alpha, falling by `fade` each generation; the glow round a stroke, as a multiple of
+// its width and a share of its alpha.
+const STROKE = Object.freeze({ alpha: 0.85, fade: 0.82, glowWidth: 3, glowAlpha: 0.22 });
+// The most a frame may grow a tree by (s), so a long pause does not draw it all at once.
+const MAX_FRAME_SEC = 0.25;
 
 /**
  * @param {{ color: string, depth: number, growSec: number, sizePx: number, seed: number }} tree  its colour (CSS), how
@@ -28,8 +32,6 @@ export function createGrowingTree({ color, depth, growSec, sizePx, seed }) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = sizePx;
   const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, sizePx, sizePx);
   const random = seeded(seed);
   const between = ([low, high]) => low + random() * (high - low);
   // Grown at a pace that brings the tips out at `growSec`: the path from the root along the leaders to the top.
@@ -47,15 +49,13 @@ export function createGrowingTree({ color, depth, growSec, sizePx, seed }) {
   /** Draws what grew up to `now` (seconds). Returns whether the tree is still growing. */
   function step(now) {
     if (!growing.length) return false;
-    const dt = Math.min(0.1, lastAt === null ? 0 : now - lastAt);
+    const dt = Math.min(MAX_FRAME_SEC, lastAt === null ? 0 : now - lastAt);
     lastAt = now;
     ctx.save();
     ctx.scale(sizePx, sizePx);
     ctx.globalCompositeOperation = 'lighter';
     ctx.lineCap = 'butt';
     ctx.strokeStyle = color;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = STROKE.glow * sizePx;
     growing = growing.flatMap((b) => grow(b, speed * dt));
     ctx.restore();
     return growing.length > 0;
@@ -70,11 +70,16 @@ export function createGrowingTree({ color, depth, growSec, sizePx, seed }) {
       const x1 = b.x + Math.cos(b.angle) * piece;
       const y1 = b.y + Math.sin(b.angle) * piece;
       const taper = 1 - 0.35 * (b.grown / b.length);
-      ctx.globalAlpha = STROKE.alpha * STROKE.fade ** b.generation;
-      ctx.lineWidth = Math.max(b.width * taper, 1.2 / sizePx);
+      const alpha = STROKE.alpha * STROKE.fade ** b.generation;
+      const width = Math.max(b.width * taper, 1.2 / sizePx);
       ctx.beginPath();
       ctx.moveTo(b.x, b.y);
       ctx.lineTo(x1, y1);
+      ctx.globalAlpha = alpha * STROKE.glowAlpha;
+      ctx.lineWidth = width * STROKE.glowWidth;
+      ctx.stroke();
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = width;
       ctx.stroke();
       const before = b.grown / b.length;
       b.x = x1;

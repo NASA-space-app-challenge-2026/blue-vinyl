@@ -30,7 +30,7 @@ const TREE_KINDS = Object.values(TreeKind);
 // the mean of their sizes, so the forest stays open. Each grows `afterSteps` after the noon line has crossed it.
 const TREE_PICK = Object.freeze({ tallBias: 3, spacing: 0.8, afterSteps: [1, 10] });
 // A tree takes from `shortest` (the lowest kind) to `longest` (the tallest) to reach its tips.
-const TREE_GROWTH = Object.freeze({ shortest: 1.5, longest: 4 });
+const TREE_GROWTH = Object.freeze({ shortest: 0.6, longest: 1.5 });
 // Each tree's canvas: the smaller kinds at the first size, the taller at the second (pixels, a power of two).
 const TREE_CANVAS_PX = Object.freeze([256, 512]);
 // The tree's base in its sprite (share of the sprite, from the bottom left), as tree-sprites.js plants it.
