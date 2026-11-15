@@ -63,6 +63,7 @@ import { YEAR_TIMELINE, yearAt } from '../features/tracks/domain/year-timeline.j
 import { createRecordSwap } from '../features/turntable/presentation/record-swap.js';
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 import { pointInScreen, rectInScreen } from '../shared/screen-space.js';
+import { createAnnouncer } from '../shared/announcer.js';
 import { isRovingKey } from '../shared/roving-focus.js';
 import { createTicker } from '../shared/ticker.js';
 
@@ -112,10 +113,14 @@ let swapping = false;
 let pendingSteps = 0;
 // True while a hand holds the record that was playing.
 let handHeld = false;
+// The album and track a screen reader was last told of (see announceTrack), null before the first render.
+let announcedAlbum = null;
+let announcedTrack = null;
 
 const slot = (id) => document.getElementById(id);
 
 const backdrop = createBackdrop(document.documentElement);
+const announcer = createAnnouncer(slot('screen'));
 const playHint = createPlayHint(slot('bottom-center'));
 const albumColumn = createAlbumColumn(slot('stage'), albums, { onSelectTrack: playFromTrack });
 // Boxes and pointers in the layout's own pixels, which a portrait screen turned to show it landscape does not share
@@ -746,6 +751,7 @@ function render() {
   soundEngine.setTrackFade(fade);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex);
+  announceTrack(trackIndex);
   globe.describe(`Globe showing ${album.globeAlt}. Track: ${album.tracks[trackIndex].title}.`);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
   backdrop.show(trackCover(album, trackIndex).url);
@@ -1084,6 +1090,24 @@ function renderForest(trackIndex, song) {
   if (state !== PlaybackState.PLAYING) return;
   soundEngine.follow(song, elapsedSec);
   halo.wake();
+}
+
+/**
+ * Tells a screen reader of a new album or track, which the eye sees on the sleeve: the album's place and title when
+ * the album changes, the track and its album otherwise. The page's first album is left to the page itself.
+ *
+ * @param {number} trackIndex
+ */
+function announceTrack(trackIndex) {
+  const track = album.tracks[trackIndex];
+  if (album === announcedAlbum && track === announcedTrack) return;
+  const first = announcedAlbum === null;
+  const newAlbum = album !== announcedAlbum;
+  announcedAlbum = album;
+  announcedTrack = track;
+  if (first) return;
+  if (newAlbum) announcer.say(`Album ${albumIndex + 1} of ${albums.length}: ${album.title}. Track: ${track.title}.`);
+  else announcer.say(`${isPlaying() ? 'Now playing: ' : ''}${track.title}, from ${album.title}.`);
 }
 
 function setState(next) {

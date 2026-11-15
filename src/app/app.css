@@ -17,7 +17,8 @@
   --title-bg: #05070d;
   transition: --bg 1.2s ease, --bg-deep 1.2s ease;
   --ink: #f3ece1;
-  --ink-muted: rgb(243 236 225 / 0.65);
+  /* At least 4.5:1 on the lightest backdrop a cover gives (the forest album's). */
+  --ink-muted: rgb(243 236 225 / 0.75);
   --gutter: clamp(16px, 2vw, 32px);
   --font: 'Gowun Batang', serif;
   --font-title: 'Yellowtail', cursive;
@@ -157,6 +158,38 @@ html:not(.is-booted) .screen > * {
   text-decoration: none;
   pointer-events: auto;
   cursor: pointer;
+}
+
+/* Every control reached from the keyboard shows where the focus is; controls with a ring of their own keep it. */
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* The landing spot of the skip link: focused only to move the Tab order there, so it shows no ring. */
+#corner-bottom-left:focus {
+  outline: none;
+}
+
+/* The first stop of the Tab key: hidden until focused, then shown over the top left corner. */
+.skip-link {
+  position: absolute;
+  z-index: 10;
+  top: calc(var(--gutter) + var(--safe-top));
+  left: calc(var(--gutter) + var(--safe-left));
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #1a1410;
+  font-size: 14px;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+  transform: none;
+  outline-color: #1a1410;
+  outline-offset: -4px;
 }
 
 /* Read out by a screen reader, not drawn: a fuller wording of something shown in short. */

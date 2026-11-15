@@ -60,8 +60,9 @@
   bottom: 0;
   /* The right padding keeps the text clear of the record lying over the sleeve's right side (--record-overlap). */
   padding: 16cqw 18cqw 5cqw 6cqw;
-  /* Darkens the cover photo under the text, deepening toward the bottom edge. */
-  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 0.6) 35%, rgb(0 0 0 / 0.85));
+  /* Darkens the cover photo under the text, deepening toward the bottom edge: dark enough from the category down that
+     its text keeps 4.5:1 even over a white photo. */
+  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 0.7) 35%, rgb(0 0 0 / 0.85));
 }
 
 .album-cover-category {

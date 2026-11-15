@@ -23,13 +23,14 @@
 </head>
 <body>
   <div id="screen" class="screen">
+    <a class="skip-link" href="#corner-bottom-left">Skip to the player</a>
     <header id="corner-top-left" class="corner">
       <h1 class="app-title"><a href="./" aria-label="Blue Vinyl, back to the start">Blue Vinyl</a></h1>
     </header>
+    <section id="corner-top-right" class="corner" aria-label="Page"></section>
     <main id="stage" class="stage"></main>
-    <div id="corner-top-right" class="corner"></div>
-    <div id="corner-bottom-left" class="corner"></div>
-    <div id="bottom-center" class="corner"></div>
+    <section id="corner-bottom-left" class="corner" aria-label="Player" tabindex="-1"></section>
+    <footer id="bottom-center" class="corner"></footer>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.46.2/dist/globe.gl.min.js"></script>
   <script src="https://unpkg.com/live2d-widget@3.1.4/lib/L2Dwidget.min.js"></script>

@@ -1,3 +1,4 @@
+import { prefersReducedMotion } from '../../../shared/motion.js';
 import { spokenDuration } from '../../../shared/spoken-duration.js';
 import { PlaybackState } from '../../controls/domain/playback-state.js';
 import {
@@ -410,6 +411,10 @@ function createProgressRing(onSeek, { rectOf, pointOf }) {
     if (trackNow !== track) {
       track = trackNow;
       toldSec = null;
+      if (glide) cancelAnimationFrame(glide.frame);
+      glide = null;
+      draw(target);
+    } else if (jumped && prefersReducedMotion()) {
       if (glide) cancelAnimationFrame(glide.frame);
       glide = null;
       draw(target);

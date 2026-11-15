@@ -3,6 +3,7 @@ import { createAerosolLayer } from './aerosol-layer.js';
 import { createIceFall } from './ice-fall.js';
 import { createIceFields, createIceMorph } from './ice-morph.js';
 
+import { prefersReducedMotion } from '../../../shared/motion.js';
 import { DEFAULT_GLOBE_LENS } from '../domain/globe-lens.js';
 import { createBirdsLayer } from './birds-layer.js';
 import { createLightningLayer } from './lightning-layer.js';
@@ -283,7 +284,7 @@ export function createGlobeView(container) {
     pinTileLevel();
   }
 
-  /** Eases the globe to the focus for GLIDE_SEC, then settles it there. */
+  /** Eases the globe to the focus for GLIDE_SEC, then settles it there; turns it there at once with less motion. */
   function glide() {
     stopGlide();
     let start = null;
@@ -291,7 +292,7 @@ export function createGlobeView(container) {
     const step = (now) => {
       glideFrame = null;
       start ??= now;
-      const done = now - start >= GLIDE_SEC * 1000;
+      const done = prefersReducedMotion() || now - start >= GLIDE_SEC * 1000;
       follow(done ? Infinity : (now - (last ?? now)) / 1000, GLIDE_TAU_SEC);
       last = now;
       if (!done) glideFrame = requestAnimationFrame(step);

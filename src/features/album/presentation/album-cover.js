@@ -1,4 +1,5 @@
 import { createRovingFocus } from '../../../shared/roving-focus.js';
+import { prefersReducedMotion } from '../../../shared/motion.js';
 import { spokenDuration } from '../../../shared/spoken-duration.js';
 import { ALBUM_CATEGORY_LABEL, formatDuration, trackCover } from '../domain/album.js';
 
@@ -49,7 +50,7 @@ export function createAlbumCover(parent, { onSelectTrack } = {}) {
 
   // Only a mouse hovers; a touch dragging across the sleeve would leave it leaning.
   cover.addEventListener('pointermove', (event) => {
-    if (event.pointerType !== 'mouse') return;
+    if (event.pointerType !== 'mouse' || prefersReducedMotion()) return;
     const rect = cover.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     const y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
