@@ -16,7 +16,7 @@ const PARTICLE = Object.freeze({
 // Lifted a little off the surface, as the comet tails are.
 const ALTITUDE = 0.003;
 // The lead particle's marker, in pixels across.
-const MARKER_PX = 30;
+const MARKER_PX = 7.5;
 // A path's opacity: this far behind the head, and at the head; the tail fades from the one to the other.
 const ALPHA = Object.freeze({ path: 0.15, head: 0.9 });
 
@@ -34,23 +34,22 @@ void main() {
   gl_FragColor = vec4(color, vAlpha);
   #include <colorspace_fragment>
 }`;
-/** A disc filled with `color` and edged in white, with a dark halo, so it reads on dark and on bright air. */
+/** A disc filled with `color` and edged in white, with a thin dark halo, so it reads on dark and on bright air. */
 function markerTexture(color) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 64;
   const ctx = canvas.getContext('2d');
-  const halo = ctx.createRadialGradient(32, 32, 14, 32, 32, 32);
-  halo.addColorStop(0, 'rgba(0,0,0,0.55)');
+  const halo = ctx.createRadialGradient(32, 32, 24, 32, 32, 32);
+  halo.addColorStop(0, 'rgba(0,0,0,0.5)');
   halo.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = halo;
   ctx.fillRect(0, 0, 64, 64);
-  ctx.beginPath();
-  ctx.arc(32, 32, 21, 0, 2 * Math.PI);
-  ctx.fillStyle = color;
-  ctx.fill();
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  for (const [r, fill] of [[27, '#ffffff'], [19, color]]) {
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.arc(32, 32, r, 0, 2 * Math.PI);
+    ctx.fill();
+  }
   return new THREE.CanvasTexture(canvas);
 }
 
