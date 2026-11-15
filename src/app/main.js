@@ -589,16 +589,24 @@ function takePendingStep() {
   return step;
 }
 
+// True while the listener means the music to play: playing, the arm moving onto the record, or a hand holding it.
+function isPlaying() {
+  return state === PlaybackState.PLAYING || state === PlaybackState.CUEING || state === PlaybackState.HELD;
+}
+
 /**
  * Changes records, once for `step` (-1 or 1) and once more for each step asked for meanwhile, even while the new
  * record is being drawn out (see createRecordSwap): the arm lifts, the record goes into its sleeve and the column of
- * sleeves moves along to the new album, whose record comes out stopped at its start. The catalog wraps around.
+ * sleeves moves along to the new album, whose record comes out at its start. The catalog wraps around.
  * Given a `target` album, the first change goes straight to it, its sleeve standing next to the current one.
+ * With `resume`, by default when the music was playing, the arm sets down on the new record to play it; otherwise
+ * it stays off.
  *
  * @param {number} step
  * @param {number | null} [target]
+ * @param {boolean} [resume]
  */
-async function switchAlbum(step, target = null) {
+async function switchAlbum(step, target = null, resume = isPlaying()) {
   if (swapping) {
     if (recordSwap.skip()) pendingSteps += step;
     return;
@@ -620,6 +628,7 @@ async function switchAlbum(step, target = null) {
     slot('stage').inert = false;
     swapping = false;
   }
+  if (resume) cue();
 }
 
 /**
@@ -647,18 +656,22 @@ async function stepTrack(step) {
 }
 
 /**
- * Switches to the album `step` (-1 or 1) away, as switchAlbum does, and plays its first track going forward or its
- * last going back. A hidden page draws no frames for the records to change by, so there the album changes at once.
+ * Switches to the album `step` (-1 or 1) away, as switchAlbum does, and moves to its first track going forward or its
+ * last going back, playing it if the music was playing. A hidden page draws no frames for the records to change by,
+ * so there the album changes at once.
  */
 async function playNextAlbum(step) {
+  const resume = isPlaying();
   if (document.hidden) {
     elapsedMs = 0;
     setState(PlaybackState.STOPPED);
     showAlbum(wrapIndex(albumIndex + step, albums.length));
   } else {
-    await switchAlbum(step);
+    await switchAlbum(step, null, false);
   }
+  if (swapping) return;
   playFromTrack(step > 0 ? 0 : album.tracks.length - 1);
+  if (resume) cue();
 }
 
 // 0..1 through the track at `trackIndex`.
@@ -666,30 +679,27 @@ function trackProgressAt(trackIndex) {
   return (elapsedMs / 1000 - trackStartSec(album, trackIndex)) / album.tracks[trackIndex].durationSec;
 }
 
-// Plays the current track from `trackProgress` (0..1) on: the arm moves there, and sets down first if it was off.
+// Moves to `trackProgress` (0..1) through the current track: playing, the music plays on from there; stopped, it
+// stays stopped there.
 function seekTrack(trackProgress) {
   if (swapping) return;
   const trackIndex = trackIndexAt(album, elapsedMs / totalMs);
   seekTo((trackStartSec(album, trackIndex) + trackProgress * album.tracks[trackIndex].durationSec) * 1000);
 }
 
-// Plays the track at `trackIndex` from its start, as seekTrack does.
+// Moves to the start of the track at `trackIndex`, as seekTrack does.
 function playFromTrack(trackIndex) {
   if (swapping) return;
   seekTo(trackStartSec(album, trackIndex) * 1000);
 }
 
+// Moves the clock to `ms`, keeping the music playing or stopped as it was.
 function seekTo(ms) {
   elapsedMs = ms;
   globe.glide();
-  if (state === PlaybackState.PLAYING) {
-    // The ice and sea music sets the clock while it plays, so it starts again from the new place.
-    music.play(() => elapsedMs / 1000);
-    render();
-    return;
-  }
-  unlockSound();
-  cue();
+  // The ice and sea music sets the clock while it plays, so it starts again from the new place.
+  if (state === PlaybackState.PLAYING) music.play(() => elapsedMs / 1000);
+  render();
 }
 
 function togglePlayback() {
