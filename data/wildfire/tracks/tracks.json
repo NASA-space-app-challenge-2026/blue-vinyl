@@ -3,8 +3,10 @@
     "id": "us_annual_burned_acres",
     "title": "Burned Acres",
     "file": "us_annual_burned_acres.csv",
+    "globe_file": "mtbs_large_fires.csv",
     "duration_hint_s": 30,
     "message": "US annual wildfire burned area has increased since the 1980s; all ten largest years are since 2004.",
+    "note": "Ours: the globe shows each year's MTBS large fires (Wildfire and Wildland Fire Use, 1984–2024) where they burned; the music and the read-out play NIFC's national acres. MTBS has no 1983.",
     "eic": [
       {
         "id": 5453,
@@ -20,6 +22,15 @@
         "download_date": "2026-11-14",
         "license": "US federal public information",
         "substitute": null
+      },
+      {
+        "name": "MTBS Burned Area Boundaries, fire occurrence points",
+        "provider": "MTBS (USGS EROS, USDA Forest Service)",
+        "url": "https://www.mtbs.gov/direct-download",
+        "download_url": "https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/MTBS_Fire/data/composite_data/fod_pt_shapefile/mtbs_fod_pts_data.zip",
+        "download_date": "2026-11-15",
+        "license": "US federal public domain",
+        "substitute": "Not cited by EIC. NIFC (cited by 5453) has no locations; MTBS maps the large fires behind most of each year's acres."
       }
     ]
   },

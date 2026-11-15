@@ -49,7 +49,7 @@ import { createRecordSwap } from '../features/turntable/presentation/record-swap
 import { createTurntableView } from '../features/turntable/presentation/turntable-view.js';
 
 // The contiguous United States, zoomed until the label's edge is 30 degrees of arc from its middle, so the West's fires
-// and the burn field read large.
+// read large.
 const CONUS_FOCUS = Object.freeze({ lat: 39, lon: -98, arcDeg: 30 });
 
 // Set by showAlbum().
@@ -301,7 +301,7 @@ async function loadAlbumData(loading) {
       }));
     }
     if (track.wildfire?.kind === 'annual') {
-      return annualBurnScore(data[i].years, WILDFIRE_YEAR_TIMELINE, track.durationSec).map((note) => ({
+      return annualBurnScore(data[i].years, data[i].firesByYear, WILDFIRE_YEAR_TIMELINE, track.durationSec).map((note) => ({
         ...note,
         timeSec: note.timeSec + offset,
       }));
@@ -630,8 +630,8 @@ function renderData(trackIndex) {
 
 /**
  * Draws the year or day of a wildfire track that plays at the clock, looking at the contiguous United States: the
- * year's burn field over the West (Burned Acres), or each large fire's scar, front and smoke that day (2020 Fire
- * Season). The globe and the read-out change only when the year or day does; the fires ease and flicker by themselves.
+ * year's large MTBS fires where they burned, lit through its bar in the order they started (Burned Acres), or each
+ * large fire's scar, front and smoke that day (2020 Fire Season). The globe and the read-out change only when the year or day does; the fires ease and flicker by themselves.
  *
  * @param {import('../features/tracks/data/track-repository.js').WildfireTrackData} data
  * @param {number} trackIndex
@@ -654,11 +654,14 @@ function renderWildfire(data, trackIndex) {
 
   if (data.kind === 'annual') {
     const year = data.years[at];
-    globe.showFires({ mode: 'annual', acres: year.acres, acresMax: data.acresMax });
+    const fires = data.firesByYear[at];
+    globe.showFires({ mode: 'annual', year: year.year, fires, spanSec: WILDFIRE_YEAR_TIMELINE.beatSec });
+    // The acres are NIFC's, all of the year's fires; the globe shows the large ones MTBS maps, none before 1984.
     const acresM = (year.acres / 1e6).toFixed(1);
+    const mapped = fires.length ? ` · ${fires.length} large fires mapped` : ' · no fire map before 1984';
     wildfireOverlay.render({
       title: String(year.year),
-      detail: year.isTop10 ? `${acresM} M acres · among the 10 largest` : `${acresM} M acres burned`,
+      detail: `${acresM} M acres${year.isTop10 ? ', among the 10 largest' : ' burned'}${mapped}`,
     });
     dateLabel.show(null);
     return;

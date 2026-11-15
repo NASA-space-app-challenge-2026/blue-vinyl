@@ -274,7 +274,7 @@ export const albums = [
     title: 'As the Season Burns',
     coverUrl: `${WILDFIRE_COVERS}/creek_fire_2020.jpg`,
     coverCredit: 'Photo: CAL FIRE, public domain, via Wikimedia Commons',
-    dataCredit: 'Data: NIFC / NICC · NASA FEDS (VEDA)',
+    dataCredit: 'Data: NIFC / NICC · MTBS (USGS, USDA Forest Service) · NASA FEDS (VEDA)',
     tracks: [
       {
         title: 'Burned Acres',
@@ -285,6 +285,8 @@ export const albums = [
         wildfire: {
           kind: 'annual',
           csvUrl: `${WILDFIRE_DATA}/us_annual_burned_acres.csv`,
+          // Each year's large fires where they burned: NIFC's acres have no places.
+          firesUrl: `${WILDFIRE_DATA}/mtbs_large_fires.csv`,
         },
       },
       {

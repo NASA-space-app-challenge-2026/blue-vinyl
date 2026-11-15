@@ -55,7 +55,7 @@ export const AlbumCategory = Object.freeze({
  * @property {StormSource} [storm] data, sound and view of a hurricane track
  * @property {StormSeasonSource} [season] data, sound and view of a storm season track
  * @property {LightningSource} [lightning] data and sound of a lightning track
- * @property {{ kind: 'annual', csvUrl: string } | { kind: 'season', csvUrl: string, firesUrl: string }} [wildfire]
+ * @property {{ kind: 'annual' | 'season', csvUrl: string, firesUrl: string }} [wildfire]
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
  * @property {{ lineUrl: string, mapUrl: string, airMapUrl: string, airUrl: string }} [forest] the noon line, canopy
  *   map, and the CO₂ map and months of the same window the track plays (see tracks/domain/noon-line.js)
