@@ -8,6 +8,8 @@ import { svgPoints } from '../../globe/presentation/particle-shape.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
+import { createRovingFocus } from '../../../shared/roving-focus.js';
+
 const PARTICLES = [
   {
     id: 'salt',
@@ -70,6 +72,8 @@ export function createParticleToggles(parent, onChange) {
   // Floating hover caption bubble
   const caption = document.createElement('div');
   caption.className = 'particle-caption';
+  // Each toggle carries the same words as its description.
+  caption.setAttribute('aria-hidden', 'true');
   caption.style.cssText = `
     position: absolute;
     bottom: calc(100% + 10px);
@@ -93,6 +97,8 @@ export function createParticleToggles(parent, onChange) {
 
   const container = document.createElement('div');
   container.className = 'glass-capsule particle-toggles';
+  container.setAttribute('role', 'toolbar');
+  container.setAttribute('aria-label', 'Particles');
   // A dark tint under the glass, so the white names read over the bright air inside the globe
   container.style.cssText = `
     display: flex;
@@ -114,6 +120,7 @@ export function createParticleToggles(parent, onChange) {
   function paint(id) {
     const { btn, dot, label, color } = buttons.get(id);
     btn.classList.toggle('active', states[id]);
+    btn.setAttribute('aria-pressed', String(states[id]));
     label.style.opacity = states[id] ? '1' : '0.4';
     dot.style.opacity = states[id] ? '1.0' : '0.2';
     dot.style.transform = states[id] ? 'scale(1.0)' : 'scale(0.7)';
@@ -124,7 +131,10 @@ export function createParticleToggles(parent, onChange) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'glass-segment particle-toggle active';
-    btn.setAttribute('aria-label', `Toggle ${name}`);
+    // A toggle button: its name stays, its pressed state says whether the stem is on.
+    btn.setAttribute('aria-label', name);
+    btn.setAttribute('aria-pressed', 'true');
+    btn.setAttribute('aria-description', desc);
 
     // Glowing indicator in the particle type's shape
     const dot = document.createElementNS(SVG_NS, 'svg');
@@ -163,17 +173,22 @@ export function createParticleToggles(parent, onChange) {
     `;
     btn.append(dot, label);
 
-    // Hover caption handlers
-    btn.addEventListener('mouseenter', () => {
+    // Hover caption handlers, on keyboard focus too
+    const showCaption = () => {
       caption.innerHTML = `<strong style="color: ${color};">${name}</strong> <span style="opacity: 0.85; margin-left: 6px;">${desc}</span>`;
       caption.style.opacity = '1';
       caption.style.transform = 'translateX(-50%) translateY(-2px)';
-    });
-
-    btn.addEventListener('mouseleave', () => {
+    };
+    const hideCaption = () => {
       caption.style.opacity = '0';
       caption.style.transform = 'translateX(-50%) translateY(0)';
+    };
+    btn.addEventListener('mouseenter', showCaption);
+    btn.addEventListener('mouseleave', hideCaption);
+    btn.addEventListener('focus', () => {
+      if (btn.matches(':focus-visible')) showCaption();
     });
+    btn.addEventListener('blur', hideCaption);
 
     // Click toggle handler
     btn.addEventListener('click', (e) => {
@@ -187,6 +202,7 @@ export function createParticleToggles(parent, onChange) {
     container.append(btn);
   }
 
+  createRovingFocus(container, { selector: '.particle-toggle' });
   wrapper.append(container);
   parent.append(wrapper);
 

@@ -1,3 +1,6 @@
+import { createRovingFocus } from '../../../shared/roving-focus.js';
+import { prefersReducedMotion } from '../../../shared/motion.js';
+import { spokenDuration } from '../../../shared/spoken-duration.js';
 import { ALBUM_CATEGORY_LABEL, formatDuration, trackCover } from '../domain/album.js';
 import { ALBUM_NOTES } from '../data/album-notes.js';
 import { introSec } from '../../docent/data/docent-audio.js';
@@ -24,8 +27,10 @@ function el(tag, className, text) {
 
 /**
  * Album sleeve with title and track list on the front, and liner notes on the back.
+ * The front shows the current track's cover (see trackCover), fading from one to the next.
  * The face leans in 3D toward the mouse like a card held in the hand.
  * Clicking the NOTE button in the top right flips the sleeve to the back.
+ * The track list takes one Tab stop, the up and down arrow keys moving between its tracks; the playing one is marked.
  * While the docent is on (setDocent), the track list opens with the docent's introduction, which plays before the
  * first track; clicking it calls `onSelectDocent`.
  *
@@ -51,6 +56,8 @@ export function createAlbumCover(parent, { onSelectTrack, onSelectDocent } = {})
   let album = null;
   let image = null;
   let items = [];
+  let buttons = [];
+  const tracks = createRovingFocus(body, { selector: '.album-cover-track-button', orientation: 'vertical' });
 
   // The docent's introduction, above the first track while the docent is on. It has no number: it is not a track.
   const docentItem = el('li', 'album-cover-track album-cover-track-docent');
@@ -97,7 +104,7 @@ export function createAlbumCover(parent, { onSelectTrack, onSelectDocent } = {})
 
   // Only a mouse hovers; a touch dragging across the sleeve would leave it leaning.
   cover.addEventListener('pointermove', (event) => {
-    if (event.pointerType !== 'mouse') return;
+    if (event.pointerType !== 'mouse' || prefersReducedMotion()) return;
     if (cover.classList.contains('is-flipped')) return;
     const rect = cover.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -110,10 +117,10 @@ export function createAlbumCover(parent, { onSelectTrack, onSelectDocent } = {})
     face.style.removeProperty('--hover-y');
   });
 
-  // Fades `url` in over the covers shown, which go once it is in; another album's cover replaces them at once. That
+  // Fades the cover at `url` (`alt` saying what it shows) in over the covers shown, which go once it is in; another album's cover replaces them at once. That
   // one is taken from `drawn` when another sleeve already shows it, else shown once decoded, so the sleeve never shows
   // a blank or half-drawn cover in between (as a phone would while the record is drawn out of it).
-  function showCover(url, fade, drawn) {
+  function showCover({ url, alt }, fade, drawn) {
     if (image?.getAttribute('src') === url && image.parentNode === face) return;
     const taken = fade ? null : drawn?.get(url);
     if (taken) {
@@ -128,7 +135,7 @@ export function createAlbumCover(parent, { onSelectTrack, onSelectDocent } = {})
     }
     const img = el('img', 'album-cover-image');
     img.src = url;
-    img.alt = '';
+    img.alt = alt;
     img.addEventListener('error', () => img.remove());
     const removeOthers = () => face.querySelectorAll('.album-cover-image').forEach((other) => other !== img && other.remove());
     if (!fade) {
@@ -214,24 +221,35 @@ export function createAlbumCover(parent, { onSelectTrack, onSelectDocent } = {})
       void flipper.offsetWidth;
       cover.classList.remove('is-flipped-instantly');
     }
-    showCover(trackCover(album, 0).url, false, drawn);
+    showCover(trackCover(album, 0), false, drawn);
     cover.style.setProperty('--tilt', `${tiltDeg(index)}deg`);
 
-    counter.textContent = `${index + 1} / ${count}`;
+    // "1 / 9" would be read out as "1 slash 9".
+    const shown = el('span', '', `${index + 1} / ${count}`);
+    shown.setAttribute('aria-hidden', 'true');
+    counter.replaceChildren(shown, el('span', 'visually-hidden', `Album ${index + 1} of ${count}`));
 
     const list = el('ol', 'album-cover-tracks');
+    list.setAttribute('aria-label', 'Tracks');
+    buttons = [];
     items = album.tracks.map((track, i) => {
       const item = el('li', 'album-cover-track');
       const button = el('button', 'album-cover-track-button');
       button.type = 'button';
+      // "1:20" would be read out as "1 colon 20".
+      button.setAttribute('aria-label', `${track.title}, ${spokenDuration(track.durationSec)}`);
       button.append(el('span', 'album-cover-track-title', track.title), el('span', 'album-cover-track-duration', formatDuration(track.durationSec)));
       button.addEventListener('click', () => onSelectTrack?.(i));
       item.append(button);
+      buttons.push(button);
       return item;
     });
-    docentDuration.textContent = formatDuration(introSec(album.id, album.title, ALBUM_NOTES[album.id]?.docentTip));
+    const docentSec = introSec(album.id, album.title, ALBUM_NOTES[album.id]?.docentTip);
+    docentDuration.textContent = formatDuration(docentSec);
+    docentButton.setAttribute('aria-label', `Docent, ${spokenDuration(docentSec)}`);
     list.append(docentItem, ...items);
-    body.replaceChildren(el('p', 'album-cover-category', ALBUM_CATEGORY_LABEL[album.category]), el('h1', 'album-cover-title', album.title), list);
+    // The app's name is the page's one h1.
+    body.replaceChildren(el('p', 'album-cover-category', ALBUM_CATEGORY_LABEL[album.category]), el('h2', 'album-cover-title', album.title), list);
 
     renderNotes(album);
   }
@@ -241,9 +259,17 @@ export function createAlbumCover(parent, { onSelectTrack, onSelectDocent } = {})
    * @param {boolean} [inDocent] whether the docent's introduction is playing, before the track
    */
   function render(activeTrackIndex, inDocent = false) {
-    showCover(trackCover(album, activeTrackIndex).url, true);
+    showCover(trackCover(album, activeTrackIndex), true);
     docentItem.classList.toggle('is-active', inDocent);
     items.forEach((item, i) => item.classList.toggle('is-active', !inDocent && i === activeTrackIndex));
+    // The one playing is marked, the docent's introduction or a track.
+    const playing = inDocent ? docentButton : buttons[activeTrackIndex];
+    for (const button of [docentButton, ...buttons]) {
+      if (button === playing) button.setAttribute('aria-current', 'true');
+      else button.removeAttribute('aria-current');
+    }
+    // Tabbing into the list lands on the one playing.
+    if (playing) tracks.setCurrent(playing);
   }
 
   /** @param {boolean} on whether the docent is on, so its introduction is listed */
@@ -256,6 +282,8 @@ export function createAlbumCover(parent, { onSelectTrack, onSelectDocent } = {})
     setAlbum,
     render,
     setDocent,
+    /** Focuses the track the list's Tab stop is on. */
+    focusTracks: tracks.focus,
     /** The cover image shown, or null. */
     get image() {
       return image?.parentNode === face ? image : null;
