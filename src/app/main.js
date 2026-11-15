@@ -7,7 +7,7 @@ import { createParticleToggles } from '../features/controls/presentation/particl
 // Composition root: wires the features together.
 
 import { albums, WILDFIRE_DAY_TIMELINE, WILDFIRE_YEAR_TIMELINE } from '../features/album/data/albums.js';
-import { albumDurationSec, formatDuration, trackBoundaries, trackCover, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
+import { albumDurationSec, formatDuration, trackBoundaries, trackCover, trackFadeAt, trackIndexAt, trackStartSec, wrapIndex } from '../features/album/domain/album.js';
 import { createAlbumColumn } from '../features/album/presentation/album-column.js';
 import { createAlbumCredit } from '../features/album/presentation/album-credit.js';
 import { createBackdrop } from '../features/album/presentation/backdrop.js';
@@ -268,8 +268,11 @@ const onboarding = createOnboarding(slot('screen'), {
 const ALBUM_KEYS = Object.freeze({ ArrowLeft: -1, ArrowRight: 1 });
 // Volume keys: up louder, down quieter.
 const VOLUME_KEYS = Object.freeze({ ArrowUp: 1, ArrowDown: -1 });
+// The number keys, on the main row or the keypad, go straight to the album at that place in the catalog (1 the first).
+const ALBUM_NUMBER_CODE = /^(?:Digit|Numpad)([1-9])$/;
 
-// Space always plays or pauses, left and right switch albums and up and down set the volume, wherever the focus is.
+// Space always plays or pauses, left and right switch albums, 1 to 9 go to an album and up and down set the volume,
+// wherever the focus is.
 // Captured before any control sees the key, so a button left focused by a click is not pressed again.
 document.addEventListener(
   'keydown',
@@ -283,6 +286,14 @@ document.addEventListener(
       event.preventDefault();
       releaseClickFocus();
       if (!event.repeat) togglePlayback();
+      return;
+    }
+    const albumNumber = ALBUM_NUMBER_CODE.exec(event.code);
+    // A text field keeps its digits.
+    if (albumNumber && !(event.target instanceof HTMLInputElement && event.target.type !== 'range')) {
+      event.preventDefault();
+      releaseClickFocus();
+      if (!event.repeat) goToAlbum(Number(albumNumber[1]) - 1);
       return;
     }
     const albumStep = ALBUM_KEYS[event.key];
@@ -583,7 +594,10 @@ function takePendingStep() {
  * Changes records, once for `step` (-1 or 1) and once more for each step asked for meanwhile, even while the new
  * record is being drawn out (see createRecordSwap): the arm lifts, the record goes into its sleeve and the column of
  * sleeves moves along to the new album, whose record comes out stopped at its start. The catalog wraps around.
- * With `target`, the first change lands on that album instead of the next one, and the sleeve coming in shows it.
+ * Given a `target` album, the first change goes straight to it, its sleeve standing next to the current one.
+ *
+ * @param {number} step
+ * @param {number | null} [target]
  */
 async function switchAlbum(step, target = null) {
   if (swapping) {
@@ -595,12 +609,11 @@ async function switchAlbum(step, target = null) {
   slot('stage').inert = true;
   elapsedMs = 0;
   setState(PlaybackState.STOPPED);
-  let landOn = target;
-  if (landOn !== null) albumColumn.aimAt(step, landOn);
+  if (target !== null) albumColumn.setNeighbour(step, target);
   try {
     await recordSwap.play(step, (direction) => {
-      showAlbum(landOn ?? wrapIndex(albumIndex + direction, albums.length));
-      landOn = null;
+      showAlbum(target ?? wrapIndex(albumIndex + direction, albums.length));
+      target = null;
       render();
     }, takePendingStep);
   } finally {
@@ -611,21 +624,18 @@ async function switchAlbum(step, target = null) {
 }
 
 /**
- * Changes records to the album at `index` in one go, the shorter way round the catalog (forward when both ways are
- * as long): the same change of records as the chevrons make, but landing on that album.
+ * Changes records straight to the album at `index`, in one change as switchAlbum does: its sleeve comes from below a
+ * later album, from above an earlier one. Nothing happens for the album already shown, an album the catalog does not
+ * have, or while the records change.
  */
 function goToAlbum(index) {
-  if (swapping) return;
-  const count = albums.length;
-  const forward = wrapIndex(index - albumIndex, count);
-  if (forward === 0) return;
-  switchAlbum(forward <= count - forward ? 1 : -1, index);
+  if (swapping || index === albumIndex || index >= albums.length) return;
+  switchAlbum(Math.sign(index - albumIndex), index);
 }
 
 /**
- * Plays the track `step` (-1 or 1) away from the current one. Past either end of the album it switches to the album
- * next to it, as switchAlbum does, and plays its first track going forward or its last going back. A hidden page draws
- * no frames for the records to change by, so there the album changes at once.
+ * Plays the track `step` (-1 or 1) away from the current one. Past either end of the album it plays on into the album
+ * next to it (see playNextAlbum).
  */
 async function stepTrack(step) {
   if (swapping) return;
@@ -634,6 +644,14 @@ async function stepTrack(step) {
     playFromTrack(next);
     return;
   }
+  await playNextAlbum(step);
+}
+
+/**
+ * Switches to the album `step` (-1 or 1) away, as switchAlbum does, and plays its first track going forward or its
+ * last going back. A hidden page draws no frames for the records to change by, so there the album changes at once.
+ */
+async function playNextAlbum(step) {
   if (document.hidden) {
     elapsedMs = 0;
     setState(PlaybackState.STOPPED);
@@ -703,6 +721,10 @@ function startPlaying() {
 function render() {
   const progress = elapsedMs / totalMs;
   const trackIndex = trackIndexAt(album, progress);
+  // Every track's music fades in at its start and out at its end.
+  const fade = trackFadeAt(album, trackIndex, elapsedMs / 1000 - trackStartSec(album, trackIndex));
+  music.setTrackFade(fade);
+  soundEngine.setTrackFade(fade);
   turntable.render(state, progress, trackProgressAt(trackIndex), album.tracks[trackIndex]);
   albumColumn.render(trackIndex);
   albumCredit.render(album, trackIndex, [...musicCredits, mapCredit]);
@@ -1065,9 +1087,9 @@ function tick(ts) {
   if (heardSec !== null) elapsedMs = heardSec * 1000;
   else elapsedMs += dtMs;
   lastFrameTs = ts;
+  // The album's last track has ended: the record changes and the next album plays from its first track.
   if (elapsedMs >= totalMs) {
-    elapsedMs = 0;
-    setState(PlaybackState.STOPPED);
+    playNextAlbum(1);
     return;
   }
   render();

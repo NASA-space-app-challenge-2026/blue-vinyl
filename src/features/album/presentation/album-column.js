@@ -36,13 +36,18 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
   const places = [0, ...neighbours.map(({ place: at }) => at)];
   let spacing = 0;
 
-  /** @param {number} index */
-  function setAlbum(index) {
-    // The covers drawn now: a sleeve given an album another sleeve showed takes its drawn cover, not loading it anew.
+  // The covers drawn now: a sleeve given an album another sleeve showed takes its drawn cover, not loading it anew.
+  function drawnCovers() {
     const drawn = new Map();
     for (const cover of [sleeve, ...neighbours.map((n) => n.cover)]) {
       if (cover.image) drawn.set(cover.image.getAttribute('src'), cover.image);
     }
+    return drawn;
+  }
+
+  /** @param {number} index */
+  function setAlbum(index) {
+    const drawn = drawnCovers();
     sleeve.setAlbum({ album: albums[index], index, count: albums.length }, drawn);
     for (const { place, cover } of neighbours) {
       const i = wrapIndex(index + place, albums.length);
@@ -52,16 +57,16 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
   }
 
   /**
-   * Has the neighbour at `place` show the album at `index`, for a change of records that goes straight there: it is
-   * the sleeve that comes in, and setAlbum puts the neighbours back in catalog order once it has.
+   * Stands the album at `index` next to the current one, `place` (-1 above, 1 below) from it, in place of its
+   * neighbour in the catalog, so the next change of records brings it straight into the middle.
    *
    * @param {number} place
    * @param {number} index
    */
-  function aimAt(place, index) {
-    const { cover } = neighbours.find((neighbour) => neighbour.place === place);
-    cover.setAlbum({ album: albums[index], index, count: albums.length }, new Map());
-    cover.render(0);
+  function setNeighbour(place, index) {
+    const neighbour = neighbours.find((n) => n.place === place);
+    neighbour.cover.setAlbum({ album: albums[index], index, count: albums.length }, drawnCovers());
+    neighbour.cover.render(0);
   }
 
   /**
@@ -123,5 +128,5 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
   }
 
   settle();
-  return { setAlbum, aimAt, render: sleeve.render, place, setTucked, moves, settle };
+  return { setAlbum, setNeighbour, render: sleeve.render, place, setTucked, moves, settle };
 }
