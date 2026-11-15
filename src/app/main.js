@@ -437,7 +437,6 @@ async function loadSong(track, target) {
     return {
       forest: true,
       ...forest,
-      lead: track.lead,
       // The album's first track opens with the listening legend.
       legend: target.tracks.indexOf(track) === 0,
       composer: noonComposer,

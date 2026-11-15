@@ -3,20 +3,20 @@
 // composers/noon.js); the light is in its voice's colour and lets a few motes of pollen rise from the tree.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
-import { Band, LINE_STEPS, lineLonAt } from '../../tracks/domain/noon-line.js';
-import { TREE_SIZE, treeSizeU } from '../../tracks/domain/forest-trees.js';
+import { LINE_STEPS, lineLonAt } from '../../tracks/domain/noon-line.js';
+import { TREE_KINDS, TREE_SIZE, TreeKind, treeSizeU } from '../../tracks/domain/forest-trees.js';
 import { createGrowingTree } from './tree-sprites.js';
 
 // Each height class its own colour and its own tree: the commonest, the lowest, is plain green; each class up is
-// brighter and branches more generations deep, so it glows more, up to gold. Colours are sRGB, as picked.
-const TreeKind = Object.freeze({
-  GREEN: Object.freeze({ fromM: 4, color: '#2f8f46', depth: 4 }),
-  TEAL: Object.freeze({ fromM: 8, color: '#22a99a', depth: 5 }),
-  SKY: Object.freeze({ fromM: 14, color: '#79c7ee', depth: 6 }),
-  SILVER: Object.freeze({ fromM: 20, color: '#e6edf5', depth: 7 }),
-  GOLD: Object.freeze({ fromM: 28, color: '#f4c34a', depth: 8 }),
+// brighter and branches more generations deep, so it glows more, up to gold. Colours are sRGB, as picked. The music
+// plays each class on its own instrument (composers/noon.js), so a colour is a sound.
+const TREE_LOOK = Object.freeze({
+  [TreeKind.GREEN]: Object.freeze({ color: '#2f8f46', depth: 4 }),
+  [TreeKind.TEAL]: Object.freeze({ color: '#22a99a', depth: 5 }),
+  [TreeKind.SKY]: Object.freeze({ color: '#79c7ee', depth: 6 }),
+  [TreeKind.SILVER]: Object.freeze({ color: '#e6edf5', depth: 7 }),
+  [TreeKind.GOLD]: Object.freeze({ color: '#f4c34a', depth: 8 }),
 });
-const TREE_KINDS = Object.values(TreeKind);
 // Trees are drawn over the globe without a depth test (an upright sprite against the surface flickered as the two
 // fought for depth), so a tree behind the globe is hidden by hand: by how much its ground faces the camera (cosine),
 // gone at `hiddenAt` and fully shown from `shownFrom`, so it fades at the rim.
@@ -39,13 +39,7 @@ const LIGHT_POOL = 2048;
 const NOTE_GLOW = Object.freeze({ life: 0.9, size: [5, 11], grow: 1.7 });
 // Motes of pollen rising from the tree, more the taller it is.
 const MOTE = Object.freeze({ count: [2, 5], life: [1.6, 2.8], size: [2.5, 4.5], rise: [3, 6], drift: 3, sway: 1.2, grow: 0.45 });
-// Each voice in its own colour, so the eye can follow the ear: the north's flute cool, the tropics' lead gold, the
-// south's pizzicato rose. The warm light is every glow's heart.
-const VOICE_COLORS = Object.freeze({
-  [Band.NORTH]: '#7fd0ff',
-  [Band.TROPICS]: '#ffc94d',
-  [Band.SOUTH]: '#ff8fb1',
-});
+// A tree's note glows in the tree's own colour, so the eye can follow the ear. The warm light is every glow's heart.
 const LIGHT_HEART = '#fff1cf';
 // Steps a frame may jump and still have each tree's note shown (more is a seek).
 const MAX_STEPS_A_FRAME = 4;
@@ -122,11 +116,6 @@ const smoothstep = (edge0, edge1, x) => {
 };
 // Scratch for a tree's direction to the camera, reused every frame.
 const toCamera = new THREE.Vector3();
-
-/** The TreeKind of a tree `metres` tall: the tallest class it reaches. */
-function treeKindOf(metres) {
-  return TREE_KINDS.findLast((kind) => metres >= kind.fromM) ?? TREE_KINDS[0];
-}
 
 /**
  * How lit a tree is by the noon sun over the line at `lineLon`: full light under it at the equator, falling to dusk
@@ -232,11 +221,11 @@ export function createNoonLayer(view) {
     for (const name of ['position', 'aDrift', 'aSway', 'aColor', 'aLife', 'aLook']) attributes[name].needsUpdate = true;
   }
 
-  const voiceColors = Object.fromEntries(Object.entries(VOICE_COLORS).map(([band, hex]) => [band, new THREE.Color(hex)]));
+  const kindColors = Object.fromEntries(Object.entries(TREE_LOOK).map(([kind, look]) => [kind, new THREE.Color(look.color)]));
 
   /** The note of a tree: a glow where it starts, as big as it is tall, and pollen from it. */
   function lightTree(tree, now) {
-    const color = voiceColors[tree.band];
+    const color = kindColors[tree.kind];
     const share = (treeSizeU(tree.metres) - TREE_SIZE.smallestU) / (TREE_SIZE.tallestU - TREE_SIZE.smallestU);
     light({
       lat: tree.lat, lon: tree.lon, color, now,
@@ -261,13 +250,12 @@ export function createNoonLayer(view) {
    * upright on the screen and added onto the globe like light.
    */
   function plant(tree) {
-    const kindIndex = TREE_KINDS.indexOf(treeKindOf(tree.metres));
-    const kind = TREE_KINDS[kindIndex];
-    const share = kindIndex / (TREE_KINDS.length - 1);
+    const look = TREE_LOOK[tree.kind];
+    const share = TREE_KINDS.findIndex((k) => k.kind === tree.kind) / (TREE_KINDS.length - 1);
     const size = treeSizeU(tree.metres);
     tree.grower = createGrowingTree({
-      color: kind.color,
-      depth: kind.depth,
+      color: look.color,
+      depth: look.depth,
       growSec: tree.growSec,
       sizePx: TREE_CANVAS_PX[share > 0.5 ? 1 : 0],
       seed: tree.seed,

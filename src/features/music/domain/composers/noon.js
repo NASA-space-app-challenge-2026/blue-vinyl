@@ -2,27 +2,32 @@
 // tree it passes is one note: it starts when the tree starts to grow on the globe and lasts as long as the tree takes to
 // grow (forest-trees.js, the one list of trees the globe and the music share).
 //
-//   voices: north (23–52° N) on flute; tropics on the track's lead; south on cello, instruments that hold a note.
-//     A tree's height sets pitch and loudness; a dense forest is many trees, so many notes at once.
+//   voices: a tree's kind (its height class, the colour of the tree on the globe) is its instrument, one that holds a
+//     note: cello, viola, violin, flute and oboe from the lowest class up, each in a higher register. Inside its class a
+//     taller tree plays a higher note; the taller the tree, the louder. A dense forest is many trees, so many notes.
 //   landmarks: the sea is a wave; a bell marks each continent; a woodblock ticks every 30°.
 //   legend (the first track): ten bars that explain the mappings while the line is already moving.
 //
 // D dorian in 3/4 at 120 beats a minute: a step is a sixteenth (noon-line.js STEP_SEC) and a degree of longitude.
 
 import { Instrument } from '../instruments.js';
-import { Band, LEGEND_STEPS, LINE_STEPS, REGIONS, STEP_SEC, bandAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
-import { startOffsetSec } from '../../../tracks/domain/forest-trees.js';
+import { BANDS, LEGEND_STEPS, LINE_STEPS, REGIONS, STEP_SEC, bandAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
+import { TREE_KINDS, TreeKind, kindOf, startOffsetSec } from '../../../tracks/domain/forest-trees.js';
 
 const STEPS_PER_BAR = 12;
 const SCALE = [0, 2, 3, 5, 7, 9, 10]; // D dorian, above D
 
-const VOICES = Object.freeze({
-  [Band.NORTH]: { instrument: Instrument.FLUTE, lowNote: 74 }, // D5
-  [Band.TROPICS]: { instrument: null, lowNote: 62 }, // D4 — track lead
-  [Band.SOUTH]: { instrument: Instrument.CELLO, lowNote: 50 }, // D3
+// Each kind of tree its instrument and the note it plays at the bottom of its class: the classes climb the scale together.
+const KIND_VOICES = Object.freeze({
+  [TreeKind.GREEN]: { instrument: Instrument.CELLO, lowNote: 50 }, // D3
+  [TreeKind.TEAL]: { instrument: Instrument.VIOLA, lowNote: 55 }, // G3
+  [TreeKind.SKY]: { instrument: Instrument.VIOLIN, lowNote: 62 }, // D4
+  [TreeKind.SILVER]: { instrument: Instrument.FLUTE, lowNote: 69 }, // A4
+  [TreeKind.GOLD]: { instrument: Instrument.OBOE, lowNote: 74 }, // D5
 });
+// Loudness follows a tree's height over this range (m); pitch follows it over its class, in this many scale steps.
 const HEIGHT_RANGE_M = Object.freeze({ low: 4, high: 24 });
-const HEIGHT_DEGREES = 10;
+const KIND_DEGREES = 4;
 const VELOCITY = Object.freeze({ low: 50, high: 115 });
 
 const SEA = Object.freeze({ note: 60, velocity: 45 });
@@ -37,7 +42,7 @@ function noteAt(lowNote, degree) {
   return lowNote + 12 * Math.floor(degree / SCALE.length) + SCALE[degree % SCALE.length];
 }
 
-/** How loud and how high a voice plays forest `heightM` tall: 0 at the low end of the range to 1 at the top. */
+/** How loud a tree `heightM` tall plays: 0 at the low end of the range to 1 at the top. */
 function heightShare(heightM) {
   return clamp((heightM - HEIGHT_RANGE_M.low) / (HEIGHT_RANGE_M.high - HEIGHT_RANGE_M.low), 0, 1);
 }
@@ -47,9 +52,7 @@ const REGION_STARTS = new Map(REGIONS.map((region) => [Math.round(lineLonAt(0) -
 
 export class NoonComposer {
   instruments = Object.freeze([
-    Instrument.HARP,
-    Instrument.CELLO,
-    Instrument.FLUTE,
+    ...TREE_KINDS.map(({ kind }) => KIND_VOICES[kind].instrument),
     Instrument.SEASHORE,
     Instrument.TUBULAR_BELLS,
     Instrument.WOODBLOCK,
@@ -60,11 +63,10 @@ export class NoonComposer {
 
   /**
    * @param {{ line: import('../../../tracks/domain/noon-line.js').NoonLine, treesByStep: Map<number, Object[]>,
-   *   lead: Object, legend: boolean }} song
+   *   legend: boolean }} song
    */
   setSong(song) {
     this.song = song;
-    this.voices = { ...VOICES, [Band.TROPICS]: { ...VOICES[Band.TROPICS], instrument: song.lead } };
   }
 
   reset() {}
@@ -89,29 +91,31 @@ export class NoonComposer {
     }
     // Each tree that starts to grow in this step plays where it starts, for as long as it grows.
     for (const tree of this.song.treesByStep.get(lineStep) ?? []) {
-      this.playVoice(music, this.voices[tree.band], tree.metres, at + startOffsetSec(tree), tree.growSec / STEP_SEC);
+      this.playTree(music, tree.metres, at + startOffsetSec(tree), tree.growSec / STEP_SEC);
     }
-    const sounding = Object.keys(this.voices).some((band) => bandAt(this.song.line, band, lineStep));
+    const sounding = BANDS.some((band) => bandAt(this.song.line, band, lineStep));
     if (!sounding && lineStep % STEPS_PER_BAR === 0) music.note(Instrument.SEASHORE, SEA.note, SEA.velocity, at, STEPS_PER_BAR);
   }
 
-  playVoice(music, voice, heightM, at, steps) {
-    const share = heightShare(heightM);
-    const degree = Math.round(share * HEIGHT_DEGREES);
-    const velocity = VELOCITY.low + share * (VELOCITY.high - VELOCITY.low);
+  /** A tree `heightM` tall: its class's instrument, a note up its class with its height, held `steps` (as long as it grows). */
+  playTree(music, heightM, at, steps, degreeOverride = null) {
+    const { kind, fromM, toM } = kindOf(heightM);
+    const voice = KIND_VOICES[kind];
+    const inClass = clamp((heightM - fromM) / (toM - fromM), 0, 1);
+    const degree = degreeOverride ?? Math.round(inClass * KIND_DEGREES);
+    const velocity = VELOCITY.low + heightShare(heightM) * (VELOCITY.high - VELOCITY.low);
     music.note(voice.instrument, noteAt(voice.lowNote, degree), velocity, at, steps);
   }
 
   playLegend(music, step, at) {
-    const lead = this.voices[Band.TROPICS];
-    if (step < 30) {
-      if (step % 2 === 0) this.playVoice(music, lead, HEIGHT_RANGE_M.low + ((HEIGHT_RANGE_M.high - HEIGHT_RANGE_M.low) * step) / 28, at, 2);
-    } else if (step < 60) {
-      const every = step < 42 ? 4 : step < 50 ? 2 : 1;
-      if ((step - 30) % every === 0) this.playVoice(music, lead, 14, at, every);
+    if (step < 60) {
+      // The five classes in turn, twelve steps each, climbing from the bottom of the class to its top.
+      const local = step % 12;
+      if (local % 2 === 0) this.playTree(music, TREE_KINDS[Math.floor(step / 12)].fromM, at, 2, Math.round((local / 10) * KIND_DEGREES));
     } else if (step < 90) {
-      const voice = step < 70 ? this.voices[Band.NORTH] : step < 80 ? lead : this.voices[Band.SOUTH];
-      if (step % 2 === 0) this.playVoice(music, voice, 6 + (step % 10), at, 2);
+      // A forest thickening: one tree, then two, up to five growing at once.
+      const count = 1 + Math.floor((step - 60) / 6);
+      if (step % 2 === 0) for (let i = 0; i < count; i++) this.playTree(music, TREE_KINDS[1].fromM, at, 2, i);
     } else if (step === 90) {
       music.note(Instrument.SEASHORE, SEA.note, SEA.velocity + 15, at, STEPS_PER_BAR);
     } else if (step === 100) {

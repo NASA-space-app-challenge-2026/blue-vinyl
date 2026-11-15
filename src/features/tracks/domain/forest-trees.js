@@ -2,7 +2,7 @@
 // growing and played as one note, from the step it starts at for as long as it takes to grow. Picked with a seeded random
 // sequence, so a tree is the same for the eye and the ear and on every play.
 
-import { BAND_LATS, Band, LINE_STEPS, STEP_SEC, lineStepAt } from './noon-line.js';
+import { LINE_STEPS, STEP_SEC, lineStepAt } from './noon-line.js';
 
 // Canopy PNG is 0.25°.
 const MAP_CELL_DEG = 0.25;
@@ -15,9 +15,20 @@ export const FOREST_FROM_M = 4;
 // Big tree, small tree: a tree's size on the map (globe units, radius 100) grows with its height from 4 m to 40 m and
 // over, so the tallest forests stand out far across the globe.
 export const TREE_SIZE = Object.freeze({ fromM: 4, fullM: 40, smallestU: 13, tallestU: 50 });
+// Each height class a kind of tree: the globe gives each its colour and the music its instrument. A tree is of the
+// tallest class it reaches.
+export const TreeKind = Object.freeze({ GREEN: 'green', TEAL: 'teal', SKY: 'sky', SILVER: 'silver', GOLD: 'gold' });
+/** The kinds from the lowest up, each with the height (m) it starts at. */
+export const TREE_KINDS = Object.freeze([
+  { kind: TreeKind.GREEN, fromM: 4 },
+  { kind: TreeKind.TEAL, fromM: 8 },
+  { kind: TreeKind.SKY, fromM: 14 },
+  { kind: TreeKind.SILVER, fromM: 20 },
+  { kind: TreeKind.GOLD, fromM: 28 },
+]);
 // Only some trees grow: picked at random, the taller likelier (`tallBias`), and no two closer than `spacing` times
 // the mean of their sizes, so the forest stays open. Each grows `afterSteps` after the noon line has crossed it.
-const TREE_PICK = Object.freeze({ tallBias: 3, spacing: 0.46, afterSteps: [1, 10] });
+const TREE_PICK = Object.freeze({ tallBias: 3, spacing: 0.23, afterSteps: [1, 10] });
 // Every tree shoots up at one pace: the smallest reaches its tips in `smallestSec`, a bigger one in proportion to its size.
 const TREE_GROWTH = Object.freeze({ smallestSec: 0.2 });
 const PICK_SEED = 58;
@@ -45,9 +56,11 @@ export function growSecOf(metres) {
   return (TREE_GROWTH.smallestSec * treeSizeU(metres)) / TREE_SIZE.smallestU;
 }
 
-/** The band (a voice of the music) of the forest at `lat`. */
-function bandOfLat(lat) {
-  return Object.keys(BAND_LATS).find((band) => lat >= BAND_LATS[band][0] && lat < BAND_LATS[band][1]) ?? (lat < 0 ? Band.SOUTH : Band.NORTH);
+/** The kind of a tree `metres` tall, as { kind, fromM, toM }: `toM` is where the next kind starts (the size where trees stop growing taller for the last). */
+export function kindOf(metres) {
+  const i = TREE_KINDS.findLastIndex((k) => metres >= k.fromM);
+  const at = Math.max(0, i);
+  return { ...TREE_KINDS[at], toM: TREE_KINDS[at + 1]?.fromM ?? TREE_SIZE.fullM };
 }
 
 /** The angle between two places on the globe (degrees). */
@@ -84,7 +97,7 @@ function mapTrees(map) {
 }
 
 /**
- * The trees that grow on the globe, picked from the map's, each as { lat, lon, metres, band, startStep, growSec, seed }:
+ * The trees that grow on the globe, picked from the map's, each as { lat, lon, metres, kind, startStep, growSec, seed }:
  * the step (fractional) it starts growing at and how long it takes (s).
  *
  * @param {{ width: number, height: number, metres: Float32Array }} map
@@ -106,7 +119,7 @@ export function pickTrees(map) {
     if (crowded) continue;
     picked.push({
       ...tree,
-      band: bandOfLat(tree.lat),
+      kind: kindOf(tree.metres).kind,
       startStep: lineStepAt(tree.lon) + afterFrom + random() * (afterTo - afterFrom),
       growSec: growSecOf(tree.metres),
       seed: Math.floor(random() * 1e9),

@@ -173,7 +173,6 @@ export const albums = [
           lineUrl: `${FOREST_TRACKS}/forest_noon_line.csv`,
           mapUrl: `${FOREST_TRACKS}/canopy_height_quarter_degree.png`,
         },
-        lead: Instrument.HARP,
         color: '#8ecf7a',
       },
     ],

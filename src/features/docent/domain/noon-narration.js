@@ -13,14 +13,11 @@ const DESCRIBED_FROM_M = 5;
 
 /**
  * The legend's lines, at the step each part of it starts (see composers/noon.js, which plays it).
- *
- * @param {string} leadName  what the tropics are played on, as a listener would call it
  */
-export function legendLines(leadName) {
+export function legendLines() {
   return [
-    { step: 0, text: 'How to listen. Higher, louder notes mean taller forest.' },
-    { step: 30, text: 'Faster notes mean denser forest.' },
-    { step: 60, text: `Flute is the north, ${leadName} the tropics, pizzicato the south.` },
+    { step: 0, text: 'How to listen. Every tree is a note, as long as the tree takes to grow. Taller trees play higher and louder, on cello, viola, violin, flute and oboe.' },
+    { step: 60, text: 'Many trees at once make a dense forest.' },
     { step: 90, text: 'Waves are the sea, a bell marks land, a tick every thirty degrees.' },
   ];
 }
@@ -32,12 +29,11 @@ const word = (words, value) => words.find(([from]) => value >= from)[1];
  *
  * @param {Object} options
  * @param {import('../../tracks/domain/noon-line.js').NoonLine} options.line
- * @param {string} options.leadName
  * @param {boolean} options.legend  whether the track opens with the legend
  * @returns {{ step: number, text: string }[]}
  */
-export function noonNarration({ line, leadName, legend }) {
-  const lines = legend ? legendLines(leadName) : [];
+export function noonNarration({ line, legend }) {
+  const lines = legend ? legendLines() : [];
   // Same clock as the noon line: regions are announced as the meridian reaches them.
   lines.push({
     step: 0,
