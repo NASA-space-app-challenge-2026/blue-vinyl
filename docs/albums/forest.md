@@ -16,7 +16,7 @@ Pages and datasets (album guide Q4): 14696 is in the EIC gallery and its sources
 | --- | --- | --- | --- | --- |
 | 1 | Under the Noon Sun · 2019–2023 | April 2019 to March 2023 (opens with the legend) | Harp | `#8ecf7a` |
 
-The line runs from 52° S to 52° N and moves west a degree a step. Three bands: **north** (flute), **tropics** (harp), **south** (pizzicato).
+The line runs from 52° S to 52° N and moves west a degree a step. Three bands: **north** (flute), **tropics** (the track's lead, harp), **south** (cello).
 
 Data files: `data/forest/tracks/` (see `tracks.json` for every source, version and credit): `forest_noon_line.csv` (a row per degree: land share, mean height and density in each band), `canopy_height_quarter_degree.png` (the forest on the globe), and the XCO2 files, which the album no longer reads.
 
@@ -32,20 +32,20 @@ A step is a sixteenth note of 0.125 s at 120 bpm in 3/4 (12 steps a bar). One st
 
 D dorian, from the album's sound font (`orchestra.sf2`, GeneralUser GS). Code: [`noon.js`](../../src/features/music/domain/composers/noon.js).
 
-Three voices play the forest under the noon line, made to be followed by ear alone: how tall sets pitch and loudness together; how dense sets the rhythm.
+Every tree on the globe is one note: it starts when the tree starts to grow and lasts as long as the tree takes to grow. The globe and the music read one list of trees ([`forest-trees.js`](../../src/features/tracks/domain/forest-trees.js); picked with a fixed seed, so the same trees grow on every play). How tall a tree is sets its pitch and loudness together; a dense forest is many trees, so many notes at once. Where the forest is quiet (sparse land, under 4 m) no tree grows and no note sounds.
 
 | Part | Data | Mapping |
 | --- | --- | --- |
-| North (flute) | Canopy height and density, 23°–52° N | Pitch and loudness from 4–24 m; rhythm by density. Quiet where land is sparse or under 4 m |
-| Tropics (harp) | Same, 23° S–23° N | As the north, from D4 |
-| South (pizzicato) | Same, 52°–23° S | As the north, from D3 |
+| North (flute) | Trees at 23°–52° N | Pitch and loudness from the tree's height, 4–24 m; the note is as long as the tree's growth |
+| Tropics (lead, harp) | Trees at 23° S–23° N | As the north, from D4 |
+| South (cello) | Trees at 52°–23° S | As the north, from D3 |
 | Tubular bells | Land regions | A bell as the line reaches each continent |
 | Woodblock | Longitude | A tick every 30° |
 | Seashore | Sea / no forest | A wave each bar where no band is sounding |
 
 ## Globe
 
-See [design.md](../design.md#data-on-the-globe): neon trees, picked at random and spaced apart, grow where the noon line has just passed; the taller the canopy, the bigger the tree, the deeper it branches and the brighter its colour (green, teal, sky, silver, gold); a CO₂ haze floats above them, warmer and higher where the air is thicker; the trees are lit by the noon sun over the line; a noon meridian ribbon moves west, and each forest note lights where it is played, in its voice's colour; the camera follows the meridian; the halo and the month label follow the air.
+See [design.md](../design.md#data-on-the-globe): neon trees, picked with a fixed seed and spaced apart, grow where the noon line has just passed, each as its note starts; the taller the canopy, the bigger the tree, the deeper it branches and the brighter its colour (green, teal, sky, silver, gold); a CO₂ haze floats above them, warmer and higher where the air is thicker; the trees are lit by the noon sun over the line; a noon meridian ribbon moves west, and each tree's note lights where the tree starts, in its voice's colour; the camera follows the meridian; the halo and the month label follow the air.
 
 ## Credits
 

@@ -1,20 +1,12 @@
 // A forest track on the globe: the GEDI canopy map as trees, big and small, lit by the noon sun, the noon meridian
-// moving west, and a note of light wherever the music strikes one: each forest voice glows at the forest it is playing, in its own colour, and lets a few motes
-// of pollen rise from there.
+// moving west, and a note of light where each tree starts to grow: the music plays that tree there and then (see
+// composers/noon.js); the light is in its voice's colour and lets a few motes of pollen rise from the tree.
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.185.0/build/three.module.js';
-import { BAND_LATS, Band, LINE_STEPS, lineLonAt, lineStepAt } from '../../tracks/domain/noon-line.js';
-import { forestNotesAt } from '../../music/domain/composers/noon.js';
+import { Band, LINE_STEPS, lineLonAt } from '../../tracks/domain/noon-line.js';
+import { TREE_SIZE, treeSizeU } from '../../tracks/domain/forest-trees.js';
 import { createGrowingTree } from './tree-sprites.js';
 
-// Canopy PNG is 0.25°.
-const MAP_CELL_DEG = 0.25;
-// The forest stands as one tree on each 2° square of the map where at least a quarter of the square is forest. The
-// tree is as tall as the square's tall canopy (90th percentile of its forest cells).
-const TREE = Object.freeze({ cellDeg: 2, minForestShare: 0.25, percentile: 0.9 });
-// Big tree, small tree: a tree's size on the map (globe units, radius 100) grows with its height from 4 m to 40 m and
-// over, so the tallest forests stand out far across the globe.
-const TREE_SIZE = Object.freeze({ fromM: 4, fullM: 40, smallestU: 13, tallestU: 50 });
 // Each height class its own colour and its own tree: the commonest, the lowest, is plain green; each class up is
 // brighter and branches more generations deep, so it glows more, up to gold. Colours are sRGB, as picked.
 const TreeKind = Object.freeze({
@@ -25,11 +17,6 @@ const TreeKind = Object.freeze({
   GOLD: Object.freeze({ fromM: 28, color: '#f4c34a', depth: 8 }),
 });
 const TREE_KINDS = Object.values(TreeKind);
-// Only some trees grow: picked at random, the taller likelier (`tallBias`), and no two closer than `spacing` times
-// the mean of their sizes, so the forest stays open. Each grows `afterSteps` after the noon line has crossed it.
-const TREE_PICK = Object.freeze({ tallBias: 3, spacing: 0.46, afterSteps: [1, 10] });
-// Every tree shoots up at one pace: the smallest reaches its tips in `smallestSec`, a bigger one in proportion to its size.
-const TREE_GROWTH = Object.freeze({ smallestSec: 0.2 });
 // Trees are drawn over the globe without a depth test (an upright sprite against the surface flickered as the two
 // fought for depth), so a tree behind the globe is hidden by hand: by how much its ground faces the camera (cosine),
 // gone at `hiddenAt` and fully shown from `shownFrom`, so it fades at the rim.
@@ -48,11 +35,9 @@ const MERIDIAN_HALF_DEG = 0.7;
 // Notes of light: points drawn on the GPU from one fixed pool, each fading out where it was struck (it does not slide
 // along with the meridian). Sizes and speeds in globe units (radius 100).
 const LIGHT_POOL = 2048;
-// The forest a voice plays: the band's cells under the degree of the step, at least this tall (m; as noon-line.js).
-const SOUNDING_FROM_M = 4;
-// The glow where a note is struck: bigger the higher and louder the note (share 0..1).
+// The glow where a tree's note is struck: bigger the taller the tree (share 0..1).
 const NOTE_GLOW = Object.freeze({ life: 0.9, size: [5, 11], grow: 1.7 });
-// Motes of pollen rising from the forest the note plays, more the louder it is.
+// Motes of pollen rising from the tree, more the taller it is.
 const MOTE = Object.freeze({ count: [2, 5], life: [1.6, 2.8], size: [2.5, 4.5], rise: [3, 6], drift: 3, sway: 1.2, grow: 0.45 });
 // Each voice in its own colour, so the eye can follow the ear: the north's flute cool, the tropics' lead gold, the
 // south's pizzicato rose. The warm light is every glow's heart.
@@ -62,7 +47,7 @@ const VOICE_COLORS = Object.freeze({
   [Band.SOUTH]: '#ff8fb1',
 });
 const LIGHT_HEART = '#fff1cf';
-// Steps a frame may jump and still have each one's notes shown (more is a seek).
+// Steps a frame may jump and still have each tree's note shown (more is a seek).
 const MAX_STEPS_A_FRAME = 4;
 const meridianVertex = `
 varying float vAlong;
@@ -130,38 +115,6 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
-/**
- * The forest a band plays at a step: its cells on the canopy map under the step's degree of longitude, as { lat, lon,
- * height }, and their centre, weighted toward the tallest (where the note is heard from). Null where it has none.
- */
-function bandForest(map, band, lineStep) {
-  const { width, height, metres } = map;
-  const east = lineLonAt(lineStep);
-  const [south, north] = BAND_LATS[band];
-  const c0 = Math.round((east - 1 + 180) / MAP_CELL_DEG);
-  const r0 = Math.max(0, Math.round((MAP_NORTH - north) / MAP_CELL_DEG));
-  const r1 = Math.min(height, Math.round((MAP_NORTH - south) / MAP_CELL_DEG));
-  const cells = [];
-  let weight = 0;
-  let lat = 0;
-  let lon = 0;
-  for (let c = c0; c < c0 + 1 / MAP_CELL_DEG; c++) {
-    const col = ((c % width) + width) % width;
-    for (let row = r0; row < r1; row++) {
-      const h = metres[row * width + col];
-      if (!(h >= SOUNDING_FROM_M)) continue;
-      const cell = { lat: MAP_NORTH - (row + 0.5) * MAP_CELL_DEG, lon: -180 + (col + 0.5) * MAP_CELL_DEG, height: h };
-      cells.push(cell);
-      const w = h * h;
-      weight += w;
-      lat += cell.lat * w;
-      lon += cell.lon * w;
-    }
-  }
-  if (!cells.length) return null;
-  return { cells, lat: lat / weight, lon: lon / weight };
-}
-
 const between = ([low, high], share = Math.random()) => low + share * (high - low);
 const smoothstep = (edge0, edge1, x) => {
   const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
@@ -169,12 +122,6 @@ const smoothstep = (edge0, edge1, x) => {
 };
 // Scratch for a tree's direction to the camera, reused every frame.
 const toCamera = new THREE.Vector3();
-
-/** A tree's size on the map (globe units) for its height in metres. */
-function treeSizeU(metres) {
-  const share = Math.min(1, Math.max(0, (metres - TREE_SIZE.fromM) / (TREE_SIZE.fullM - TREE_SIZE.fromM)));
-  return TREE_SIZE.smallestU + share * (TREE_SIZE.tallestU - TREE_SIZE.smallestU);
-}
 
 /** The TreeKind of a tree `metres` tall: the tallest class it reaches. */
 function treeKindOf(metres) {
@@ -191,68 +138,14 @@ function sunAt(lat, lon, lineLon) {
   return 0.32 + 0.68 * Math.max(sun, 0) ** 0.8;
 }
 
-/** The trees that grow on the globe, picked from the map's (TREE_PICK), each with the step it starts growing at. */
-function pickTrees(map) {
-  const unitsPerDeg = (100 * Math.PI) / 180;
-  const sizeDeg = (metres) => treeSizeU(metres) / unitsPerDeg;
-  const shareOf = (metres) => (treeSizeU(metres) - TREE_SIZE.smallestU) / (TREE_SIZE.tallestU - TREE_SIZE.smallestU);
-  // A weighted random order: the taller a tree, the likelier it comes early.
-  const order = mapTrees(map)
-    .map((tree) => ({ tree, key: Math.random() ** (1 / (1 + TREE_PICK.tallBias * shareOf(tree.metres))) }))
-    .sort((a, b) => b.key - a.key)
-    .map(({ tree }) => tree);
-  const picked = [];
-  for (const tree of order) {
-    const crowded = picked.some((other) => arcDeg(tree, other) < ((sizeDeg(tree.metres) + sizeDeg(other.metres)) / 2) * TREE_PICK.spacing);
-    if (crowded) continue;
-    picked.push({ ...tree, startStep: lineStepAt(tree.lon) + between(TREE_PICK.afterSteps), seed: Math.floor(Math.random() * 1e9) });
-  }
-  return picked;
-}
-
-/** The angle between two places on the globe (degrees). */
-function arcDeg(a, b) {
-  const rad = Math.PI / 180;
-  const cos = Math.sin(a.lat * rad) * Math.sin(b.lat * rad) + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.cos((a.lon - b.lon) * rad);
-  return Math.acos(Math.min(1, Math.max(-1, cos))) / rad;
-}
-
-/** The trees of the canopy map: one per TREE.cellDeg square that is forest enough, as { lat, lon, metres }. */
-function mapTrees(map) {
-  const { width, height, metres } = map;
-  const span = Math.round(TREE.cellDeg / MAP_CELL_DEG);
-  const trees = [];
-  for (let r0 = 0; r0 < height; r0 += span) {
-    for (let c0 = 0; c0 < width; c0 += span) {
-      const forest = [];
-      for (let row = r0; row < Math.min(height, r0 + span); row++) {
-        for (let col = c0; col < Math.min(width, c0 + span); col++) {
-          const h = metres[row * width + col];
-          if (h >= SOUNDING_FROM_M) forest.push(h);
-        }
-      }
-      if (forest.length < TREE.minForestShare * span * span) continue;
-      forest.sort((a, b) => a - b);
-      trees.push({
-        lat: MAP_NORTH - (r0 + span / 2) * MAP_CELL_DEG,
-        lon: -180 + (c0 + span / 2) * MAP_CELL_DEG,
-        metres: forest[Math.min(forest.length - 1, Math.floor(TREE.percentile * forest.length))],
-      });
-    }
-  }
-  return trees;
-}
-
 /**
  * @param {{ globe: Object, unitsPerPx: () => number, setElements: (elements: Object[]) => void }} view
  */
 export function createNoonLayer(view) {
   let trees = [];
   let meridian = null;
-  let canopyMap = null;
   let lights = null;
   let nextLight = 0;
-  let lastNoteStep = null;
   let growFrame = 0;
 
   function disposeMesh(m) {
@@ -269,13 +162,11 @@ export function createNoonLayer(view) {
     disposeMesh(meridian);
     disposeMesh(lights);
     meridian = lights = null;
-    canopyMap = null;
     nextLight = 0;
-    lastNoteStep = null;
     view.setElements([]);
     if (!song) return;
-    canopyMap = song.map;
-    trees = pickTrees(song.map);
+    // Copies, since the layer keeps each tree's sprite on it.
+    trees = song.trees.map((tree) => ({ ...tree }));
     meridian = buildMeridian(color);
     view.globe.scene().add(meridian);
     lights = buildLights();
@@ -343,28 +234,19 @@ export function createNoonLayer(view) {
 
   const voiceColors = Object.fromEntries(Object.entries(VOICE_COLORS).map(([band, hex]) => [band, new THREE.Color(hex)]));
 
-  /** The notes the forest voices strike at a whole step of the line, each lit where its band's forest is. */
-  function lightNotes(line, lineStep, now) {
-    for (const note of forestNotesAt(line, lineStep)) {
-      const forest = bandForest(canopyMap, note.band, lineStep);
-      if (!forest) continue;
-      const color = voiceColors[note.band];
-      // The note: a glow at the heart of the forest it plays, as big as it is high and loud.
+  /** The note of a tree: a glow where it starts, as big as it is tall, and pollen from it. */
+  function lightTree(tree, now) {
+    const color = voiceColors[tree.band];
+    const share = (treeSizeU(tree.metres) - TREE_SIZE.smallestU) / (TREE_SIZE.tallestU - TREE_SIZE.smallestU);
+    light({
+      lat: tree.lat, lon: tree.lon, color, now,
+      life: NOTE_GLOW.life, size: between(NOTE_GLOW.size, share), grow: NOTE_GLOW.grow, attack: 0.06, rises: false,
+    });
+    for (let made = 0; made < Math.round(between(MOTE.count, share)); made++) {
       light({
-        lat: forest.lat, lon: forest.lon, color, now,
-        life: NOTE_GLOW.life, size: between(NOTE_GLOW.size, note.share), grow: NOTE_GLOW.grow, attack: 0.06, rises: false,
+        lat: tree.lat, lon: tree.lon, color, now,
+        life: between(MOTE.life), size: between(MOTE.size), grow: MOTE.grow, attack: 0.15, rises: true,
       });
-      // Pollen from the forest itself, the taller cells likelier.
-      const motes = Math.round(between(MOTE.count, note.share));
-      for (let tries = 0, made = 0; made < motes && tries < motes * 8; tries++) {
-        const cell = forest.cells[Math.floor(Math.random() * forest.cells.length)];
-        if (Math.random() > cell.height / 35) continue;
-        light({
-          lat: cell.lat, lon: cell.lon, color, now,
-          life: between(MOTE.life), size: between(MOTE.size), grow: MOTE.grow, attack: 0.15, rises: true,
-        });
-        made++;
-      }
     }
   }
 
@@ -386,7 +268,7 @@ export function createNoonLayer(view) {
     tree.grower = createGrowingTree({
       color: kind.color,
       depth: kind.depth,
-      growSec: (TREE_GROWTH.smallestSec * size) / TREE_SIZE.smallestU,
+      growSec: tree.growSec,
       sizePx: TREE_CANVAS_PX[share > 0.5 ? 1 : 0],
       seed: tree.seed,
     });
@@ -524,9 +406,13 @@ export function createNoonLayer(view) {
     const lineStep = Math.max(0, Math.min(LINE_STEPS, step));
     const headLon = lineLonAt(lineStep);
     // A picked tree grows once the line has crossed it, and is gone again if the music goes back before that.
+    const now = performance.now() / 1000;
     for (const tree of trees) {
-      if (!tree.sprite && lineStep >= tree.startStep) plant(tree);
-      else if (tree.sprite && tree.leavingAt === null && lineStep < tree.startStep) fadeOut(tree);
+      if (!tree.sprite && lineStep >= tree.startStep) {
+        plant(tree);
+        // A tree's note sounds as it starts (composers/noon.js); a seek past it plants it without a note.
+        if (playing && lineStep - tree.startStep <= MAX_STEPS_A_FRAME) lightTree(tree, now);
+      } else if (tree.sprite && tree.leavingAt === null && lineStep < tree.startStep) fadeOut(tree);
       else if (tree.sprite && tree.leavingAt !== null && lineStep >= tree.startStep) {
         tree.leavingAt = null;
         tree.fadeOut = 1;
@@ -536,16 +422,6 @@ export function createNoonLayer(view) {
     placeMeridian(headLon);
     meridian.visible = true;
 
-    // A note sounds at the start of its step (composers/noon.js plays step n at n steps in), so it lights then too.
-    const now = performance.now() / 1000;
-    const stepInt = Math.floor(lineStep);
-    if (!playing) {
-      lastNoteStep = null;
-    } else if (canopyMap && song.line && stepInt !== lastNoteStep) {
-      const ahead = lastNoteStep !== null && stepInt > lastNoteStep && stepInt - lastNoteStep <= MAX_STEPS_A_FRAME;
-      for (let s = ahead ? lastNoteStep + 1 : stepInt; s <= stepInt; s++) lightNotes(song.line, s, now);
-      lastNoteStep = stepInt;
-    }
     lights.material.uniforms.uTime.value = now;
     updateLightScale();
   }

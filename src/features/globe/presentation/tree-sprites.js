@@ -7,6 +7,8 @@
 // like neon. Round each stroke a wider, fainter one is its glow (cheap, unlike a shadow blur, which made the frames
 // stutter). The canvas is otherwise transparent, so it adds nothing to the globe or the page around it.
 
+import { seeded } from '../../tracks/domain/forest-trees.js';
+
 // The trunk's base, first length and width in the canvas (canvas units, y down).
 const ROOT = Object.freeze({ x: 0.5, y: 0.985, length: 0.22, width: 0.03 });
 // A child's length and width as a share of its parent's; a side shoot's length as a share of its parent's.
@@ -111,16 +113,4 @@ export function createGrowingTree({ color, depth, growSec, sizePx, seed }) {
   }
 
   return { canvas, step };
-}
-
-/** A repeatable random sequence. */
-function seeded(seed) {
-  let s = (seed * 2654435761) >>> 0;
-  return () => {
-    s = (s + 0x6d2b79f5) >>> 0;
-    let t = s;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
 }

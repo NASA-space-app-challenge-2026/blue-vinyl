@@ -1,4 +1,5 @@
 import { parseNoonLine } from '../domain/noon-line.js';
+import { pickTrees, treesByStep } from '../domain/forest-trees.js';
 
 async function fetchOk(url) {
   const res = await fetch(url);
@@ -38,7 +39,8 @@ function cached(url, load) {
 }
 
 /**
- * Loads one forest track: the noon line and the canopy map.
+ * Loads one forest track: the noon line, the canopy map and the trees picked from it (the globe grows them and the music
+ * plays them).
  *
  * @param {{ lineUrl: string, mapUrl: string }} source
  */
@@ -47,5 +49,6 @@ export async function loadNoonSong({ lineUrl, mapUrl }) {
     fetchOk(lineUrl).then((res) => res.text()).then(parseNoonLine),
     cached(mapUrl, loadCanopyMap),
   ]);
-  return { line, map };
+  const trees = pickTrees(map);
+  return { line, map, trees, treesByStep: treesByStep(trees) };
 }

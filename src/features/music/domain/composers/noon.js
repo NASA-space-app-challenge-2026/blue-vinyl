@@ -1,8 +1,9 @@
-// Composer for the forest album, made to be followed by ear alone: the Earth turns once under the noon line, and three
-// voices play the forest the line crosses — instruments with clear pitch height, not percussion toys.
+// Composer for the forest album, made to be followed by ear alone: the Earth turns once under the noon line, and every
+// tree it passes is one note: it starts when the tree starts to grow on the globe and lasts as long as the tree takes to
+// grow (forest-trees.js, the one list of trees the globe and the music share).
 //
-//   voices: north (23–52° N) on flute; tropics on the track's lead (harp); south on
-//     pizzicato. Height sets pitch and loudness; density sets rhythm.
+//   voices: north (23–52° N) on flute; tropics on the track's lead; south on cello, instruments that hold a note.
+//     A tree's height sets pitch and loudness; a dense forest is many trees, so many notes at once.
 //   landmarks: the sea is a wave; a bell marks each continent; a woodblock ticks every 30°.
 //   legend (the first track): ten bars that explain the mappings while the line is already moving.
 //
@@ -10,6 +11,7 @@
 
 import { Instrument } from '../instruments.js';
 import { Band, LEGEND_STEPS, LINE_STEPS, REGIONS, STEP_SEC, bandAt, lineLonAt } from '../../../tracks/domain/noon-line.js';
+import { startOffsetSec } from '../../../tracks/domain/forest-trees.js';
 
 const STEPS_PER_BAR = 12;
 const SCALE = [0, 2, 3, 5, 7, 9, 10]; // D dorian, above D
@@ -17,16 +19,11 @@ const SCALE = [0, 2, 3, 5, 7, 9, 10]; // D dorian, above D
 const VOICES = Object.freeze({
   [Band.NORTH]: { instrument: Instrument.FLUTE, lowNote: 74 }, // D5
   [Band.TROPICS]: { instrument: null, lowNote: 62 }, // D4 — track lead
-  [Band.SOUTH]: { instrument: Instrument.PIZZICATO, lowNote: 50 }, // D3
+  [Band.SOUTH]: { instrument: Instrument.CELLO, lowNote: 50 }, // D3
 });
 const HEIGHT_RANGE_M = Object.freeze({ low: 4, high: 24 });
 const HEIGHT_DEGREES = 10;
 const VELOCITY = Object.freeze({ low: 50, high: 115 });
-const RHYTHM = Object.freeze([
-  { from: 0, every: 4 },
-  { from: 0.25, every: 2 },
-  { from: 0.55, every: 1 },
-]);
 
 const SEA = Object.freeze({ note: 60, velocity: 45 });
 const TICK = Object.freeze({ everyDeg: 30, note: 76, velocity: 50, loudAtStart: 80 });
@@ -45,34 +42,13 @@ function heightShare(heightM) {
   return clamp((heightM - HEIGHT_RANGE_M.low) / (HEIGHT_RANGE_M.high - HEIGHT_RANGE_M.low), 0, 1);
 }
 
-/**
- * The forest notes struck at a whole step of the line: one per band whose forest sounds and whose rhythm falls on this
- * step. The globe shows each where it is heard.
- *
- * @param {import('../../../tracks/domain/noon-line.js').NoonLine} line
- * @param {number} lineStep
- * @returns {{ band: string, height: number, density: number, every: number, share: number }[]}
- */
-export function forestNotesAt(line, lineStep) {
-  const notes = [];
-  if (lineStep < 0 || lineStep >= LINE_STEPS) return notes;
-  for (const band of Object.keys(VOICES)) {
-    const forest = bandAt(line, band, lineStep);
-    if (!forest) continue;
-    const every = RHYTHM.findLast((r) => forest.density >= r.from).every;
-    if (lineStep % every) continue;
-    notes.push({ band, ...forest, every, share: heightShare(forest.height) });
-  }
-  return notes;
-}
-
 const LAND_BELLS = new Map(REGIONS.filter((r) => r.land).map((region, i) => [region, BELL_NOTES[i % BELL_NOTES.length]]));
 const REGION_STARTS = new Map(REGIONS.map((region) => [Math.round(lineLonAt(0) - region.fromLon), region]));
 
 export class NoonComposer {
   instruments = Object.freeze([
     Instrument.HARP,
-    Instrument.PIZZICATO,
+    Instrument.CELLO,
     Instrument.FLUTE,
     Instrument.SEASHORE,
     Instrument.TUBULAR_BELLS,
@@ -83,7 +59,7 @@ export class NoonComposer {
   stepsPerBar = STEPS_PER_BAR;
 
   /**
-   * @param {{ line: import('../../../tracks/domain/noon-line.js').NoonLine,
+   * @param {{ line: import('../../../tracks/domain/noon-line.js').NoonLine, treesByStep: Map<number, Object[]>,
    *   lead: Object, legend: boolean }} song
    */
   setSong(song) {
@@ -111,8 +87,9 @@ export class NoonComposer {
     if (lineStep % TICK.everyDeg === 0) {
       music.note(Instrument.WOODBLOCK, TICK.note, lineStep === 0 ? TICK.loudAtStart : TICK.velocity, at, 1);
     }
-    for (const note of forestNotesAt(this.song.line, lineStep)) {
-      this.playVoice(music, this.voices[note.band], note.height, at, note.every);
+    // Each tree that starts to grow in this step plays where it starts, for as long as it grows.
+    for (const tree of this.song.treesByStep.get(lineStep) ?? []) {
+      this.playVoice(music, this.voices[tree.band], tree.metres, at + startOffsetSec(tree), tree.growSec / STEP_SEC);
     }
     const sounding = Object.keys(this.voices).some((band) => bandAt(this.song.line, band, lineStep));
     if (!sounding && lineStep % STEPS_PER_BAR === 0) music.note(Instrument.SEASHORE, SEA.note, SEA.velocity, at, STEPS_PER_BAR);
