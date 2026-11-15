@@ -33,6 +33,19 @@
  * @property {Float32Array} newPixels by day index: newly burning VIIRS pixels seen that day (0 on days it was not seen)
  */
 
+/**
+ * One large fire MTBS mapped, in the year it started.
+ *
+ * @typedef {Object} WildfireYearFire
+ * @property {string} fireid unique across the years
+ * @property {number} lon of a point inside its burned area
+ * @property {number} lat
+ * @property {number} areaKm2 its burned area
+ * @property {number} yearShare how far into the year it started, 0 (1 January) to 1
+ */
+
+const KM2_PER_ACRE = 0.0040468564224;
+
 /** @param {string} text */
 export function parseAnnualCsv(text) {
   const lines = text.trim().split(/\r?\n/);
@@ -52,6 +65,38 @@ export function parseAnnualCsv(text) {
     });
   }
   return years;
+}
+
+/**
+ * Reads the large-fires file (one row per MTBS fire, by year and ignition date) into each year's fires, laid out on
+ * `years`; a year MTBS has no fires for (1983, before it starts) gets none.
+ *
+ * @param {string} text
+ * @param {WildfireYear[]} years
+ * @returns {WildfireYearFire[][]} by year index
+ */
+export function parseYearFiresCsv(text, years) {
+  const yearIndex = new Map(years.map(({ year }, index) => [year, index]));
+  const byYear = years.map(() => []);
+  const lines = text.trim().split(/\r?\n/);
+  const header = lines[0].split(',');
+  const i = Object.fromEntries(header.map((name, index) => [name, index]));
+  lines.slice(1).forEach((line, row) => {
+    const cells = line.split(',');
+    const year = Number(cells[i.year]);
+    const at = yearIndex.get(year);
+    if (at === undefined) return;
+    const start = Date.UTC(year, 0, 1);
+    const yearMs = Date.UTC(year + 1, 0, 1) - start;
+    byYear[at].push({
+      fireid: `mtbs-${row}`,
+      lon: Number(cells[i.lon]),
+      lat: Number(cells[i.lat]),
+      areaKm2: Number(cells[i.acres]) * KM2_PER_ACRE,
+      yearShare: Math.min(1, Math.max(0, (Date.parse(`${cells[i.ig_date]}T00:00:00Z`) - start) / yearMs)),
+    });
+  });
+  return byYear;
 }
 
 /** @param {string} text */

@@ -37,4 +37,11 @@ export const Instrument = Object.freeze({
   DULCIMER: { program: 15, volume: 127 },
   TAIKO: { program: 116, volume: 66 },
   MELODIC_TOM: { program: 117, volume: 85 },
+  // The forest album: harp for canopy height in the tropics (clear pitch steps, not percussion toys), flute for the
+  // north, pizzicato for the south, seashore, a land bell, a longitude tick, and a warm pad for the air (CO₂).
+  HARP: { program: 46, volume: 105 },
+  PIZZICATO: { program: 45, volume: 100 },
+  SEASHORE: { program: 122, volume: 70 },
+  TUBULAR_BELLS: { program: 14, volume: 85 },
+  WOODBLOCK: { program: 115, volume: 70 },
 });

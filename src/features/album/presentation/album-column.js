@@ -38,21 +38,30 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
 
   /** @param {number} index */
   function setAlbum(index) {
-    sleeve.setAlbum({ album: albums[index], index, count: albums.length });
+    // The covers drawn now: a sleeve given an album another sleeve showed takes its drawn cover, not loading it anew.
+    const drawn = new Map();
+    for (const cover of [sleeve, ...neighbours.map((n) => n.cover)]) {
+      if (cover.image) drawn.set(cover.image.getAttribute('src'), cover.image);
+    }
+    sleeve.setAlbum({ album: albums[index], index, count: albums.length }, drawn);
     for (const { place, cover } of neighbours) {
       const i = wrapIndex(index + place, albums.length);
-      cover.setAlbum({ album: albums[i], index: i, count: albums.length });
+      cover.setAlbum({ album: albums[i], index: i, count: albums.length }, drawn);
       cover.render(0);
     }
   }
 
   /**
-   * Lines the neighbours up above and below the sleeve and shows them; returns the sleeve in client pixels: its centre,
-   * side, right edge (its tilted corners included) and the spacing between sleeves.
+   * Lines the neighbours up above and below the sleeve and shows them; returns the sleeve in client pixels, or in the
+   * pixels `rectOf` measures boxes in: its centre, side, right edge (its tilted corners included) and the spacing
+   * between sleeves.
+   *
+   * @param {(el: Element) => DOMRectReadOnly} [rectOf]
    */
-  function place() {
+  function place(rectOf = (el) => el.getBoundingClientRect()) {
     const { el } = sleeve;
-    spacing = window.innerHeight;
+    // The parent's height is the viewport's along the column, even on a screen turned to show it landscape.
+    spacing = parent.offsetHeight;
     for (const { place: at, cover } of neighbours) {
       Object.assign(cover.el.style, {
         left: `${el.offsetLeft}px`,
@@ -62,7 +71,7 @@ export function createAlbumColumn(parent, albums, { onSelectTrack }) {
       cover.el.hidden = false;
     }
     // The tilt turns the sleeve round its centre, so its bounding box keeps the centre.
-    const rect = el.getBoundingClientRect();
+    const rect = rectOf(el);
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, size: el.offsetWidth, right: rect.right, spacing };
   }
 

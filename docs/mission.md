@@ -26,7 +26,7 @@ Blue Vinyl is an interactive web jukebox. Each EIC dataset is an **album** place
 | Globe      | `globe`: the globe and its data views                    |
 | Music      | `music`: data-to-sound mapping and the audio engine      |
 | Turntable  | `turntable`: the record and player visuals               |
-| Controls   | `controls`: play, pause, seek, settings                  |
+| Controls   | `controls`: play, pause, seek, the more menu             |
 | Docent     | `docent`: spoken and written descriptions                |
 
 ## Goals

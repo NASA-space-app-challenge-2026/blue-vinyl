@@ -14,7 +14,9 @@ import { minorDegree, velocityGain } from './pitch.js';
 //
 // Track 1 — literal 5453 graph: one french-horn tone a year; pitch and loudness = burned acres. Fire = acres. A cello
 // floor follows the 10-year mean (the rise since the 1980s). Timpani marks each of the ten largest-acre years; the
-// blast lands on the largest (2015, and 2020 within 1% of it).
+// blast lands on the largest (2015, and 2020 within 1% of it). Under them, the year's largest MTBS fires (the ones the
+// globe shows) are plucked as they start, through the bar the way they started through the year: higher and louder
+// the larger, from the left in the West to the right in the East, so a big year crackles and a small one barely does.
 //
 // Track 2 — 2020 season, one beat a day: trombone (+ tuba as weight when heavy) = that day's active large-fire area,
 // held while it stays on one pitch. Roar = active area, centred where the fires burn; quiet cello = fireline length, every four days; timpani when the active area sets a clear season record; the blast
@@ -30,6 +32,7 @@ export const Instrument = Object.freeze({
   TIMPANI: 'timpani',
   REVERSE_CYMBAL: 'reverse_cymbal',
   HARP: 'orchestral_harp',
+  PIZZICATO: 'pizzicato_strings',
   // The fire's roar: a low wash of sea noise.
   ROAR: 'seashore',
 });
@@ -43,6 +46,7 @@ export const Part = Object.freeze({
   ROAR: 'roar',
   BUILD: 'build',
   BLAST: 'blast',
+  IGNITE: 'ignite',
 });
 
 export const KEY_TONIC = 0;
@@ -59,6 +63,8 @@ const MIX = Object.freeze({
   [Instrument.REVERSE_CYMBAL]: 1.6,
   [Instrument.ROAR]: 1.3,
   [Instrument.HARP]: 0.8,
+  // A pluck's first 150 ms is about 1.5 times as loud as the horn's: the largest fire's stays about 6 dB under it.
+  [Instrument.PIZZICATO]: 0.5,
 });
 
 // How the fire's size (0..1, share of the track's largest) sounds.
@@ -80,12 +86,19 @@ const BLAST = Object.freeze({
   breathSec: 0.45,
 });
 
+// Track 1: fires of at least `minKm2` (50,000 acres; 1 to 46 a year) are plucked; `fullKm2` (1,000,000 acres) is the
+// top of the scale. Fires that start within `gapSec` of each other (about five days) are plucked together, the largest
+// `chord` of them at once. Plucks within `crowdSec` of each other share one pluck's loudness.
+const IGNITE = Object.freeze({ minKm2: 202, fullKm2: 4047, gapSec: 0.01, chord: 3, steps: 9, crowdSec: 0.025 });
+
 // Track 2: a season record strikes the timpani only when it beats the last stroke's by this share, and this long after.
 const RECORD = Object.freeze({ rise: 0.15, gapSec: 1.5 });
 
 const clamp = (x, lo, hi) => Math.min(Math.max(x, lo), hi);
 const dbGain = (db) => 10 ** (db / 20);
 const lerp = (range, t) => range.min + (range.max - range.min) * t;
+// West (left) to east (right) across the CONUS, in tenths, so notes at one place share a panner.
+const panOfLon = (lon) => Math.round(clamp(((lon + 125) / 60) * 2 - 1, -0.8, 0.8) * 10) / 10;
 
 /**
  * @param {import('./ice-sea-score.js').NoteEvent[]} notes
@@ -237,6 +250,7 @@ function blast(notes, peakSec) {
 // let ring out instead of stopped, so the struck chord carries the peak, and come back in after it. Held notes come
 // back for whatever is left of them.
 function breathe(notes, fromSec, toSec) {
+  // The fires still starting in a peak year (Track 1's plucks) are not silenced: they are the year's data.
   const fire = new Set([Part.ROAR]);
   const held = new Set([Part.ROAR, Part.ACRES, Part.AREA, Part.TREND, Part.FRONT]);
   const resumed = [];
@@ -260,14 +274,64 @@ function breathe(notes, fromSec, toSec) {
 }
 
 /**
- * Track 1: US annual burned acres (5453).
+ * Track 1's plucks: each of a year's large fires as it starts, as far into the bar as it started into its year (the
+ * globe lights it then too).
+ *
+ * @param {import('./ice-sea-score.js').NoteEvent[]} notes
+ * @param {import('../../tracks/domain/wildfire-series.js').WildfireYearFire[]} fires
+ * @param {number} barSec when the year's bar starts
+ * @param {number} beatSec how long it lasts
+ */
+function ignite(notes, fires, barSec, beatSec) {
+  const large = fires.filter((f) => f.areaKm2 >= IGNITE.minKm2).sort((a, b) => a.yearShare - b.yearShare);
+  /** @type {import('../../tracks/domain/wildfire-series.js').WildfireYearFire[][]} */
+  const groups = [];
+  for (const fire of large) {
+    const group = groups.at(-1);
+    if (group && (fire.yearShare - group[0].yearShare) * beatSec < IGNITE.gapSec) group.push(fire);
+    else groups.push([fire]);
+  }
+  const plucks = [];
+  for (const group of groups) {
+    const timeSec = barSec + group[0].yearShare * beatSec;
+    const largest = [...group].sort((a, b) => b.areaKm2 - a.areaKm2).slice(0, IGNITE.chord);
+    for (const fire of largest) plucks.push(pluck(fire, timeSec));
+  }
+  // Where plucks crowd (a summer's outbreak), each is softer, so together they sound about as loud as one: the burst
+  // is heard as many, not as louder than the horn.
+  for (const note of plucks) {
+    const crowd = plucks.filter((other) => Math.abs(other.timeSec - note.timeSec) <= IGNITE.crowdSec).length;
+    note.gain /= Math.sqrt(crowd);
+  }
+  notes.push(...plucks);
+}
+
+// One fire's pluck: higher and louder the larger (on a log scale of its area), panned to where it burned.
+function pluck(fire, timeSec) {
+  const size = clamp(Math.log(fire.areaKm2 / IGNITE.minKm2) / Math.log(IGNITE.fullKm2 / IGNITE.minKm2), 0, 1);
+  return {
+    timeSec,
+    durationSec: 0.1,
+    instrument: Instrument.PIZZICATO,
+    part: Part.IGNITE,
+    midi: minorDegree(48, Math.round(size * IGNITE.steps), KEY_TONIC),
+    gain: velocityGain(35 + 85 * size) * MIX[Instrument.PIZZICATO],
+    attackSec: 0.003,
+    releaseSec: 0.25,
+    pan: panOfLon(fire.lon),
+  };
+}
+
+/**
+ * Track 1: US annual burned acres (5453), with each year's large MTBS fires plucked as they start.
  *
  * @param {import('../../tracks/domain/wildfire-series.js').WildfireYear[]} years
+ * @param {import('../../tracks/domain/wildfire-series.js').WildfireYearFire[][]} firesByYear by year index
  * @param {import('../../tracks/domain/year-timeline.js').YearTimeline} timeline
  * @param {number} durationSec
  * @returns {import('./ice-sea-score.js').NoteEvent[]}
  */
-export function annualBurnScore(years, timeline, durationSec) {
+export function annualBurnScore(years, firesByYear, timeline, durationSec) {
   const end = durationSec - timeline.tailSec;
   const acres = years.map((y) => y.acres);
   const amin = Math.min(...acres);
@@ -303,6 +367,7 @@ export function annualBurnScore(years, timeline, durationSec) {
     });
 
     fire.beat(notes, { timeSec, untilSec: until, size: year.acres / amax, pan: 0 });
+    ignite(notes, firesByYear[i] ?? [], timeSec, timeline.beatSec);
 
     const tr = (trend[i] - tmin) / (tmax - tmin || 1);
     notes.push({
@@ -377,7 +442,7 @@ export function seasonScore(days, timeline, durationSec) {
     const a = day.areaKm2 / amax;
     const lv = day.flinelen / lmax;
     // Where the day's fires burn, west (left) to east (right) across the CONUS.
-    const pan = day.lon ? clamp(((day.lon + 125) / 60) * 2 - 1, -0.8, 0.8) : 0;
+    const pan = day.lon ? panOfLon(day.lon) : 0;
 
     if (a <= 0.02) held.clear();
     if (a > 0.02) {

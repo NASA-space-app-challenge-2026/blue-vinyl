@@ -3,6 +3,12 @@ import { svg } from '../../../shared/svg.js';
 const SPEAKER = 'M4 9.5h3.5L12 5.5v13l-4.5-4H4z';
 const NEAR_WAVE = 'M15 9.5a3.5 3.5 0 0 1 0 5';
 const FAR_WAVE = 'M17.5 7a7.5 7.5 0 0 1 0 10';
+const DOT_R = 1.8;
+
+/** A filled dot of radius DOT_R centered on (cx, cy), as a path. */
+function dot(cx, cy) {
+  return `M${cx - DOT_R} ${cy}a${DOT_R} ${DOT_R} 0 1 0 ${2 * DOT_R} 0a${DOT_R} ${DOT_R} 0 1 0 ${-2 * DOT_R} 0z`;
+}
 
 /** Icon shapes on a 24×24 grid: `fill` paths are solid, `stroke` paths are lines. */
 export const ControlIcon = Object.freeze({
@@ -15,6 +21,8 @@ export const ControlIcon = Object.freeze({
   CHEVRON_LEFT: { fill: [], stroke: ['M15 6l-6 6 6 6'] },
   CHEVRON_RIGHT: { fill: [], stroke: ['M9 6l6 6-6 6'] },
   FULLSCREEN_EXIT: { fill: [], stroke: ['M9 4v5H4', 'M20 9h-5V4', 'M15 20v-5h5', 'M4 15h5v5'] },
+  // Three dots in a row.
+  MORE: { fill: [dot(5.5, 12), dot(12, 12), dot(18.5, 12)], stroke: [] },
 });
 
 /** @param {{ fill: string[], stroke: string[] }} icon one of ControlIcon */

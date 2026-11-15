@@ -2,6 +2,15 @@ export const AlbumCategory = Object.freeze({
   BIODIVERSITY: 'biodiversity',
   CLIMATE: 'climate',
   EXTREME_WEATHER: 'extreme-weather',
+  DISASTER: 'disaster',
+});
+
+/** How each AlbumCategory is named on the sleeve and in the About dialog. */
+export const ALBUM_CATEGORY_LABEL = Object.freeze({
+  [AlbumCategory.BIODIVERSITY]: 'Biodiversity',
+  [AlbumCategory.CLIMATE]: 'Climate',
+  [AlbumCategory.EXTREME_WEATHER]: 'Extreme Weather',
+  [AlbumCategory.DISASTER]: 'Disaster',
 });
 
 /**
@@ -86,8 +95,10 @@ export const AlbumCategory = Object.freeze({
  * @property {StormSource} [storm] data, sound and view of a hurricane track
  * @property {StormSeasonSource} [season] data, sound and view of a storm season track
  * @property {LightningSource} [lightning] data and sound of a lightning track
- * @property {{ kind: 'annual', csvUrl: string } | { kind: 'season', csvUrl: string, firesUrl: string }} [wildfire]
+ * @property {{ kind: 'annual' | 'season', csvUrl: string, firesUrl: string }} [wildfire]
  * @property {string} [birdsUrl] the birds' paths the track plays (see tracks/domain/bird-track.js)
+ * @property {{ lineUrl: string, mapUrl: string, airMapUrl: string, airUrl: string }} [forest] the noon line, canopy
+ *   map, and the CO₂ map and months of the same window the track plays (see tracks/domain/noon-line.js)
  * @property {Object} [lead] the Instrument that carries the track's information (see music/domain/instruments.js)
  * @property {string} [color] CSS color the track's data is drawn in
  * @property {string} [coverUrl] the track's own cover image, shown on the sleeve while it is the current track

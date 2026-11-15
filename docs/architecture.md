@@ -14,9 +14,10 @@ src/
   features/
     album/           # albums, songs and their timelines
     cat/             # the Live2D black cat in the bottom right corner
-    controls/        # player controls and user settings
+    controls/        # player controls and the more menu
     docent/          # spoken and written descriptions (accessibility)
     globe/           # the globe and its data views
+    info/            # the About and License dialogs and what they say
     music/           # data-to-sound mapping and the audio engine
     tracks/          # NASA data loaded as time series on the globe
     turntable/       # the turntable and record visuals
